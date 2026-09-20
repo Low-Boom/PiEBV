@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on 21-01-2024
+
+@author: C. Willert
+
+purpose: 
+control of Teensy4.1-based event-based camera/laser synchronizer via COM-port
+
+required package(s): pyserial
+python -m pip install pyserial
+"""
+import serial
+import time
+import platform
+import os, sys
+from serial import SerialException
+import glob
+
+def openPort(baudrate=115200, port=''):
+    """
+    Scan available serial ports for device
+    port --> default port
+    """
+    # find available ports
+    ports = []
+    if not port == '' : 
+        ports = [port]
+    if platform.system() == 'Darwin': # MacOSX
+        ports.extend(glob.glob("/dev/cu.usbmodem*"))
+    elif platform.system() == 'Linux': # Linux
+        ports = []
+    elif platform.system() == 'Windows': # Windows
+        ports.extend(['COM1','COM2','COM3','COM4','COM5','COM6','COM7','COM8','COM9']) 
+    else:
+        raise Exception('Cannot determine host system!  Found: ' + platform.system())   
+
+    # try to open
+    for port in ports:
+        try:
+            teensyPort = serial.Serial(port=port, baudrate=baudrate, timeout=1)        
+        except SerialException:            
+            pass # try next
+        else:
+            print("Checking port " + port)
+            # check if teensy is alive
+            teensyPort.write(bytes('6,i;', 'utf-8'))
+            time.sleep(0.05)
+            retData = teensyPort.read(10000)   # read until EOF or time out
+            # try to decode return data
+            try:
+                retStr = retData.decode('utf-8')
+                print(retStr)
+            except UnicodeDecodeError:
+                pass # teensyPort.close()
+            else:
+                # make sure it's 'teensy' or 'due'
+                if ('teensy' in retStr) or ('due' in retStr) or ('TeensyPulser' in retStr): 
+                    print("Communication successfully started on port " + port)
+                    return teensyPort, port
+            teensyPort.close()
+            
+    # no port found - quit
+    print(("Problem opening serial connection to device "
+            "\n   Quitting..."))
+    return None, 'None'
+
+if __name__ == '__main__':
+    
+    baudrate = 115200
+    #baudrate = 57600
+    teensy,port = openPort(baudrate=baudrate)
+    if teensy == None:
+        sys.exit(-1)
+    
+    def write_read(x):
+        teensy.write(bytes(x, 'utf-8'))
+        time.sleep(0.05)
+        data = teensy.read(10000)   # read until EOF or time out
+        #data = teensy.readline()
+        return data
+    
+    while True:
+        val = input('Enter a string ("x" to exit): ')
+        if val == 'x':
+            break
+        # format output string
+        strOUT = '6,'+val+';'
+        print('Sending: ' + strOUT)
+        retVal = write_read(strOUT).decode('utf-8')
+        for i in retVal.split(sep=';'): 
+            print(i)
+        #print(retVal)
+        
+    # Important: always close the port when done!
+    teensy.close()
+    
