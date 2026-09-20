@@ -125,7 +125,7 @@ void Protocol::dispatch(char *line) {
     }
 
     if (strcasecmp(cmd, "ID?") == 0 || strcasecmp(cmd, "ID") == 0) {
-        Serial.println(F("PiDG-Pico delay generator, built " __DATE__ " " __TIME__));
+        Serial.println(F("PiDG-Pico2W delay generator, built " __DATE__ " " __TIME__));
         return;
     }
 

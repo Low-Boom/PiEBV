@@ -31,7 +31,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "https://datasheets.raspberrypi.com/pico/pico-datasheet.pdf"
+		(property "Datasheet" "https://datasheets.raspberrypi.com/picow/pico-2-w-datasheet.pdf"
 			(at 0 0 0)
 			(effects
 				(font
@@ -40,7 +40,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Raspberry Pi Pico (RP2040) module, SMD castellated-edge mount; NO FOOTPRINT ASSIGNED -- get a verified castellation footprint (official Raspberry Pi KiCad files, or a vetted community library) before running Update PCB From Schematic"
+		(property "Description" "Raspberry Pi Pico 2 W (RP2350 + CYW43439 wireless, unused) module, SMD castellated-edge mount, pin/footprint-compatible with the original Pico/Pico W; NO FOOTPRINT ASSIGNED -- get a verified castellation footprint (official Raspberry Pi KiCad files at datasheets.raspberrypi.com/picow/pico-2-w-schematic.pdf, or a vetted community library) before running Update PCB From Schematic"
 			(at 0 0 0)
 			(effects
 				(font

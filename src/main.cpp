@@ -1,4 +1,7 @@
-// PiDG - PIV delay generator (Raspberry Pi Pico / RP2040 port)
+// PiDG - PIV delay generator (Raspberry Pi Pico 2 W / RP2350 port)
+// Built via the community arduino-pico core (see platformio.ini) since
+// PlatformIO's official "raspberrypi" platform/Mbed core has no RP2350
+// support; the wireless radio itself is unused by this firmware.
 //
 // Reimplements the Teensy 4.1 "IDS EVS Event-camera Synchronizer" firmware
 // (see "Chris Teensy Version/IDS_EVS_Sync_v2.ino", kept as the reference
@@ -111,7 +114,7 @@ void setup() {
     g_protocol.begin(&g_params, applyPulseParams);
     applyPulseParams(g_params);  // establish the compiled-in defaults
 
-    Serial.println(F("PiDG-Pico delay generator ready. Type HELP for commands."));
+    Serial.println(F("PiDG-Pico2W delay generator ready. Type HELP for commands."));
 }
 
 void loop() {

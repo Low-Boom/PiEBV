@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Control script for the Raspberry Pi Pico-based PiDG delay generator.
+Control script for the Raspberry Pi Pico 2 W-based PiDG delay generator.
 
 This is the Pico-protocol counterpart to "Chris Teensy Version/EBIV_Pulser_serial_py.txt":
 same pyserial-based port-scanning approach, but talking the new line-based

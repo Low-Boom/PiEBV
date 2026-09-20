@@ -5826,7 +5826,7 @@
 					(hide yes)
 				)
 			)
-			(property "Datasheet" "https://datasheets.raspberrypi.com/pico/pico-datasheet.pdf"
+			(property "Datasheet" "https://datasheets.raspberrypi.com/picow/pico-2-w-datasheet.pdf"
 				(at 0 0 0)
 				(effects
 					(font
@@ -5835,7 +5835,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "Raspberry Pi Pico (RP2040) module, SMD castellated-edge mount; verify footprint pad geometry against the official mechanical drawing before fab"
+			(property "Description" "Raspberry Pi Pico 2 W (RP2350 + CYW43439 wireless, unused) module, SMD castellated-edge mount, pin/footprint-compatible with the original Pico/Pico W; verify footprint pad geometry against the official mechanical drawing (datasheets.raspberrypi.com/picow/pico-2-w-schematic.pdf) before fab"
 				(at 0 0 0)
 				(effects
 					(font
@@ -16088,7 +16088,7 @@
 				)
 			)
 		)
-		(property "Value" "Raspberry Pi Pico"
+		(property "Value" "Raspberry Pi Pico 2 W"
 			(at 103 283 0)
 			(effects
 				(font
@@ -16105,7 +16105,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "https://datasheets.raspberrypi.com/pico/pico-datasheet.pdf"
+		(property "Datasheet" "https://datasheets.raspberrypi.com/picow/pico-2-w-datasheet.pdf"
 			(at 100 280 0)
 			(effects
 				(font
@@ -16114,7 +16114,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "RP2040 module -- replaces the Teensy 4.1 (see HARDWARE_DESIGN.md)"
+		(property "Description" "RP2350 + CYW43439 (wireless unused) module -- replaces the Teensy 4.1 (see HARDWARE_DESIGN.md)"
 			(at 100 280 0)
 			(effects
 				(font

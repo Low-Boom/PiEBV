@@ -1,8 +1,16 @@
 # PiDG Pico Version — Hardware Design Spec
 
 Baseline: `Chris Teensy Version/IDS_EVS_Synchronizer.kicad_sch` (Teensy 4.1). This
-document specifies the Raspberry Pi Pico (RP2040) redesign: MCU swap, a new
-50Ω-matched laser driver stage, and an SWD debug header. The camera-side
+document specifies the Raspberry Pi Pico 2 W (RP2350 + CYW43439, wireless
+unused) redesign: MCU swap, a new 50Ω-matched laser driver stage, and an SWD
+debug header. Pico 2 W was chosen over the plain RP2040 Pico for future
+headroom; electrically/pin-wise it's a drop-in swap since Raspberry Pi
+designed it to stay pin/footprint-compatible with the original Pico/Pico W
+(see `src/main.cpp` / `platformio.ini` for the corresponding firmware
+toolchain change — the official PlatformIO "raspberrypi" platform has no
+RP2350 support, so the project now builds via the community
+`maxgerhardt/platform-raspberrypi` fork and Earle Philhower's `arduino-pico`
+core instead). The camera-side
 buffering (Sync/Trigger/TDRSTN to the six `J1`-`J6` headers, the 1.8V LDO, the
 `J10`/`J11` selector jumpers) is carried forward unchanged, per direction —
 only re-sourced from the new Pico GPIOs instead of the Teensy's.
@@ -32,11 +40,16 @@ SWD) remain through-hole, which is standard fab practice even on
 
 ### 2.1 MCU
 Teensy 4.1 module (`U11`) + breakout headers `J16`/`J17` → **Raspberry Pi
-Pico**, mounted SMD (soldered directly by its 40 castellated edge pads +
+Pico 2 W**, mounted SMD (soldered directly by its 40 castellated edge pads +
 3 castellated debug pads, reflow — no pin headers/socket). **Verify the
-castellation footprint's pad pitch/offsets against the official Raspberry Pi
-Pico datasheet mechanical drawing before fab** — getting this wrong means the
-Pico physically won't solder to the board correctly.
+castellation footprint's pad pitch/offsets against the official mechanical
+drawing before fab** (`datasheets.raspberrypi.com/picow/pico-2-w-schematic.pdf`
+and `.../pico-2-w-datasheet.pdf`) — getting this wrong means the module
+physically won't solder to the board correctly. The onboard CYW43439
+wireless radio and its associated GPIOs (23/24/25/29 — none of which are
+even broken out to header pins on any Pico variant, plain or "W") are simply
+unused by this design; no extra antenna/RF layout considerations apply
+since nothing on this board drives the radio.
 
 Pico power: `VSYS`/`VBUS` → board `+5V` net (was Teensy `VIN`); Pico's
 `3V3(OUT)` → board `+3V3` net, feeding `U9`'s LDO input/enable exactly as the
@@ -73,7 +86,7 @@ interlock behavior is unchanged) and *before* the coax connector:
     the existing 0805 decoupling caps.
 
 ### 2.3 Debug header (new)
-The Teensy had no SWD (it's USB-bootloader-only). RP2040 benefits from SWD
+The Teensy had no SWD (it's USB-bootloader-only). RP2350 benefits from SWD
 for development. Add a 3-pin header wired to the Pico's dedicated debug
 castellated pads: `SWCLK`, `GND`, `SWDIO` (these are separate, dedicated pads
 on the Pico module, not shared with any GPIO). BOOTSEL + USB/UF2 remains the
@@ -116,7 +129,7 @@ CH2_DRIVE      : U13.OUTB (pin5) -- R7 -- J8.center
 
 | Ref | Part | Package | Notes |
 |---|---|---|---|
-| U11 (replaces Teensy) | Raspberry Pi Pico | SMD module, castellated edge | verify footprint against official mechanical drawing |
+| U11 (replaces Teensy) | Raspberry Pi Pico 2 W | SMD module, castellated edge | verify footprint against official mechanical drawing; wireless radio unused |
 | U13 (new) | TI UCC27524 | SOIC-8 | dual 50Ω-drive stage for CH1/CH2 |
 | R6, R7 (new) | 47Ω, 0805 | placeholder, tune on bench | CH1/CH2 back-match resistors |
 | C9, C10 (new) | 0.1µF / 1µF, 0805 | U13 VDD decoupling |
@@ -128,13 +141,16 @@ CH2_DRIVE      : U13.OUTB (pin5) -- R7 -- J8.center
   actual footprint placement and routing needs to be done in KiCad, which
   isn't possible in this environment (see §7: `PiDG_Pico.kicad_pcb` was left
   untouched, so it still has the old Teensy-era footprints).
-- **Get a verified Pico footprint.** `PiDG_Pico.kicad_sch` intentionally
+- **Get a verified Pico 2 W footprint.** `PiDG_Pico.kicad_sch` intentionally
   leaves U11's Footprint field blank rather than shipping a hand-derived
   castellation footprint under false confidence — pull one from Raspberry
-  Pi's own official KiCad design files or a vetted community library (e.g.
-  the ones found under "KiCad Raspberry Pi Pico" — several exist on GitHub),
-  add it to `libs/`, and assign it to U11 before running Update PCB from
-  Schematic.
+  Pi's own official Pico 2 W KiCad/schematic files
+  (`datasheets.raspberrypi.com/picow/pico-2-w-schematic.pdf`) or a vetted
+  community library (search "KiCad Raspberry Pi Pico 2 W" — several exist on
+  GitHub; make sure it's specifically the Pico 2 W / Pico 2 footprint, not
+  the original RP2040 Pico's, even though the outline is nominally the
+  same), add it to `libs/`, and assign it to U11 before running Update PCB
+  from Schematic.
 - Confirming R6/R7 values against the real light sources' trigger-input spec
   and a bench measurement of U13's actual output impedance.
 - Confirming VBUS headroom for U13's 4.5V VDD minimum under real USB load.
