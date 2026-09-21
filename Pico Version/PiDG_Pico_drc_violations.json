@@ -1,0 +1,521 @@
+{
+  "board": "F:\\OneDrive\\Documents\\PlatformIO\\Projects\\PiDG\\Pico Version\\PiDG_Pico.kicad_pcb",
+  "timestamp": "2026-09-20T20:48:16",
+  "total_violations": 50,
+  "violation_counts": {
+    "shorting_items": 6,
+    "starved_thermal": 1,
+    "solder_mask_bridge": 7,
+    "track_dangling": 9,
+    "lib_footprint_mismatch": 24,
+    "silk_overlap": 1,
+    "silk_over_copper": 2
+  },
+  "severity_counts": {
+    "error": 14,
+    "warning": 36,
+    "info": 0
+  },
+  "violations": [
+    {
+      "type": "shorting_items",
+      "severity": "error",
+      "message": "Items shorting two nets (nets Net-(J10-Pad2) and Net-(J10-Pin_2))",
+      "location": {
+        "x": 201.93,
+        "y": 98.1075,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "shorting_items",
+      "severity": "error",
+      "message": "Items shorting two nets (nets Net-(J10-Pad2) and Net-(J10-Pin_2))",
+      "location": {
+        "x": 196.56,
+        "y": 110.1725,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "shorting_items",
+      "severity": "error",
+      "message": "Items shorting two nets (nets Net-(J10-Pad2) and Net-(J10-Pin_2))",
+      "location": {
+        "x": 201.93,
+        "y": 98.1075,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "shorting_items",
+      "severity": "error",
+      "message": "Items shorting two nets (nets _PULSE_OUT_CH1 and )",
+      "location": {
+        "x": 151.765,
+        "y": 87.3125,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "shorting_items",
+      "severity": "error",
+      "message": "Items shorting two nets (nets Net-(TP3-Pad1) and PWM_1MHz)",
+      "location": {
+        "x": 152.46,
+        "y": 93.0275,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "shorting_items",
+      "severity": "error",
+      "message": "Items shorting two nets (nets +5V and )",
+      "location": {
+        "x": 140.97,
+        "y": 55.88,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "starved_thermal",
+      "severity": "error",
+      "message": "Thermal relief connection to zone incomplete (layer B.Cu; 1 spokes connected to isolated island)",
+      "location": {
+        "x": 70.0,
+        "y": 30.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Rear solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 154.964,
+        "y": 88.5,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Rear solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 151.765,
+        "y": 87.3125,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 140.97,
+        "y": 55.88,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 140.97,
+        "y": 55.88,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 201.93,
+        "y": 98.1075,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 201.93,
+        "y": 110.172,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Rear solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 201.93,
+        "y": 95.5675,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "track_dangling",
+      "severity": "warning",
+      "message": "Track has unconnected end",
+      "location": {
+        "x": 139.695,
+        "y": 59.06,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "track_dangling",
+      "severity": "warning",
+      "message": "Track has unconnected end",
+      "location": {
+        "x": 139.7,
+        "y": 59.055,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "track_dangling",
+      "severity": "warning",
+      "message": "Track has unconnected end",
+      "location": {
+        "x": 139.7,
+        "y": 62.86,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "track_dangling",
+      "severity": "warning",
+      "message": "Track has unconnected end",
+      "location": {
+        "x": 147.315,
+        "y": 78.105,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "track_dangling",
+      "severity": "warning",
+      "message": "Track has unconnected end",
+      "location": {
+        "x": 144.775,
+        "y": 66.1775,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "track_dangling",
+      "severity": "warning",
+      "message": "Track has unconnected end",
+      "location": {
+        "x": 144.78,
+        "y": 62.86,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "track_dangling",
+      "severity": "warning",
+      "message": "Track has unconnected end",
+      "location": {
+        "x": 144.78,
+        "y": 59.055,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "track_dangling",
+      "severity": "warning",
+      "message": "Track has unconnected end",
+      "location": {
+        "x": 152.455,
+        "y": 81.975,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "track_dangling",
+      "severity": "warning",
+      "message": "Track has unconnected end",
+      "location": {
+        "x": 152.395,
+        "y": 78.105,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'C_0805_2012Metric_Pad1.18x1.45mm_HandSolder' does not match copy in library 'Capacitor_SMD'",
+      "location": {
+        "x": 218.2075,
+        "y": 120.65,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'IDC-Header_2x05_P2.54mm_Vertical' does not match copy in library 'Connector_IDC'",
+      "location": {
+        "x": 187.88,
+        "y": 126.6825,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'C_0805_2012Metric_Pad1.18x1.45mm_HandSolder' does not match copy in library 'Capacitor_SMD'",
+      "location": {
+        "x": 140.97,
+        "y": 90.4875,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'C_0805_2012Metric_Pad1.18x1.45mm_HandSolder' does not match copy in library 'Capacitor_SMD'",
+      "location": {
+        "x": 198.3525,
+        "y": 106.3625,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'IDC-Header_2x05_P2.54mm_Vertical' does not match copy in library 'Connector_IDC'",
+      "location": {
+        "x": 199.865,
+        "y": 126.6825,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'R_0805_2012Metric_Pad1.20x1.40mm_HandSolder' does not match copy in library 'Resistor_SMD'",
+      "location": {
+        "x": 222.25,
+        "y": 66.675,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'R_0805_2012Metric_Pad1.20x1.40mm_HandSolder' does not match copy in library 'Resistor_SMD'",
+      "location": {
+        "x": 218.17,
+        "y": 118.11,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'IDC-Header_2x05_P2.54mm_Vertical' does not match copy in library 'Connector_IDC'",
+      "location": {
+        "x": 151.925,
+        "y": 126.6825,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'IDC-Header_2x05_P2.54mm_Vertical' does not match copy in library 'Connector_IDC'",
+      "location": {
+        "x": 139.94,
+        "y": 126.6825,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'PinHeader_1x01_P2.54mm_Horizontal' does not match copy in library 'Connector_PinHeader_2.54mm'",
+      "location": {
+        "x": 199.39,
+        "y": 93.0275,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'SOT-23-5' does not match copy in library 'Package_TO_SOT_SMD'",
+      "location": {
+        "x": 140.97,
+        "y": 93.6625,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'R_0805_2012Metric_Pad1.20x1.40mm_HandSolder' does not match copy in library 'Resistor_SMD'",
+      "location": {
+        "x": 212.455,
+        "y": 59.055,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'IDC-Header_2x05_P2.54mm_Vertical' does not match copy in library 'Connector_IDC'",
+      "location": {
+        "x": 163.91,
+        "y": 126.6825,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'C_0805_2012Metric_Pad1.18x1.45mm_HandSolder' does not match copy in library 'Capacitor_SMD'",
+      "location": {
+        "x": 217.17,
+        "y": 95.885,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'C_0805_2012Metric_Pad1.18x1.45mm_HandSolder' does not match copy in library 'Capacitor_SMD'",
+      "location": {
+        "x": 217.4025,
+        "y": 76.2,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'C_0805_2012Metric_Pad1.18x1.45mm_HandSolder' does not match copy in library 'Capacitor_SMD'",
+      "location": {
+        "x": 174.625,
+        "y": 106.3625,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'R_0805_2012Metric_Pad1.20x1.40mm_HandSolder' does not match copy in library 'Resistor_SMD'",
+      "location": {
+        "x": 218.17,
+        "y": 115.57,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'C_0805_2012Metric_Pad1.18x1.45mm_HandSolder' does not match copy in library 'Capacitor_SMD'",
+      "location": {
+        "x": 149.6275,
+        "y": 106.3625,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'IDC-Header_2x05_P2.54mm_Vertical' does not match copy in library 'Connector_IDC'",
+      "location": {
+        "x": 175.895,
+        "y": 126.6825,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'PinHeader_1x03_P2.54mm_Vertical' does not match copy in library 'Connector_PinHeader_2.54mm'",
+      "location": {
+        "x": 199.39,
+        "y": 98.1075,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'PinHeader_1x03_P2.54mm_Vertical' does not match copy in library 'Connector_PinHeader_2.54mm'",
+      "location": {
+        "x": 217.17,
+        "y": 59.055,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'C_0805_2012Metric_Pad1.18x1.45mm_HandSolder' does not match copy in library 'Capacitor_SMD'",
+      "location": {
+        "x": 140.97,
+        "y": 96.8375,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'PinHeader_1x01_P2.54mm_Horizontal' does not match copy in library 'Connector_PinHeader_2.54mm'",
+      "location": {
+        "x": 152.46,
+        "y": 93.0275,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "lib_footprint_mismatch",
+      "severity": "warning",
+      "message": "Footprint 'PinHeader_1x01_P2.54mm_Horizontal' does not match copy in library 'Connector_PinHeader_2.54mm'",
+      "location": {
+        "x": 226.695,
+        "y": 66.675,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "silk_overlap",
+      "severity": "warning",
+      "message": "Silkscreen clearance",
+      "location": {
+        "x": 204.0,
+        "y": 60.35,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "silk_over_copper",
+      "severity": "warning",
+      "message": "Silkscreen clipped by solder mask",
+      "location": {
+        "x": 204.0,
+        "y": 60.35,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "silk_over_copper",
+      "severity": "warning",
+      "message": "Silkscreen clipped by solder mask",
+      "location": {
+        "x": 204.0,
+        "y": 60.35,
+        "unit": "mm"
+      }
+    }
+  ]
+}
