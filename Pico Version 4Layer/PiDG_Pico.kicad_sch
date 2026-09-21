@@ -7561,12 +7561,6 @@
 		(uuid "7676a522-8516-435b-89a2-f1d94b7e5f7f")
 	)
 	(junction
-		(at 40.64 208.28)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "77ddf98b-ad3d-430b-b181-b9fb83486083")
-	)
-	(junction
 		(at 72.39 97.79)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -7631,12 +7625,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "b66b88ff-23c2-49bb-8424-d8113641c60a")
-	)
-	(junction
-		(at 59.69 208.28)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "b7b36dc8-4720-4aa8-a481-811371abca2b")
 	)
 	(junction
 		(at 356.87 78.74)
@@ -8105,16 +8093,6 @@
 			(type default)
 		)
 		(uuid "200eb93a-147f-4c07-b77b-7139b5591d17")
-	)
-	(wire
-		(pts
-			(xy 40.64 208.28) (xy 40.64 210.82)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "21048485-ea7c-433c-8b2d-2af0c8a5b2ac")
 	)
 	(wire
 		(pts
@@ -8985,16 +8963,6 @@
 			(type default)
 		)
 		(uuid "b45d4618-1a37-466c-9719-584d6271916b")
-	)
-	(wire
-		(pts
-			(xy 59.69 208.28) (xy 55.88 208.28)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "b7fbef9d-6f79-4b94-b590-73bfaa7b7bc7")
 	)
 	(wire
 		(pts
@@ -9931,7 +9899,7 @@
 		)
 	)
 	(symbol
-		(lib_id "power:+1V8")
+		(lib_id "power:+3V3")
 		(at 59.69 208.28 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -9949,7 +9917,7 @@
 				(hide yes)
 			)
 		)
-		(property "Value" "+1V8"
+		(property "Value" "+3V3"
 			(at 59.69 203.2 0)
 			(effects
 				(font
@@ -10264,7 +10232,7 @@
 		)
 	)
 	(symbol
-		(lib_id "power:+1V8")
+		(lib_id "power:+3V3")
 		(at 86.36 119.38 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -10281,7 +10249,7 @@
 				(hide yes)
 			)
 		)
-		(property "Value" "+1V8"
+		(property "Value" "+3V3"
 			(at 89.662 119.126 0)
 			(effects
 				(font
@@ -11560,84 +11528,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Regulator_Linear:NCP718xSN180")
-		(at 48.26 210.82 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "5b0ad5c4-4470-4c98-b967-4fc53e3507cc")
-		(property "Reference" "U9"
-			(at 48.26 200.66 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "NCP718xSN180"
-			(at 48.26 203.2 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-23-5"
-			(at 48.26 201.93 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "https://www.onsemi.com/pub/Collateral/NCP718-D.PDF"
-			(at 48.26 198.12 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "300-mA, Wide Input Voltage, Low-IQ LDO, 1.8V, SOT-23"
-			(at 48.26 210.82 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "5"
-			(uuid "9f49c2f6-3d76-4674-8a28-5f2b32968a57")
-		)
-		(pin "1"
-			(uuid "87515918-bac4-40f0-9fcd-d0e508bfe270")
-		)
-		(pin "3"
-			(uuid "0d7f4da0-87d2-4a54-897c-6061a1489365")
-		)
-		(pin "2"
-			(uuid "c3fa3c73-4c26-40af-b493-a55041ac3d73")
-		)
-		(pin "4"
-			(uuid "988ba077-67cb-446f-8cfd-d80139e3a442")
-		)
-		(instances
-			(project ""
-				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
-					(reference "U9")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "power:+1V8")
+		(lib_id "power:+3V3")
 		(at 86.36 77.47 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -11655,7 +11546,7 @@
 				(hide yes)
 			)
 		)
-		(property "Value" "+1V8"
+		(property "Value" "+3V3"
 			(at 86.36 72.39 0)
 			(effects
 				(font
@@ -13184,7 +13075,7 @@
 		)
 	)
 	(symbol
-		(lib_id "power:+1V8")
+		(lib_id "power:+3V3")
 		(at 86.36 31.75 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -13202,7 +13093,7 @@
 				(hide yes)
 			)
 		)
-		(property "Value" "+1V8"
+		(property "Value" "+3V3"
 			(at 86.36 26.67 0)
 			(effects
 				(font
@@ -14373,7 +14264,7 @@
 				(hide yes)
 			)
 		)
-		(property "Value" "+1V8"
+		(property "Value" "+3V3"
 			(at 38.1 228.6 0)
 			(effects
 				(font
