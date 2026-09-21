@@ -1,14 +1,14 @@
 {
   "board": "F:\\OneDrive\\Documents\\PlatformIO\\Projects\\PiDG\\Pico Version 4Layer\\PiDG_Pico.kicad_pcb",
-  "timestamp": "2026-09-21T16:28:33",
-  "total_violations": 248,
+  "timestamp": "2026-09-21T16:34:15",
+  "total_violations": 253,
   "violation_counts": {
-    "shorting_items": 6,
-    "clearance": 68,
+    "shorting_items": 7,
+    "clearance": 74,
     "hole_clearance": 24,
     "starved_thermal": 2,
     "solder_mask_bridge": 57,
-    "track_dangling": 46,
+    "track_dangling": 44,
     "silk_edge_clearance": 6,
     "lib_footprint_mismatch": 22,
     "lib_footprint_issues": 4,
@@ -16,8 +16,8 @@
     "silk_over_copper": 7
   },
   "severity_counts": {
-    "error": 157,
-    "warning": 91,
+    "error": 164,
+    "warning": 89,
     "info": 0
   },
   "violations": [
@@ -28,6 +28,16 @@
       "location": {
         "x": 134.0,
         "y": 38.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation ( clearance 0.2000 mm; actual 0.0623 mm)",
+      "location": {
+        "x": 202.762,
+        "y": 99.9877,
         "unit": "mm"
       }
     },
@@ -44,40 +54,10 @@
     {
       "type": "clearance",
       "severity": "error",
-      "message": "Clearance violation ( clearance 0.2000 mm; actual 0.0623 mm)",
-      "location": {
-        "x": 202.762,
-        "y": 99.9877,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
       "message": "Clearance violation ( clearance 0.2000 mm; actual 0.0714 mm)",
       "location": {
         "x": 204.216,
         "y": 99.9877,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 192.0,
-        "y": 74.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "hole_clearance",
-      "severity": "error",
-      "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 192.0,
-        "y": 74.0,
         "unit": "mm"
       }
     },
@@ -134,7 +114,17 @@
     {
       "type": "clearance",
       "severity": "error",
-      "message": "Clearance violation ( clearance 0.2000 mm; actual 0.0150 mm)",
+      "message": "Clearance violation ( clearance 0.2000 mm; actual 0.1725 mm)",
+      "location": {
+        "x": 211.135,
+        "y": 93.9825,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation ( clearance 0.2000 mm; actual 0.1600 mm)",
       "location": {
         "x": 211.135,
         "y": 79.69,
@@ -144,10 +134,20 @@
     {
       "type": "clearance",
       "severity": "error",
-      "message": "Clearance violation ( clearance 0.2000 mm; actual 0.1725 mm)",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
       "location": {
-        "x": 211.135,
-        "y": 93.9825,
+        "x": 192.0,
+        "y": 74.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "hole_clearance",
+      "severity": "error",
+      "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 192.0,
+        "y": 74.0,
         "unit": "mm"
       }
     },
@@ -186,6 +186,86 @@
       "severity": "error",
       "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
       "location": {
+        "x": 189.5,
+        "y": 93.55,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 189.5,
+        "y": 83.05,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "shorting_items",
+      "severity": "error",
+      "message": "Items shorting two nets (nets +5V and Net-(U10-Pad4))",
+      "location": {
+        "x": 201.525,
+        "y": 66.095,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 189.5,
+        "y": 82.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 200.35,
+        "y": 64.95,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 200.35,
+        "y": 82.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 189.5,
+        "y": 82.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 190.0,
+        "y": 64.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
         "x": 243.5375,
         "y": 117.0,
         "unit": "mm"
@@ -206,8 +286,68 @@
       "severity": "error",
       "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
       "location": {
+        "x": 202.525,
+        "y": 88.595,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 192.0,
+        "y": 64.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 202.525,
+        "y": 89.865,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 212.0,
+        "y": 89.9,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 214.0,
+        "y": 89.9,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
         "x": 197.65,
         "y": 64.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 202.525,
+        "y": 92.405,
         "unit": "mm"
       }
     },
@@ -226,8 +366,48 @@
       "severity": "error",
       "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
       "location": {
+        "x": 207.475,
+        "y": 92.405,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 207.475,
+        "y": 91.135,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
         "x": 200.35,
         "y": 63.05,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 207.475,
+        "y": 89.865,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 207.475,
+        "y": 88.595,
         "unit": "mm"
       }
     },
@@ -296,6 +476,26 @@
       "severity": "error",
       "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
       "location": {
+        "x": 191.0,
+        "y": 73.5,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "hole_clearance",
+      "severity": "error",
+      "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 191.0,
+        "y": 73.5,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
         "x": 239.35,
         "y": 118.75,
         "unit": "mm"
@@ -326,36 +526,6 @@
       "severity": "error",
       "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
       "location": {
-        "x": 191.0,
-        "y": 73.5,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 199.0,
-        "y": 101.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "hole_clearance",
-      "severity": "error",
-      "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 191.0,
-        "y": 73.5,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "hole_clearance",
-      "severity": "error",
-      "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
-      "location": {
         "x": 199.0,
         "y": 101.0,
         "unit": "mm"
@@ -376,6 +546,16 @@
       "severity": "error",
       "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
       "location": {
+        "x": 199.0,
+        "y": 101.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "hole_clearance",
+      "severity": "error",
+      "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
+      "location": {
         "x": 191.0,
         "y": 73.5,
         "unit": "mm"
@@ -406,8 +586,8 @@
       "severity": "error",
       "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
       "location": {
-        "x": 193.54,
-        "y": 73.5,
+        "x": 199.0,
+        "y": 101.0,
         "unit": "mm"
       }
     },
@@ -416,8 +596,8 @@
       "severity": "error",
       "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
       "location": {
-        "x": 199.0,
-        "y": 101.0,
+        "x": 193.54,
+        "y": 73.5,
         "unit": "mm"
       }
     },
@@ -446,8 +626,8 @@
       "severity": "error",
       "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
       "location": {
-        "x": 193.54,
-        "y": 73.5,
+        "x": 199.0,
+        "y": 101.0,
         "unit": "mm"
       }
     },
@@ -456,16 +636,6 @@
       "severity": "error",
       "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
       "location": {
-        "x": 199.0,
-        "y": 101.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "hole_clearance",
-      "severity": "error",
-      "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
-      "location": {
         "x": 193.54,
         "y": 73.5,
         "unit": "mm"
@@ -478,16 +648,6 @@
       "location": {
         "x": 199.0,
         "y": 101.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.2500 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 193.54,
-        "y": 73.5,
         "unit": "mm"
       }
     },
@@ -512,12 +672,32 @@
       }
     },
     {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.2500 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 193.54,
+        "y": 73.5,
+        "unit": "mm"
+      }
+    },
+    {
       "type": "hole_clearance",
       "severity": "error",
       "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
       "location": {
         "x": 199.0,
         "y": 101.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "hole_clearance",
+      "severity": "error",
+      "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 193.54,
+        "y": 73.5,
         "unit": "mm"
       }
     },
@@ -532,16 +712,6 @@
       }
     },
     {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.2500 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 196.08,
-        "y": 73.5,
-        "unit": "mm"
-      }
-    },
-    {
       "type": "hole_clearance",
       "severity": "error",
       "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
@@ -552,9 +722,9 @@
       }
     },
     {
-      "type": "hole_clearance",
+      "type": "clearance",
       "severity": "error",
-      "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
+      "message": "Clearance violation (zone clearance 0.2500 mm; actual 0.0000 mm)",
       "location": {
         "x": 196.08,
         "y": 73.5,
@@ -576,18 +746,8 @@
       "severity": "error",
       "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
       "location": {
-        "x": 201.54,
-        "y": 101.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 201.54,
-        "y": 101.0,
+        "x": 196.08,
+        "y": 73.5,
         "unit": "mm"
       }
     },
@@ -598,126 +758,6 @@
       "location": {
         "x": 201.54,
         "y": 101.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.2500 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 201.54,
-        "y": 101.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "hole_clearance",
-      "severity": "error",
-      "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 201.54,
-        "y": 101.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 204.08,
-        "y": 101.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "hole_clearance",
-      "severity": "error",
-      "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 204.08,
-        "y": 101.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 204.08,
-        "y": 101.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "hole_clearance",
-      "severity": "error",
-      "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 204.08,
-        "y": 101.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 204.08,
-        "y": 101.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "hole_clearance",
-      "severity": "error",
-      "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 204.08,
-        "y": 101.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.2500 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 204.08,
-        "y": 101.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "hole_clearance",
-      "severity": "error",
-      "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 204.08,
-        "y": 101.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 212.0,
-        "y": 89.9,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 214.0,
-        "y": 89.9,
         "unit": "mm"
       }
     },
@@ -736,8 +776,128 @@
       "severity": "error",
       "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
       "location": {
+        "x": 201.54,
+        "y": 101.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "hole_clearance",
+      "severity": "error",
+      "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 201.54,
+        "y": 101.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.2500 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 201.54,
+        "y": 101.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
         "x": 231.0,
         "y": 121.5,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "hole_clearance",
+      "severity": "error",
+      "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 201.54,
+        "y": 101.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 204.08,
+        "y": 101.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "hole_clearance",
+      "severity": "error",
+      "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 204.08,
+        "y": 101.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 204.08,
+        "y": 101.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "hole_clearance",
+      "severity": "error",
+      "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 204.08,
+        "y": 101.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 204.08,
+        "y": 101.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "hole_clearance",
+      "severity": "error",
+      "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 204.08,
+        "y": 101.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.2500 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 204.08,
+        "y": 101.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "hole_clearance",
+      "severity": "error",
+      "message": "Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 204.08,
+        "y": 101.0,
         "unit": "mm"
       }
     },
@@ -776,28 +936,8 @@
       "severity": "error",
       "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
       "location": {
-        "x": 190.65,
-        "y": 94.5,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 193.35,
-        "y": 95.45,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 193.35,
-        "y": 93.55,
+        "x": 212.0,
+        "y": 93.1,
         "unit": "mm"
       }
     },
@@ -816,26 +956,6 @@
       "severity": "error",
       "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
       "location": {
-        "x": 184.0,
-        "y": 73.5,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 212.0,
-        "y": 93.1,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
-      "location": {
         "x": 214.0,
         "y": 93.1,
         "unit": "mm"
@@ -846,8 +966,8 @@
       "severity": "error",
       "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
       "location": {
-        "x": 200.0,
-        "y": 83.4625,
+        "x": 190.65,
+        "y": 94.5,
         "unit": "mm"
       }
     },
@@ -866,8 +986,18 @@
       "severity": "error",
       "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
       "location": {
-        "x": 202.525,
-        "y": 88.595,
+        "x": 184.0,
+        "y": 73.5,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "clearance",
+      "severity": "error",
+      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
+      "location": {
+        "x": 193.35,
+        "y": 95.45,
         "unit": "mm"
       }
     },
@@ -886,8 +1016,8 @@
       "severity": "error",
       "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
       "location": {
-        "x": 202.525,
-        "y": 89.865,
+        "x": 193.35,
+        "y": 93.55,
         "unit": "mm"
       }
     },
@@ -906,16 +1036,6 @@
       "severity": "error",
       "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
       "location": {
-        "x": 202.525,
-        "y": 92.405,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
-      "location": {
         "x": 193.35,
         "y": 83.05,
         "unit": "mm"
@@ -926,38 +1046,8 @@
       "severity": "error",
       "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
       "location": {
-        "x": 207.475,
-        "y": 92.405,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 207.475,
-        "y": 91.135,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 207.475,
-        "y": 89.865,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 207.475,
-        "y": 88.595,
+        "x": 200.0,
+        "y": 83.4625,
         "unit": "mm"
       }
     },
@@ -978,26 +1068,6 @@
       "location": {
         "x": 231.0,
         "y": 118.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 190.0,
-        "y": 64.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "clearance",
-      "severity": "error",
-      "message": "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)",
-      "location": {
-        "x": 192.0,
-        "y": 64.0,
         "unit": "mm"
       }
     },
@@ -1034,90 +1104,10 @@
     {
       "type": "solder_mask_bridge",
       "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 190.65,
-        "y": 93.55,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 190.65,
-        "y": 94.5,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Rear solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 151.765,
-        "y": 87.3125,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 193.35,
-        "y": 95.45,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 193.35,
-        "y": 93.55,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
       "message": "Rear solder mask aperture bridges items with different nets",
       "location": {
         "x": 177.795,
         "y": 46.355,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 193.0375,
-        "y": 91.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Rear solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 177.795,
-        "y": 46.355,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 193.0375,
-        "y": 88.0,
         "unit": "mm"
       }
     },
@@ -1128,6 +1118,16 @@
       "location": {
         "x": 201.525,
         "y": 66.095,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Rear solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 177.795,
+        "y": 46.355,
         "unit": "mm"
       }
     },
@@ -1156,8 +1156,118 @@
       "severity": "error",
       "message": "Front solder mask aperture bridges items with different nets",
       "location": {
+        "x": 190.65,
+        "y": 93.55,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Rear solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 151.765,
+        "y": 87.3125,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 190.65,
+        "y": 94.5,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
         "x": 197.65,
         "y": 63.05,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 193.35,
+        "y": 95.45,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 197.65,
+        "y": 64.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 193.35,
+        "y": 93.55,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 200.35,
+        "y": 64.95,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 193.0375,
+        "y": 91.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 193.0375,
+        "y": 88.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 200.35,
+        "y": 63.05,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 243.5375,
+        "y": 117.0,
         "unit": "mm"
       }
     },
@@ -1196,48 +1306,8 @@
       "severity": "error",
       "message": "Front solder mask aperture bridges items with different nets",
       "location": {
-        "x": 197.65,
-        "y": 64.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
         "x": 214.0,
         "y": 89.9,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 200.35,
-        "y": 64.95,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 200.35,
-        "y": 63.05,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 243.5375,
-        "y": 117.0,
         "unit": "mm"
       }
     },
@@ -1294,6 +1364,26 @@
     {
       "type": "solder_mask_bridge",
       "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 202.525,
+        "y": 88.595,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 202.525,
+        "y": 89.865,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
       "message": "Rear solder mask aperture bridges items with different nets",
       "location": {
         "x": 199.0,
@@ -1314,6 +1404,16 @@
     {
       "type": "solder_mask_bridge",
       "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 202.525,
+        "y": 92.405,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
       "message": "Rear solder mask aperture bridges items with different nets",
       "location": {
         "x": 201.54,
@@ -1326,8 +1426,28 @@
       "severity": "error",
       "message": "Front solder mask aperture bridges items with different nets",
       "location": {
+        "x": 207.475,
+        "y": 92.405,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
         "x": 204.08,
         "y": 101.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 207.475,
+        "y": 91.135,
         "unit": "mm"
       }
     },
@@ -1346,8 +1466,28 @@
       "severity": "error",
       "message": "Front solder mask aperture bridges items with different nets",
       "location": {
+        "x": 207.475,
+        "y": 89.865,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
         "x": 191.0,
         "y": 73.5,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 207.475,
+        "y": 88.595,
         "unit": "mm"
       }
     },
@@ -1378,6 +1518,16 @@
       "location": {
         "x": 193.54,
         "y": 73.5,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 200.0,
+        "y": 83.4625,
         "unit": "mm"
       }
     },
@@ -1406,116 +1556,6 @@
       "severity": "error",
       "message": "Front solder mask aperture bridges items with different nets",
       "location": {
-        "x": 239.35,
-        "y": 120.65,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 239.35,
-        "y": 118.75,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 210.0,
-        "y": 83.4625,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 202.525,
-        "y": 88.595,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 202.525,
-        "y": 89.865,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 202.525,
-        "y": 92.405,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 207.475,
-        "y": 92.405,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 207.475,
-        "y": 91.135,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 207.475,
-        "y": 89.865,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 207.475,
-        "y": 88.595,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
-        "x": 200.0,
-        "y": 83.4625,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "solder_mask_bridge",
-      "severity": "error",
-      "message": "Front solder mask aperture bridges items with different nets",
-      "location": {
         "x": 190.65,
         "y": 83.05,
         "unit": "mm"
@@ -1536,8 +1576,28 @@
       "severity": "error",
       "message": "Front solder mask aperture bridges items with different nets",
       "location": {
+        "x": 239.35,
+        "y": 120.65,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
         "x": 193.35,
         "y": 84.95,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 239.35,
+        "y": 118.75,
         "unit": "mm"
       }
     },
@@ -1568,6 +1628,16 @@
       "location": {
         "x": 214.0,
         "y": 93.1,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "solder_mask_bridge",
+      "severity": "error",
+      "message": "Front solder mask aperture bridges items with different nets",
+      "location": {
+        "x": 210.0,
+        "y": 83.4625,
         "unit": "mm"
       }
     },
@@ -1618,26 +1688,6 @@
       "location": {
         "x": 223.25,
         "y": 67.625,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "track_dangling",
-      "severity": "warning",
-      "message": "Track has unconnected end",
-      "location": {
-        "x": 218.6,
-        "y": 68.575,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "track_dangling",
-      "severity": "warning",
-      "message": "Track has unconnected end",
-      "location": {
-        "x": 217.17,
-        "y": 96.995,
         "unit": "mm"
       }
     },
