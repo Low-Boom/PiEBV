@@ -16096,7 +16096,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "RPi_Pico:RPi_Pico2W_SMD_TH"
 			(at 100 280 0)
 			(effects
 				(font
