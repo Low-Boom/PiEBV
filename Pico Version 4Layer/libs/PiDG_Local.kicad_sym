@@ -887,7 +887,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Dual 5A low-side gate driver, repurposed as a fast 50-ohm-matched line driver"
+		(property "Description" "Dual 5A low-side gate driver, repurposed as a fast 50-ohm-matched line driver for the laser trigger outputs"
 			(at 0 0 0)
 			(effects
 				(font

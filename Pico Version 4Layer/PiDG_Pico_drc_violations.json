@@ -1,115 +1,12 @@
 {
   "board": "F:\\OneDrive\\Documents\\PlatformIO\\Projects\\PiDG\\Pico Version 4Layer\\PiDG_Pico.kicad_pcb",
-  "timestamp": "2026-09-22T22:35:31",
-  "total_violations": 10,
-  "violation_counts": {
-    "silk_edge_clearance": 10
-  },
+  "timestamp": "2026-09-23T11:28:59",
+  "total_violations": 0,
+  "violation_counts": {},
   "severity_counts": {
     "error": 0,
-    "warning": 10,
+    "warning": 0,
     "info": 0
   },
-  "violations": [
-    {
-      "type": "silk_edge_clearance",
-      "severity": "warning",
-      "message": "Silkscreen clipped by board edge",
-      "location": {
-        "x": 258.0,
-        "y": 30.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "silk_edge_clearance",
-      "severity": "warning",
-      "message": "Silkscreen clipped by board edge",
-      "location": {
-        "x": 258.0,
-        "y": 30.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "silk_edge_clearance",
-      "severity": "warning",
-      "message": "Silkscreen clipped by board edge",
-      "location": {
-        "x": 258.0,
-        "y": 30.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "silk_edge_clearance",
-      "severity": "warning",
-      "message": "Silkscreen clipped by board edge",
-      "location": {
-        "x": 258.0,
-        "y": 30.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "silk_edge_clearance",
-      "severity": "warning",
-      "message": "Silkscreen clipped by board edge",
-      "location": {
-        "x": 258.0,
-        "y": 30.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "silk_edge_clearance",
-      "severity": "warning",
-      "message": "Silkscreen clipped by board edge",
-      "location": {
-        "x": 132.0,
-        "y": 30.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "silk_edge_clearance",
-      "severity": "warning",
-      "message": "Silkscreen clipped by board edge",
-      "location": {
-        "x": 132.0,
-        "y": 30.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "silk_edge_clearance",
-      "severity": "warning",
-      "message": "Silkscreen clipped by board edge",
-      "location": {
-        "x": 132.0,
-        "y": 30.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "silk_edge_clearance",
-      "severity": "warning",
-      "message": "Silkscreen clipped by board edge",
-      "location": {
-        "x": 132.0,
-        "y": 30.0,
-        "unit": "mm"
-      }
-    },
-    {
-      "type": "silk_edge_clearance",
-      "severity": "warning",
-      "message": "Silkscreen clipped by board edge",
-      "location": {
-        "x": 132.0,
-        "y": 30.0,
-        "unit": "mm"
-      }
-    }
-  ]
+  "violations": []
 }

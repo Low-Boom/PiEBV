@@ -11,4 +11,5 @@
   (lib (name "Connector_IDC")(type "KiCad")(uri "C:/Program Files/KiCad/10.0/share/kicad/footprints/Connector_IDC.pretty")(options "")(descr ""))
   (lib (name "MountingHole")(type "KiCad")(uri "C:/Program Files/KiCad/10.0/share/kicad/footprints/MountingHole.pretty")(options "")(descr ""))
   (lib (name "RPi_Pico")(type "KiCad")(uri "${KIPRJMOD}/libs/RPi_Pico.pretty")(options "")(descr "Official RPi Pico 2 W castellated module footprint (sourced from RPi's VGA-PicoW-KiCAD.zip)"))
+  (lib (name "PiDG_Local")(type "KiCad")(uri "${KIPRJMOD}/libs/PiDG_Local.pretty")(options "")(descr "PiDG board-specific footprint variants (edge-trimmed silkscreen for overhanging connectors)"))
 )
