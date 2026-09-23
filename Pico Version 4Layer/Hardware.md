@@ -20,7 +20,7 @@ This board is the Raspberry Pi Pico 2 W redesign of the original Teensy 4.1 desi
 | Power | USB only, via the Pico's own connector |
 | Logic rails | **1.8 V** (camera I/O) · 3.3 V (MCU, pixel-reset input) · 5 V (lasers) |
 | Design rules | 0.2 mm clearance, 0.2 mm track, 0.6/0.3 mm via, 0.25 mm copper-to-edge |
-| Placeable parts | 44, plus 4 NPTH mounting holes |
+| Placeable parts | 45, plus 4 NPTH mounting holes |
 
 Layer use:
 
@@ -198,7 +198,10 @@ J1–J6 pin 4
 
 J10 selects the trigger source: a shunt on **2‑3** triggers the cameras from the reference
 marker (normal), a shunt on **1‑2** triggers them from every laser CH1 pulse instead. J10.1
-is the CH1 monitor tap.
+is the CH1 monitor tap. **With no shunt fitted, R9 (10 k) pulls `PWM_TRIG_TAP` low**, so all
+six camera trigger lines idle low rather than following a floating input on ~145 mm of trace
+(the node also runs up to J16.2). 10 k rather than a weaker pull holds U5's 1.8 V input at
+≤ 0.05 V even at worst-case input leakage, and loads the selected GPIO by only 330 µA.
 
 > J10's silkscreen reads `MON / IN / OUT`, which mislabels pin 1 — it is not a monitor, it is
 > the alternate trigger source. The Teensy board called it `PWM Trig. / Laser`. A shunt
@@ -353,7 +356,9 @@ Ordered by what would bite hardest.
    bench at room temperature, which is exactly why it is dangerous. Fix before fab: an HCT/AHCT
    gate (TTL thresholds at 5 V), or move U7/U8 to 3.3 V with a translating buffer ahead of U13.
    This is the one remaining item that is a copper/BOM change rather than a measurement.
-2. **Measure the lasers' trigger input impedance, then confirm R6/R7.** Into a high-impedance
+2. **Measure the input impedance of each laser's trigger input, then confirm R6/R7.** J7 and J8
+   are *outputs*: the board drives the pulse down the coax to the laser. What arrives there
+   depends on how the laser's own trigger input terminates the cable. Into a high-impedance
    input the 2.5 V launched wave doubles at the open end to a clean 5.0 V and 47 Ω is
    correct. Into a genuinely 50 Ω terminated input the divider yields only ~2.51 V, which
    clears 5 V TTL VIH by 0.5 V and fails 5 V CMOS outright. Source termination cannot deliver
@@ -368,24 +373,20 @@ Ordered by what would bite hardest.
    1.8 V but publishes no VIH/VIL, input pull or absolute maximum. With one camera, measure
    TDRSTN, Trigger and Sync at the camera end of the harness, and confirm pin 5 is not being
    driven by the camera (i.e. that it is configured as a sync slave).
-5. **J10 with no shunt fitted leaves U5's input floating.** `PWM_TRIG_TAP` connects J10.2,
-   J16.2 and U5.2 and nothing else — no pull resistor. With the jumper off, all six camera
-   trigger lines follow an open CMOS input on a ~150 mm trace. A 100 k pull-down on
-   `PWM_TRIG_TAP` would define it.
-6. **No antenna keepout under the module.** All four copper layers run solid beneath the
+5. **No antenna keepout under the module.** All four copper layers run solid beneath the
    Pico, including its on-board antenna. Wi-Fi will be detuned. Harmless for the current
    USB-serial firmware, but if wireless is ever wanted the keepout must be cut on all four
    layers *before* fabrication — it cannot be fixed after.
-7. **+5 V bulk is light for the new pulsed load** — C10 near U13 (1 µF) plus C4/C5/C9
+6. **+5 V bulk is light for the new pulsed load** — C10 near U13 (1 µF) plus C4/C5/C9
    (0.1 µF); C6 (1 µF) is on +5 V too but sits at the far side of the board as U9's input cap.
    Roughly 100 mA for a ~2 µs pulse out of 1 µF is ~200 mV of droop. A 10 µF X7R beside C10 directly
    protects pulse-amplitude flatness, which is the parameter this instrument exists to
    deliver.
-8. **No 50 Ω termination on the J12 pixel-reset input** — only R5's 3k3 pull-up and U12's
+7. **No 50 Ω termination on the J12 pixel-reset input** — only R5's 3k3 pull-up and U12's
    CMOS input. U12's 0.5–0.8 V of hysteresis now absorbs moderate ringing from an unterminated
    coax run. Do *not* add a 49.9 Ω shunt as-is: against R5 it would hold J12 at ~50 mV, i.e.
    keep all six cameras permanently in reset unless the source actively drives high.
-9. **Correct J10's silkscreen** at the next revision — see the Trigger section above.
+8. **Correct J10's silkscreen** at the next revision — see the Trigger section above.
 
 ---
 
@@ -396,7 +397,7 @@ Ordered by what would bite hardest.
 | `PiDG_Pico.kicad_sch` | schematic |
 | `PiDG_Pico.kicad_pcb` | board |
 | `PiDG_Pico_BOM.csv` | BOM (hand-maintained; `export_bom` ignores DNP attributes) |
-| `PiDG_Pico_CPL.csv` | pick-and-place, 44 parts, mounting holes excluded |
+| `PiDG_Pico_CPL.csv` | pick-and-place, 45 parts, mounting holes excluded |
 | `libs/PiDG_Local.kicad_sym` | Pico 2 W and UCC27524 symbols |
 | `libs/PiDG_Local.pretty/` | `*_EdgeTrim` footprint variants (see below) |
 | `libs/RPi_Pico.pretty/` | official RPi castellated module footprint (unused — board is socketed) |
