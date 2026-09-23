@@ -13,6 +13,223 @@
 		(comment 3 "Chris Willert")
 	)
 	(lib_symbols
+		(symbol "74xGxx:74LVC1G17"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "U"
+				(at 0 3.81 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Value" "74LVC1G17"
+				(at 0 -3.81 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Footprint" ""
+				(at -2.54 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" "https://www.ti.com/lit/ds/symlink/sn74lvc1g17.pdf"
+				(at 0 -6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Description" "Single Schmitt Buffer Gate, Low-Voltage CMOS"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "Single Gate Buff Schmitt LVC CMOS"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "SOT?23* SOT?553* Texas?R-PDSO-G5?DCK* Texas?R-PDSO-N5?DRL* Texas?X2SON*0.8x0.8mm*P0.48mm*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "74LVC1G17_0_1"
+				(polyline
+					(pts
+						(xy -7.62 6.35) (xy -7.62 -6.35) (xy 5.08 0) (xy -7.62 6.35)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+				(polyline
+					(pts
+						(xy -3.81 -1.27) (xy -2.54 -1.27) (xy -2.54 1.27) (xy -1.27 1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+				(polyline
+					(pts
+						(xy -2.54 -1.27) (xy -1.27 -1.27) (xy -1.27 1.27) (xy 0 1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+			)
+			(symbol "74LVC1G17_1_1"
+				(pin no_connect line
+					(at -7.62 5.08 180)
+					(length 5.08)
+					(hide yes)
+					(name "NC"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at -12.7 0 0)
+					(length 5.08)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at -5.08 -10.16 90)
+					(length 5.08)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin output line
+					(at 10.16 0 180)
+					(length 5.08)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at -5.08 10.16 270)
+					(length 5.08)
+					(name "VCC"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "74xGxx:74LVC1G04"
 			(exclude_from_sim no)
 			(in_bom yes)
@@ -7990,6 +8207,24 @@
 		)
 	)
 	(junction
+		(at 40.64 208.28)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "b4756c5b-081f-46b3-968b-1f45e8d160d3")
+	)
+	(junction
+		(at 33.02 208.28)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "71c322d3-9664-44b1-8966-3b07cad9ea39")
+	)
+	(junction
+		(at 59.69 208.28)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "163d3a32-666f-41a6-a0cb-ad0de6951091")
+	)
+	(junction
 		(at 72.39 95.25)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -8164,12 +8399,6 @@
 		(uuid "cfebb299-638b-4485-968a-b8d81498c93c")
 	)
 	(junction
-		(at 63.5 233.68)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "dc0e2102-351f-4368-9574-3dc1aed9f904")
-	)
-	(junction
 		(at 63.5 241.3)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -8186,12 +8415,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "ea4d26c0-bb51-4936-9fd0-fd2b8f5d298b")
-	)
-	(junction
-		(at 345.44 111.76)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "eb560743-f13c-4a4b-884d-a5d12ff39f88")
 	)
 	(junction
 		(at 72.39 140.97)
@@ -8560,6 +8783,66 @@
 	(no_connect
 		(at 194.31 273.05)
 		(uuid "fe678645-4fc4-4d0e-9092-71ddabdb4978")
+	)
+	(wire
+		(pts
+			(xy 40.64 208.28) (xy 33.02 208.28)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c0fdcdbd-fb44-418f-a94c-8d2d5f6a3251")
+	)
+	(wire
+		(pts
+			(xy 40.64 208.28) (xy 40.64 210.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4753344e-5744-497b-974e-509944e8cc4a")
+	)
+	(wire
+		(pts
+			(xy 59.69 208.28) (xy 55.88 208.28)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2aae7792-8533-4345-8180-f3c3ab5c6c4b")
+	)
+	(wire
+		(pts
+			(xy 314.96 121.92) (xy 308.61 121.92)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "aa9230bd-b36b-4074-8854-a3c651e54b63")
+	)
+	(wire
+		(pts
+			(xy 337.82 121.92) (xy 345.44 121.92)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "53258e7b-3cee-40b0-ad84-3263f864a608")
+	)
+	(wire
+		(pts
+			(xy 345.44 121.92) (xy 345.44 124.46)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d63d845b-5225-4c29-9ee7-27ff7d4985e6")
 	)
 	(wire
 		(pts
@@ -9853,16 +10136,6 @@
 	)
 	(wire
 		(pts
-			(xy 345.44 111.76) (xy 345.44 114.3)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "b862b5f9-f031-493f-b887-9e7bc3f349b4")
-	)
-	(wire
-		(pts
 			(xy 100.33 45.72) (xy 143.51 45.72)
 		)
 		(stroke
@@ -9960,16 +10233,6 @@
 			(type default)
 		)
 		(uuid "c1cdeecd-7a7d-4b74-a6d5-574ea7268889")
-	)
-	(wire
-		(pts
-			(xy 63.5 233.68) (xy 71.12 233.68)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "c321b839-0d9d-4306-b705-68c9add8b721")
 	)
 	(wire
 		(pts
@@ -10293,16 +10556,6 @@
 	)
 	(wire
 		(pts
-			(xy 317.5 121.92) (xy 308.61 121.92)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "e8b5d757-2073-4da5-b365-c70f30b0b661")
-	)
-	(wire
-		(pts
 			(xy 416.56 34.29) (xy 416.56 39.37)
 		)
 		(stroke
@@ -10460,16 +10713,6 @@
 			(justify left bottom)
 		)
 		(uuid "a6c1dfc7-1c90-416b-a4fd-14521608e88d")
-	)
-	(label "PIXRST_GATE_EN"
-		(at 345.44 119.38 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "e98e3e11-b6e6-4477-a6a4-7b7ea5bdca72")
 	)
 	(label "LASER_EN_PU"
 		(at 356.87 83.82000000000001 0)
@@ -11392,88 +11635,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:R_Small")
-		(at 345.44 116.84 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "02468cfd-5709-4daa-8223-4e0e775a345c")
-		(property "Reference" "R4"
-			(at 347.98 115.5699 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.016 1.016)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "3k3"
-			(at 347.98 118.1099 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
-			(at 345.44 116.84 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 345.44 116.84 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Resistor, small symbol"
-			(at 345.44 116.84 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "2"
-			(uuid "090899b8-57b0-4b08-960c-ce535fb34887")
-		)
-		(pin "1"
-			(uuid "a98a591a-30f9-4acb-8b7a-56ee540d4255")
-		)
-		(instances
-			(project "PiDG_Pico"
-				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
-					(reference "R4")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Device:C")
 		(at 45.72 237.49 0)
 		(unit 1)
@@ -11835,7 +11996,7 @@
 		)
 	)
 	(symbol
-		(lib_id "power:+3V3")
+		(lib_id "power:+1V8")
 		(at 59.69 208.28 0)
 		(unit 1)
 		(body_style 1)
@@ -11857,7 +12018,7 @@
 				)
 			)
 		)
-		(property "Value" "+3V3"
+		(property "Value" "+1V8"
 			(at 59.69 203.2 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -12462,7 +12623,7 @@
 		)
 	)
 	(symbol
-		(lib_id "power:+3V3")
+		(lib_id "power:+1V8")
 		(at 86.36 119.38 0)
 		(unit 1)
 		(body_style 1)
@@ -12483,7 +12644,7 @@
 				)
 			)
 		)
-		(property "Value" "+3V3"
+		(property "Value" "+1V8"
 			(at 89.662 119.126 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -13190,7 +13351,7 @@
 		)
 	)
 	(symbol
-		(lib_id "power:+5V")
+		(lib_id "power:+3V3")
 		(at 330.2 111.76 0)
 		(unit 1)
 		(body_style 1)
@@ -13212,7 +13373,7 @@
 				)
 			)
 		)
-		(property "Value" "+5V"
+		(property "Value" "+3V3"
 			(at 330.2 106.68 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -13244,7 +13405,7 @@
 				)
 			)
 		)
-		(property "Description" "Power symbol creates a global label with name \"+5V\""
+		(property "Description" "Power symbol creates a global label with name \"+3V3\""
 			(at 330.2 111.76 0)
 			(hide yes)
 			(show_name no)
@@ -14212,7 +14373,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "0.1uF"
+		(property "Value" "2.2uF"
 			(at 63.5 213.3599 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -14535,7 +14696,7 @@
 		)
 	)
 	(symbol
-		(lib_id "power:+3V3")
+		(lib_id "power:+1V8")
 		(at 86.36 77.47 0)
 		(unit 1)
 		(body_style 1)
@@ -14557,7 +14718,7 @@
 				)
 			)
 		)
-		(property "Value" "+3V3"
+		(property "Value" "+1V8"
 			(at 86.36 72.39 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16554,8 +16715,8 @@
 		)
 	)
 	(symbol
-		(lib_id "74xGxx:74LVC1G08")
-		(at 330.2 121.92 0)
+		(lib_id "74xGxx:74LVC1G17")
+		(at 325.12 121.92 0)
 		(mirror y)
 		(unit 1)
 		(body_style 1)
@@ -16566,7 +16727,7 @@
 		(dnp no)
 		(uuid "b62c22ac-7a64-4a66-bcff-758fb7700f72")
 		(property "Reference" "U12"
-			(at 318.77 115.4998 0)
+			(at 313.69 115.4998 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -16575,8 +16736,8 @@
 				)
 			)
 		)
-		(property "Value" "74LVC1G08"
-			(at 318.77 118.0398 0)
+		(property "Value" "74LVC1G17"
+			(at 313.69 118.0398 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -16586,7 +16747,7 @@
 			)
 		)
 		(property "Footprint" "Package_TO_SOT_SMD:SOT-23-5_HandSoldering"
-			(at 330.2 121.92 0)
+			(at 325.12 121.92 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16597,7 +16758,7 @@
 			)
 		)
 		(property "Datasheet" "https://www.ti.com/lit/ds/symlink/sn74lvc1g08.pdf"
-			(at 330.2 121.92 0)
+			(at 325.12 121.92 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16607,8 +16768,8 @@
 				)
 			)
 		)
-		(property "Description" "Single AND Gate, Low-Voltage CMOS"
-			(at 330.2 121.92 0)
+		(property "Description" "Single Schmitt Buffer Gate, Low-Voltage CMOS. Pixel-reset input: TTL-compatible thresholds at VCC 3.3V, 5.5V-tolerant input, 0.5-0.8V hysteresis"
+			(at 325.12 121.92 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16643,7 +16804,7 @@
 		)
 	)
 	(symbol
-		(lib_id "power:+3V3")
+		(lib_id "power:+1V8")
 		(at 86.36 31.75 0)
 		(unit 1)
 		(body_style 1)
@@ -16665,7 +16826,7 @@
 				)
 			)
 		)
-		(property "Value" "+3V3"
+		(property "Value" "+1V8"
 			(at 86.36 26.67 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -18590,7 +18751,7 @@
 		)
 	)
 	(symbol
-		(lib_id "power:+3V3")
+		(lib_id "power:+1V8")
 		(at 38.1 233.68 0)
 		(unit 1)
 		(body_style 1)
@@ -18611,7 +18772,7 @@
 				)
 			)
 		)
-		(property "Value" "+3V3"
+		(property "Value" "+1V8"
 			(at 38.1 228.6 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -18643,7 +18804,7 @@
 				)
 			)
 		)
-		(property "Description" "Power symbol creates a global label with name \"+3V3\""
+		(property "Description" "Power symbol creates a global label with name \"+1V8\""
 			(at 38.1 233.68 0)
 			(hide yes)
 			(show_name no)
@@ -18688,7 +18849,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "0.1uF"
+		(property "Value" "1uF"
 			(at 34.29 214.63 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -19297,7 +19458,7 @@
 		)
 	)
 	(symbol
-		(lib_id "power:+3V3")
+		(lib_id "power:+5V")
 		(at 33.02 208.28 0)
 		(unit 1)
 		(body_style 1)
@@ -19319,7 +19480,7 @@
 				)
 			)
 		)
-		(property "Value" "+3V3"
+		(property "Value" "+5V"
 			(at 33.02 205.74 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -19351,7 +19512,7 @@
 				)
 			)
 		)
-		(property "Description" "Power symbol creates a global label with name \"+3V3\""
+		(property "Description" "Power symbol creates a global label with name \"+5V\""
 			(at 33.02 208.28 0)
 			(hide yes)
 			(show_name no)
@@ -19369,6 +19530,173 @@
 			(project "PiDG_Pico"
 				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
 					(reference "#PWR010")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Regulator_Linear:NCP718xSN180")
+		(at 48.26 210.82 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "f2f0d0c5-ec5f-429d-9adc-2ffdbfd0dd22")
+		(property "Reference" "U9"
+			(at 48.26 200.66 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "NCP718xSN180"
+			(at 48.26 203.2 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-23-5_HandSoldering"
+			(at 48.26 201.93 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" "https://www.onsemi.com/pub/Collateral/NCP718-D.PDF"
+			(at 48.26 198.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "300-mA, Wide Input Voltage, Low-IQ LDO, 1.8V, SOT-23. Camera I/O rail: IDS UE-39B0XCP-E pins 3/4/5 are 1.8 V sensor-level"
+			(at 48.26 210.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "5"
+			(uuid "ef6f24ca-6d4e-43c3-8dc3-fffe13753dbb")
+		)
+		(pin "1"
+			(uuid "3868ae22-3256-4c6f-aa25-ed8341d224f8")
+		)
+		(pin "3"
+			(uuid "b1150cc1-9b81-4fa2-9e4f-476c0f1cb473")
+		)
+		(pin "2"
+			(uuid "e8aa7d96-b243-4006-a4d7-67f2e2e2dc96")
+		)
+		(pin "4"
+			(uuid "40f14d33-9606-4108-a80c-1b8558b57c5f")
+		)
+		(instances
+			(project "PiDG_Pico"
+				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
+					(reference "U9")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:+3V3")
+		(at 71.12 233.68 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "c2c2d7b8-26b6-4169-bd6f-9ce9578d8045")
+		(property "Reference" "#PWR119"
+			(at 71.12 237.49 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "+3V3"
+			(at 71.12 229.87 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 71.12 233.68 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 71.12 233.68 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+3V3\""
+			(at 71.12 233.68 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "e1fc794a-9589-4d3b-ac21-6f0b5e811446")
+		)
+		(instances
+			(project "PiDG_Pico"
+				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
+					(reference "#PWR119")
 					(unit 1)
 				)
 			)
