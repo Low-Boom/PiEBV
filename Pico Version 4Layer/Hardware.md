@@ -48,10 +48,23 @@ Physical stackup (symmetric 1.6 mm, matching JLCPCB's standard 4-layer `JLC04161
 | B.Mask | solder mask | 0.010 mm |
 
 Total 1.586 mm of copper and dielectric, 1.606 mm over the mask — a nominal 1.6 mm board.
-Copper finish is left unspecified in the file; pick it when ordering. Confirm these numbers
-against whatever your fabricator actually presses, and note that the gerber job file reports
-the board size as 126.1 × 126.1 mm because Edge.Cuts extents include the 0.1 mm line stroke —
-the fabricated dimension is the centreline, **126.0 × 126.0 mm**.
+
+**Copper finish: lead-free HASL** (`HAL lead-free`) — RoHS compliant, and the cheapest
+compliant option at most quick-turn fabs. It carries only a small premium over leaded HASL
+and is far below ENIG, which is the usual paid upgrade.
+
+Nothing here needs a flat surface: the finest pitch on the board is 0.95 mm (SOT-23-5), with
+no BGA or fine-pitch QFN, so HASL's uneven deposit is a non-issue even at lead-free's
+slightly worse flatness. It also suits the board's hand-assembly bias — every passive and SOT
+uses a `_HandSolder` footprint variant, and HASL arrives pre-tinned and tolerates rework
+better than OSP, whose coating degrades with repeated heat. A lead-free finish solders fine
+with either leaded or lead-free solder, so it does not constrain how you assemble.
+
+If a future revision adds a fine-pitch part, reconsider the finish at the same time.
+
+Confirm these numbers against whatever your fabricator actually presses. Note that the gerber
+job file reports the board size as 126.1 × 126.1 mm because Edge.Cuts extents include the
+0.1 mm line stroke — the fabricated dimension is the centreline, **126.0 × 126.0 mm**.
 
 ---
 
