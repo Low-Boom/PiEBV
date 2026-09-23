@@ -10,7 +10,7 @@
 
 struct PulseParams {
     uint32_t freqHz = 1000;         // pulse-pair repetition frequency
-    uint32_t widthNs = 2000;        // CH1/CH2 pulse width
+    uint32_t widthNs = 100;         // CH1/CH2 pulse width (inside every attached laser driver's range)
     uint32_t delayNs = 10000;       // CH2-after-CH1 delay
     uint32_t markerDiv = 100;       // marker fires once every N pulses
     uint32_t markerWidthNs = 2000;  // marker pulse width

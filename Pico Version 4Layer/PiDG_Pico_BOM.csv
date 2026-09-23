@@ -7,7 +7,7 @@
 "R8,R9","10k","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","2",""
 "U1,U3,U5","74LVC1G04","Package_TO_SOT_SMD:SOT-23-5_HandSoldering","3",""
 "U2,U4,U6","SN74LVC04AD","SN74LVC04AD:SOIC127P600X175-14N","3",""
-"U7,U8,U10","74LVC1G08","Package_TO_SOT_SMD:SOT-23-5_HandSoldering","3",""
+"U7,U8,U10","74AHCT1G08","Package_TO_SOT_SMD:SOT-23-5_HandSoldering","3",""
 "U9","NCP718xSN180","Package_TO_SOT_SMD:SOT-23-5_HandSoldering","1",""
 "U12","74LVC1G17","Package_TO_SOT_SMD:SOT-23-5_HandSoldering","1",""
 "U13","UCC27524","Package_SO:SOIC-8_3.9x4.9mm_P1.27mm","1",""
@@ -27,3 +27,4 @@
 "NOTE","J16/TP3 use PiDG_Local *_EdgeTrim footprint variants","Identical part and pad geometry to the stock Connector_PinHeader_2.54mm footprints; only the silkscreen is clipped where the connector overhangs the board edge. Order the standard parts.","",""
 "NOTE","R8 is a fail-safe interlock pull-down","Holds U10 pin 1 low when no jumper is fitted on J11, so the lasers default to DISABLED. R2 (3k3) still wins when the J11 1-2 jumper is fitted.","",""
 "NOTE","R9 is the J10 trigger-select pull-down","Holds PWM_TRIG_TAP (U5 input) low when no shunt is fitted on J10, so all six camera trigger lines idle low instead of floating.","",""
+"NOTE","U7/U8/U10 must be AHCT (TTL-input) parts, not LVC","At VCC = 5 V an LVC input needs 0.7 x VCC = 3.5 V to read high; the Pico drives these from 3.3 V GPIOs. AHCT reads high above 2.0 V.","",""

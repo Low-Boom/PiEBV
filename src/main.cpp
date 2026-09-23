@@ -43,6 +43,17 @@ constexpr uint kPinCh2 = 12;
 constexpr uint kPinMarker = 11;
 constexpr uint kPinSync = 10;
 
+// Laser-driver safety limits, enforced on every WIDTH / FREQ change. CH1 and CH2
+// share one pulse width, so the tightest attached driver governs:
+//
+//   PicoLas LDP-V 10-70   : pulse 10 ns - 1 us,   max duty factor 0.1 %   <- governs
+//   PicoLas LDP-V 240-100 : pulse 60 ns - >1 us,  max duty cycle  7.5 %
+//
+// Exceeding a driver's pulse width or duty rating risks the laser diode. Edit these
+// if the attached drivers change.
+constexpr uint32_t kLaserMaxWidthNs = 1000;
+constexpr uint32_t kLaserMaxDutyPpm = 1000;  // 0.1 %
+
 PIO kPio = pio0;
 
 PulseChannel g_ch1;
@@ -65,6 +76,12 @@ uint32_t clkHz() {
 // hardware partway through a reconfiguration.
 bool applyPulseParams(const PulseParams &p) {
     if (p.freqHz == 0 || p.markerDiv == 0 || p.syncHz == 0) {
+        return false;
+    }
+    // Each laser channel fires once per period, so its duty is width * freq.
+    // duty_ppm = width_ns * freq_hz / 1000.
+    if (p.widthNs > kLaserMaxWidthNs ||
+        (uint64_t)p.widthNs * p.freqHz > (uint64_t)kLaserMaxDutyPpm * 1000ULL) {
         return false;
     }
 

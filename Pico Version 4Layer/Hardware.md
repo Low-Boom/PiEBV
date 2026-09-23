@@ -135,6 +135,22 @@ works — there is no PWM-slice constraint.
 These constants and the schematic have drifted apart once before, which made the whole board
 look inert. `main.cpp` now carries this table as a comment block; keep both in step.
 
+### Laser safety limits
+
+`main.cpp` rejects any `WIDTH`/`FREQ` change that would exceed the attached drivers' ratings.
+CH1 and CH2 share one pulse width, so the tightest driver governs:
+
+| Driver | Pulse width | Max duty |
+|---|---|---|
+| PicoLas LDP-V 10-70 | 10 ns – 1 µs | **0.1 %** ← governs |
+| PicoLas LDP-V 240-100 | 60 ns – >1 µs | 7.5 % |
+
+Enforced: `WIDTH ≤ 1000 ns` and `WIDTH × FREQ ≤ 0.1 %` (`kLaserMaxWidthNs`,
+`kLaserMaxDutyPpm`). The default width is **100 ns** — inside both drivers' ranges. The
+previous default of 2 µs at 1 kHz was twice the 10-70's maximum pulse width and twice its duty
+limit. Edit the two constants if the attached drivers change. Widths below the PIO's minimum
+(a few 150 MHz cycles) are clamped up, and are safe — a too-short trigger just underdrives.
+
 ---
 
 ## Power
@@ -144,7 +160,7 @@ Everything is powered from the Pico's USB connector. There is no other supply in
 **+5 V** — from the Pico's VBUS (pin 40), with VSYS (pin 39) tied to the same net. This
 deliberately shorts out the Pico's input Schottky, which the Pico 2 W datasheet (§3.4)
 explicitly allows when USB is the only source; it recovers ~0.3 V that the laser driver
-needs. Distributed on the In2.Cu plane. Consumers: U7, U8, U10 (74LVC1G08), U13 (UCC27524),
+needs. Distributed on the In2.Cu plane. Consumers: U7, U8, U10 (74AHCT1G08), U13 (UCC27524),
 **U9 (the 1.8 V LDO's input)**, and the R2/R3 pull-ups. Decoupling C4, C5, C9 (0.1 µF),
 C6 and C10 (1 µF).
 
@@ -243,10 +259,19 @@ J7.1
 `GP12` → U8.2 → `CH2_GATED` → U13.4 (INB) → U13.5 (OUTB) → `CH2_DRIVE_RAW` → **R7 47 Ω** →
 J8.1
 
-U13 is a TI UCC27524 dual 5 A driver, non-inverting, ENA/ENB hard-tied to +5 V. Its ~2 Ω
-output plus the 47 Ω series gives a ~49 Ω source — a proper back-match to 50 Ω coax. The
-Teensy drove the coax straight off a logic gate with no series element, mismatching the
-source and exceeding the gate's 32 mA rating; this stage is a deliberate improvement.
+U7 and U8 are **74AHCT1G08** gates on +5 V. AHCT has TTL input thresholds (high above
+2.0 V), so the Pico's 3.3 V pulses drive them with ~1.3 V of margin. An LVC gate here would
+need 0.7 × VCC = 3.5 V to read high, which a 3.3 V GPIO cannot guarantee.
+
+U13 is a TI UCC27524 dual 5 A driver, non-inverting, ENA/ENB hard-tied to +5 V. Its inputs are
+TTL-compatible independent of VDD (high above 1.8–2.3 V, 1 V hysteresis). Output pull-up is
+**2.5 / 5 / 7.5 Ω** (min/typ/max, PMOS only — which is what holds a steady load high during a
+pulse); pull-down 0.15–1 Ω.
+
+> **The output does not yet meet the laser drivers' trigger spec — see Open item 1.** The
+> target loads are PicoLas LDP-V 10-70 and LDP-V 240-100 drivers, whose trigger inputs are
+> **50 Ω terminated** and need **4.5–5.2 V high, ≤ 0.2 V low**. From today's 5 V rail through
+> 47 Ω into 50 Ω, only ~2.4 V arrives.
 
 U13 adds ~13–25 ns of propagation delay, common to both laser channels. Inter-pulse delay is
 preserved to within the driver's channel-to-channel matching (1–2 ns). Laser-vs-camera skew
@@ -257,7 +282,7 @@ grows by that fixed, calibratable amount.
 ## Laser interlock
 
 ```
-LASER_EN = AND( J11 jumper , EN tap )      -- U10, 74LVC1G08 on +5 V
+LASER_EN = AND( J11 jumper , EN tap )      -- U10, 74AHCT1G08 on +5 V
 J7 output = AND( LASER_EN , CH1 pulse )    -- U7
 J8 output = AND( LASER_EN , CH2 pulse )    -- U8
 ```
@@ -272,11 +297,10 @@ J8 output = AND( LASER_EN , CH2 pulse )    -- U8
 
 **Fails safe.** R8 holds U10 pin 1 low when no jumper is fitted on J11, so the default state
 is *disabled*. Fit a shunt on J11 **1‑2** to arm; **2‑3** inhibits. With the 1‑2 shunt fitted
-R2 wins: 5 V × 10/(3.3+10) ≈ **3.76 V**, against the 74LVC1G08's **VIH = 0.7 × VCC = 3.5 V**
-at VCC = 5 V — about **260 mV of margin**. That margin is thin but ratiometric: the divider and
-the threshold both scale with VCC, so it holds at ~5 % of the rail across the USB range.
-(An earlier version of this document quoted 2.0 V VIH here; that is the LVC figure for
-VCC = 2.7–3.6 V, not 5 V.)
+R2 wins: 5 V × 10/(3.3+10) ≈ **3.76 V**, against U10's (74AHCT1G08) **VIH of 2.0 V** — about
+**1.76 V of margin**. (With the 74LVC1G08 used previously, VIH at VCC = 5 V was
+0.7 × VCC = 3.5 V and the margin only ~260 mV.) AHCT also means an external interlock signal on
+J16.1 can be 3.3 V logic.
 
 The original Teensy design had no pull-down here and defaulted to *armed* with the header
 empty. R8 is the one deliberate behavioural change to the interlock.
@@ -348,45 +372,41 @@ external source would fight it — treat them as monitor points.
 
 Ordered by what would bite hardest.
 
-1. **The laser gates U7/U8 are driven below their input threshold.** They run from +5 V, and
-   an LVC input at VCC = 5 V needs **0.7 × VCC = 3.5 V** to read high — but their pulse inputs
-   (`_PULSE_OUT_CH1/CH2`) come straight from 3.3 V Pico GPIOs. The break-even is VBUS ≈ 4.71 V,
-   so on a healthy 5.0–5.15 V USB port the laser trigger path sits *outside* its guaranteed
-   operating range, and gets worse as the supply gets better. It will probably work on the
-   bench at room temperature, which is exactly why it is dangerous. Fix before fab: an HCT/AHCT
-   gate (TTL thresholds at 5 V), or move U7/U8 to 3.3 V with a translating buffer ahead of U13.
-   This is the one remaining item that is a copper/BOM change rather than a measurement.
-2. **Measure the input impedance of each laser's trigger input, then confirm R6/R7.** J7 and J8
-   are *outputs*: the board drives the pulse down the coax to the laser. What arrives there
-   depends on how the laser's own trigger input terminates the cable. Into a high-impedance
-   input the 2.5 V launched wave doubles at the open end to a clean 5.0 V and 47 Ω is
-   correct. Into a genuinely 50 Ω terminated input the divider yields only ~2.51 V, which
-   clears 5 V TTL VIH by 0.5 V and fails 5 V CMOS outright. Source termination cannot deliver
-   full rail amplitude into a matched load. If the input is terminated, either raise U13's
-   VDD to ~10 V keeping R6/R7 near 50 Ω, or accept 2.5 V against the laser's datasheet. Do
-   not silently drop R6/R7 to 0 Ω — that throws away the match. If terminated, also respec
-   R6/R7 as 1206 or 250 mW (≈122 mW at 100% duty against a 125 mW 0805).
-3. **Scope U13 pin 6 under load.** The UCC27524 wants VDD ≥ 4.5 V with UVLO ~4.2 V, and the
+1. **The laser output amplitude fails the LDP-V trigger spec — the blocking item.** The
+   PicoLas LDP-V 10-70 and 240-100 trigger inputs are **50 Ω terminated** and need
+   **4.5–5.2 V high** (below 4.5 V they "will not turn on properly and can not carry the full
+   current"; above 5.2 V "can damage the power stage") and **≤ 0.2 V low** (more "will cause a
+   non proper turning off and thermal damage"). From the 5 V rail through R6/R7 = 47 Ω into
+   50 Ω, only ~2.4 V arrives — PicoLas's own FAQ names this failure: a source that "adds
+   additional 50 Ohm, so that the received voltage at the driver is effectively halved".
+   Setting R6/R7 to 0 Ω does not rescue it: 5 V × 50/(50 + ROH) spans ~3.8–5.0 V across USB
+   VBUS and UCC27524 ROH tolerance, falling below 4.5 V at low VBUS or high ROH. The robust fix
+   is a **regulated ~10 V rail for U13 with R6/R7 = 48.7 Ω**: 4.55–5.11 V into 50 Ω across ROH
+   2.5–7.5 Ω, ±3 % rail and ±1 % resistors, with a ~52 Ω back-matched source. Pending a
+   decision on where that rail comes from. Consequence to accept: open-circuit or into a
+   high-impedance load the output reaches ~10 V, so the laser BNCs are for 50 Ω loads only.
+   Acceptance test (PicoLas's): a scope with 50 Ω input termination must read 0 to ~5 V.
+2. **Scope U13 pin 6 under load.** The UCC27524 wants VDD ≥ 4.5 V with UVLO ~4.2 V, and the
    rail is raw USB VBUS. USB 2.0 permits 4.40 V at the far end of a cable. Below UVLO both
    laser outputs go dead with no indication. Use the cable and port you will deploy with.
-4. **Bench-confirm the camera I/O before plugging in six cameras.** IDS documents the pins as
+3. **Bench-confirm the camera I/O before plugging in six cameras.** IDS documents the pins as
    1.8 V but publishes no VIH/VIL, input pull or absolute maximum. With one camera, measure
    TDRSTN, Trigger and Sync at the camera end of the harness, and confirm pin 5 is not being
    driven by the camera (i.e. that it is configured as a sync slave).
-5. **No antenna keepout under the module.** All four copper layers run solid beneath the
+4. **No antenna keepout under the module.** All four copper layers run solid beneath the
    Pico, including its on-board antenna. Wi-Fi will be detuned. Harmless for the current
    USB-serial firmware, but if wireless is ever wanted the keepout must be cut on all four
    layers *before* fabrication — it cannot be fixed after.
-6. **+5 V bulk is light for the new pulsed load** — C10 near U13 (1 µF) plus C4/C5/C9
+5. **+5 V bulk is light for the new pulsed load** — C10 near U13 (1 µF) plus C4/C5/C9
    (0.1 µF); C6 (1 µF) is on +5 V too but sits at the far side of the board as U9's input cap.
    Roughly 100 mA for a ~2 µs pulse out of 1 µF is ~200 mV of droop. A 10 µF X7R beside C10 directly
    protects pulse-amplitude flatness, which is the parameter this instrument exists to
    deliver.
-7. **No 50 Ω termination on the J12 pixel-reset input** — only R5's 3k3 pull-up and U12's
+6. **No 50 Ω termination on the J12 pixel-reset input** — only R5's 3k3 pull-up and U12's
    CMOS input. U12's 0.5–0.8 V of hysteresis now absorbs moderate ringing from an unterminated
    coax run. Do *not* add a 49.9 Ω shunt as-is: against R5 it would hold J12 at ~50 mV, i.e.
    keep all six cameras permanently in reset unless the source actively drives high.
-8. **Correct J10's silkscreen** at the next revision — see the Trigger section above.
+7. **Correct J10's silkscreen** at the next revision — see the Trigger section above.
 
 ---
 

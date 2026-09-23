@@ -51,7 +51,9 @@ void printHelp() {
         "SYNC <Hz>          camera sync clock frequency\n"
         "STATUS             show all current settings\n"
         "ID?                firmware identity\n"
-        "HELP               this text"));
+        "HELP               this text\n"
+        "Laser safety limits: WIDTH <= 1000 ns and WIDTH x FREQ <= 0.1 % duty\n"
+        "(PicoLas LDP-V 10-70). Changes that would exceed them are rejected."));
 }
 
 }  // namespace

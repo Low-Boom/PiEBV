@@ -169,7 +169,7 @@
 				)
 			)
 		)
-		(property "Value" "74LVC1G08"
+		(property "Value" "74AHCT1G08"
 			(at 0 2.9 0)
 			(layer "F.Fab")
 			(uuid "2b96c43e-7c2b-4bb1-b6fb-8fc84b234a80")
@@ -180,7 +180,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://www.ti.com/lit/ds/symlink/sn74lvc1g08.pdf"
+		(property "Datasheet" "http://www.ti.com/lit/sg/scyt129e/scyt129e.pdf"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -6379,7 +6379,7 @@
 				)
 			)
 		)
-		(property "Value" "74LVC1G08"
+		(property "Value" "74AHCT1G08"
 			(at 0 2.9 0)
 			(layer "F.Fab")
 			(uuid "12d4ace1-c6c3-45f8-b220-0be29e426df8")
@@ -6390,7 +6390,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://www.ti.com/lit/ds/symlink/sn74lvc1g08.pdf"
+		(property "Datasheet" "http://www.ti.com/lit/sg/scyt129e/scyt129e.pdf"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -7495,7 +7495,7 @@
 				)
 			)
 		)
-		(property "Value" "74LVC1G08"
+		(property "Value" "74AHCT1G08"
 			(at 0 2.9 0)
 			(layer "F.Fab")
 			(uuid "0f5438e2-7fbd-4537-97d8-598e665f08f7")
@@ -7506,7 +7506,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://www.ti.com/lit/ds/symlink/sn74lvc1g08.pdf"
+		(property "Datasheet" "http://www.ti.com/lit/sg/scyt129e/scyt129e.pdf"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
