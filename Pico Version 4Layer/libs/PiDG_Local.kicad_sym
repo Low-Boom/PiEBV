@@ -40,7 +40,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Raspberry Pi Pico 2 W (RP2350 + CYW43439 wireless, unused) module, SMD castellated-edge mount, pin/footprint-compatible with the original Pico/Pico W; NO FOOTPRINT ASSIGNED -- get a verified castellation footprint (official Raspberry Pi KiCad files at datasheets.raspberrypi.com/picow/pico-2-w-schematic.pdf, or a vetted community library) before running Update PCB From Schematic"
+		(property "Description" "Raspberry Pi Pico 2 W (RP2350 + CYW43439 wireless, unused) module, SMD castellated-edge mount, pin/footprint-compatible with the original Pico/Pico W; verify footprint pad geometry against the official mechanical drawing (datasheets.raspberrypi.com/picow/pico-2-w-schematic.pdf) before fab"
 			(at 0 0 0)
 			(effects
 				(font
@@ -468,10 +468,10 @@
 					)
 				)
 			)
-			(pin bidirectional line
+			(pin power_in line
 				(at 20.32 19.05 180)
 				(length 5.08)
-				(name "GP18"
+				(name "GND"
 					(effects
 						(font
 							(size 1.27 1.27)
@@ -489,7 +489,7 @@
 			(pin bidirectional line
 				(at 20.32 16.51 180)
 				(length 5.08)
-				(name "GP19"
+				(name "GP18"
 					(effects
 						(font
 							(size 1.27 1.27)
@@ -504,10 +504,10 @@
 					)
 				)
 			)
-			(pin power_in line
+			(pin bidirectional line
 				(at 20.32 13.97 180)
 				(length 5.08)
-				(name "GND"
+				(name "GP19"
 					(effects
 						(font
 							(size 1.27 1.27)
@@ -651,7 +651,7 @@
 			(pin power_in line
 				(at 20.32 -6.35 180)
 				(length 5.08)
-				(name "GND"
+				(name "AGND"
 					(effects
 						(font
 							(size 1.27 1.27)
@@ -887,7 +887,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Dual 5A low-side gate driver, repurposed as a fast 50-ohm-matched line driver"
+		(property "Description" "Dual 5A low-side gate driver, repurposed as a fast 50-ohm-matched line driver for the laser trigger outputs"
 			(at 0 0 0)
 			(effects
 				(font
