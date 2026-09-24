@@ -5,7 +5,7 @@
       "Application": "Pcbnew",
       "Version": "10.0.6"
     },
-    "CreationDate": "2026-09-20T22:54:46+09:00"
+    "CreationDate": "2026-09-24T09:38:13+09:00"
   },
   "GeneralSpecs": {
     "ProjectId": {
@@ -14,12 +14,12 @@
       "Revision": "rev?"
     },
     "Size": {
-      "X": 156.1,
-      "Y": 122.1
+      "X": 126.1,
+      "Y": 126.1
     },
     "LayerNumber": 4,
     "BoardThickness": 1.6,
-    "Finish": "None"
+    "Finish": "HAL lead-free"
   },
   "DesignRules": [
     {
@@ -27,14 +27,14 @@
       "PadToPad": 0.2,
       "PadToTrack": 0.2,
       "TrackToTrack": 0.2,
-      "MinLineWidth": 0.15,
+      "MinLineWidth": 0.2,
       "TrackToRegion": 0.3,
       "RegionToRegion": 0.3
     },
     {
       "Layers": "Inner",
-      "PadToPad": 0.2,
-      "PadToTrack": 0.2,
+      "PadToPad": 0.0,
+      "PadToTrack": 0.0,
       "TrackToTrack": 0.2,
       "TrackToRegion": 0.25,
       "RegionToRegion": 0.25
@@ -42,57 +42,57 @@
   ],
   "FilesAttributes": [
     {
-      "Path": "PiDG_Pico-F_Cu.gtl",
+      "Path": "PiDG_Pico-F_Cu.gbr",
       "FileFunction": "Copper,L1,Top",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "PiDG_Pico-In1_Cu.g1",
+      "Path": "PiDG_Pico-In1_Cu.gbr",
       "FileFunction": "Copper,L2,Inr",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "PiDG_Pico-In2_Cu.g2",
+      "Path": "PiDG_Pico-In2_Cu.gbr",
       "FileFunction": "Copper,L3,Inr",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "PiDG_Pico-B_Cu.gbl",
+      "Path": "PiDG_Pico-B_Cu.gbr",
       "FileFunction": "Copper,L4,Bot",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "PiDG_Pico-F_Paste.gtp",
+      "Path": "PiDG_Pico-F_Paste.gbr",
       "FileFunction": "SolderPaste,Top",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "PiDG_Pico-B_Paste.gbp",
+      "Path": "PiDG_Pico-B_Paste.gbr",
       "FileFunction": "SolderPaste,Bot",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "PiDG_Pico-F_Silkscreen.gto",
+      "Path": "PiDG_Pico-F_Silkscreen.gbr",
       "FileFunction": "Legend,Top",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "PiDG_Pico-B_Silkscreen.gbo",
+      "Path": "PiDG_Pico-B_Silkscreen.gbr",
       "FileFunction": "Legend,Bot",
       "FilePolarity": "Positive"
     },
     {
-      "Path": "PiDG_Pico-F_Mask.gts",
+      "Path": "PiDG_Pico-F_Mask.gbr",
       "FileFunction": "SolderMask,Top",
       "FilePolarity": "Negative"
     },
     {
-      "Path": "PiDG_Pico-B_Mask.gbs",
+      "Path": "PiDG_Pico-B_Mask.gbr",
       "FileFunction": "SolderMask,Bot",
       "FilePolarity": "Negative"
     },
     {
-      "Path": "PiDG_Pico-Edge_Cuts.gm1",
+      "Path": "PiDG_Pico-Edge_Cuts.gbr",
       "FileFunction": "Profile",
       "FilePolarity": "Positive"
     }
@@ -108,44 +108,53 @@
     },
     {
       "Type": "SolderMask",
+      "Thickness": 0.01,
       "Name": "Top Solder Mask"
     },
     {
       "Type": "Copper",
+      "Thickness": 0.035,
       "Name": "F.Cu"
     },
     {
       "Type": "Dielectric",
+      "Thickness": 0.2104,
       "Material": "FR4",
       "Name": "F.Cu/In1.Cu",
       "Notes": "Type: dielectric layer 1 (from F.Cu to In1.Cu)"
     },
     {
       "Type": "Copper",
+      "Thickness": 0.0152,
       "Name": "In1.Cu"
     },
     {
       "Type": "Dielectric",
+      "Thickness": 1.065,
       "Material": "FR4",
       "Name": "In1.Cu/In2.Cu",
       "Notes": "Type: dielectric layer 2 (from In1.Cu to In2.Cu)"
     },
     {
       "Type": "Copper",
+      "Thickness": 0.0152,
       "Name": "In2.Cu"
     },
     {
       "Type": "Dielectric",
+      "Thickness": 0.2104,
       "Material": "FR4",
       "Name": "In2.Cu/B.Cu",
       "Notes": "Type: dielectric layer 3 (from In2.Cu to B.Cu)"
     },
     {
       "Type": "Copper",
+      "Thickness": 0.035,
       "Name": "B.Cu"
     },
     {
       "Type": "SolderMask",
+      "Thickness": 0.01,
       "Name": "Bottom Solder Mask"
     },
     {

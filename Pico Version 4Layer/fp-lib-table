@@ -9,6 +9,8 @@
   (lib (name "Package_TO_SOT_SMD")(type "KiCad")(uri "C:/Program Files/KiCad/10.0/share/kicad/footprints/Package_TO_SOT_SMD.pretty")(options "")(descr ""))
   (lib (name "Connector_Coaxial")(type "KiCad")(uri "C:/Program Files/KiCad/10.0/share/kicad/footprints/Connector_Coaxial.pretty")(options "")(descr ""))
   (lib (name "Connector_IDC")(type "KiCad")(uri "C:/Program Files/KiCad/10.0/share/kicad/footprints/Connector_IDC.pretty")(options "")(descr ""))
+  (lib (name "Connector_USB")(type "KiCad")(uri "C:/Program Files/KiCad/10.0/share/kicad/footprints/Connector_USB.pretty")(options "")(descr ""))
+  (lib (name "Inductor_SMD")(type "KiCad")(uri "C:/Program Files/KiCad/10.0/share/kicad/footprints/Inductor_SMD.pretty")(options "")(descr ""))
   (lib (name "MountingHole")(type "KiCad")(uri "C:/Program Files/KiCad/10.0/share/kicad/footprints/MountingHole.pretty")(options "")(descr ""))
   (lib (name "RPi_Pico")(type "KiCad")(uri "${KIPRJMOD}/libs/RPi_Pico.pretty")(options "")(descr "Official RPi Pico 2 W castellated module footprint (sourced from RPi's VGA-PicoW-KiCAD.zip)"))
   (lib (name "PiDG_Local")(type "KiCad")(uri "${KIPRJMOD}/libs/PiDG_Local.pretty")(options "")(descr "PiDG board-specific footprint variants (edge-trimmed silkscreen for overhanging connectors)"))

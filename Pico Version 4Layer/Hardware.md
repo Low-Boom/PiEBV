@@ -17,10 +17,10 @@ This board is the Raspberry Pi Pico 2 W redesign of the original Teensy 4.1 desi
 |---|---|
 | Board | 126 × 126 mm, 4 copper layers, 1.6 mm FR4 |
 | MCU | Raspberry Pi Pico 2 W, socketed (not soldered) |
-| Power | USB only, via the Pico's own connector |
-| Logic rails | **1.8 V** (camera I/O) · 3.3 V (MCU, pixel-reset input) · 5 V (lasers) |
+| Power | **USB-C PD input (J17, 15 V)** for the laser driver and the whole board; the Pico's own USB still powers the logic when J17 is unplugged |
+| Rails | **1.8 V** (camera I/O) · 3.3 V (MCU, pixel-reset input) · 5 V (logic, Pico VSYS) · **12 V** (laser driver U13, from J17 only) |
 | Design rules | 0.2 mm clearance, 0.2 mm track, 0.6/0.3 mm via, 0.25 mm copper-to-edge |
-| Placeable parts | 45, plus 4 NPTH mounting holes |
+| Placeable parts | 66, plus 4 NPTH mounting holes |
 
 Layer use:
 
@@ -107,7 +107,7 @@ up across the two rows, it is wrong.
 | GND | 38, 33 (AGND), 28, 23 | J15.3, .8, .13, .18 | `GND` |
 | 3V3_OUT | 36 | J15.5 | `+3V3` |
 | VSYS | 39 | J15.2 | `+5V` |
-| VBUS | 40 | J15.1 | `+5V` |
+| VBUS | 40 | J15.1 | **not connected** (see Power) |
 
 All eight module grounds are bonded. Every other socket pad is unconnected — and, once the
 module is seated, physically inaccessible. There is no GPIO breakout header.
@@ -155,18 +155,69 @@ limit. Edit the two constants if the attached drivers change. Widths below the P
 
 ## Power
 
-Everything is powered from the Pico's USB connector. There is no other supply input.
+Two inputs. **J17 (USB-C, power only)** is the main supply; the **Pico's own USB** carries data
+and can run everything *except the laser outputs* on its own.
 
-**+5 V** — from the Pico's VBUS (pin 40), with VSYS (pin 39) tied to the same net. This
-deliberately shorts out the Pico's input Schottky, which the Pico 2 W datasheet (§3.4)
-explicitly allows when USB is the only source; it recovers ~0.3 V that the laser driver
-needs. Distributed on the In2.Cu plane. Consumers: U7, U8, U10 (74AHCT1G08), U13 (UCC27524),
-**U9 (the 1.8 V LDO's input)**, and the R2/R3 pull-ups. Decoupling C4, C5, C9 (0.1 µF),
-C6 and C10 (1 µF).
+```
+J17 USB-C ─ U14 CH224K (asks the charger for 15 V) ─ VBUS_PD (5 V until negotiated, then 15 V)
+   ├─ U15 AP63205WU buck ─ +5V_PD ─ U16 LM66100 ideal diode ─┐
+   │                                                        ├─ +5V plane = Pico VSYS
+   │               Pico USB VBUS ─ Pico's own Schottky D1 ───┘
+   └─ U17 LP2951 (adj.) ─ LDO12_OUT ─ R14 1 Ω ─ +12V ─ U13 VDD (C9, C10)
+                    └─ ~ERROR ─ LASER_PWR_OK ─ U13 ENA/ENB  (R16 100k pull-up to +12V)
+```
 
-> **Constraint created by the VBUS/VSYS short:** never add an external 5 V feed to this net.
-> It would back-feed the USB host with no diode in the way. If a bench-supply option is ever
-> wanted, feed it through a Schottky into VSYS only, per the datasheet's ORing arrangement.
+**VBUS_PD.** U14 is a WCH CH224K PD sink. R10 = 56 kΩ on CFG1 requests **15 V** (CH224K table:
+6k8 = 9 V, 24k = 12 V, 56k = 15 V, open = 20 V — never leave R10 off). CFG2/CFG3 are grounded,
+DP/DM are shorted at the chip (the datasheet's way of disabling the QC/BC1.2 protocols), and PG
+is unused. VDD is fed through R11 = 1 kΩ (1206, 0.14 W at 15 V) and the VBUS sense pin through
+R15 = 10 kΩ, both per the datasheet. Until the PD contract completes VBUS_PD sits at 5 V; after
+it, 15 V. The CH224K has no output switch, so everything downstream must tolerate both, and
+does. Any charger rated **above 27 W** must offer 15 V under the USB-PD rules; a smaller one may
+not, and the laser outputs then stay disabled (see below). C12 (10 µF) is the only large
+capacitor on VBUS_PD, which keeps the board near the USB-C 10 µF sink limit.
+
+**+5 V.** U15 (Diodes AP63205WU, fixed 5.00 V ±1 %, 3.8–32 V in) makes +5V_PD. With VBUS_PD
+still at 5 V it runs in 100 % duty dropout and passes ~4.9 V. U16 (TI LM66100) ORs +5V_PD
+into the **+5V plane, which is the Pico's VSYS pin** (J15.2). U16's CE is tied to its own
+VOUT — TI's always-on reverse-blocking connection — so +5V_PD is never back-driven.
+
+**Pico VBUS (pin 40, J15.1) is deliberately not connected.** Previous revisions tied VBUS to
+VSYS to recover the Schottky drop, which was only legal while USB was the sole source. With J17
+feeding VSYS, that tie would back-feed the USB host. Now the Pico's USB reaches VSYS only through
+its own Schottky D1 (MBR120VLSFT1G, ~0.28 V at 0.1 A). With both inputs present, U16's ~5.0 V
+beats D1's ~4.7 V and J17 carries the load, while D1 blocks any flow back into the host. With
+the Pico USB alone, +5V sits at ~4.7 V typical: U9 and the 74AHCT gates run happily (AHCT is
+specified from 4.5 V, so a host that sags below ~4.8 V puts them just outside their rated
+range), and the lasers are off because there is no 12 V.
+
+Consumers on +5V: the Pico (VSYS), U7, U8, U10 (74AHCT1G08), **U9 (the 1.8 V LDO's input)**,
+and the R2/R3 pull-ups. Decoupling C4, C5 (0.1 µF), C6 (1 µF, U9's input).
+
+**+12 V — the laser driver rail, and why it has a power-good gate.** U17 is a TI LP2951 in
+adjustable mode (SENSE and VTAP floating, SHUTDOWN grounded):
+VOUT = VREF × (1 + R12/R13) = VREF × (1 + 100k/11.3k) ≈ 12.1 V. U17's open-collector **~ERROR**
+drives U13's ENA/ENB directly as `LASER_PWR_OK` (R16 100 kΩ pull-up to +12V; U13's own EN
+pins also pull up to VDD through ~200 kΩ). ~ERROR goes low whenever U17 is out of regulation:
+at start-up, in dropout, in current or thermal limit. So U13's outputs are held low:
+
+* with J17 unplugged — +12V = 0 V, U13 in UVLO;
+* before the PD contract (VBUS_PD = 5 V) and with a 5 V-only charger — U17 in deep dropout;
+* **if the charger only offers 9 V** — U17 output ≤ 9.45 V, feedback ≥ 23 % low, far past
+  ~ERROR's worst-case 11 % trip. This is why the rail is 12 V rather than the 10 V first
+  proposed: at 10 V, a 9 V PD fallback sat inside ~ERROR's uncertainty band, and the CH224K
+  datasheet does not say what it does when 15 V is unavailable;
+* with a 12 V PDO the rail is in or near dropout; either ~ERROR disables the outputs or the
+  amplitude is still ≥ 4.6 V, which is in spec.
+
+**Two TI dies.** LP2951D/DR ships as either TI's legacy die (VREF 1.200–1.272 V over
+line/load/temperature) or its new die (1.188–1.212 V), and only the reel label says which. The
+divider is centred on the union of both ranges, and R12/R13 must be **0.1 %** — see the laser
+amplitude budget under Signal chains. The legacy die also needs 0.03–5 Ω of ESR on its output
+capacitor, and ceramics have almost none. **R14 (1 Ω)** supplies it: U17 sees C9 + C10
+(~10 µF) through 1 Ω, which suits both dies (new die: 0–2 Ω). R14 drops at most ~15 mV at the
+firmware's duty limit. Do not replace it with 0 Ω. C10 (10 µF X7R 1206) is also U13's pulse
+reservoir: a 1 µs, ~200 mA pulse pair droops it by ~20 mV (0.2 %).
 
 **+1.8 V — the camera I/O rail.** Generated by **U9, an NCP718xSN180** fixed 1.8 V LDO,
 fed from +5 V (NCP718 accepts 2.5–24 V in; the 3.2 V of headroom costs ~16 mW at the few mA
@@ -254,24 +305,40 @@ there was no hysteresis on a bare BNC input. Its second input, `PIXRST_GATE_EN`,
 tied high through R4 and was never connected to anything; R4 and that net were removed with it.
 
 **Laser outputs**
-`GP13` → U7.2 → `CH1_GATED` → U13.2 (INA) → U13.7 (OUTA) → `CH1_DRIVE_RAW` → **R6 47 Ω** →
+`GP13` → U7.2 → `CH1_GATED` → U13.2 (INA) → U13.7 (OUTA) → `CH1_DRIVE_RAW` → **R6 69.8 Ω** →
 J7.1
-`GP12` → U8.2 → `CH2_GATED` → U13.4 (INB) → U13.5 (OUTB) → `CH2_DRIVE_RAW` → **R7 47 Ω** →
+`GP12` → U8.2 → `CH2_GATED` → U13.4 (INB) → U13.5 (OUTB) → `CH2_DRIVE_RAW` → **R7 69.8 Ω** →
 J8.1
 
 U7 and U8 are **74AHCT1G08** gates on +5 V. AHCT has TTL input thresholds (high above
 2.0 V), so the Pico's 3.3 V pulses drive them with ~1.3 V of margin. An LVC gate here would
 need 0.7 × VCC = 3.5 V to read high, which a 3.3 V GPIO cannot guarantee.
 
-U13 is a TI UCC27524 dual 5 A driver, non-inverting, ENA/ENB hard-tied to +5 V. Its inputs are
-TTL-compatible independent of VDD (high above 1.8–2.3 V, 1 V hysteresis). Output pull-up is
+U13 is a TI UCC27524 dual 5 A driver, non-inverting, on **VDD = +12V** with ENA/ENB on
+`LASER_PWR_OK` (see Power). Its inputs are TTL-compatible independent of VDD (high above
+1.8–2.3 V, 1 V hysteresis), so the 5 V AHCT gates drive it unchanged. Output pull-up is
 **2.5 / 5 / 7.5 Ω** (min/typ/max, PMOS only — which is what holds a steady load high during a
-pulse); pull-down 0.15–1 Ω.
+pulse); pull-down 0.15–1 Ω, so the low level into 50 Ω is well under the 0.2 V limit.
 
-> **The output does not yet meet the laser drivers' trigger spec — see Open item 1.** The
-> target loads are PicoLas LDP-V 10-70 and LDP-V 240-100 drivers, whose trigger inputs are
-> **50 Ω terminated** and need **4.5–5.2 V high, ≤ 0.2 V low**. From today's 5 V rail through
-> 47 Ω into 50 Ω, only ~2.4 V arrives.
+**Amplitude budget.** The target loads are PicoLas LDP-V 10-70 and LDP-V 240-100 drivers, whose
+trigger inputs are **50 Ω terminated** and need **4.5–5.2 V high, ≤ 0.2 V low**. Delivered
+level = VDD × 50 / (50 + R6 + ROH):
+
+| Corner | VDD | R6 (69.8 Ω ±1 %) | ROH | Into 50 Ω |
+|---|---|---|---|---|
+| Low | 11.66 V (VREF 1.188 V, divider −0.18 %, R14 drop) | 70.50 Ω | 7.5 Ω | **4.55 V** |
+| Typical, legacy die | 12.16 V | 69.8 Ω | 5 Ω | 4.87 V |
+| Typical, new die | 11.82 V | 69.8 Ω | 5 Ω | 4.74 V |
+| High | 12.56 V (VREF 1.272 V, divider +0.18 %) | 69.10 Ω | 2.5 Ω | **5.16 V** |
+
+Every corner passes, with ~1 % margin at the low end and ~0.7 % at the high end. The budget
+assumes a 50 Ω termination at the driver; a load 1 % high adds ~0.6 %. With 1 % divider
+resistors the corners fall outside the window, which is why R12/R13 are 0.1 %.
+
+> **The laser BNCs are for 50 Ω loads only.** Open-circuit, or into a high-impedance scope
+> input, the output rises to ~12 V (the source is ~75 Ω). PicoLas's acceptance test applies:
+> a scope with **50 Ω input termination** must read 0 to ~4.9 V. The LDP-V absolute maximum on
+> its trigger input is 15 V, so an unterminated reflection cannot exceed it.
 
 U13 adds ~13–25 ns of propagation delay, common to both laser channels. Inter-pulse delay is
 preserved to within the driver's channel-to-channel matching (1–2 ns). Laser-vs-camera skew
@@ -306,8 +373,17 @@ The original Teensy design had no pull-down here and defaulted to *armed* with t
 empty. R8 is the one deliberate behavioural change to the interlock.
 
 Disabling forces both BNC centre pins to 0 V: U10 low → U7/U8 outputs low → U13 outputs low.
-The driver's ENA/ENB are tied high rather than wired to the interlock, so U13 adds no bypass
-path — U10 retains sole authority.
+U13's ENA/ENB carry only the **power-good** gate (`LASER_PWR_OK`, see Power), not the user
+interlock. The two act in series, and either one alone forces the outputs low; neither can
+enable a laser the other has disabled. U10 retains sole authority over the user interlock.
+
+**Pico removed, J17 powered.** J17 can power the board with no module fitted, which the old
+USB-only design could not. U7/U8's pulse inputs would then float, and an armed interlock would
+pass whatever they picked up. **R17/R18 (10 kΩ)** hold `_PULSE_OUT_CH1`/`_PULSE_OUT_CH2` low at
+the socket (J14.17/.16), so the laser outputs stay at 0 V. With the Pico fitted they cost
+0.33 mA per GPIO while high. The camera lines are not guarded the same way: with no module,
+`PWM_1MHz` floats and U12 is unpowered (no +3V3), so Sync and TDRSTN at the cameras are
+undefined. That is a nuisance, not a hazard — fit the Pico before connecting cameras.
 
 ---
 
@@ -343,7 +419,13 @@ IDS does not publish the camera's own thresholds or input pull, so confirm on th
 > master mode would contend with U2.
 
 **BNC, 50 Ω** — J7 Laser 1 (out), J8 Laser 2 (out), J12 Pixel Reset (**in**, active low,
-3.3 V/5 V/open-drain compatible — see Signal chains). Shells on GND.
+3.3 V/5 V/open-drain compatible — see Signal chains). Shells on GND. J7/J8 expect a 50 Ω load
+(see Laser outputs).
+
+**J17 — USB-C power input** (HRO TYPE-C-31-M-12, top edge, face flush with the board edge).
+Power only: VBUS, CC1/CC2 to U14, GND and shell to GND; D+/D−/SBU are not connected. Use a USB-PD
+charger that offers 15 V — in practice any PD charger rated 30 W or more. Programming and serial
+still go through the Pico's own USB port.
 
 **Headers**
 
@@ -372,23 +454,15 @@ external source would fight it — treat them as monitor points.
 
 Ordered by what would bite hardest.
 
-1. **The laser output amplitude fails the LDP-V trigger spec — the blocking item.** The
-   PicoLas LDP-V 10-70 and 240-100 trigger inputs are **50 Ω terminated** and need
-   **4.5–5.2 V high** (below 4.5 V they "will not turn on properly and can not carry the full
-   current"; above 5.2 V "can damage the power stage") and **≤ 0.2 V low** (more "will cause a
-   non proper turning off and thermal damage"). From the 5 V rail through R6/R7 = 47 Ω into
-   50 Ω, only ~2.4 V arrives — PicoLas's own FAQ names this failure: a source that "adds
-   additional 50 Ohm, so that the received voltage at the driver is effectively halved".
-   Setting R6/R7 to 0 Ω does not rescue it: 5 V × 50/(50 + ROH) spans ~3.8–5.0 V across USB
-   VBUS and UCC27524 ROH tolerance, falling below 4.5 V at low VBUS or high ROH. The robust fix
-   is a **regulated ~10 V rail for U13 with R6/R7 = 48.7 Ω**: 4.55–5.11 V into 50 Ω across ROH
-   2.5–7.5 Ω, ±3 % rail and ±1 % resistors, with a ~52 Ω back-matched source. Pending a
-   decision on where that rail comes from. Consequence to accept: open-circuit or into a
-   high-impedance load the output reaches ~10 V, so the laser BNCs are for 50 Ω loads only.
-   Acceptance test (PicoLas's): a scope with 50 Ω input termination must read 0 to ~5 V.
-2. **Scope U13 pin 6 under load.** The UCC27524 wants VDD ≥ 4.5 V with UVLO ~4.2 V, and the
-   rail is raw USB VBUS. USB 2.0 permits 4.40 V at the far end of a cable. Below UVLO both
-   laser outputs go dead with no indication. Use the cable and port you will deploy with.
+1. **Bench-verify the laser trigger amplitude before connecting a laser driver.** With J17 on a
+   15 V PD charger, check `LASER_PWR_OK` (U13 pins 1/8) is high (~12 V), then scope J7 and J8
+   through a **50 Ω-terminated** input: expect 0 V to 4.55–5.16 V (typically ~4.8 V). Also
+   confirm the outputs stay at 0 V with J17 unplugged and during plug-in. The amplitude budget
+   rests on datasheet corners for U17's two dies and U13's ROH; a measurement closes it.
+2. **Check the charger's PD behaviour.** The CH224K datasheet does not say what it does when
+   the charger lacks the requested 15 V. The board is safe either way — U17 keeps the lasers
+   disabled below ~11 V — but a small charger may leave them disabled. Measure VBUS_PD (C12)
+   with the charger you will deploy.
 3. **Bench-confirm the camera I/O before plugging in six cameras.** IDS documents the pins as
    1.8 V but publishes no VIH/VIL, input pull or absolute maximum. With one camera, measure
    TDRSTN, Trigger and Sync at the camera end of the harness, and confirm pin 5 is not being
@@ -397,16 +471,11 @@ Ordered by what would bite hardest.
    Pico, including its on-board antenna. Wi-Fi will be detuned. Harmless for the current
    USB-serial firmware, but if wireless is ever wanted the keepout must be cut on all four
    layers *before* fabrication — it cannot be fixed after.
-5. **+5 V bulk is light for the new pulsed load** — C10 near U13 (1 µF) plus C4/C5/C9
-   (0.1 µF); C6 (1 µF) is on +5 V too but sits at the far side of the board as U9's input cap.
-   Roughly 100 mA for a ~2 µs pulse out of 1 µF is ~200 mV of droop. A 10 µF X7R beside C10 directly
-   protects pulse-amplitude flatness, which is the parameter this instrument exists to
-   deliver.
-6. **No 50 Ω termination on the J12 pixel-reset input** — only R5's 3k3 pull-up and U12's
+5. **No 50 Ω termination on the J12 pixel-reset input** — only R5's 3k3 pull-up and U12's
    CMOS input. U12's 0.5–0.8 V of hysteresis now absorbs moderate ringing from an unterminated
    coax run. Do *not* add a 49.9 Ω shunt as-is: against R5 it would hold J12 at ~50 mV, i.e.
    keep all six cameras permanently in reset unless the source actively drives high.
-7. **Correct J10's silkscreen** at the next revision — see the Trigger section above.
+6. **Correct J10's silkscreen** at the next revision — see the Trigger section above.
 
 ---
 
@@ -417,13 +486,14 @@ Ordered by what would bite hardest.
 | `PiDG_Pico.kicad_sch` | schematic |
 | `PiDG_Pico.kicad_pcb` | board |
 | `PiDG_Pico_BOM.csv` | BOM (hand-maintained; `export_bom` ignores DNP attributes) |
-| `PiDG_Pico_CPL.csv` | pick-and-place, 45 parts, mounting holes excluded |
+| `PiDG_Pico_CPL.csv` | pick-and-place, 66 parts, mounting holes excluded |
+| `fab/gerbers/`, `fab/PiDG_Pico_Gerbers.zip` | gerbers, Excellon drill (PTH/NPTH) and job file, from the board's stored plot settings |
 | `libs/PiDG_Local.kicad_sym` | Pico 2 W and UCC27524 symbols |
 | `libs/PiDG_Local.pretty/` | `*_EdgeTrim` footprint variants (see below) |
 | `libs/RPi_Pico.pretty/` | official RPi castellated module footprint (unused — board is socketed) |
 | `../src/main.cpp` | firmware |
 
-**About the `*_EdgeTrim` footprints.** J16 and TP3 overhang the board edge, so their stock
+**About the `*_EdgeTrim` footprints.** J16 and TP3 overhang the board edge, and J17's face is flush with it, so their stock
 silkscreen outlines run off the board and trip `silk_edge_clearance`. The variants in
 `libs/PiDG_Local.pretty/` are the stock footprints with that off-board silk clipped —
 **identical part, identical pads, silkscreen only.** Order the standard parts; the CPL
@@ -437,7 +507,7 @@ coordinate and length at 1/100 of the true mm value despite declaring `"coordina
 "mm"` — multiply by 100.
 
 Current state: DRC 0 violations, 0 unconnected items; ERC 0 violations. A
-`kicad-cli pcb drc --schematic-parity` run additionally reports ~162 parity *warnings*, none
+`kicad-cli pcb drc --schematic-parity` run additionally reports ~185 parity *warnings*, none
 electrical: board net names lack the `/` root-sheet prefix the schematic generates for local
 labels (`TDRSTN1` vs `/TDRSTN1` — connectivity identical), unused J14/J15 socket pads carry no
 net rather than `unconnected-(…)`, `Datasheet`/`Description` field text differs, and U11 /
