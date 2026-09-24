@@ -16056,8 +16056,8 @@
 		(at 155.002076 34.093171 90)
 		(descr "Through hole angled pin header, 1x02, 2.54mm pitch, 6mm pin length, single row")
 		(tags "Through hole angled pin header THT 1x02 2.54mm single row")
-		(property "Reference" "TP3"
-			(at -2.907 0 90)
+		(property "Reference" "1MHz Clock"
+			(at 0.063171 -5.762076 0)
 			(layer "F.SilkS")
 			(uuid "9326fbf7-4a58-4d29-b7b6-97abf2a6f128")
 			(effects
@@ -17046,6 +17046,18 @@
 			)
 		)
 	)
+	(gr_text "GND"
+		(at 159.74 34.53 0)
+		(layer "F.SilkS")
+		(uuid "76174693-30f5-445b-afee-0721789283c5")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left bottom)
+		)
+	)
 	(gr_text "ENABLE"
 		(at 245.24 55.03 0)
 		(layer "F.SilkS")
@@ -17079,19 +17091,8 @@
 			)
 		)
 	)
-	(gr_text "PIXEL RESET"
-		(at 234.24 127.53 0)
-		(layer "F.SilkS")
-		(uuid "bc196163-afd4-4f40-bece-41aaf946de72")
-		(effects
-			(font
-				(size 1.2 1.2)
-				(thickness 0.15)
-			)
-		)
-	)
-	(gr_text "LASER 2"
-		(at 235.74 107.53 0)
+	(gr_text "LASER 2 (50 Ohm)"
+		(at 233.24 107.03 0)
 		(layer "F.SilkS")
 		(uuid "c5cf6346-d83d-4e04-82b9-20de1e7e5f69")
 		(effects
@@ -17101,10 +17102,21 @@
 			)
 		)
 	)
-	(gr_text "LASER 1"
-		(at 236.74 87.03 0)
+	(gr_text "LASER 1 (50Ohm)"
+		(at 233.74 87.03 0)
 		(layer "F.SilkS")
 		(uuid "41634639-1fa7-48b5-8c97-8751b9811232")
+		(effects
+			(font
+				(size 1.2 1.2)
+				(thickness 0.15)
+			)
+		)
+	)
+	(gr_text "PIXEL RESET"
+		(at 234.24 127.53 0)
+		(layer "F.SilkS")
+		(uuid "bc196163-afd4-4f40-bece-41aaf946de72")
 		(effects
 			(font
 				(size 1.2 1.2)

@@ -467,15 +467,16 @@ Ordered by what would bite hardest.
    1.8 V but publishes no VIH/VIL, input pull or absolute maximum. With one camera, measure
    TDRSTN, Trigger and Sync at the camera end of the harness, and confirm pin 5 is not being
    driven by the camera (i.e. that it is configured as a sync slave).
-4. **No antenna keepout under the module.** All four copper layers run solid beneath the
-   Pico, including its on-board antenna. Wi-Fi will be detuned. Harmless for the current
-   USB-serial firmware, but if wireless is ever wanted the keepout must be cut on all four
-   layers *before* fabrication — it cannot be fixed after.
-5. **No 50 Ω termination on the J12 pixel-reset input** — only R5's 3k3 pull-up and U12's
+4. **No 50 Ω termination on the J12 pixel-reset input** — only R5's 3k3 pull-up and U12's
    CMOS input. U12's 0.5–0.8 V of hysteresis now absorbs moderate ringing from an unterminated
    coax run. Do *not* add a 49.9 Ω shunt as-is: against R5 it would hold J12 at ~50 mV, i.e.
    keep all six cameras permanently in reset unless the source actively drives high.
-6. **Correct J10's silkscreen** at the next revision — see the Trigger section above.
+5. **Correct J10's silkscreen** at the next revision — see the Trigger section above.
+
+**Not an open item: Wi-Fi.** All four copper layers run solid under the module, including its
+antenna, so the radio would be detuned. That is deliberate: wireless is not a requirement. The
+Pico 2 W is fitted only because it is easier to buy than the plain Pico 2. Do not cut an antenna
+keepout.
 
 ---
 
