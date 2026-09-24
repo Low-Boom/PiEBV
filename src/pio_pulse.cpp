@@ -1,21 +1,20 @@
 #include "pio_pulse.h"
 #include "hardware/pio_instructions.h"
+#include "hardware/sync.h"
 
 namespace {
 
-// Instruction addresses within the pulse program (see pio_pulse.h for the
-// timing derivation): a 5-instruction preamble loads three FIFO words into
-// persistent registers (ISR=delay, Y=width, OSR=tail), then an 8-instruction
-// loop spends `delay` cycles low, `width` cycles high, `tail` cycles low.
-//   cycles-to-rising-edge   = delay_loaded + 2
-//   cycles-pin-stays-high   = width_loaded + 3
-//   cycles-pin-stays-low    = tail_loaded + 3
-//   total period (cycles)   = delay_loaded + width_loaded + tail_loaded + 8
+// Instruction addresses within the pulse program: a 5-instruction preamble
+// loads three FIFO words into persistent registers (ISR=delay, Y=width,
+// OSR=tail), then an 8-instruction loop spends `delay` cycles low, `width`
+// cycles high, `tail` cycles low. Cycle model (see pulse_timing.h):
+//   SET PINS,1 on cycle 7 + delay_loaded after the in-sync enable
+//   high time = width_loaded + 3 cycles
+//   period    = delay_loaded + width_loaded + tail_loaded + 8 cycles
+// The 7-cycle offset is the same for every channel, so it cancels between
+// CH1, CH2 and the marker.
 constexpr uint kPulseWrapTarget = 5;
 constexpr uint kPulseWrap = 12;
-constexpr uint32_t kPulseFixedOverheadCycles = 8;
-constexpr uint32_t kPulseMinDelayCycles = 2;
-constexpr uint32_t kPulseMinWidthCycles = 3;
 
 const uint16_t kPulseInstructions[] = {
     (uint16_t)pio_encode_pull(false, true),      // 0: delay word -> OSR
@@ -37,6 +36,10 @@ const pio_program_t kPulseProgram = {
     kPulseInstructions,
     13,
     -1,
+    0,  // pio_version: runs on any PIO
+#if PICO_PIO_VERSION > 0
+    0,  // used_gpio_ranges: no constraint (pins are chosen at run time)
+#endif
 };
 
 const uint16_t kToggleInstructions[] = {
@@ -48,137 +51,127 @@ const pio_program_t kToggleProgram = {
     kToggleInstructions,
     2,
     -1,
+    0,  // pio_version: runs on any PIO
+#if PICO_PIO_VERSION > 0
+    0,  // used_gpio_ranges: no constraint (pins are chosen at run time)
+#endif
 };
 
 // The pulse program is shared by every PulseChannel on a given PIO block
 // (each state machine gets its own PC/registers, so several SMs can run the
 // same physical instruction memory concurrently) -- it must only be loaded
 // into that block's instruction memory once, or repeated loads would exceed
-// the block's 32-instruction memory.
-uint pulseProgramOffset(PIO pio) {
-    static PIO loadedOn[2] = {nullptr, nullptr};
-    static uint loadedOffset[2] = {0, 0};
-    int idx = (pio == pio0) ? 0 : 1;
-    if (loadedOn[idx] != pio) {
-        loadedOffset[idx] = pio_add_program(pio, &kPulseProgram);
-        loadedOn[idx] = pio;
+// the block's 32-instruction memory. Returns the offset, or a negative
+// PICO_ERROR_* if pio_add_program() found no room.
+int pulseProgramOffset(PIO pio) {
+    static bool loaded[NUM_PIOS] = {};
+    static int loadedOffset[NUM_PIOS] = {};
+    const uint idx = pio_get_index(pio);
+    if (!loaded[idx]) {
+        const int off = pio_add_program(pio, &kPulseProgram);
+        if (off < 0) {
+            return off;
+        }
+        loadedOffset[idx] = off;
+        loaded[idx] = true;
     }
     return loadedOffset[idx];
 }
 
-// Shared by pulseTimingFits() and PulseChannel::configure() so both agree on
-// exactly the same feasibility check and cycle-count math.
-bool computePulseCounts(uint32_t period_ns, uint32_t delay_ns, uint32_t width_ns, uint32_t clk_hz,
-                         uint32_t *delayLoaded, uint32_t *widthLoaded, uint32_t *tailLoaded) {
-    auto nsToCycles = [clk_hz](uint32_t ns) -> uint64_t {
-        return ((uint64_t)ns * clk_hz + 500000000ULL) / 1000000000ULL;
-    };
-
-    const uint64_t delayCycles = nsToCycles(delay_ns);
-    const uint64_t widthCycles = nsToCycles(width_ns);
-    const uint64_t periodCycles = nsToCycles(period_ns);
-
-    const uint32_t dl =
-        (delayCycles >= kPulseMinDelayCycles) ? (uint32_t)(delayCycles - kPulseMinDelayCycles) : 0;
-    const uint32_t wl =
-        (widthCycles >= kPulseMinWidthCycles) ? (uint32_t)(widthCycles - kPulseMinWidthCycles) : 0;
-
-    const uint64_t used = (uint64_t)dl + wl + kPulseFixedOverheadCycles;
-    if (periodCycles <= used) {
-        return false;  // requested width+delay does not fit inside period at this clock
-    }
-
-    if (delayLoaded) *delayLoaded = dl;
-    if (widthLoaded) *widthLoaded = wl;
-    if (tailLoaded) *tailLoaded = (uint32_t)(periodCycles - used);
-    return true;
-}
-
 }  // namespace
 
-bool pulseTimingFits(uint32_t period_ns, uint32_t delay_ns, uint32_t width_ns, uint32_t clk_hz) {
-    return computePulseCounts(period_ns, delay_ns, width_ns, clk_hz, nullptr, nullptr, nullptr);
-}
-
-void PulseChannel::begin(PIO pio, uint sm, uint gpio) {
+bool PulseChannel::begin(PIO pio, uint sm, uint gpio, bool connectPin) {
     pio_ = pio;
     sm_ = sm;
     gpio_ = gpio;
-    offset_ = pulseProgramOffset(pio_);
 
-    pio_gpio_init(pio_, gpio_);
-    pio_sm_set_consecutive_pindirs(pio_, sm_, gpio_, 1, true);
+    const int off = pulseProgramOffset(pio_);
+    if (off < 0) {
+        return false;
+    }
+    offset_ = (uint)off;
 
     config_ = pio_get_default_sm_config();
     sm_config_set_set_pins(&config_, gpio_, 1);
     sm_config_set_wrap(&config_, offset_ + kPulseWrapTarget, offset_ + kPulseWrap);
-    sm_config_set_clkdiv_int_frac(&config_, 1, 0);
-}
+    sm_config_set_clkdiv_int_frac8(&config_, 1, 0);
+    // Load PINCTRL now, so a forced `SET PINS, 0` on this SM (stopPulseChannelsLow)
+    // targets this channel's own pin even before the first configure().
+    pio_sm_set_config(pio_, sm_, &config_);
 
-bool PulseChannel::configure(uint32_t period_ns, uint32_t delay_ns, uint32_t width_ns, uint32_t clk_hz) {
-    uint32_t delayLoaded, widthLoaded, tailLoaded;
-    if (!computePulseCounts(period_ns, delay_ns, width_ns, clk_hz, &delayLoaded, &widthLoaded, &tailLoaded)) {
-        return false;
+    if (connectPin) {
+        pio_gpio_init(pio_, gpio_);  // the PIO output latch is LOW after the boot-time PIO reset
+        pio_sm_set_consecutive_pindirs(pio_, sm_, gpio_, 1, true);
     }
-
-    pio_sm_set_enabled(pio_, sm_, false);
-    pio_sm_init(pio_, sm_, offset_, &config_);
-    pio_sm_put_blocking(pio_, sm_, delayLoaded);
-    pio_sm_put_blocking(pio_, sm_, widthLoaded);
-    pio_sm_put_blocking(pio_, sm_, tailLoaded);
-    ready_ = true;
     return true;
 }
 
-void PulseChannel::start() {
-    if (ready_) {
-        pio_sm_set_enabled(pio_, sm_, true);
+bool PulseChannel::configure(const PulseCycles &t) {
+    PulseWords w;
+    if (computePulseCounts(t, &w) != PulseFit::Ok) {
+        return false;
     }
+    pio_sm_set_enabled(pio_, sm_, false);  // already stopped; harmless
+    pio_sm_set_consecutive_pindirs(pio_, sm_, gpio_, 1, true);
+    pio_sm_init(pio_, sm_, offset_, &config_);  // stays disabled; FIFOs cleared; PC = offset_
+    pio_sm_put_blocking(pio_, sm_, w.delay);    // 3 words into a 4-deep TX FIFO: never blocks
+    pio_sm_put_blocking(pio_, sm_, w.width);
+    pio_sm_put_blocking(pio_, sm_, w.tail);
+    return true;
 }
 
-void PulseChannel::stop() {
-    pio_sm_set_enabled(pio_, sm_, false);
-}
-
-void SyncChannel::begin(PIO pio, uint sm, uint gpio) {
+bool SyncChannel::begin(PIO pio, uint sm, uint gpio) {
     pio_ = pio;
     sm_ = sm;
     gpio_ = gpio;
-    offset_ = pio_add_program(pio_, &kToggleProgram);
 
-    pio_gpio_init(pio_, gpio_);
+    const int off = pio_add_program(pio_, &kToggleProgram);
+    if (off < 0) {
+        return false;
+    }
+    offset_ = (uint)off;
+
+    pio_gpio_init(pio_, gpio_);  // the PIO output latch is LOW after the boot-time PIO reset
     pio_sm_set_consecutive_pindirs(pio_, sm_, gpio_, 1, true);
 
     config_ = pio_get_default_sm_config();
     sm_config_set_set_pins(&config_, gpio_, 1);
     sm_config_set_wrap(&config_, offset_ + 0, offset_ + 1);
-}
-
-bool SyncChannel::configure(uint32_t freq_hz, uint32_t clk_hz) {
-    if (freq_hz == 0) {
-        return false;
-    }
-    // One output period is 2 state-machine clock cycles (set high, set low).
-    const double divider = (double)clk_hz / (2.0 * (double)freq_hz);
-    if (divider < 1.0 || divider >= 65536.0) {
-        return false;  // outside the PIO clock divider's representable range
-    }
-
-    pio_sm_set_enabled(pio_, sm_, false);
-    sm_config_set_clkdiv(&config_, (float)divider);
-    pio_sm_init(pio_, sm_, offset_, &config_);
-    ready_ = true;
     return true;
 }
 
-void SyncChannel::start() {
-    if (ready_) {
-        pio_sm_set_enabled(pio_, sm_, true);
-    }
+void SyncChannel::start(uint32_t div256) {
+    pio_sm_set_enabled(pio_, sm_, false);
+    sm_config_set_clkdiv_int_frac8(&config_, div256 >> 8, (uint8_t)(div256 & 0xFFu));
+    pio_sm_init(pio_, sm_, offset_, &config_);
+    pio_sm_set_enabled(pio_, sm_, true);
 }
 
-void SyncChannel::stop() {
-    pio_sm_set_enabled(pio_, sm_, false);
+// In RAM, so no flash (XIP) cache miss can sit between the halt and the forced LOWs.
+void __not_in_flash_func(stopPulseChannelsLow)(PulseChannel *const *channels, size_t count) {
+    if (count == 0) {
+        return;
+    }
+    // Read everything first: the channel list may live in flash, and nothing between
+    // the halt and the forced LOWs should touch flash.
+    PIO pio = channels[0]->pio();
+    uint sms[NUM_PIO_STATE_MACHINES];
+    const size_t n = count < NUM_PIO_STATE_MACHINES ? count : NUM_PIO_STATE_MACHINES;
+    uint32_t smMask = 0;
+    for (size_t i = 0; i < n; ++i) {
+        sms[i] = channels[i]->sm();
+        smMask |= 1u << sms[i];
+    }
+    const uint32_t irq = save_and_disable_interrupts();
+    pio_set_sm_mask_enabled(pio, smMask, false);  // one CTRL write halts them all
+    // The output latch is PIO-block state (RP2350 datasheet 11.5.6): a halted SM
+    // leaves it wherever it was. `SET PINS, 0` written to each SM's own SMx_INSTR
+    // runs on the disabled SM, drives that SM's own pin (PINCTRL is loaded at
+    // begin()) and leaves its PC alone -- one store per channel, no PINCTRL swap.
+    for (size_t i = 0; i < n; ++i) {
+        pio_sm_exec(pio, sms[i], pio_encode_set(pio_pins, 0));
+    }
+    restore_interrupts(irq);
 }
 
 void startPulseChannelsInSync(PulseChannel *const *channels, size_t count) {

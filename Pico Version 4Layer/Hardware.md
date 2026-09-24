@@ -119,37 +119,111 @@ placed there.
 
 ## Firmware pin map
 
-`src/main.cpp` drives all four signals through PIO (pio0, state machines 0–3), so any GPIO
-works — there is no PWM-slice constraint.
+The firmware (`../src/`) drives all four signals from pio0 state machines (SM0 CH1, SM1 CH2,
+SM2 MARKER, SM3 SYNC), so any GPIO works — there is no PWM-slice constraint. CH1/CH2 reach
+their pads only while ARMED; otherwise `src/laser_gate.cpp` drives them LOW.
 
 | Constant | GPIO | Board net | Drives |
 |---|---|---|---|
 | `kPinSync` | 10 | `PWM_1MHz` | U1 → U2 → Sync1‑6 |
 | `kPinMarker` | 11 | `PWM_Trig` | J10.3 → (jumper) → U5 → U6 → Trigger1‑6 |
-| `kPinCh2` | 12 | `_PULSE_OUT_CH2` | U8 → U13 → J8 (Laser 2) |
-| `kPinCh1` | 13 | `_PULSE_OUT_CH1` | U7 → U13 → J7 (Laser 1) |
+| `kPinCh2` | 12 | `_PULSE_OUT_CH2` | U8 → U13 → J8 (Laser 2); R18 10 k to GND |
+| `kPinCh1` | 13 | `_PULSE_OUT_CH1` | U7 → U13 → J7 (Laser 1); R17 10 k to GND |
 
 **CH1 is the higher GPIO and CH2 the lower** — the opposite order to the Teensy original
 (D2 = CH1, D3 = CH2). Do not "tidy" these into ascending order.
 
 These constants and the schematic have drifted apart once before, which made the whole board
-look inert. `main.cpp` now carries this table as a comment block; keep both in step.
+look inert. `src/board.h` now carries this table as a comment block; keep both in step.
 
 ### Laser safety limits
 
-`main.cpp` rejects any `WIDTH`/`FREQ` change that would exceed the attached drivers' ratings.
-CH1 and CH2 share one pulse width, so the tightest driver governs:
+The firmware (`realizeTiming()` in `src/pulse_timing.h`) re-validates the whole parameter set
+on every command and rejects any change whose **realized** timing would exceed the drivers'
+ratings. CH1 and CH2 share one pulse width, so the tightest driver governs the maximum width
+and the duty:
 
 | Driver | Pulse width | Max duty |
 |---|---|---|
 | PicoLas LDP-V 10-70 | 10 ns – 1 µs | **0.1 %** ← governs |
 | PicoLas LDP-V 240-100 | 60 ns – >1 µs | 7.5 % |
 
-Enforced: `WIDTH ≤ 1000 ns` and `WIDTH × FREQ ≤ 0.1 %` (`kLaserMaxWidthNs`,
-`kLaserMaxDutyPpm`). The default width is **100 ns** — inside both drivers' ranges. The
-previous default of 2 µs at 1 kHz was twice the 10-70's maximum pulse width and twice its duty
-limit. Edit the two constants if the attached drivers change. Widths below the PIO's minimum
-(a few 150 MHz cycles) are clamped up, and are safe — a too-short trigger just underdrives.
+Enforced on the realized values, i.e. after rounding to whole PIO cycles (6.667 ns at 150 MHz):
+`WIDTH ≤ 1000 ns` and `WIDTH × FREQ ≤ 0.1 %` (`kLaserMaxWidthNs`, `kLaserMaxDutyPpm` in
+`src/pulse_timing.h`). WIDTH 1003 is accepted (150 cycles = 1000.000 ns); 1004 is rejected
+(151 cycles = 1006.667 ns). A duty rejection names the highest FREQ that would pass. The
+default width is **100 ns** — inside both drivers' ranges. Edit the constants if the attached
+drivers change.
+
+Widths that realize below the pulse program's 3-cycle minimum (WIDTH or MARKERWIDTH ≤ 16 ns
+at 150 MHz) are **rejected**, not clamped; the shortest pulse is 20.000 ns. (An earlier
+firmware clamped them up, which let `WIDTH 0` slip past the duty check while still producing
+20 ns pulses.) The 240-100's 60 ns minimum is a performance limit and is not enforced:
+WIDTH 17–56 realizes to 20.000–53.333 ns and only under-drives that driver.
+
+### Timing: what you set is what you get
+
+- **Every reply shows the realized value**, e.g. `DELAY 1003` → `OK DELAY=1003 (actual
+  1000.000 ns, 150 cyc)`. `STATUS` lists all of them. The user never has to correct a setting
+  for quantization or for fixed instruction overheads.
+- **CH2 rises exactly DELAY after CH1** (to the nearest 6.667 ns cycle). Firmware before
+  this revision loaded CH2 two cycles short, so it fired 13.33 ns early — a 1.3 % velocity error
+  at 1 µs separation. The fix is exact in a cycle-accurate model of the PIO; see
+  `../tools/timing_check/`.
+- **MARKER is phase-locked to CH1**: its period is exactly MARKERDIV × the laser period in
+  cycles. Before, the two periods were rounded separately, via a period truncated to whole
+  nanoseconds, so MARKER drifted off the pulse it marks — e.g. by 5 cycles per marker period
+  at 3 kHz with MARKERDIV 100.
+- **SYNC** is realized with the PIO's 8.8 fixed-point clock divider. The default 1 MHz is
+  exact (divider 75). Other values are reported with their actual average frequency; a
+  fractional divider adds 1-cycle (6.667 ns) edge jitter, which the reply notes.
+
+### Boot and arming
+
+- **The firmware boots DISARMED.** A pre-init hook (`src/laser_gate.cpp`, `.preinit_array`
+  priority 00110) drives GP12/GP13 LOW from SIO right after the SDK's peripheral reset, before
+  clock setup, USB, the Pico 2 W's CYW43 init and `setup()`. They stay LOW until the host sends
+  `ARM` over the Pico's USB serial port. SYNC and MARKER start as soon as `setup()` applies the
+  defaults and keep running while DISARMED.
+- **`ARM`** (exactly that word, no argument) restarts CH1, CH2 and MARKER together, so the
+  first laser pulse is full width and in phase. It replies at once; the pulses begin after a
+  **restart hold-off** of one pulse period (the longer of the old and new periods, ≤ 1 s),
+  measured from when the laser pads last carried pulses. Pulse-setting changes while armed go
+  through the same restart. The hold-off keeps the laser pulse spacing ≥ the set period under
+  any command sequence, so a host looping ARM/DISARM cannot raise the duty. MARKER pauses
+  during it.
+- **`DISARM` can never be refused and takes effect at once.** The six characters `DISARM`
+  (any case) anywhere in the input disarm immediately — mid-line, inside an over-long line,
+  after backspace edits — and cancel a pending start. Lines may end with CR, LF or CRLF, so
+  PuTTY, Tera Term, screen and minicom all work.
+- **J7/J8 pulse only when all three are true:** firmware ARMED, J11 on 1‑2 (hardware
+  interlock), and `LASER_PWR_OK` (12 V rail in regulation).
+- **Watchdog.** A 3 s hardware watchdog, fed only from the main loop, reboots the chip if the
+  firmware hangs; it comes back DISARMED and `STATUS` shows `RESET=WATCHDOG` (and a
+  `WDT_RESETS` count). There is no command that hangs the firmware; to test the watchdog, write
+  `0x80000000` (TRIGGER) to `WATCHDOG_CTRL` (`0x400d8000`) over SWD with the core running (a
+  halted core pauses the watchdog). Replies are written a whole line at a time within a 250 ms
+  budget, and once a host stops reading, later replies stop waiting until it drains again — so a
+  host that stops reading delays a queued DISARM by at most about 250 ms in total and cannot trip
+  the watchdog. Lines that could not be sent are counted in `STATUS` as `TX_DROPPED`.
+- **Host scripts** must now send `ARM` after every reset, and should check `RESET=` in
+  `STATUS` before doing so (require an operator action after `RESET=WATCHDOG`). `STATUS` has
+  more lines than before; parse it by key, not by line count.
+
+**Residual hazards the firmware cannot remove** (both need a reset to land during a laser
+pulse, so the chance per event is at most the duty, ≤ 0.1 %):
+
+- *A reset mid-pulse* (watchdog, `pio run -t upload`'s 1200-baud reboot, RUN button) releases
+  the pad rather than driving it LOW; R17/R18 plus the pad pull-down discharge the node in an
+  estimated 70–150 ns, so that one pulse can end up to ~15 % past WIDTH at the 1 µs maximum.
+  Measure it (scope GP13 while forcing a watchdog reset). If it matters, fit R17/R18 = 2.2 k
+  (τ ≈ 30 ns; 1.5 mA while high, well inside the GPIO's drive) or lower `kLaserMaxWidthNs` by the
+  measured stretch.
+- *A debugger warm reset (SYSRESETREQ)* leaves PIO running while the bootrom latches the pads,
+  so a pad caught HIGH can stay HIGH until the pre-init hook runs — milliseconds. **Before any
+  SWD session or debugger reset: DISARM and open J11 (or unplug J17).** The one deliberate
+  exception is the bench test of Open item 1, done into a 50 Ω scope input with no laser driver
+  connected.
 
 ---
 
@@ -264,8 +338,10 @@ dedicated gate per camera.
 J1–J6 pin 4
 
 J10 selects the trigger source: a shunt on **2‑3** triggers the cameras from the reference
-marker (normal), a shunt on **1‑2** triggers them from every laser CH1 pulse instead. J10.1
-is the CH1 monitor tap. **With no shunt fitted, R9 (10 k) pulls `PWM_TRIG_TAP` low**, so all
+marker (normal), a shunt on **1‑2** triggers them from every laser CH1 pulse instead — which
+exist only while the firmware is ARMED; with the lasers disarmed, 1‑2 gives the cameras no
+trigger (use 2‑3, or ARM with J11 on 2‑3, for camera-only work). J10.1 is the CH1 monitor tap
+and, like TP4, idles LOW while DISARMED. **With no shunt fitted, R9 (10 k) pulls `PWM_TRIG_TAP` low**, so all
 six camera trigger lines idle low rather than following a floating input on ~145 mm of trace
 (the node also runs up to J16.2). 10 k rather than a weaker pull holds U5's 1.8 V input at
 ≤ 0.05 V even at worst-case input leakage, and loads the selected GPIO by only 330 µA.
@@ -363,7 +439,8 @@ J8 output = AND( LASER_EN , CH2 pulse )    -- U8
 | U10.4 | `LASER_EN` | → U7.1, U8.1 |
 
 **Fails safe.** R8 holds U10 pin 1 low when no jumper is fitted on J11, so the default state
-is *disabled*. Fit a shunt on J11 **1‑2** to arm; **2‑3** inhibits. With the 1‑2 shunt fitted
+is *disabled*. Fit a shunt on J11 **1‑2** to enable the hardware interlock (the firmware must
+also be ARMED — see Boot and arming); **2‑3** inhibits. With the 1‑2 shunt fitted
 R2 wins: 5 V × 10/(3.3+10) ≈ **3.76 V**, against U10's (74AHCT1G08) **VIH of 2.0 V** — about
 **1.76 V of margin**. (With the 74LVC1G08 used previously, VIH at VCC = 5 V was
 0.7 × VCC = 3.5 V and the margin only ~260 mV.) AHCT also means an external interlock signal on
@@ -371,6 +448,9 @@ J16.1 can be 3.3 V logic.
 
 The original Teensy design had no pull-down here and defaulted to *armed* with the header
 empty. R8 is the one deliberate behavioural change to the interlock.
+
+The firmware's ARM state acts upstream of U7/U8 (DISARMED holds their pulse inputs LOW), so the
+three gates — firmware ARM, the J11/U10 interlock and U13's power-good enable — are in series.
 
 Disabling forces both BNC centre pins to 0 V: U10 low → U7/U8 outputs low → U13 outputs low.
 U13's ENA/ENB carry only the **power-good** gate (`LASER_PWR_OK`, see Power), not the user
@@ -441,7 +521,8 @@ still go through the Pico's own USB port.
 > which via J10's selector shorts a GPIO straight to ground and silently kills all six camera
 > triggers.
 
-TP3 and TP4 are scope points with a local ground pin. The TRIG and 1 MHz taps feed U5 and U1,
+TP3 and TP4 are scope points with a local ground pin (TP4, like J10.1, idles LOW while the
+firmware is DISARMED). The TRIG and 1 MHz taps feed U5 and U1,
 which run from the 1.8 V rail: external drive there needs **VIH ≥ 1.17 V, VIL ≤ 0.63 V**, and
 the inputs are 5.5 V-tolerant. Note that both taps are normally driven by a Pico GPIO, so an
 external source would fight it — treat them as monitor points.
@@ -454,11 +535,20 @@ external source would fight it — treat them as monitor points.
 
 Ordered by what would bite hardest.
 
-1. **Bench-verify the laser trigger amplitude before connecting a laser driver.** With J17 on a
-   15 V PD charger, check `LASER_PWR_OK` (U13 pins 1/8) is high (~12 V), then scope J7 and J8
-   through a **50 Ω-terminated** input: expect 0 V to 4.55–5.16 V (typically ~4.8 V). Also
-   confirm the outputs stay at 0 V with J17 unplugged and during plug-in. The amplitude budget
-   rests on datasheet corners for U17's two dies and U13's ROH; a measurement closes it.
+1. **Bench-verify the laser outputs before connecting a laser driver.** With J17 on a 15 V PD
+   charger, check `LASER_PWR_OK` (U13 pins 1/8) is high (~12 V). Fit J11 on 1‑2 and send `ARM`,
+   then scope J7 and J8 through a **50 Ω-terminated** input:
+   - amplitude 0 V to 4.55–5.16 V (typically ~4.8 V) — the budget rests on datasheet corners
+     for U17's two dies and U13's ROH, so a measurement closes it;
+   - CH2 rising edge exactly DELAY after CH1 (e.g. `DELAY 10000` → 10.000 µs, `DELAY 13` →
+     13.3 ns), and MARKER staying on the same CH1 pulse for minutes at `FREQ 3000`;
+   - the first pulse after `ARM` full width, and no two CH1 pulses closer than 1/FREQ while a
+     host loops `ARM`/`DISARM` as fast as it can;
+   - J7/J8 at 0 V after `DISARM`, after a reset (RUN button, and a watchdog timeout forced
+     over SWD as described under Boot and arming), and — while ARMED with pulses running — with
+     J17 unplugged and during plug-in;
+   - MARKER staying on the same CH1 pulse at a FREQ whose period is not a whole number of
+     cycles, e.g. `FREQ 7000`.
 2. **Check the charger's PD behaviour.** The CH224K datasheet does not say what it does when
    the charger lacks the requested 15 V. The board is safe either way — U17 keeps the lasers
    disabled below ~11 V — but a small charger may leave them disabled. Measure VBUS_PD (C12)
@@ -492,7 +582,9 @@ keepout.
 | `libs/PiDG_Local.kicad_sym` | Pico 2 W and UCC27524 symbols |
 | `libs/PiDG_Local.pretty/` | `*_EdgeTrim` footprint variants (see below) |
 | `libs/RPi_Pico.pretty/` | official RPi castellated module footprint (unused — board is socketed) |
-| `../src/main.cpp` | firmware |
+| `../src/` | firmware: `board.h` (pin map), `pulse_timing.h` (timing math, laser limits), `pio_pulse.*` (PIO programs), `laser_gate.*` (CH1/CH2 gate, pre-init hook), `protocol.*` (serial commands), `main.cpp` (arming, hold-off, watchdog) |
+| `../platformio.ini` | build config: platform pinned to an exact commit; envs `pico2w` (default) and `pico2` |
+| `../tools/timing_check/` | host check of `pulse_timing.h` against a cycle-level PIO model (see its README) |
 
 **About the `*_EdgeTrim` footprints.** J16 and TP3 overhang the board edge, and J17's face is flush with it, so their stock
 silkscreen outlines run off the board and trip `silk_edge_clearance`. The variants in

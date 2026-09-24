@@ -3,3 +3,9 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
+
+# host timing check (tools/timing_check) build artifacts
+tools/timing_check/harness
+tools/timing_check/harness.exe
+tools/timing_check/*.pdb
+__pycache__/
