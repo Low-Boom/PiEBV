@@ -89,7 +89,7 @@ these in the preview against the board's pin-1 marks and correct the rotation th
 - **Mounting:** 4 × M3 holes on a 114 × 114 mm square, 6 mm in from each edge of the 126 × 126 mm
   board. Copper is kept 3 mm clear of each hole.
 - **Right edge:** the three BNC barrels stand 20.8 mm past the board edge (Laser 1, Laser 2, Pixel
-  reset from top to bottom), for a panel with matching holes. J16's pins also stick out on the
+  reset from top to bottom), for a panel with matching holes. J16's pins stick out 2.1 mm past the
   right edge.
 - **Top edge — two USB ports, labelled on the silkscreen:**
   - **J17 USB-C, `POWER ONLY`**: centred 82 mm from the board's left edge, flush with the top edge,
@@ -98,7 +98,7 @@ these in the preview against the board's pin-1 marks and correct the rotation th
     from the left edge, at the top edge, raised about 13 mm above the board surface on the sockets
     (8.5 mm socket + 2.5 mm header spacer + module). Needs a cut-out at that height; confirm the
     height on the first assembled board.
-  - TP3's pins stick out of the top edge to the left of the Pico.
+  - TP3's pins stick out 2.1 mm past the top edge, to the left of the Pico (the same overhang as J16).
 - **Inside the enclosure, reached from above:**
   - The six camera IDC headers stand vertically between about 17 and 30 mm in from the bottom edge, so the
     ribbons leave upward.

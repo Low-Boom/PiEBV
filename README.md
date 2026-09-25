@@ -110,14 +110,24 @@ firmware) and **`POWER ONLY — USB-C PD 15 V`** (J17).
 | **J17** | USB-C, **power only** (silkscreen `POWER ONLY`) | USB-C PD charger that offers 15 V | No data. Programming and serial always use the Pico's own micro-USB, next to it on the top edge (`CONTROL / PROGRAM`). |
 | **J10** | 1×3 trigger-source jumper | shunt | see [Jumpers](#jumpers) |
 | **J11** | 1×3 laser interlock | shunt, or a normally-closed E-stop switch | see [Jumpers](#jumpers) |
-| **J16** | 1×3 right-angle header, right edge | probes, or an external interlock | 1 ENABLE (pull LOW to inhibit the lasers) · 2 TRIG (camera trigger node) · 3 GND. **Never fit a shunt.** |
+| **J16** | 1×3 right-angle header, right edge | probes, or a secondary interlock | 1 `ENABLE IN` (pull LOW = lasers off) · 2 `TRIG OUT` (camera trigger, monitor only) · 3 GND. **Never fit a shunt.** |
 | **TP3** | 1×2 right-angle header, top edge | scope | 1 = 1 MHz sync straight from the Pico (3.3 V) · 2 = GND |
 | **TP4** | 1×2 header next to J10, `CH2` / `GND` | scope only | 1 = CH2 pulse straight from the Pico (3.3 V, idles LOW while DISARMED) · 2 = GND |
 
-**External interlock on J16.** J16 pin 1 (ENABLE) is pulled up to 5 V on the board. Pulling it LOW,
-with a switch or open-collector output to pin 3 or with a 3.3 V or 5 V logic low, disables both
-laser outputs. Note that this input is *enabled when open*, so a broken interlock cable leaves the
-lasers enabled. J11 is the fail-safe interlock.
+**J16 — interlock input and trigger monitor.** The silkscreen beside it reads, pin by pin,
+`ENABLE IN: PULL LOW = LASERS OFF`, `TRIG OUT: CAMERA TRIGGER (MONITOR)` and `GND`, with
+`J16: NEVER FIT A SHUNT` and `NOT FAIL-SAFE - PUT THE E-STOP ON J11` below.
+- **Pin 1, ENABLE IN:** pulled up to 5 V on the board (3.3 kΩ). Pulling it LOW, with a switch or
+  open-collector output to pin 3 or with a 3.3 V or 5 V logic low (sinking about 1.5 mA), forces
+  both laser outputs off. It is *enabled when open*, so a broken cable leaves the lasers enabled:
+  use it for a secondary inhibit (a door switch, a control system's logic line), and put the E-stop
+  on J11.
+- **Pin 2, TRIG OUT:** the camera trigger that J10 selected (the marker, or every Laser 1 pulse),
+  3.3 V logic, as it enters the camera trigger buffers. It is driven by a Pico output, so probe it;
+  don't drive it.
+- **Pin 3:** ground.
+- **Never fit a shunt:** on 2-3 it grounds a Pico output and kills all camera triggers; on 1-2 it
+  ties the laser enable to the trigger.
 
 ### Jumpers
 

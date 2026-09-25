@@ -548,6 +548,10 @@ still go through the Pico's own USB port.
 > open* (R3 pulls it up), so a broken interlock cable leaves the lasers enabled — J11 remains the
 > fail-safe interlock.
 >
+> The silkscreen beside J16 spells this out pin by pin: `ENABLE IN: PULL LOW = LASERS OFF`,
+> `TRIG OUT: CAMERA TRIGGER (MONITOR)`, `GND`, then `J16: NEVER FIT A SHUNT` and
+> `NOT FAIL-SAFE - PUT THE E-STOP ON J11`. J16's and TP3's pins both overhang their edges by 2.1 mm.
+>
 > **Never fit a shunt on J16.** A shunt on pins 2‑3 grounds `PWM_TRIG_TAP`,
 > which via J10's selector shorts a GPIO straight to ground and silently kills all six camera
 > triggers.
