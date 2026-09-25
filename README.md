@@ -1,8 +1,8 @@
 # PiDG
 
 A Raspberry Pi Pico 2 W–based digital delay generator and event-camera synchroniser for
-particle image velocimetry (PIV). It fires two laser drivers with a precisely set delay
-between them, and keeps six event cameras synchronised to the same clock.
+particle velocimetry. It fires two laser (or LED/LEP) drivers with a precisely set delay
+between them, and keeps upto six event cameras synchronised to the same clock.
 
 > **Status.** The current board (`Pico Version 4Layer/`) has not been fabricated yet. The
 > firmware builds cleanly and its timing has been checked cycle-for-cycle in simulation, but
@@ -38,7 +38,7 @@ The target equipment is two **PicoLas LDP-V** laser-diode drivers (10-70 and 240
 
 ---
 
-## Safety — read this first
+## Safety
 
 - **The laser outputs start DISARMED** at every power-up and every reset. They only pulse after
   you send `ARM`.
@@ -61,14 +61,24 @@ The target equipment is two **PicoLas LDP-V** laser-diode drivers (10-70 and 240
 - **J7 and J8 are for 50 Ω loads only.** Into 50 Ω they give 0 V / about 4.8 V (4.55–5.16 V
   worst case), which is what the LDP-V wants. Unterminated, or into a 1 MΩ scope input, they
   swing to about **12 V**.
+- **One laser driver per output — never use a BNC tee.** Each output is built to drive exactly one
+  50 Ω input. Simulated, with 1–2 m of coax:
+  - J7 and J8 tied together into one driver: each pulse reaches only **3.4 V** (the idle output
+    sinks half of it), below the LDP-V's 4.5 V minimum, so the driver fires badly. Where the pulses
+    overlap (DELAY shorter than WIDTH, e.g. `DELAY 0`) both outputs push together and the input sees
+    **6.9 V**, above its 5.2 V damage threshold.
+  - One output split to two drivers: each sees **3.0 V**, too low for either.
+  - The PiDG itself survives both (about 1 mW average in R6/R7 at the 0.1 % duty limit).
 - **Before any debugger (SWD) session: send `DISARM` and remove the J11 shunt** (or unplug J17).
   A debugger reset can leave a laser output high for milliseconds.
 - **Before uploading new firmware, send `DISARM`.** The upload reboots the Pico. A reboot that lands
   in the middle of a pulse can stretch that one pulse by an estimated 70–150 ns (about 15 % at the
   1 µs maximum width).
-- **Leave camera harness pins 1, 6 and 8 unconnected.** Pin 1 is the camera's 1.8 V output and
-  pin 8 its USB 5 V, so a harness that grounds either shorts a camera supply. Pin 6 is undocumented;
-  do not assume it is a ground.
+- **Camera pins 1, 6 and 8 are not connected on the board.** Header pins 1, 6, 8, 9 and 10 of J1–J6
+  are bare plated holes with no copper to anything, so a 1:1 ribbon cannot short the camera's own
+  supplies (pin 1 is its 1.8 V output, pin 8 its USB 5 V) at the board. The remaining risk is in the
+  harness: build it with only wires 2, 3, 4, 5 and 7 fitted (or cut 1, 6 and 8), and never tie
+  pin 1 or 8 to a ground wire. Pin 6 is undocumented; do not assume it is a ground.
 - **Set every camera to sync slave.** The board drives the sync pin, so a camera set as sync master
   would fight it.
 - **Never fit a shunt on J16**, and never fit one across all three pins of J10.

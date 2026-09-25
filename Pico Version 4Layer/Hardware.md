@@ -432,7 +432,11 @@ assumes a 50 Ω termination at the driver; a load 1 % high adds ~0.6 %. With 1 %
 resistors the corners fall outside the window, which is why R12/R13 are 0.1 %.
 
 > **The laser BNCs are for 50 Ω loads only.** Open-circuit, or into a high-impedance scope
-> input, the output rises to ~12 V (the source is ~75 Ω). PicoLas's acceptance test applies:
+> input, the output rises to ~12 V (the source is ~75 Ω). **One driver per output — no BNC
+> tees.** A transmission-line simulation (scratch `tee_sim.py`, typ. corners) gives: J7 and J8
+> tied into one 50 Ω input → 3.4 V per pulse (the idle channel's 70 Ω sinks half), and 6.9 V where
+> the pulses overlap (DELAY < WIDTH), above the LDP-V's 5.2 V damage limit; one output teed to two
+> drivers → 3.0 V each. The PiDG survives either (R6/R7 dissipate ~1 mW average at 0.1 % duty). PicoLas's acceptance test applies:
 > a scope with **50 Ω input termination** must read 0 to ~4.9 V. The LDP-V absolute maximum on
 > its trigger input is 15 V, so an unterminated reflection cannot exceed it.
 
@@ -516,9 +520,11 @@ by U2/U4/U6 on the 1.8 V rail. Delivered levels: VOH ≥ 1.5 V and VOL ≤ 0.2 V
 temperature, against a 1.8 V CMOS receiver's typical VIH of ~1.17–1.26 V and VIL of ~0.63 V.
 IDS does not publish the camera's own thresholds or input pull, so confirm on the bench.
 
-> **Leave pins 1, 6 and 8 unconnected.** Pin 8 is the camera's USB 5 V and pin 1 its 1.8 V
-> output — grounding either through a straight-through harness shorts a camera supply. Pin 6
-> is undocumented; do not assume it is a ground.
+> **Pins 1, 6 and 8 are unconnected on the board** (so are 9 and 10): bare plated holes with no
+> copper to any net, so the board can never short the camera's own supplies — pin 8 is its USB 5 V
+> and pin 1 its 1.8 V output. The only remaining risk is a harness that ties pin 1 or 8 to a ground
+> wire; build it with only wires 2, 3, 4, 5 and 7. Pin 6 is undocumented; do not assume it is a
+> ground.
 >
 > **Configure every camera as a sync *slave*.** The IMX636's SYNC pad is bidirectional (it
 > drives when the sensor is master), and the board drives pin 5 push-pull. A camera left in
