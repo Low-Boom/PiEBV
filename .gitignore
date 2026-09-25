@@ -9,3 +9,7 @@ tools/timing_check/harness
 tools/timing_check/harness.exe
 tools/timing_check/*.pdb
 __pycache__/
+
+# KiCad: per-project local history (KiCad's own git repo) and open-file lock files
+.history/
+*.lck
