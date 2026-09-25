@@ -13,3 +13,10 @@ __pycache__/
 # KiCad: per-project local history (KiCad's own git repo) and open-file lock files
 .history/
 *.lck
+
+# Backups: KiCad MCP server snapshots, KiCad's own project backups / autosaves, editor backups
+.mcp-backups/
+*-backups/
+_autosave-*
+*-bak
+*.bak
