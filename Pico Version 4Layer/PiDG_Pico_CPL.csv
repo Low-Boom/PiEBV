@@ -32,7 +32,7 @@ Ref,Val,Package,PosX,PosY,Rot,Side
 "J12","Pixel Reset","BNC_Amphenol_B6252HB-NPP3G-50_Horizontal",245.000000,-120.650000,-90.000000,top
 "J14","Pico Socket A","PinSocket_1x20_P2.54mm_Vertical",160.015000,-32.385000,0.000000,top
 "J15","Pico Socket B","PinSocket_1x20_P2.54mm_Vertical",177.795000,-32.385000,0.000000,top
-"J16","Laser En/PWM Trig/GND","PinHeader_1x03_P2.54mm_Horizontal",250.000000,-55.000000,0.000000,top
+"J16","Laser En/PWM Trig/GND","PinHeader_1x03_P2.54mm_Horizontal",187.800000,-38.000000,90.000000,top
 "J17","USB-C PD in","USB_C_Receptacle_HRO_TYPE-C-31-M-12",214.000000,-33.650000,180.000000,top
 "L1","4.7uH","L_Cenker_CKCS4030",231.200000,-44.000000,0.000000,top
 "R2","3k3","R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",183.000000,-73.500000,0.000000,top

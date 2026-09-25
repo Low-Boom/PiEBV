@@ -56,7 +56,7 @@
 "NOTE","C9, C10, C17 see 12 V; C12, C16 see up to 20 V","Use >= 25 V parts for C9/C10/C17 and >= 50 V for C12/C16 (X7R). C12 is the only large cap on VBUS_PD: keep total VBUS capacitance near the USB-C 10 uF sink limit.","","",""
 "NOTE","U16 CE is tied to its VOUT (+5V)","That is TI's always-on reverse-blocking connection. With CE grounded the LM66100 does NOT block reverse current.","","",""
 "NOTE","R17/R18 hold the laser pulse inputs low when the Pico is removed","J17 can power the board with no Pico fitted; without these, U7/U8 inputs would float and an armed interlock could pass spurious laser triggers.","","",""
-"NOTE","R19 (100 ohm) isolates J10 pin 1 from the CH1 laser pulse","With J10 on 1-2 the CH1 GPIO would otherwise also drive the ~150 mm PWM_TRIG_TAP net and arrive 0.4-1.7 ns later than CH2. Do not replace with 0 ohm.","","",""
+"NOTE","R19 (100 ohm) isolates J10 pin 1 from the CH1 laser pulse","With J10 on 1-2 the CH1 GPIO would otherwise also drive the ~120 mm PWM_TRIG_TAP net and arrive 0.4-1.7 ns later than CH2. Do not replace with 0 ohm.","","",""
 "NOTE","C14/C15 must keep >= 10 uF each at 5 V DC bias","22 uF 10 V 0805 X5R parts typically keep only 40-50 % at 5 V; 25 V-rated parts keep more. Check the chosen part's DC-bias curve.","","",""
 "NOTE","C9 (0.1 uF, 50 V) is U13's local VDD bypass","It sits right beside U13 pin 6 with its own GND via; keep it populated and next to the driver.","","",""
 "NOTE","R6/R7 are 2 W 2512 parts (68 ohm 1 %)","An output high into 50 ohm dissipates 0.66 W in its resistor (1.4 W at the firmware's worst duty into a shorted BNC). Do not substitute a smaller package.","","",""

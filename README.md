@@ -106,9 +106,9 @@ labelled on the silkscreen: **`CONTROL / PROGRAM — PICO MICRO-USB`** (data: se
 firmware) and **`POWER ONLY — USB-C PD 15 V`** (J17).
 
 ```
- top edge:  TP3   Pico micro-USB = CONTROL          J17 USB-C = POWER ONLY
+ top edge:  TP3   Pico micro-USB = CONTROL   J16   J17 USB-C = POWER ONLY
            +------------+--------+----------------------------------------+
-           |            |  Pico  |                                   J16 =|  ENABLE/TRIG/GND
+           |            |  Pico  |  (J16 = ENABLE / TRIG / GND)            |
            |            |  2 W   |       J11 (laser enable)                |
            |            | in J14 |                                     J7 =|  Laser 1  (BNC)
            |            | / J15  |      TP4     J10 (trigger select)       |
@@ -129,13 +129,14 @@ firmware) and **`POWER ONLY — USB-C PD 15 V`** (J17).
 | **J17** | USB-C, **power only** (silkscreen `POWER ONLY`) | USB-C PD charger that offers 15 V | No data. Programming and serial always use the Pico's own micro-USB, next to it on the top edge (`CONTROL / PROGRAM`). |
 | **J10** | 1×3 trigger-source jumper | shunt | see [Jumpers](#jumpers) |
 | **J11** | 1×3 laser interlock | shunt, or a normally-closed E-stop switch | see [Jumpers](#jumpers) |
-| **J16** | 1×3 right-angle header, right edge | probes, or a secondary interlock | 1 `ENABLE IN` (pull LOW = lasers off) · 2 `TRIG OUT` (camera trigger, monitor only) · 3 GND. **Never fit a shunt.** |
+| **J16** | 1×3 right-angle header, top edge between the Pico and J17 | probes, or a secondary interlock | 1 `ENABLE IN` (pull LOW = lasers off) · 2 `TRIG OUT` (camera trigger, monitor only) · 3 GND. **Never fit a shunt.** |
 | **TP3** | 1×2 right-angle header, top edge | scope | 1 = 1 MHz sync straight from the Pico (3.3 V) · 2 = GND |
 | **TP4** | 1×2 header left of J10, `CH2` / `GND` | scope only | 1 = CH2 pulse straight from the Pico (3.3 V, idles LOW while DISARMED) · 2 = GND |
 
-**J16 — interlock input and trigger monitor.** The silkscreen beside it reads, pin by pin,
-`ENABLE IN: PULL LOW = LASERS OFF`, `TRIG OUT: CAMERA TRIGGER (MONITOR)` and `GND`, with
-`J16: NEVER FIT A SHUNT` and `NOT FAIL-SAFE - PUT THE E-STOP ON J11` below.
+**J16 — interlock input and trigger monitor.** On the top edge between the Pico and J17, pins
+pointing off the board. The silkscreen reads `EN` `TRIG` `GND` under the pins, with
+`J16: NEVER FIT A SHUNT`, `EN IN: PULL LOW = LASERS OFF`, `TRIG OUT: CAMERA TRIGGER (MONITOR)`
+and `NOT FAIL-SAFE: E-STOP ON J11` below.
 - **Pin 1, ENABLE IN:** pulled up to 5 V on the board (3.3 kΩ). Pulling it LOW, with a switch or
   open-collector output to pin 3 or with a 3.3 V or 5 V logic low (sinking about 1.5 mA), forces
   both laser outputs off. It is *enabled when open*, so a broken cable leaves the lasers enabled:
