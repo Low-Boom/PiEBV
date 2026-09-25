@@ -30,7 +30,8 @@ between them, and keeps upto six event cameras synchronised to the same clock.
 - CH1 and CH2 share one pulse `WIDTH` and one repetition rate `FREQ`.
 - Every time is set in whole steps of **6.667 ns** (one cycle of the 150 MHz clock). Every reply shows the
   exact timing the hardware will produce, so you never have to correct for the step size.
-- The firmware enforces the laser drivers' limits: pulse width ≤ 1000 ns and duty ≤ 0.1 %.
+- The firmware imposes **no laser-driver limits** (pulse width, duty, spacing): set what your driver
+  is rated for. It only keeps the pulses physically separate: `DELAY` ≤ 1/FREQ − 2 × `WIDTH`.
 - Control is a plain-text command line over the Pico's USB serial port.
 
 The target equipment is two **PicoLas LDP-V** laser-diode drivers (10-70 and 240-100) and six
@@ -68,16 +69,16 @@ The target equipment is two **PicoLas LDP-V** laser-diode drivers (10-70 and 240
     overlap (DELAY shorter than WIDTH, e.g. `DELAY 0`) both outputs push together and the input sees
     **6.9 V**, above its 5.2 V damage threshold.
   - One output split to two drivers: each sees **3.0 V**, too low for either.
-  - The PiDG itself survives both (about 1 mW average in R6/R7 at the 0.1 % duty limit).
+  - The PiDG itself survives both at low duty (see the output rating below).
 
   To fire **one light source with both pulses**, or **two sources in sync with the same double
   pulse**, use `COMBINE 1` instead (see [Combined mode](#combined-mode-combine)): each output then
   carries both pulses, one driver per output.
+- **Board output rating (not enforced by the firmware).** R6/R7 are 0.125 W 0805 resistors. While an output is high into 50 Ω it dissipates about 0.65 W in its resistor, so keep each output's duty (WIDTH × FREQ, twice that with `COMBINE 1`) below about **19 %**. Both outputs high at once draw about 190 mA from the 12 V regulator (U17, rated 100 mA); its 10 µF reservoir covers short pulses (about 10–20 mV of sag per µs), but long simultaneous pulses sag the amplitude and can trip the power-good gate, which switches the outputs off.
 - **Before any debugger (SWD) session: send `DISARM` and remove the J11 shunt** (or unplug J17).
   A debugger reset can leave a laser output high for milliseconds.
 - **Before uploading new firmware, send `DISARM`.** The upload reboots the Pico. A reboot that lands
-  in the middle of a pulse can stretch that one pulse by an estimated 70–150 ns (about 15 % at the
-  1 µs maximum width).
+  in the middle of a pulse can stretch that one pulse by an estimated 70–150 ns.
 - **Camera pins 1, 6 and 8 are not connected on the board.** Header pins 1, 6, 8, 9 and 10 of J1–J6
   are bare plated holes with no copper to anything, so a 1:1 ribbon cannot short the camera's own
   supplies (pin 1 is its 1.8 V output, pin 8 its USB 5 V) at the board. The remaining risk is in the
@@ -349,7 +350,7 @@ try:
     for c in ("WIDTH 100", "DELAY 10000", "FREQ 15"):
         reply = cmd(c)
         if not reply.startswith("OK "):
-            raise RuntimeError(reply)                # e.g. "ERR FREQ rejected: laser limit: ..."
+            raise RuntimeError(reply)                # e.g. "ERR DELAY rejected: DELAY must leave ..."
     print(cmd("ARM"))                                # pulses start after <= 1 s hold-off
     ...                                              # acquire
 finally:
@@ -402,11 +403,11 @@ needed. Until then, use USB.
 
 | Command | Unit | Default | Range (150 MHz clock) | What it sets |
 |---|---|---|---|---|
-| `FREQ [n]` | Hz | 1000 | 1 up to the duty limit: 10 000 at WIDTH 100, 50 000 at the 20 ns minimum width | Pulse-pair repetition rate |
-| `WIDTH [n]` | ns | 100 | 17 … 1003 (realizes to 20.000 … 1000.000 ns), and WIDTH × FREQ ≤ 0.1 % | Width of both CH1 and CH2 pulses |
-| `DELAY [n]` | ns | 10000 | 0 up to period − WIDTH − 5 cycles (33.3 ns); the error message gives the exact maximum | CH2 rising edge after CH1 rising edge. `0` makes them coincide. |
+| `FREQ [n]` | Hz | 1000 | 1 up to where 2 × WIDTH + DELAY still fits in 1/FREQ | Pulse-pair repetition rate |
+| `WIDTH [n]` | ns | 100 | ≥ 17 (realizes to ≥ 20.000 ns), and 2 × WIDTH + DELAY ≤ 1/FREQ. No upper limit. | Width of both CH1 and CH2 pulses |
+| `DELAY [n]` | ns | 10000 | 0 up to 1/FREQ − 2 × WIDTH, so pulse pairs stay separated (with `COMBINE 1`, more than WIDTH); the error message gives the exact limit | CH2 rising edge after CH1 rising edge. `0` makes them coincide. |
 | `MARKERDIV [n]` | count | 100 | ≥ 1, and MARKERDIV × period ≤ 2³²−1 cycles (about 28.6 s) | Marker fires once every *n* pulse pairs |
-| `MARKERWIDTH [n]` | ns | 2000 | 17 up to the marker period − 5 cycles | Marker pulse width (no laser limit) |
+| `MARKERWIDTH [n]` | ns | 2000 | 17 up to the marker period − 5 cycles | Marker pulse width |
 | `SYNC [n]` | Hz | 1000000 | 1145 … 75 000 000 | Camera sync clock frequency (free-running square wave) |
 | `COMBINE [n]` | 0 / 1 | 0 | 0 or 1; change only while DISARMED | 0: CH1 → Laser 1, CH2 → Laser 2. 1: **both** pulses on **both** outputs ([details](#combined-mode-combine)) |
 | `ARM` | – | disarmed | exactly `ARM`, no argument | Enable the laser outputs |
@@ -472,13 +473,13 @@ COMBINE 0   ->  OK COMBINE=0 (CH1 on LASER 1, CH2 on LASER 2)
 
 - **Change it only while DISARMED.** While armed the reply is
   `ERR COMBINE rejected: DISARM first: COMBINE changes what both laser outputs carry`.
-- **The laser limits count both pulses**, because each driver now receives two per period:
-  - duty: 2 × WIDTH × FREQ ≤ 0.1 % (at WIDTH 100 ns the maximum FREQ halves to 5 kHz);
-  - spacing: **no minimum** beyond keeping the two pulses apart. `DELAY` must exceed `WIDTH` by at
-    least one PIO clock cycle (6.667 ns), e.g. `DELAY` ≥ 106.667 ns at `WIDTH 100`. At exactly
-    `DELAY` = `WIDTH` the second pulse would start on the cycle the first ends, and the two would
-    fuse into one pulse of twice the width. Check your own laser driver's minimum pulse spacing —
-    the firmware does not impose one.
+- **No spacing limit** beyond keeping the pulses apart:
+  - `DELAY` must exceed `WIDTH` by at least one PIO clock cycle (6.667 ns), e.g. `DELAY` ≥ 106.667 ns
+    at `WIDTH 100`. At exactly `DELAY` = `WIDTH` the second pulse would start on the cycle the first
+    ends, and the two would fuse into one pulse of twice the width.
+  - `DELAY` ≤ 1/FREQ − 2 × `WIDTH` (as in the normal mode), so each pair is separated from the next.
+  - Each driver now receives two pulses per period: check its own spacing and duty ratings — the
+    firmware does not impose any.
 - The timing is the same cycle-exact timing as the normal mode: the CH1 and CH2 state machines each
   drive both laser pins.
 - The monitor points follow: TP4 and J10 pin 1 both show the double pulse, and with J10 on 1-2 the
@@ -503,13 +504,14 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
 - **The marker** rises together with a CH1 pulse, and its period is exactly `MARKERDIV` × the CH1
   period, so it never drifts off the pulse it marks.
 - **SYNC** is independent of the laser timing.
-- **Laser limits** (PicoLas LDP-V 10-70, the stricter of the two drivers): realized WIDTH ≤ 1000 ns, and
-  WIDTH × FREQ ≤ 0.1 %. Requests that would exceed them are rejected, not clamped, and the error tells
-  you the highest FREQ allowed at the current WIDTH. To change the limits for other drivers, edit
-  `kLaserMaxWidthNs` / `kLaserMaxDutyPpm` in `src/pulse_timing.h`. With `COMBINE 1` the duty counts
-  both pulses and `DELAY` must exceed `WIDTH` ([Combined mode](#combined-mode-combine)).
-- **Minimum width** is 3 cycles (20.000 ns) for WIDTH and MARKERWIDTH. The LDP-V 240-100's own 60 ns
-  minimum is not enforced; shorter pulses simply under-drive it.
+- **No laser-driver limits.** Pulse width, duty and spacing are not limited by the firmware — they
+  depend on the attached driver, so set values within its ratings. What is enforced is only what
+  keeps the waveform correct:
+  - **pulse pairs stay separated:** `DELAY` ≤ 1/FREQ − 2 × `WIDTH`, i.e. CH2 ends at least one
+    `WIDTH` before the next pair's CH1 starts (this also caps `WIDTH` at half the period);
+  - **minimum width** of 3 cycles (20.000 ns) for WIDTH and MARKERWIDTH;
+  - with `COMBINE 1`, `DELAY` > `WIDTH` ([Combined mode](#combined-mode-combine)).
+- **Board output rating:** keep each output's duty below about 19 % into 50 Ω (see Safety).
 - **Low frequencies:** with MARKERDIV at 100 the lowest FREQ is 4 Hz. Lower MARKERDIV first (to ≤ 28
   for 1 Hz).
 - **Hardware delays:** the laser driver stage adds about 13–25 ns, common to both channels, so the
@@ -525,10 +527,10 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
 | `ERR ARM takes no argument` | Anything after `ARM` |
 | `ERR line too long` | More than 95 characters; the whole line is ignored |
 | `ERR <NAME> rejected: value must be > 0` | FREQ, MARKERDIV or SYNC set to 0 |
-| `ERR <NAME> rejected: laser limit: realized WIDTH … ns > 1000 ns` | WIDTH over 1 µs |
-| `ERR <NAME> rejected: laser limit: duty … ppm > 1000 ppm (max FREQ N Hz at this WIDTH)` | WIDTH × FREQ over 0.1 % |
 | `ERR <NAME> rejected: WIDTH realizes below the 3-cycle minimum (20.000 ns)` | WIDTH ≤ 16 ns (same for MARKERWIDTH) |
-| `ERR <NAME> rejected: DELAY + WIDTH does not fit in the period; max DELAY … ns` | DELAY too long for the period |
+| `ERR <NAME> rejected: DELAY must leave >= WIDTH before the next pulse pair (DELAY <= 1/FREQ - 2 x WIDTH); max DELAY … ns` | DELAY too long for the period at this WIDTH |
+| `ERR <NAME> rejected: WIDTH too long for the period: 2 x WIDTH must fit in 1/FREQ` | WIDTH over half the period |
+| `ERR <NAME> rejected: COMBINE needs DELAY > WIDTH so the two pulses stay separate (min DELAY … ns)` | With `COMBINE 1`, DELAY not above WIDTH |
 | `ERR <NAME> rejected: MARKERWIDTH does not fit in the marker period` | MARKERWIDTH too long |
 | `ERR <NAME> rejected: marker period (MARKERDIV x period) is over 2^32-1 PIO cycles` | Low FREQ with a large MARKERDIV |
 | `ERR <NAME> rejected: FREQ out of range` | FREQ above 300 MHz |
@@ -584,7 +586,7 @@ TX_DROPPED=0
 | Commands work but no replies arrive | The terminal is not asserting DTR | Enable DTR in the terminal settings |
 | The port vanishes and an `RP2350` drive appears | The port was opened at 1200 baud (reboot-to-bootloader) | Use any other baud rate. Copy `firmware.uf2` to the drive, or unplug both J17 and the Pico's USB. |
 | `ERR … unknown command` for everything | A typo, the `FREQ?` form, old Teensy-style `6,cmd;` framing, or XON/XOFF flow control | Use bare names; set flow control to None |
-| `ERR … rejected: laser limit: duty …` | WIDTH × FREQ over 0.1 % | Shorten WIDTH first, or use the max FREQ the message gives |
+| `ERR … rejected: DELAY must leave >= WIDTH …` | DELAY + 2 × WIDTH longer than 1/FREQ | Shorten DELAY or WIDTH, or lower FREQ; the message gives the max DELAY |
 | `ERR … marker period …` at low FREQ | MARKERDIV × period too long | Lower MARKERDIV first (≤ 28 for 1 Hz) |
 | `ERR ARM …`, or `HW=ERR …` in STATUS | The pulse hardware did not start | Re-flash the firmware; if it persists, report the `STATUS` output |
 | `ARMED=1` but no laser pulses | J11 not on 1-2; J16 ENABLE pulled low; J17 unplugged or the charger isn't giving 15 V; still in the hold-off (`START_PENDING_US` > 0) | Check each gate. Measure `VBUS_PD` at C12 (about 15 V). |
@@ -628,7 +630,7 @@ depend on the CPU.
 ### Timing checks
 
 `tools/timing_check/` verifies the timing arithmetic in `src/pulse_timing.h` cycle for cycle against an
-independent model of the PIO hardware. Run it after changing `pulse_timing.h` or the laser limits:
+independent model of the PIO hardware. Run it after changing `pulse_timing.h`:
 
 ```
 cd tools/timing_check
@@ -649,7 +651,7 @@ a scope check on the board.
 
 | Path | Contents |
 |---|---|
-| `src/` | Firmware: `main.cpp` (setup, arming, watchdog), `protocol.*` (serial commands), `pulse_timing.h` (timing maths and laser limits), `pio_pulse.*` (PIO programs), `laser_gate.*` (laser output gate), `board.h` (pin map) |
+| `src/` | Firmware: `main.cpp` (setup, arming, watchdog), `protocol.*` (serial commands), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `laser_gate.*` (laser output gate), `board.h` (pin map) |
 | `platformio.ini` | Build configuration (pinned platform; `pico2w` and `pico2` environments) |
 | `tools/pidg_example.py` | Python host example |
 | `tools/timing_check/` | Host-side timing verification |

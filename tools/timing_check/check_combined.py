@@ -1,8 +1,8 @@
 """COMBINE 1: both laser outputs carry CH1's pulse and CH2's pulse.
 
 1. Every accept/reject decision of the real src/pulse_timing.h (through the harness)
-   matches an exact-rational model of the COMBINE limits: duty counts 2 pulses per
-   period, and DELAY >= WIDTH + 1 cycle (the pulses must not touch; no other spacing rule).
+   matches an exact-rational model of the COMBINE rules: DELAY >= WIDTH + 1 cycle
+   (the pulses must not touch) and DELAY + WIDTH fits in the period. No driver limits.
 2. For every accepted set, CH1 and CH2 run the dual-pin program (SET PINS,3) in the
    PIO model on the shared latch of the two laser pins, and BOTH pins show, every
    period: a pulse of WIDTH at CH1's rise, a pulse of WIDTH exactly DELAY later, and
@@ -31,7 +31,7 @@ for clk in clks:
     for _ in range(300):
         f = random.choice([1, 10, 100, 1000, 2000, 5000, 9999, 10000, 20000, 25000, 49999, 50000, 60000,
                            random.randint(1, 60000)])
-        w = random.choice([17, 20, 50, 100, 500, 1000, 1003, 1004, random.randint(0, 1100)])
+        w = random.choice([17, 20, 50, 100, 500, 1000, 1004, 5000, 20000, random.randint(0, 1100), random.randint(1000, 60000)])
         P = rnd(F(clk, f))
         per_ns = int(P * F(10**9, clk))
         wn = int(rnd(F(w * clk, 10**9)) * F(10**9, clk))  # realized width in ns (approx.)
@@ -49,9 +49,8 @@ for c, line in zip(cases, out):
     P = rnd(F(clk, f)); Pm = P * md
     W = rnd(F(w * clk, 10**9)); D = rnd(F(d * clk, 10**9)); MW = rnd(F(mw * clk, 10**9))
     ok = (1 <= P <= 0xFFFFFFFF and Pm <= 0xFFFFFFFF and W >= 3 and MW >= 3 and
-          F(W * 10**9, clk) <= 1000 and F(2 * W, P) <= F(1, 1000) and
           D >= W + 1 and
-          D + W + 5 <= P and MW + 5 <= Pm)
+          D + W + 5 <= P and D + 2 * W <= P and MW + 5 <= Pm)
     if line.startswith("ERR"):
         nrej += 1
         if ok:

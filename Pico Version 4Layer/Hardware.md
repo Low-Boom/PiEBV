@@ -141,42 +141,33 @@ their pads only while ARMED; otherwise `src/laser_gate.cpp` drives them LOW.
 These constants and the schematic have drifted apart once before, which made the whole board
 look inert. `src/board.h` now carries this table as a comment block; keep both in step.
 
-### Laser safety limits
+### Timing limits
 
 The firmware (`realizeTiming()` in `src/pulse_timing.h`) re-validates the whole parameter set
-on every command and rejects any change whose **realized** timing would exceed the drivers'
-ratings. CH1 and CH2 share one pulse width, so the tightest driver governs the maximum width
-and the duty:
+on every command, on the **realized** values (after rounding to whole 6.667 ns PIO cycles). It
+imposes **no laser-driver ratings** — pulse width, duty and pulse spacing depend on the attached
+driver (the PicoLas LDP-V datasheets were only the reference for the electrical interface), so set
+values within your driver's ratings. The checks are the ones that keep the waveform correct:
 
-| Driver | Pulse width | Max duty |
-|---|---|---|
-| PicoLas LDP-V 10-70 | 10 ns – 1 µs | **0.1 %** ← governs |
-| PicoLas LDP-V 240-100 | 60 ns – >1 µs | 7.5 % |
+- **Pulse pairs stay separated:** `DELAY ≤ 1/FREQ − 2 × WIDTH`, so CH2 ends at least one WIDTH
+  before the next pair's CH1 rises. That also caps WIDTH at half the period.
+- **Minimum width:** WIDTH and MARKERWIDTH realize to ≥ 3 cycles (≤ 16 ns is **rejected**, not
+  clamped; the shortest pulse is 20.000 ns). The program itself needs `DELAY ≤ 1/FREQ − WIDTH − 5
+  cycles`, which binds only at 3–4-cycle widths.
+- The marker period (MARKERDIV × period ≤ 2³² − 1 cycles) and the SYNC divider range.
 
-Enforced on the realized values, i.e. after rounding to whole PIO cycles (6.667 ns at 150 MHz):
-`WIDTH ≤ 1000 ns` and `WIDTH × FREQ ≤ 0.1 %` (`kLaserMaxWidthNs`, `kLaserMaxDutyPpm` in
-`src/pulse_timing.h`). WIDTH 1003 is accepted (150 cycles = 1000.000 ns); 1004 is rejected
-(151 cycles = 1006.667 ns). A duty rejection names the highest FREQ that would pass. The
-default width is **100 ns** — inside both drivers' ranges. Edit the constants if the attached
-drivers change.
-
-Widths that realize below the pulse program's 3-cycle minimum (WIDTH or MARKERWIDTH ≤ 16 ns
-at 150 MHz) are **rejected**, not clamped; the shortest pulse is 20.000 ns. (An earlier
-firmware clamped them up, which let `WIDTH 0` slip past the duty check while still producing
-20 ns pulses.) The 240-100's 60 ns minimum is a performance limit and is not enforced:
-WIDTH 17–56 realizes to 20.000–53.333 ns and only under-drives that driver.
+**Board output rating (not enforced by the firmware).** R6/R7 are 0.125 W 0805 resistors. While an output is high into 50 Ω it dissipates about 0.65 W in its resistor, so keep each output's duty (WIDTH × FREQ, twice that with `COMBINE 1`) below about **19 %**. Both outputs high at once draw about 190 mA from the 12 V regulator (U17, rated 100 mA); its 10 µF reservoir covers short pulses (about 10–20 mV of sag per µs), but long simultaneous pulses sag the amplitude and can trip the power-good gate, which switches the outputs off.
 
 **Combined mode (`COMBINE 1`).** Both pulses of every pair go to **both** laser outputs, for one
 light source producing both PIV pulses, or two sources fired in sync with the same double pulse.
 The CH1 and CH2 state machines then each run a dual-pin copy of the pulse program (`SET PINS, 3`
 on GP12–GP13; identical cycle timing), and the shared PIO output latch makes each laser pin carry
 CH1's pulse and then CH2's, exactly DELAY later (checked cycle-exact in
-`tools/timing_check/check_combined.py`). Each driver then sees two pulses per period, so the duty
-check counts both (`2 × WIDTH × FREQ ≤ 0.1 %`). There is deliberately **no minimum pulse spacing**
-(it depends on the attached driver, so check its datasheet): the only rule is that the pulses stay
-separate on the shared pins, `DELAY ≥ WIDTH + 1 PIO cycle` (6.667 ns). At `DELAY = WIDTH`, CH2 rises
-on the cycle CH1 falls, the higher-numbered state machine wins the latch, and the two pulses fuse
-into one of 2 × WIDTH — past the 1 µs width limit at WIDTH 1000. COMBINE can only be changed while DISARMED. **Do not
+`tools/timing_check/check_combined.py`). Each driver then sees two pulses per period (check its
+ratings; the firmware imposes none). The only extra rule is that the pulses stay separate on the
+shared pins, `DELAY ≥ WIDTH + 1 PIO cycle` (6.667 ns). At `DELAY = WIDTH`, CH2 rises on the cycle
+CH1 falls, the higher-numbered state machine wins the latch, and the two pulses fuse into one of
+2 × WIDTH. COMBINE can only be changed while DISARMED. **Do not
 use a BNC tee instead**: tying J7 and J8 together, or splitting one output to two drivers, gives
 3–3.4 V pulses, or 6.9 V where the pulses overlap (see Laser outputs).
 
@@ -209,7 +200,7 @@ use a BNC tee instead**: tying J7 and J8 together, or splitting one output to tw
   **restart hold-off** of one pulse period (the longer of the old and new periods, ≤ 1 s),
   measured from when the laser pads last carried pulses. Pulse-setting changes while armed go
   through the same restart. The hold-off keeps the laser pulse spacing ≥ the set period under
-  any command sequence, so a host looping ARM/DISARM cannot raise the duty. MARKER pauses
+  any command sequence, so a host looping ARM/DISARM cannot fire faster than FREQ. MARKER pauses
   during it.
 - **`DISARM` can never be refused and takes effect at once.** The six characters `DISARM`
   (any case) anywhere in the input disarm immediately — mid-line, inside an over-long line,
@@ -235,14 +226,13 @@ use a BNC tee instead**: tying J7 and J8 together, or splitting one output to tw
   J16.1 pulled low, or unplugging J17.
 
 **Residual hazards the firmware cannot remove** (both need a reset to land during a laser
-pulse, so the chance per event is at most the duty, ≤ 0.1 %):
+pulse, so the chance per event is at most the duty):
 
 - *A reset mid-pulse* (watchdog, or `pio run -t upload`'s 1200-baud reboot) releases
   the pad rather than driving it LOW; R17/R18 plus the pad pull-down discharge the node in an
-  estimated 70–150 ns, so that one pulse can end up to ~15 % past WIDTH at the 1 µs maximum.
+  estimated 70–150 ns, so that one pulse can end up to that much past WIDTH.
   Measure it (scope GP13 while forcing a watchdog reset). If it matters, fit R17/R18 = 2.2 k
-  (τ ≈ 30 ns; 1.5 mA while high, well inside the GPIO's drive) or lower `kLaserMaxWidthNs` by the
-  measured stretch.
+  (τ ≈ 30 ns; 1.5 mA while high, well inside the GPIO's drive).
 - *A debugger warm reset (SYSRESETREQ)* leaves PIO running while the bootrom latches the pads,
   so a pad caught HIGH can stay HIGH until the pre-init hook runs — milliseconds. **Before any
   SWD session or debugger reset: DISARM and open J11 (or unplug J17).** The one deliberate
@@ -313,8 +303,8 @@ line/load/temperature) or its new die (1.188–1.212 V), and only the reel label
 divider is centred on the union of both ranges, and R12/R13 must be **0.1 %** — see the laser
 amplitude budget under Signal chains. The legacy die also needs 0.03–5 Ω of ESR on its output
 capacitor, and ceramics have almost none. **R14 (1 Ω)** supplies it: U17 sees C9 + C10
-(~10 µF) through 1 Ω, which suits both dies (new die: 0–2 Ω). R14 drops at most ~15 mV at the
-firmware's duty limit. Do not replace it with 0 Ω. C10 (10 µF X7R 1206) is also U13's pulse
+(~10 µF) through 1 Ω, which suits both dies (new die: 0–2 Ω). R14 drops about 0.2 V while both outputs
+are high (~190 mA), (the amplitude budget above is for one output at a time). Do not replace it with 0 Ω. C10 (10 µF X7R 1206) is also U13's pulse
 reservoir: a 1 µs, ~200 mA pulse pair droops it by ~20 mV (0.2 %).
 
 **+1.8 V — the camera I/O rail.** Generated by **U9, an NCP718xSN180** fixed 1.8 V LDO,
@@ -450,7 +440,7 @@ resistors the corners fall outside the window, which is why R12/R13 are 0.1 %.
 > tees.** A transmission-line simulation (scratch `tee_sim.py`, typ. corners) gives: J7 and J8
 > tied into one 50 Ω input → 3.4 V per pulse (the idle channel's 70 Ω sinks half), and 6.9 V where
 > the pulses overlap (DELAY < WIDTH), above the LDP-V's 5.2 V damage limit; one output teed to two
-> drivers → 3.0 V each. The PiDG survives either (R6/R7 dissipate ~1 mW average at 0.1 % duty). PicoLas's acceptance test applies:
+> drivers → 3.0 V each. The PiDG survives either at low duty (see the board output rating under Timing limits). PicoLas's acceptance test applies:
 > a scope with **50 Ω input termination** must read 0 to ~4.9 V. The LDP-V absolute maximum on
 > its trigger input is 15 V, so an unterminated reflection cannot exceed it.
 
@@ -677,7 +667,7 @@ order-number placeholder.
 | `libs/PiDG_Local.kicad_sym` | Pico 2 W and UCC27524 symbols |
 | `libs/PiDG_Local.pretty/` | `*_EdgeTrim` footprint variants (see below) |
 | `libs/RPi_Pico.pretty/` | official RPi castellated module footprint (unused — board is socketed) |
-| `../src/` | firmware: `board.h` (pin map), `pulse_timing.h` (timing math, laser limits), `pio_pulse.*` (PIO programs), `laser_gate.*` (CH1/CH2 gate, pre-init hook), `protocol.*` (serial commands), `main.cpp` (arming, hold-off, watchdog) |
+| `../src/` | firmware: `board.h` (pin map), `pulse_timing.h` (timing math and checks), `pio_pulse.*` (PIO programs), `laser_gate.*` (CH1/CH2 gate, pre-init hook), `protocol.*` (serial commands), `main.cpp` (arming, hold-off, watchdog) |
 | `../platformio.ini` | build config: platform pinned to an exact commit; envs `pico2w` (default) and `pico2` |
 | `../tools/timing_check/` | host check of `pulse_timing.h` against a cycle-level PIO model (see its README) |
 

@@ -12,7 +12,7 @@ Protocol notes (see src/protocol.h and src/protocol.cpp):
   * One command per line; CR, LF or CRLF all end a line. Replies end in CRLF.
   * Values are plain decimal integers: FREQ in Hz, WIDTH/DELAY/MARKERWIDTH in ns.
   * Each setting is validated together with the others that are already set (laser
-    width/duty limits, DELAY + WIDTH must fit in the period), so the order of changes can
+    DELAY <= 1/FREQ - 2 x WIDTH so pulse pairs stay separated), so the order of changes can
     matter. A rejected change leaves the running configuration untouched, so
     set_timing() below simply retries rejected settings after the others.
   * The board boots DISARMED and after every reset; ARM must be sent again.
@@ -98,7 +98,7 @@ class PiDG:
                 if ok:
                     print(reply)
                 else:
-                    rejected[name] = reply  # e.g. "ERR FREQ rejected: laser limit: ..."
+                    rejected[name] = reply  # e.g. "ERR DELAY rejected: DELAY must leave ..."
             if len(rejected) == len(pending):
                 raise RuntimeError("settings rejected: " + "; ".join(rejected.values()))
             pending = {n: settings[n] for n in rejected}

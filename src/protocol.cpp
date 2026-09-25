@@ -193,17 +193,10 @@ void printHelp(uint32_t clkHz) {
     g_out.print(F(" cycles ("));
     g_out.print(buf);
     g_out.println(F(" ns)."));
-    g_out.print(F("Laser safety limits ("));
-    g_out.print(kLaserLimitSource);
-    g_out.print(F("), checked on the realized values: WIDTH <= "));
-    g_out.print(kLaserMaxWidthNs);
-    pulseFormatFixed3(kLaserMaxDutyPpm, 10000, buf, sizeof(buf));
-    g_out.print(F(" ns and WIDTH x FREQ <= "));
-    g_out.print(buf);
-    g_out.println(F(" % duty. Changes that would exceed them are rejected."));
-    g_out.println(F("With COMBINE 1 each output carries 2 pulses per period: the duty counts both,\n"
-                    "and DELAY must exceed WIDTH (by >= 1 cycle) so the pulses stay separate.\n"
-                    "Change COMBINE only while DISARMED."));
+    g_out.println(F("No laser-driver limits are imposed (pulse width, duty, spacing): check your\n"
+                    "driver's ratings. DELAY <= 1/FREQ - 2 x WIDTH, so pulse pairs stay separated.\n"
+                    "With COMBINE 1 each output carries both pulses, so DELAY must also exceed\n"
+                    "WIDTH (by >= 1 cycle). Change COMBINE only while DISARMED."));
     g_out.println(F(
         "MARKER and SYNC run while DISARMED; CH1/CH2 are held LOW. ARM, and pulse\n"
         "changes while armed, restart CH1/CH2/MARKER together after a hold-off of up\n"

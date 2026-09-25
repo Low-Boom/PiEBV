@@ -32,7 +32,7 @@
 // RESET=WATCHDOG.
 //
 // See src/pio_pulse.h for the PIO program design, src/pulse_timing.h for the
-// cycle math and laser limits, and src/protocol.h for the serial command set.
+// cycle math and timing checks, and src/protocol.h for the serial command set.
 
 #include <Arduino.h>
 #include <algorithm>
@@ -191,8 +191,8 @@ void closeLaserGate() {
 //
 // Restart hold-off: every restart fires a CH1 pulse ~8 cycles after the enable,
 // however recently the last one fired. Without a hold-off, a host looping ARM/DISARM
-// or changing settings fast would set the pulse rate by its command rate, and could
-// break the duty limit. Waiting until one full period -- the longer of the old and
+// or changing settings fast would set the pulse rate by its command rate, faster than
+// the set FREQ. Waiting until one full period -- the longer of the old and
 // new laser periods -- has passed since the pads last carried pulses keeps the
 // spacing between laser pulses >= the set period under any command sequence. At boot
 // the old period is taken as the worst case (1 s, FREQ >= 1 Hz), which also covers a

@@ -14,11 +14,12 @@ for clk in clks:
     for _ in range(400):
         f = random.choice([1, 2, 3, 7, 10, 999, 1000, 1001, 1234, 3000, 7000, 9999, 20000, 50000, 99999, 150000,
                            random.randint(1, 60000), random.randint(1, 3000000)])
-        w = random.choice([0, 1, 6, 7, 10, 13, 14, 16, 17, 19, 20, 21, 23, 24, 26, 27, 1000, 1003, 1004, 1010,
+        w = random.choice([0, 1, 6, 7, 10, 13, 14, 16, 17, 19, 20, 21, 23, 24, 26, 27, 1000, 1003, 1004, 1010, 5000, 20000, 100000, random.randint(1000, 200000),
                            random.randint(0, 1100)])
         P = rnd(F(clk, f))
         d = random.choice([0, 1, 3, 4, 6, 7, 10, 13, 14, 20, 10000, random.randint(0, 2*10**6),
-                           max(0, int((P - rnd(F(w*clk, 10**9)) - 5) * F(10**9, clk)) + random.randint(-20, 20))])
+                           max(0, int((P - rnd(F(w*clk, 10**9)) - 5) * F(10**9, clk)) + random.randint(-20, 20)),
+                           max(0, int((P - 2 * rnd(F(w*clk, 10**9))) * F(10**9, clk)) + random.randint(-20, 20))])
         md = random.choice([1, 2, 3, 7, 100, 300, random.randint(1, 30000)])
         mw = random.choice([0, 13, 20, 2000, random.randint(0, 50000)])
         cases.append((clk, f, w, d, md, mw))
@@ -31,7 +32,7 @@ for c, line in zip(cases, out):
     P = rnd(F(clk, f)); Pm = P * md
     W = rnd(F(w * clk, 10**9)); D = rnd(F(d * clk, 10**9)); MW = rnd(F(mw * clk, 10**9))
     ok = (1 <= P <= 0xFFFFFFFF and Pm <= 0xFFFFFFFF and W >= 3 and MW >= 3 and
-          F(W * 10**9, clk) <= 1000 and F(W, P) <= F(1, 1000) and D + W + 5 <= P and MW + 5 <= Pm)
+          D + W + 5 <= P and D + 2 * W <= P and MW + 5 <= Pm)
     if line.startswith("ERR"):
         nrej += 1
         if ok: mism.append(("rejected but legal", c, line))

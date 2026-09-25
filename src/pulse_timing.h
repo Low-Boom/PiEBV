@@ -23,32 +23,18 @@
 // the 2 fixed cycles before the SET from every channel; CH1's delay of 0 could
 // not go negative, so CH2 fired 2 cycles = 13.3 ns early.)
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 
-// ---------------------------------------------------------------- laser limits
-// Laser-driver safety limits, enforced on every change and checked against the
-// REALIZED cycle counts. CH1 and CH2 share one pulse width, so the tightest
-// attached driver governs the MAXIMUM width and the duty:
-//
-//   PicoLas LDP-V 10-70   : pulse 10 ns - 1 us,   max duty factor 0.1 %   <- governs
-//   PicoLas LDP-V 240-100 : pulse 60 ns - >1 us,  max duty cycle  7.5 %
-//
-// Exceeding a driver's pulse width or duty rating risks the laser diode. Edit
-// these if the attached drivers change.
-// The minimum width is a performance limit, not a safety one, and is not
-// enforced beyond the program's own 3-cycle floor (20 ns at 150 MHz), which
-// meets the 10-70's 10 ns minimum. The 240-100's 60 ns minimum is NOT enforced:
-// shorter widths only under-drive that driver.
-constexpr uint32_t kLaserMaxWidthNs = 1000;
-constexpr uint32_t kLaserMaxDutyPpm = 1000;  // 0.1 %
-constexpr const char *kLaserLimitSource = "PicoLas LDP-V 10-70";
-// COMBINE 1 puts both pulses of a pair on EACH laser output, so each driver sees
-// two pulses per period and the duty check counts both. There is deliberately no
-// minimum pulse spacing (it depends on the attached driver): the only rule is the
-// physical one that the two pulses must not touch on the shared pins, i.e.
-// DELAY >= WIDTH + 1 cycle (see realizeTiming()).
+// ---------------------------------------------------------------- limits
+// No laser-driver ratings are imposed: pulse width, duty and pulse spacing all
+// depend on the attached driver, and the unit is used with more than one. The
+// firmware only enforces what the PIO programs physically need: widths of >= 3
+// cycles (20 ns at 150 MHz), DELAY + WIDTH fitting in the period, the marker and
+// SYNC counter ranges, and with COMBINE 1 (both pulses on both outputs, sharing
+// the pins) DELAY >= WIDTH + 1 cycle so the two pulses never touch.
 
 // ---------------------------------------------------------------- parameters
 struct PulseParams {
@@ -213,7 +199,6 @@ inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTim
     if (p.combine > 1) {
         return "COMBINE must be 0 (split) or 1 (both pulses on both outputs)";
     }
-    const uint32_t pulsesPerDriver = p.combine ? 2u : 1u;
     const uint64_t period = pulseHzToCycles(p.freqHz, clk);
     const uint64_t markerPeriod = period * p.markerDiv;
     if (period == 0 || period > 0xFFFFFFFFULL) {
@@ -234,28 +219,6 @@ inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTim
                  (unsigned long)kPulseMinWidthCycles, a);
         return why;
     }
-    // Laser limits on what actually reaches the LDP-V: width_ns = width*1e9/clk,
-    // duty = width/period.
-    if ((uint64_t)width * 1000000000ULL > (uint64_t)kLaserMaxWidthNs * clk) {
-        pulseFormatNs(width, clk, a, sizeof(a));
-        snprintf(why, sizeof(why), "laser limit: realized WIDTH %s ns > %lu ns", a,
-                 (unsigned long)kLaserMaxWidthNs);
-        return why;
-    }
-    // Duty per driver: with COMBINE each driver carries both pulses of every pair.
-    const uint64_t highPpm = (uint64_t)width * pulsesPerDriver * 1000000ULL;
-    if (highPpm > (uint64_t)kLaserMaxDutyPpm * period) {
-        // Highest FREQ that passes at this WIDTH (the period is rounded, so step down
-        // from the continuous bound until the realized check passes).
-        uint64_t fmax = (uint64_t)clk * kLaserMaxDutyPpm / highPpm;
-        while (fmax > 0 && highPpm > (uint64_t)kLaserMaxDutyPpm * pulseHzToCycles((uint32_t)fmax, clk)) {
-            --fmax;
-        }
-        pulseFormatFixed3(highPpm, period, a, sizeof(a));
-        snprintf(why, sizeof(why), "laser limit: duty %s ppm > %lu ppm (max FREQ %lu Hz at this WIDTH%s)", a,
-                 (unsigned long)kLaserMaxDutyPpm, (unsigned long)fmax, p.combine ? ", 2 pulses per output" : "");
-        return why;
-    }
     // COMBINE: both state machines write the same two pins, and a pin keeps the last
     // level written. If CH2 rose before CH1 fell, CH1's fall would cut CH2's pulse
     // off (DELAY == WIDTH merges them into one). So CH2 may rise no earlier than one
@@ -265,6 +228,22 @@ inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTim
         pulseFormatNs(width + 1, clk, a, sizeof(a));
         snprintf(why, sizeof(why), "COMBINE needs DELAY > WIDTH so the two pulses stay separate (min DELAY %s ns)", a);
         return why;
+    }
+    // Pulse pairs stay separated: CH2 must end at least one WIDTH before the next
+    // pair's CH1 rises, i.e. DELAY <= period - 2 x WIDTH. (The program itself also
+    // needs DELAY <= period - WIDTH - 5 cycles, which only binds at WIDTH < 5 cycles.)
+    {
+        const int64_t maxDelay = std::min<int64_t>((int64_t)period - 2 * (int64_t)width,
+                                                   pulseMaxDelayCycles((uint32_t)period, width));
+        if (maxDelay < 0) {
+            return "WIDTH too long for the period: 2 x WIDTH must fit in 1/FREQ";
+        }
+        if ((int64_t)delay > maxDelay) {
+            pulseFormatNs((uint64_t)maxDelay, clk, a, sizeof(a));
+            snprintf(why, sizeof(why),
+                     "DELAY must leave >= WIDTH before the next pulse pair (DELAY <= 1/FREQ - 2 x WIDTH); max DELAY %s ns", a);
+            return why;
+        }
     }
 
     const PulseCycles ch1{(uint32_t)period, 0, width};
