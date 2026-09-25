@@ -586,8 +586,9 @@ still go through the Pico's own USB port.
 > triggers.
 
 TP3 and TP4 are scope points with a local ground pin (TP4, like J10.1, idles LOW while the
-firmware is DISARMED). TP4 is labelled `CH2` / `GND` / `SCOPE ONLY`; J10 carries
-`CAMERA TRIGGER: TRG-MKR = MARKER / TRG-CH1 = LASER 1` beside its `CH1 TRG MKR` pin labels. The TRIG and 1 MHz taps feed U5 and U1,
+firmware is DISARMED). TP4 is labelled `CH2` / `GND` / `SCOPE ONLY`. J10 stands on its own about 9 mm east of TP4 (so the two
+headers cannot be read as one row) and carries `CAMERA TRIGGER: TRG-MKR = MARKER / TRG-CH1 = LASER 1`
+to the right of its `CH1 TRG MKR` pin labels. The TRIG and 1 MHz taps feed U5 and U1,
 which run from the 1.8 V rail: external drive there needs **VIH ≥ 1.17 V, VIL ≤ 0.63 V**, and
 the inputs are 5.5 V-tolerant. Note that both taps are normally driven by a Pico GPIO, so an
 external source would fight it — treat them as monitor points.

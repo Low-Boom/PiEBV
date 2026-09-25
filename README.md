@@ -111,7 +111,7 @@ firmware) and **`POWER ONLY — USB-C PD 15 V`** (J17).
            |            |  Pico  |                                   J16 =|  ENABLE/TRIG/GND
            |            |  2 W   |       J11 (laser enable)                |
            |            | in J14 |                                     J7 =|  Laser 1  (BNC)
-           |            | / J15  |           J10 (trigger select)  TP4     |
+           |            | / J15  |      TP4     J10 (trigger select)       |
            |            +--------+                                     J8 =|  Laser 2  (BNC)
            |                                                              |
            |  J1   J2   J3   J4   J5   J6   (camera ports)             J12 =|  Pixel reset (BNC)
@@ -131,7 +131,7 @@ firmware) and **`POWER ONLY — USB-C PD 15 V`** (J17).
 | **J11** | 1×3 laser interlock | shunt, or a normally-closed E-stop switch | see [Jumpers](#jumpers) |
 | **J16** | 1×3 right-angle header, right edge | probes, or a secondary interlock | 1 `ENABLE IN` (pull LOW = lasers off) · 2 `TRIG OUT` (camera trigger, monitor only) · 3 GND. **Never fit a shunt.** |
 | **TP3** | 1×2 right-angle header, top edge | scope | 1 = 1 MHz sync straight from the Pico (3.3 V) · 2 = GND |
-| **TP4** | 1×2 header next to J10, `CH2` / `GND` | scope only | 1 = CH2 pulse straight from the Pico (3.3 V, idles LOW while DISARMED) · 2 = GND |
+| **TP4** | 1×2 header left of J10, `CH2` / `GND` | scope only | 1 = CH2 pulse straight from the Pico (3.3 V, idles LOW while DISARMED) · 2 = GND |
 
 **J16 — interlock input and trigger monitor.** The silkscreen beside it reads, pin by pin,
 `ENABLE IN: PULL LOW = LASERS OFF`, `TRIG OUT: CAMERA TRIGGER (MONITOR)` and `GND`, with
@@ -165,7 +165,7 @@ and R8 then holds the interlock off, so the stop is fail-safe. Don't use J16 pin
 input: it is enabled when open, so a broken cable there would leave the lasers enabled.
 
 **J10 — camera trigger source.** The silkscreen reads `CH1 TRG MKR` under the pins, with
-`CAMERA TRIGGER: TRG-MKR = MARKER / TRG-CH1 = LASER 1` beside it. `TRG` (pin 2) feeds the trigger
+`CAMERA TRIGGER: TRG-MKR = MARKER / TRG-CH1 = LASER 1` to its right. `TRG` (pin 2) feeds the trigger
 input (pin 4) of all six camera ports. Shunt `TRG` to `MKR` for the reference marker (normal, runs
 while disarmed), or to `CH1` for a trigger on every Laser 1 pulse (only while ARMED). Never shunt all
 three pins.

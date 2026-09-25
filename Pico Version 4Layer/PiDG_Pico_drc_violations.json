@@ -1,7 +1,7 @@
 {
     "$schema": "https://schemas.kicad.org/drc.v1.json",
     "coordinate_units": "mm",
-    "date": "2026-09-25T20:34:05",
+    "date": "2026-09-25T21:29:02",
     "ignored_checks": [
         {
             "description": "Footprint has no courtyard defined",
@@ -645,7 +645,7 @@
                 {
                     "description": "Footprint J10",
                     "pos": {
-                        "x": 199.0,
+                        "x": 217.0,
                         "y": 101.0
                     },
                     "uuid": "be19069e-ec6f-42a6-beb7-5e5271fb4269"
@@ -660,7 +660,7 @@
                 {
                     "description": "PTH pad 1 [CH1_J10] of J10",
                     "pos": {
-                        "x": 199.0,
+                        "x": 217.0,
                         "y": 101.0
                     },
                     "uuid": "d8f3f5aa-b238-43ac-a1a7-8278477bf531"
@@ -675,7 +675,7 @@
                 {
                     "description": "PTH pad 2 [PWM_TRIG_TAP] of J10",
                     "pos": {
-                        "x": 201.54,
+                        "x": 219.54,
                         "y": 101.0
                     },
                     "uuid": "55e3b17c-77ce-4e97-895f-3938fe35f160"
@@ -690,7 +690,7 @@
                 {
                     "description": "PTH pad 3 [PWM_Trig] of J10",
                     "pos": {
-                        "x": 204.08,
+                        "x": 222.08,
                         "y": 101.0
                     },
                     "uuid": "4758f094-fbdf-4532-87f6-d80201dff09e"
@@ -1710,7 +1710,7 @@
                 {
                     "description": "Footprint TP4",
                     "pos": {
-                        "x": 207.75,
+                        "x": 205.21,
                         "y": 101.0
                     },
                     "uuid": "b1be9f12-1bea-462c-a380-99a76c9d1ade"
@@ -1725,7 +1725,7 @@
                 {
                     "description": "PTH pad 1 [_PULSE_OUT_CH2] of TP4",
                     "pos": {
-                        "x": 207.75,
+                        "x": 205.21,
                         "y": 101.0
                     },
                     "uuid": "3ba61e89-3724-4257-b306-562865798631"
