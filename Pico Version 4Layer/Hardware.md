@@ -20,7 +20,7 @@ This board is the Raspberry Pi Pico 2 W redesign of the original Teensy 4.1 desi
 | Power | **USB-C PD input (J17, 15 V)** for the laser driver and the whole board; the Pico's own USB still powers the logic when J17 is unplugged |
 | Rails | **1.8 V** (camera I/O) · 3.3 V (MCU, pixel-reset input) · 5 V (logic, Pico VSYS) · **12 V** (laser driver U13, from J17 only) |
 | Design rules | 0.2 mm clearance, 0.2 mm track, 0.6/0.3 mm via, 0.25 mm copper-to-edge |
-| Placeable parts | 66, plus 4 NPTH mounting holes |
+| Placeable parts | 67, plus 4 NPTH mounting holes |
 
 Layer use:
 
@@ -54,11 +54,13 @@ Total 1.586 mm of copper and dielectric, 1.606 mm over the mask — a nominal 1.
 compliant option at most quick-turn fabs. It carries only a small premium over leaded HASL
 and is far below ENIG, which is the usual paid upgrade.
 
-Nothing here needs a flat surface: the finest pitch on the board is 0.95 mm (SOT-23-5), with
-no BGA or fine-pitch QFN, so HASL's uneven deposit is a non-issue even at lead-free's
-slightly worse flatness. It also suits the board's hand-assembly bias — every passive and SOT
-uses a `_HandSolder` footprint variant, and HASL arrives pre-tinned and tolerates rework
-better than OSP, whose coating degrades with repeated heat. A lead-free finish solders fine
+The finest pitch on the board is J17's USB-C receptacle (0.5 mm pads) and U16 (SC-70-6,
+0.65 mm). There is no BGA or fine-pitch QFN. Quick-turn fabs routinely assemble USB-C
+receptacles on lead-free HASL, but the finish is uneven enough that J17 is worth inspecting for
+bridges; see Open item 1 for the continuity check before first power-up. Most passives and
+SOT-23s use `_HandSolder` footprint variants (U16, L1 and U14's exposed pad are the exceptions),
+and HASL arrives pre-tinned and tolerates rework better than OSP, whose coating degrades with
+repeated heat. A lead-free finish solders fine
 with either leaded or lead-free solder, so it does not constrain how you assemble.
 
 If a future revision adds a fine-pitch part, reconsider the finish at the same time.
@@ -128,7 +130,7 @@ their pads only while ARMED; otherwise `src/laser_gate.cpp` drives them LOW.
 | `kPinSync` | 10 | `PWM_1MHz` | U1 → U2 → Sync1‑6 |
 | `kPinMarker` | 11 | `PWM_Trig` | J10.3 → (jumper) → U5 → U6 → Trigger1‑6 |
 | `kPinCh2` | 12 | `_PULSE_OUT_CH2` | U8 → U13 → J8 (Laser 2); R18 10 k to GND |
-| `kPinCh1` | 13 | `_PULSE_OUT_CH1` | U7 → U13 → J7 (Laser 1); R17 10 k to GND |
+| `kPinCh1` | 13 | `_PULSE_OUT_CH1` | U7 → U13 → J7 (Laser 1); R17 10 k to GND; R19 100 Ω → J10.1 |
 
 **CH1 is the higher GPIO and CH2 the lower** — the opposite order to the Teensy original
 (D2 = CH1, D3 = CH2). Do not "tidy" these into ascending order.
@@ -205,15 +207,20 @@ WIDTH 17–56 realizes to 20.000–53.333 ns and only under-drives that driver.
   halted core pauses the watchdog). Replies are written a whole line at a time within a 250 ms
   budget, and once a host stops reading, later replies stop waiting until it drains again — so a
   host that stops reading delays a queued DISARM by at most about 250 ms in total and cannot trip
-  the watchdog. Lines that could not be sent are counted in `STATUS` as `TX_DROPPED`.
+  the watchdog. Replies that could not be sent are dropped a whole line at a time, and their
+  bytes are counted in `STATUS` as `TX_DROPPED`.
 - **Host scripts** must now send `ARM` after every reset, and should check `RESET=` in
   `STATUS` before doing so (require an operator action after `RESET=WATCHDOG`). `STATUS` has
   more lines than before; parse it by key, not by line count.
+- **Losing the USB link does not disarm.** The firmware does not watch the USB connection, and J17
+  alone keeps the board powered, so a pulled cable, a sleeping PC or a killed host script leaves an
+  ARMED board pulsing with no serial path left for `DISARM`. The hardware stops are J11 (off 1‑2),
+  J16.1 pulled low, or unplugging J17.
 
 **Residual hazards the firmware cannot remove** (both need a reset to land during a laser
 pulse, so the chance per event is at most the duty, ≤ 0.1 %):
 
-- *A reset mid-pulse* (watchdog, `pio run -t upload`'s 1200-baud reboot, RUN button) releases
+- *A reset mid-pulse* (watchdog, or `pio run -t upload`'s 1200-baud reboot) releases
   the pad rather than driving it LOW; R17/R18 plus the pad pull-down discharge the node in an
   estimated 70–150 ns, so that one pulse can end up to ~15 % past WIDTH at the 1 µs maximum.
   Measure it (scope GP13 while forcing a watchdog reset). If it matters, fit R17/R18 = 2.2 k
@@ -340,15 +347,21 @@ J1–J6 pin 4
 J10 selects the trigger source: a shunt on **2‑3** triggers the cameras from the reference
 marker (normal), a shunt on **1‑2** triggers them from every laser CH1 pulse instead — which
 exist only while the firmware is ARMED; with the lasers disarmed, 1‑2 gives the cameras no
-trigger (use 2‑3, or ARM with J11 on 2‑3, for camera-only work). J10.1 is the CH1 monitor tap
-and, like TP4, idles LOW while DISARMED. **With no shunt fitted, R9 (10 k) pulls `PWM_TRIG_TAP` low**, so all
+trigger (use 2‑3, or ARM with J11 on 2‑3, for camera-only work). J10.1 reaches `_PULSE_OUT_CH1`
+through **R19 (100 Ω)**; like TP4 it idles LOW while DISARMED. Without R19, the 1‑2 shunt would
+hang the whole ~150 mm `PWM_TRIG_TAP` net (U5, R9, the J16.2 run) directly on the CH1 GPIO, and
+a transmission-line simulation put CH1 0.4–1.7 ns behind CH2 at U7/U8 — a jumper-dependent
+error in the laser inter-pulse delay. R19 cuts that to under ~0.2 ns and costs the camera
+trigger 1.5–2 ns of edge, which does not matter there. **With no shunt fitted, R9 (10 k) pulls `PWM_TRIG_TAP` low**, so all
 six camera trigger lines idle low rather than following a floating input on ~145 mm of trace
 (the node also runs up to J16.2). 10 k rather than a weaker pull holds U5's 1.8 V input at
 ≤ 0.05 V even at worst-case input leakage, and loads the selected GPIO by only 330 µA.
 
-> J10's silkscreen reads `MON / IN / OUT`, which mislabels pin 1 — it is not a monitor, it is
-> the alternate trigger source. The Teensy board called it `PWM Trig. / Laser`. A shunt
-> across all three pins shorts GP13 to GP11.
+> J10's silkscreen reads **`CH1 / TRG / MKR`** (pins 1/2/3): shunt TRG to CH1 for a camera
+> trigger on every laser CH1 pulse, or TRG to MKR for the reference marker. (Earlier layouts
+> read `MON / IN / OUT`, which mislabelled pin 1.) Never fit a shunt across all three pins —
+> that ties GP13 (through R19) to GP11. J11 is marked **ON** (pins 1‑2, lasers enabled) and
+> **OFF** (pins 2‑3).
 
 **Pixel reset** (no MCU involvement — pure hardware pass-through)
 J12 BNC → `PIXRST_IN` (R5 3k3 pull-up to **+3V3**) → U12.2 (**74LVC1G17** Schmitt buffer,
@@ -391,7 +404,11 @@ U7 and U8 are **74AHCT1G08** gates on +5 V. AHCT has TTL input thresholds (high 
 need 0.7 × VCC = 3.5 V to read high, which a 3.3 V GPIO cannot guarantee.
 
 U13 is a TI UCC27524 dual 5 A driver, non-inverting, on **VDD = +12V** with ENA/ENB on
-`LASER_PWR_OK` (see Power). Its inputs are TTL-compatible independent of VDD (high above
+`LASER_PWR_OK` (see Power). Its local bypass **C9 (0.1 µF, 50 V)** sits directly beside VDD
+(pin 6) with its own GND via, and GND (pin 3) drops straight to the In1 plane through a via under
+the package — a board loop of roughly 1.5–2 nH, against the 7–13 nH of the earlier layout, which
+fed VDD only from C10 via 15 mm of trace and two vias. That keeps the ~100 mA, few-ns output
+edges from bouncing VDD into the pulse top. C10 (10 µF) remains the bulk reservoir. Its inputs are TTL-compatible independent of VDD (high above
 1.8–2.3 V, 1 V hysteresis), so the 5 V AHCT gates drive it unchanged. Output pull-up is
 **2.5 / 5 / 7.5 Ω** (min/typ/max, PMOS only — which is what holds a steady load high during a
 pulse); pull-down 0.15–1 Ω, so the low level into 50 Ω is well under the 0.2 V limit.
@@ -517,7 +534,12 @@ still go through the Pico's own USB port.
 | TP3 | 1×2 right-angle, top edge | 1 `PWM_1MHz` · 2 GND |
 | TP4 | 1×2 vertical | 1 `_PULSE_OUT_CH2` · 2 GND |
 
-> **J16 is probe-only — never fit a shunt.** A shunt on pins 2‑3 grounds `PWM_TRIG_TAP`,
+> **J16.1 (ENABLE) doubles as an external interlock input:** pull it LOW (switch or
+> open-collector to J16.3, or 3.3 V/5 V logic) to inhibit both lasers. It is *enabled when
+> open* (R3 pulls it up), so a broken interlock cable leaves the lasers enabled — J11 remains the
+> fail-safe interlock.
+>
+> **Never fit a shunt on J16.** A shunt on pins 2‑3 grounds `PWM_TRIG_TAP`,
 > which via J10's selector shorts a GPIO straight to ground and silently kills all six camera
 > triggers.
 
@@ -544,7 +566,8 @@ Ordered by what would bite hardest.
      13.3 ns), and MARKER staying on the same CH1 pulse for minutes at `FREQ 3000`;
    - the first pulse after `ARM` full width, and no two CH1 pulses closer than 1/FREQ while a
      host loops `ARM`/`DISARM` as fast as it can;
-   - J7/J8 at 0 V after `DISARM`, after a reset (RUN button, and a watchdog timeout forced
+   - J7/J8 at 0 V after `DISARM`, after a reset (a power cycle of both J17 and the Pico USB —
+     neither the board nor the Pico 2 W has a reset button — and a watchdog timeout forced
      over SWD as described under Boot and arming), and — while ARMED with pulses running — with
      J17 unplugged and during plug-in;
    - MARKER staying on the same CH1 pulse at a FREQ whose period is not a whole number of
@@ -561,12 +584,53 @@ Ordered by what would bite hardest.
    CMOS input. U12's 0.5–0.8 V of hysteresis now absorbs moderate ringing from an unterminated
    coax run. Do *not* add a 49.9 Ω shunt as-is: against R5 it would hold J12 at ~50 mV, i.e.
    keep all six cameras permanently in reset unless the source actively drives high.
-5. **Correct J10's silkscreen** at the next revision — see the Trigger section above.
+5. **Before the first USB-C PD power-up, check the fine-pitch parts for solder bridges.** J17's
+   pads are 0.5 mm pitch and U16's 0.65 mm, on lead-free HASL. With no power applied, check that
+   VBUS_PD is not shorted to GND, CC1 or CC2 (J17, and U14 pins), and that +5V_PD and +5V are not
+   shorted to GND (U16). A VBUS-to-CC bridge would put up to 20 V on U14. Also confirm that J17's
+   four shell legs are soldered (they are through-hole with no paste layer).
 
-**Not an open item: Wi-Fi.** All four copper layers run solid under the module, including its
-antenna, so the radio would be detuned. That is deliberate: wireless is not a requirement. The
-Pico 2 W is fitted only because it is easier to buy than the plain Pico 2. Do not cut an antenna
-keepout.
+**Not an open item: Wi-Fi / Bluetooth.** The firmware does not use the radio; the Pico 2 W is
+fitted only because it is easier to buy than the plain Pico 2. All four copper layers run solid
+under the module, including its antenna, which shortens the radio's range. That is acceptable
+even for a future wireless firmware: the aim would be short, Bluetooth-like range (a few metres),
+so no antenna keepout is needed.
+
+---
+
+## Manufacturing notes
+
+Layout decisions made in the final DFM / assembly / signal-integrity review (2026-09-25):
+
+- **No vias inside SMD pads,** apart from the two thermal vias in U14's exposed GND pad, which is
+  normal practice. Every other via drill is at least 0.2 mm from any SMD pad edge, so the standard
+  **tented** via option is correct; filled-and-capped via-in-pad (a paid option on 4-layer boards)
+  is not needed. On the JLC order form choose *Tented*, not *Plugged*.
+- **No controlled impedance is needed.** The longest critical run (J7/J8 drive, ~32 mm, Z0 ≈ 55 Ω)
+  is electrically short against the driver's edges. Order *Impedance control: No*.
+- **Copper keep-outs:** zone copper stays 0.5 mm from the board edge on all four layers, and a
+  3 mm-radius rule area keeps all copper (including the In2 +5 V plane) away from each M3 hole, so
+  a metal screw or standoff cannot touch a plane in the hole wall.
+- **GND stitching:** 47 stitching vias along the board edges and in the south-east quadrant, plus
+  local vias at the decoupling capacitors and IC ground pins that previously reached the planes
+  only through thermal spokes.
+- **Silkscreen** shows the Pico outline with a "PICO USB END" arrow and a pin-1 mark (a module fitted the other way round would put the
+  board's +5 V on one of its GPIO pins), and J10/J11 are labelled as described under
+  Signal chains. All board text is at least 1.0 mm high.
+
+**JLCPCB assembly files** (`fab/jlc/`) cover the 51 SMD parts. The through-hole parts (IDC
+headers, BNCs, sockets, pin headers) are hand-soldered: their footprint origins sit on pin 1
+rather than the body centre, so leave them out of a JLC placement unless you correct them.
+Before ordering:
+
+- **Fill in the `LCSC Part #` column** (it is deliberately empty). Match the qualifiers in the
+  human BOM: R12/R13 must be 0.1 %, R6/R7/R14 1 %, the 0.1 µF line 50 V (C9 sits on 12 V), C14/C15
+  25 V X5R so they keep ≥ 10 µF at 5 V. U9, U13, U14, U15, U17 and the AHCT/Schmitt logic parts
+  must be exactly the listed part numbers (see the BOM notes).
+- **Check every IC's rotation in JLC's placement preview.** Pin 1 is top-left in every footprint,
+  but JLC's library zero orientation varies by part: SOT-23-5/6, SC-70-6, SOIC-8/14, SSOP-10 and
+  the USB-C receptacle commonly need a 90° or 180° correction there.
+- **Two jumper shunts** (J10 on 2‑3, J11 on 1‑2) are loose parts, not placed.
 
 ---
 
@@ -577,7 +641,8 @@ keepout.
 | `PiDG_Pico.kicad_sch` | schematic |
 | `PiDG_Pico.kicad_pcb` | board |
 | `PiDG_Pico_BOM.csv` | BOM (hand-maintained; `export_bom` ignores DNP attributes) |
-| `PiDG_Pico_CPL.csv` | pick-and-place, 66 parts, mounting holes excluded |
+| `PiDG_Pico_CPL.csv` | pick-and-place, all 67 placed parts (KiCad columns), mounting holes excluded |
+| `fab/jlc/PiDG_Pico_JLC_BOM.csv`, `fab/jlc/PiDG_Pico_JLC_CPL.csv` | JLCPCB assembly upload files for the 51 SMD parts (see Manufacturing notes) |
 | `fab/gerbers/`, `fab/PiDG_Pico_Gerbers.zip` | gerbers, Excellon drill (PTH/NPTH) and job file, from the board's stored plot settings |
 | `libs/PiDG_Local.kicad_sym` | Pico 2 W and UCC27524 symbols |
 | `libs/PiDG_Local.pretty/` | `*_EdgeTrim` footprint variants (see below) |
@@ -600,12 +665,13 @@ coordinate and length at 1/100 of the true mm value despite declaring `"coordina
 "mm"` — multiply by 100.
 
 Current state: DRC 0 violations, 0 unconnected items; ERC 0 violations. A
-`kicad-cli pcb drc --schematic-parity` run additionally reports ~185 parity *warnings*, none
+`kicad-cli pcb drc --schematic-parity` run additionally reports ~188 parity *warnings*, none
 electrical: board net names lack the `/` root-sheet prefix the schematic generates for local
 labels (`TDRSTN1` vs `/TDRSTN1` — connectivity identical), unused J14/J15 socket pads carry no
-net rather than `unconnected-(…)`, `Datasheet`/`Description` field text differs, and U11 /
-MH1–4 exist on only one side by design. A pad-by-pad net comparison with the prefix stripped
+net rather than `unconnected-(…)`, `Datasheet`/`Description` field text differs, and
+MH1–4 exist only on the board by design (U11 is marked not-on-board in the schematic). A pad-by-pad net comparison with the prefix stripped
 matches exactly.
 
-**Avoid "Update PCB from Schematic"** unless you disable footprint creation. U11 has no board
-footprint by design, and a sync will try to place one.
+**Take care with "Update PCB from Schematic".** U11 is now marked *not on board* and *not in
+BOM*, so a sync should no longer try to place a Pico footprint, but the net-name prefix
+differences above make a sync noisy; review its change list before accepting it.

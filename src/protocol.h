@@ -20,7 +20,7 @@
 // once a host stops reading, later replies stop waiting at all until it drains
 // again. A host that stops reading therefore delays a queued DISARM by at most
 // about kReplyBudgetUs (250 ms) in total; lines that could not be sent are
-// dropped whole and counted (STATUS TX_DROPPED).
+// dropped whole and their bytes counted (STATUS TX_DROPPED).
 
 #include <Arduino.h>
 #include <cstddef>

@@ -11932,13 +11932,23 @@
 	)
 	(wire
 		(pts
-			(xy 293.37 31.75) (xy 293.37 165.1)
+			(xy 293.37 31.75) (xy 293.37 154.94)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "5809be95-6f59-4338-94bf-44d717a150ea")
+		(uuid "6670f51a-ce4a-46f1-a67f-924bb2cd0978")
+	)
+	(wire
+		(pts
+			(xy 293.37 160.02) (xy 293.37 165.1)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7ce7f4c5-fb34-4711-8a9d-2d412dff76f8")
 	)
 	(wire
 		(pts
@@ -13580,6 +13590,16 @@
 		)
 		(uuid "03f30f77-34a5-4535-98c0-9629f0738c47")
 	)
+	(label "CH1_J10"
+		(at 293.37 163.83 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "fdea0c90-138b-4321-b021-28ad06e677ee")
+	)
 	(label "PWM_TRIG_TAP"
 		(at 279.4 175.26 0)
 		(effects
@@ -15144,9 +15164,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
+		(in_bom no)
+		(on_board no)
+		(in_pos_files no)
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "10e7f79d-f7ee-489f-b17a-89e09591a29e")
@@ -26394,6 +26414,87 @@
 			(project "PiDG_Pico"
 				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
 					(reference "R17")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R_Small")
+		(at 293.37 157.48 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "5c99b7b0-ada7-4e35-b326-5118c41df798")
+		(property "Reference" "R19"
+			(at 294.894 156.845 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "100"
+			(at 294.894 158.75 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
+			(at 293.37 157.48 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 293.37 157.48 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Series isolation for J10 pin 1: keeps the PWM_TRIG_TAP load (J10 on 1-2) off the CH1 laser pulse edge"
+			(at 293.37 157.48 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "4ca07cbe-2747-48fc-8dd9-7356bcc03938")
+		)
+		(pin "2"
+			(uuid "81016c85-9a1a-45ab-9402-d86984a2d6e8")
+		)
+		(instances
+			(project "PiDG_Pico"
+				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
+					(reference "R19")
 					(unit 1)
 				)
 			)
