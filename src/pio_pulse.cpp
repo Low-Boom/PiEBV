@@ -42,6 +42,39 @@ const pio_program_t kPulseProgram = {
 #endif
 };
 
+// The same program for COMBINE mode, driving TWO consecutive pins: the rising edge
+// is `SET PINS, 3` (both pins high) instead of `SET PINS, 1`. Every instruction and
+// every cycle is otherwise identical, so the cycle model and FIFO words are shared.
+// CH1 and CH2 both run it on the two laser pins; the PIO output level of a pin is
+// the last value any state machine wrote (RP2350 datasheet 11.5.6), and the laser
+// limits keep the two channels' pulses >= kLaserMinSpacingNs apart, so each laser
+// pin carries CH1's pulse and then CH2's pulse, exactly DELAY later.
+const uint16_t kPulseDualInstructions[] = {
+    (uint16_t)pio_encode_pull(false, true),      // 0: delay word -> OSR
+    (uint16_t)pio_encode_mov(pio_isr, pio_osr),  // 1: ISR = delay
+    (uint16_t)pio_encode_pull(false, true),      // 2: width word -> OSR
+    (uint16_t)pio_encode_mov(pio_y, pio_osr),    // 3: Y = width
+    (uint16_t)pio_encode_pull(false, true),      // 4: tail word -> OSR (kept)
+    (uint16_t)pio_encode_mov(pio_x, pio_isr),    // 5: <-- wrap_target; X = delay
+    (uint16_t)pio_encode_jmp_x_dec(6),           // 6: delay loop
+    (uint16_t)pio_encode_set(pio_pins, 3),       // 7: rising edge on both pins
+    (uint16_t)pio_encode_mov(pio_x, pio_y),      // 8: X = width
+    (uint16_t)pio_encode_jmp_x_dec(9),           // 9: width loop
+    (uint16_t)pio_encode_set(pio_pins, 0),       // 10: falling edge on both pins
+    (uint16_t)pio_encode_mov(pio_x, pio_osr),    // 11: X = tail
+    (uint16_t)pio_encode_jmp_x_dec(12),          // 12: <-- wrap; tail loop
+};
+
+const pio_program_t kPulseDualProgram = {
+    kPulseDualInstructions,
+    13,
+    -1,
+    0,  // pio_version: runs on any PIO
+#if PICO_PIO_VERSION > 0
+    0,  // used_gpio_ranges: no constraint (pins are chosen at run time)
+#endif
+};
+
 const uint16_t kToggleInstructions[] = {
     (uint16_t)pio_encode_set(pio_pins, 1),  // 0: <-- wrap_target
     (uint16_t)pio_encode_set(pio_pins, 0),  // 1: <-- wrap
@@ -63,12 +96,10 @@ const pio_program_t kToggleProgram = {
 // into that block's instruction memory once, or repeated loads would exceed
 // the block's 32-instruction memory. Returns the offset, or a negative
 // PICO_ERROR_* if pio_add_program() found no room.
-int pulseProgramOffset(PIO pio) {
-    static bool loaded[NUM_PIOS] = {};
-    static int loadedOffset[NUM_PIOS] = {};
+int programOffset(PIO pio, const pio_program_t *prog, bool *loaded, int *loadedOffset) {
     const uint idx = pio_get_index(pio);
     if (!loaded[idx]) {
-        const int off = pio_add_program(pio, &kPulseProgram);
+        const int off = pio_add_program(pio, prog);
         if (off < 0) {
             return off;
         }
@@ -78,31 +109,61 @@ int pulseProgramOffset(PIO pio) {
     return loadedOffset[idx];
 }
 
+int pulseProgramOffset(PIO pio, bool dual) {
+    static bool loaded[2][NUM_PIOS] = {};
+    static int loadedOffset[2][NUM_PIOS] = {};
+    return programOffset(pio, dual ? &kPulseDualProgram : &kPulseProgram, loaded[dual], loadedOffset[dual]);
+}
+
 }  // namespace
+
+bool pulseReserveDualProgram(PIO pio) {
+    return pulseProgramOffset(pio, true) >= 0;
+}
+
+void PulseChannel::loadConfig() {
+    config_ = pio_get_default_sm_config();
+    sm_config_set_set_pins(&config_, gpio_, pinCount_);
+    sm_config_set_wrap(&config_, offset_ + kPulseWrapTarget, offset_ + kPulseWrap);
+    sm_config_set_clkdiv_int_frac8(&config_, 1, 0);
+    // Load PINCTRL now, so a forced `SET PINS, 0` on this SM (stopPulseChannelsLow)
+    // targets this channel's own pin(s) even before the next configure().
+    pio_sm_set_config(pio_, sm_, &config_);
+}
 
 bool PulseChannel::begin(PIO pio, uint sm, uint gpio, bool connectPin) {
     pio_ = pio;
     sm_ = sm;
     gpio_ = gpio;
+    pinCount_ = 1;
 
-    const int off = pulseProgramOffset(pio_);
+    const int off = pulseProgramOffset(pio_, false);
     if (off < 0) {
         return false;
     }
     offset_ = (uint)off;
-
-    config_ = pio_get_default_sm_config();
-    sm_config_set_set_pins(&config_, gpio_, 1);
-    sm_config_set_wrap(&config_, offset_ + kPulseWrapTarget, offset_ + kPulseWrap);
-    sm_config_set_clkdiv_int_frac8(&config_, 1, 0);
-    // Load PINCTRL now, so a forced `SET PINS, 0` on this SM (stopPulseChannelsLow)
-    // targets this channel's own pin even before the first configure().
-    pio_sm_set_config(pio_, sm_, &config_);
+    loadConfig();
 
     if (connectPin) {
         pio_gpio_init(pio_, gpio_);  // the PIO output latch is LOW after the boot-time PIO reset
         pio_sm_set_consecutive_pindirs(pio_, sm_, gpio_, 1, true);
     }
+    return true;
+}
+
+bool PulseChannel::setOutputs(uint gpio, uint count) {
+    if (count != 1 && count != 2) {
+        return false;
+    }
+    const int off = pulseProgramOffset(pio_, count == 2);
+    if (off < 0) {
+        return false;
+    }
+    pio_sm_set_enabled(pio_, sm_, false);  // already stopped; harmless
+    offset_ = (uint)off;
+    gpio_ = gpio;
+    pinCount_ = count;
+    loadConfig();
     return true;
 }
 
@@ -112,7 +173,7 @@ bool PulseChannel::configure(const PulseCycles &t) {
         return false;
     }
     pio_sm_set_enabled(pio_, sm_, false);  // already stopped; harmless
-    pio_sm_set_consecutive_pindirs(pio_, sm_, gpio_, 1, true);
+    pio_sm_set_consecutive_pindirs(pio_, sm_, gpio_, pinCount_, true);
     pio_sm_init(pio_, sm_, offset_, &config_);  // stays disabled; FIFOs cleared; PC = offset_
     pio_sm_put_blocking(pio_, sm_, w.delay);    // 3 words into a 4-deep TX FIFO: never blocks
     pio_sm_put_blocking(pio_, sm_, w.width);

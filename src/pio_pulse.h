@@ -46,17 +46,31 @@ public:
     // Returns false (and touches no hardware) if the timing does not fit.
     bool configure(const PulseCycles &t);
 
+    // Switches which pin(s) the channel drives: count 1 = `gpio` only (the normal
+    // program), count 2 = `gpio` and `gpio + 1` together (the dual-pin program, same
+    // cycle timing). Used for COMBINE mode on the two laser pins. PRECONDITION: the
+    // state machine is stopped; call configure() afterwards. Returns false if the
+    // program cannot be loaded.
+    bool setOutputs(uint gpio, uint count);
+
     PIO pio() const { return pio_; }
     uint sm() const { return sm_; }
     uint gpio() const { return gpio_; }
 
 private:
+    void loadConfig();
+
     PIO pio_ = nullptr;
     uint sm_ = 0;
     uint gpio_ = 0;
+    uint pinCount_ = 1;
     uint offset_ = 0;
     pio_sm_config config_{};
 };
+
+// Loads the dual-pin pulse program into `pio` now, so COMBINE mode can never fail
+// later for lack of instruction memory. Returns false if it does not fit.
+bool pulseReserveDualProgram(PIO pio);
 
 class SyncChannel {
 public:

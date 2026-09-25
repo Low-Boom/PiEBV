@@ -16,6 +16,7 @@ mirror the change there first, or the checks will keep testing the old program.
 | `check_random.py` | 3,600 random parameter sets at nine clock rates through the harness: every accept/reject decision (including the laser limits) matches an exact-rational model, every accepted set is cycle-exact in the PIO model, and every formatted ns/Hz string is correctly rounded. |
 | `check_marker_lock.py` | MARKER stays on the same CH1 pulse (period = MARKERDIV × CH1 period in cycles) for frequencies whose period is not a whole number of cycles. |
 | `check_sync.py` | SYNC divider (8.8 fixed point), accepted range and the reported realized frequency. |
+| `check_combined.py` | `COMBINE 1`: every accept/reject decision against an exact model of the combined limits (2 pulses per output in the duty, ≥ 10 µs spacing), and CH1 + CH2 running the dual-pin program on the shared PIO pin latch give both laser pins the same double pulse, DELAY apart, cycle-exact. |
 
 ## Running
 
@@ -28,6 +29,7 @@ python check_exhaustive.py
 python check_random.py
 python check_marker_lock.py
 python check_sync.py
+python check_combined.py
 ```
 
 Set `PIDG_HARNESS` to use a harness binary somewhere else. Expected key lines:
@@ -38,6 +40,7 @@ Set `PIDG_HARNESS` to use a harness binary somewhere else. Expected key lines:
 | `check_random.py` | `accepted 663 rejected 2937 simulated 663 mismatches 0` |
 | `check_marker_lock.py` | `marker phase-lock and CH2-CH1 verified for 115 configs ...` (the `rej` lines above it are expected rejections) |
 | `check_sync.py` | `sync cases 3000 accepted 2031 bad 0` |
+| `check_combined.py` | `combined: accepted 317 rejected 1183 simulated 317 mismatches 0` |
 
 These checks cover the arithmetic and the program's cycle behaviour. They do not
 replace a scope check on the board (see Hardware.md, Open items).

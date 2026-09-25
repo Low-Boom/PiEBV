@@ -69,6 +69,10 @@ The target equipment is two **PicoLas LDP-V** laser-diode drivers (10-70 and 240
     **6.9 V**, above its 5.2 V damage threshold.
   - One output split to two drivers: each sees **3.0 V**, too low for either.
   - The PiDG itself survives both (about 1 mW average in R6/R7 at the 0.1 % duty limit).
+
+  To fire **one light source with both pulses**, or **two sources in sync with the same double
+  pulse**, use `COMBINE 1` instead (see [Combined mode](#combined-mode-combine)): each output then
+  carries both pulses, one driver per output.
 - **Before any debugger (SWD) session: send `DISARM` and remove the J11 shunt** (or unplug J17).
   A debugger reset can leave a laser output high for milliseconds.
 - **Before uploading new firmware, send `DISARM`.** The upload reboots the Pico. A reboot that lands
@@ -403,6 +407,7 @@ needed. Until then, use USB.
 | `MARKERDIV [n]` | count | 100 | ≥ 1, and MARKERDIV × period ≤ 2³²−1 cycles (about 28.6 s) | Marker fires once every *n* pulse pairs |
 | `MARKERWIDTH [n]` | ns | 2000 | 17 up to the marker period − 5 cycles | Marker pulse width (no laser limit) |
 | `SYNC [n]` | Hz | 1000000 | 1145 … 75 000 000 | Camera sync clock frequency (free-running square wave) |
+| `COMBINE [n]` | 0 / 1 | 0 | 0 or 1; change only while DISARMED | 0: CH1 → Laser 1, CH2 → Laser 2. 1: **both** pulses on **both** outputs ([details](#combined-mode-combine)) |
 | `ARM` | – | disarmed | exactly `ARM`, no argument | Enable the laser outputs |
 | `DISARM` | – | – | – | Disable the laser outputs at once; recognised anywhere in the input |
 | `ARM?` | – | – | – | Report the arm state: `ARMED=0` or `ARMED=1` |
@@ -453,6 +458,29 @@ ID?            ->  PiDG delay generator (Pico 2 W), firmware built Sep 24 2026 2
 - While DISARMED, **SYNC and the marker keep running**, so cameras stay synchronised. CH1/CH2 are held
   low.
 
+### Combined mode (`COMBINE`)
+
+`COMBINE 1` sends the whole double pulse — CH1's pulse, then CH2's pulse exactly `DELAY` later — to
+**both** Laser 1 (J7) and Laser 2 (J8). Use it when one light source must produce both PIV pulses,
+or to fire two sources in sync with the same double pulse. Each output still drives one laser driver.
+
+```
+COMBINE 1   ->  OK COMBINE=1 (CH1 + CH2 on LASER 1 and LASER 2)
+COMBINE 0   ->  OK COMBINE=0 (CH1 on LASER 1, CH2 on LASER 2)
+```
+
+- **Change it only while DISARMED.** While armed the reply is
+  `ERR COMBINE rejected: DISARM first: COMBINE changes what both laser outputs carry`.
+- **The laser limits count both pulses**, because each driver now receives two per period:
+  - duty: 2 × WIDTH × FREQ ≤ 0.1 % (at WIDTH 100 ns the maximum FREQ halves to 5 kHz);
+  - spacing: `DELAY` ≥ 10 µs **and** period − `DELAY` ≥ 10 µs, rising edge to rising edge. That is
+    the LDP-V 10-70's 100 kHz maximum repetition rate (`kLaserMinSpacingNs` in `src/pulse_timing.h`;
+    the 240-100 alone would allow 500 ns). It also guarantees the two pulses never overlap.
+- The timing is the same cycle-exact timing as the normal mode: the CH1 and CH2 state machines each
+  drive both laser pins.
+- The monitor points follow: TP4 and J10 pin 1 both show the double pulse, and with J10 on 1-2 the
+  cameras are triggered on both pulses.
+
 ### Timing
 
 ```
@@ -475,7 +503,8 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
 - **Laser limits** (PicoLas LDP-V 10-70, the stricter of the two drivers): realized WIDTH ≤ 1000 ns, and
   WIDTH × FREQ ≤ 0.1 %. Requests that would exceed them are rejected, not clamped, and the error tells
   you the highest FREQ allowed at the current WIDTH. To change the limits for other drivers, edit
-  `kLaserMaxWidthNs` / `kLaserMaxDutyPpm` in `src/pulse_timing.h`.
+  `kLaserMaxWidthNs` / `kLaserMaxDutyPpm` in `src/pulse_timing.h`. With `COMBINE 1` the duty counts
+  both pulses and the pulses must be ≥ 10 µs apart ([Combined mode](#combined-mode-combine)).
 - **Minimum width** is 3 cycles (20.000 ns) for WIDTH and MARKERWIDTH. The LDP-V 240-100's own 60 ns
   minimum is not enforced; shorter pulses simply under-drive it.
 - **Low frequencies:** with MARKERDIV at 100 the lowest FREQ is 4 Hz. Lower MARKERDIV first (to ≤ 28
@@ -515,6 +544,7 @@ DELAY=10000 (actual 10000.000 ns, 1500 cyc)
 MARKERDIV=100
 MARKERWIDTH=2000 (actual 2000.000 ns, 300 cyc)
 SYNC=1000000 (actual 1000000.000 Hz, divider 75+0/256)
+COMBINE=0 (CH1 on LASER 1, CH2 on LASER 2)
 ARMED=1
 HW=OK
 START_PENDING_US=0
@@ -529,6 +559,7 @@ TX_DROPPED=0
 | Key | Meaning |
 |---|---|
 | `FREQ` … `SYNC` | Each setting as asked for, with its realized value |
+| `COMBINE` | 0 = CH1 on Laser 1, CH2 on Laser 2; 1 = both pulses on both outputs |
 | `ARMED` | Firmware arm state (1/0). J11 and the 12 V rail are separate gates. |
 | `HW` | `OK`, or `ERR outputs not started: …` if the pulse hardware failed at boot |
 | `START_PENDING_US` | Microseconds until pulses start after an `ARM` (0 = none pending) |
@@ -603,6 +634,7 @@ python check_exhaustive.py
 python check_random.py
 python check_marker_lock.py
 python check_sync.py
+python check_combined.py
 ```
 
 The expected output is listed in [its README](tools/timing_check/README.md). These checks don't replace

@@ -84,7 +84,7 @@ ReplyOut g_out;
 
 // ---------------------------------------------------------------- fields
 // How a field's realized value is shown.
-enum class Unit : uint8_t { None, Ns, Hz, Sync };
+enum class Unit : uint8_t { None, Ns, Hz, Sync, Mode };
 
 struct FieldCommand {
     const char *name;
@@ -100,6 +100,7 @@ const FieldCommand kFields[] = {
     {"MARKERDIV", &PulseParams::markerDiv, Unit::None, nullptr},
     {"MARKERWIDTH", &PulseParams::markerWidthNs, Unit::Ns, &RealizedTiming::markerWidthCycles},
     {"SYNC", &PulseParams::syncHz, Unit::Sync, &RealizedTiming::syncDiv256},
+    {"COMBINE", &PulseParams::combine, Unit::Mode, &RealizedTiming::combine},
 };
 
 // Prints "NAME=value" plus the realized value -- " (actual X ns, N cyc)",
@@ -109,7 +110,9 @@ void printField(const FieldCommand &f, uint32_t value, const RealizedTiming &r) 
     g_out.print(f.name);
     g_out.print('=');
     g_out.print(value);
-    if (f.unit != Unit::None && r.clkHz != 0) {
+    if (f.unit == Unit::Mode) {
+        g_out.print(value ? F(" (CH1 + CH2 on LASER 1 and LASER 2)") : F(" (CH1 on LASER 1, CH2 on LASER 2)"));
+    } else if (f.unit != Unit::None && r.clkHz != 0) {
         const uint32_t n = r.*(f.realized);
         char num[32];
         g_out.print(F(" (actual "));
@@ -142,6 +145,7 @@ void printField(const FieldCommand &f, uint32_t value, const RealizedTiming &r) 
                 g_out.print(')');
                 break;
             case Unit::None:
+            case Unit::Mode:
                 break;
         }
     }
@@ -168,6 +172,8 @@ void printHelp(uint32_t clkHz) {
         "MARKERDIV <N>      marker fires once every N pulse pairs\n"
         "MARKERWIDTH <ns>   marker pulse width\n"
         "SYNC <Hz>          camera sync clock frequency\n"
+        "COMBINE <0|1>      1 = both pulses on BOTH laser outputs (two sources, one\n"
+        "                   double pulse); 0 = CH1 on LASER 1, CH2 on LASER 2\n"
         "ARM                enable the laser outputs (the board boots DISARMED)\n"
         "DISARM             disable the laser outputs: always accepted, immediate, and\n"
         "                   recognised anywhere in the input, even mid-line\n"
@@ -195,6 +201,10 @@ void printHelp(uint32_t clkHz) {
     g_out.print(F(" ns and WIDTH x FREQ <= "));
     g_out.print(buf);
     g_out.println(F(" % duty. Changes that would exceed them are rejected."));
+    g_out.print(F("With COMBINE 1 each output carries 2 pulses per period: the duty counts both,\n"
+                  "and DELAY and period - DELAY must each be >= "));
+    g_out.print(kLaserMinSpacingNs);
+    g_out.println(F(" ns. Change COMBINE only while DISARMED."));
     g_out.println(F(
         "MARKER and SYNC run while DISARMED; CH1/CH2 are held LOW. ARM, and pulse\n"
         "changes while armed, restart CH1/CH2/MARKER together after a hold-off of up\n"

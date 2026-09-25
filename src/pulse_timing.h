@@ -44,6 +44,13 @@
 constexpr uint32_t kLaserMaxWidthNs = 1000;
 constexpr uint32_t kLaserMaxDutyPpm = 1000;  // 0.1 %
 constexpr const char *kLaserLimitSource = "PicoLas LDP-V 10-70";
+// COMBINE 1 puts both pulses of a pair on EACH laser output, so each driver sees
+// two pulses per period: the duty counts both, and consecutive pulses must be at
+// least this far apart (rising edge to rising edge). 10 us = the LDP-V 10-70's
+// 100 kHz maximum repetition rate (the 240-100 allows 2 MHz, i.e. 500 ns). In the
+// normal split mode each driver sees one pulse per period, and the duty limit
+// already keeps that period >= 20 us.
+constexpr uint32_t kLaserMinSpacingNs = 10000;
 
 // ---------------------------------------------------------------- parameters
 struct PulseParams {
@@ -53,6 +60,7 @@ struct PulseParams {
     uint32_t markerDiv = 100;       // marker fires once every N pulse pairs
     uint32_t markerWidthNs = 2000;  // marker pulse width
     uint32_t syncHz = 1000000;      // camera sync clock frequency
+    uint32_t combine = 0;           // 0: CH1 -> LASER 1, CH2 -> LASER 2. 1: both pulses on BOTH outputs
 };
 
 // What the hardware actually produces for a PulseParams, in PIO clock cycles.
@@ -64,6 +72,7 @@ struct RealizedTiming {
     uint32_t markerPeriodCycles = 0;  // exactly periodCycles * markerDiv (phase-locked to CH1)
     uint32_t markerWidthCycles = 0;
     uint32_t syncDiv256 = 0;          // SYNC state-machine clock divider in 1/256 steps
+    uint32_t combine = 0;             // 1: CH1 and CH2 pulses both drive both laser outputs
 };
 
 // ---------------------------------------------------------------- pulse program
@@ -198,11 +207,15 @@ inline void syncFormatHz(uint32_t div256, uint32_t clk_hz, char *buf, size_t len
 // Returns nullptr and fills *rt on success, otherwise a short reason (valid
 // until the next call).
 inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTiming *rt) {
-    static char why[112];
+    static char why[160];
     char a[32];
     if (p.freqHz == 0 || p.markerDiv == 0 || p.syncHz == 0) {
         return "value must be > 0";
     }
+    if (p.combine > 1) {
+        return "COMBINE must be 0 (split) or 1 (both pulses on both outputs)";
+    }
+    const uint32_t pulsesPerDriver = p.combine ? 2u : 1u;
     const uint64_t period = pulseHzToCycles(p.freqHz, clk);
     const uint64_t markerPeriod = period * p.markerDiv;
     if (period == 0 || period > 0xFFFFFFFFULL) {
@@ -231,17 +244,38 @@ inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTim
                  (unsigned long)kLaserMaxWidthNs);
         return why;
     }
-    if ((uint64_t)width * 1000000ULL > (uint64_t)kLaserMaxDutyPpm * period) {
+    // Duty per driver: with COMBINE each driver carries both pulses of every pair.
+    const uint64_t highPpm = (uint64_t)width * pulsesPerDriver * 1000000ULL;
+    if (highPpm > (uint64_t)kLaserMaxDutyPpm * period) {
         // Highest FREQ that passes at this WIDTH (the period is rounded, so step down
         // from the continuous bound until the realized check passes).
-        uint64_t fmax = (uint64_t)clk * kLaserMaxDutyPpm / ((uint64_t)width * 1000000ULL);
-        while (fmax > 0 && (uint64_t)width * 1000000ULL > (uint64_t)kLaserMaxDutyPpm * pulseHzToCycles((uint32_t)fmax, clk)) {
+        uint64_t fmax = (uint64_t)clk * kLaserMaxDutyPpm / highPpm;
+        while (fmax > 0 && highPpm > (uint64_t)kLaserMaxDutyPpm * pulseHzToCycles((uint32_t)fmax, clk)) {
             --fmax;
         }
-        pulseFormatFixed3((uint64_t)width * 1000000ULL, period, a, sizeof(a));
-        snprintf(why, sizeof(why), "laser limit: duty %s ppm > %lu ppm (max FREQ %lu Hz at this WIDTH)", a,
-                 (unsigned long)kLaserMaxDutyPpm, (unsigned long)fmax);
+        pulseFormatFixed3(highPpm, period, a, sizeof(a));
+        snprintf(why, sizeof(why), "laser limit: duty %s ppm > %lu ppm (max FREQ %lu Hz at this WIDTH%s)", a,
+                 (unsigned long)kLaserMaxDutyPpm, (unsigned long)fmax, p.combine ? ", 2 pulses per output" : "");
         return why;
+    }
+    // Pulse spacing per driver with COMBINE: CH1 -> CH2 is DELAY, CH2 -> next CH1 is
+    // period - DELAY; both must be >= kLaserMinSpacingNs. This also keeps the two
+    // pulses from ever overlapping on the shared pins.
+    if (p.combine) {
+        const uint64_t minSpacing = (uint64_t)kLaserMinSpacingNs * clk;  // in cycles x 1e9
+        if ((uint64_t)delay * 1000000000ULL < minSpacing) {
+            pulseFormatNs(delay, clk, a, sizeof(a));
+            snprintf(why, sizeof(why), "laser limit: COMBINE needs DELAY >= %lu ns (realized %s ns)",
+                     (unsigned long)kLaserMinSpacingNs, a);
+            return why;
+        }
+        if (delay > period || (uint64_t)(period - delay) * 1000000000ULL < minSpacing) {
+            const uint64_t minCyc = (minSpacing + 999999999ULL) / 1000000000ULL;
+            pulseFormatNs(period > minCyc ? period - minCyc : 0, clk, a, sizeof(a));
+            snprintf(why, sizeof(why), "laser limit: COMBINE needs period - DELAY >= %lu ns; max DELAY %s ns",
+                     (unsigned long)kLaserMinSpacingNs, a);
+            return why;
+        }
     }
 
     const PulseCycles ch1{(uint32_t)period, 0, width};
@@ -275,5 +309,6 @@ inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTim
     rt->markerPeriodCycles = (uint32_t)markerPeriod;
     rt->markerWidthCycles = markerWidth;
     rt->syncDiv256 = (uint32_t)div256;
+    rt->combine = p.combine;
     return nullptr;
 }

@@ -15,10 +15,12 @@ def jmp_xdec(a): return enc(JMP, 2, a)
 PROG = [pull(False, True), mov(ISR, OSR), pull(False, True), mov(Y, OSR), pull(False, True),
         mov(X, ISR), jmp_xdec(6), setp(1), mov(X, Y), jmp_xdec(9), setp(0), mov(X, OSR), jmp_xdec(12)]
 WRAP_T, WRAP = 5, 12
+# COMBINE mode: the same program with the rising edge as SET PINS,3 (two consecutive pins)
+PROG_DUAL = PROG[:7] + [setp(3)] + PROG[8:]
 
-def load(offset):
+def load(offset, prog=None):
     mem = [None] * 32
-    for i, w in enumerate(PROG):
+    for i, w in enumerate(prog or PROG):
         mem[offset + i] = w + offset if (w & 0xe000) == 0 else w  # pio.c add_program_at_offset
     return mem
 
@@ -28,6 +30,7 @@ class SM:
         self.fifo = list(words); self.x = self.y = 0; self.isr = 0; self.osr = 0
         self.wb, self.wt = offset + WRAP_T, offset + WRAP
         self.pin = 0; self.edges = []  # (cycle_visible, level)
+        self.writes = []  # every SET: (cycle_visible, full 5-bit value)
     def step(self, cyc, fast=True, horizon=None):
         """Execute starting at cycle cyc; returns number of cycles consumed."""
         w = self.mem[self.pc]; major = w & 0xe000
@@ -59,6 +62,7 @@ class SM:
         elif major == 0xe000:
             d, v = (w >> 5) & 7, w & 0x1f
             assert d == pins
+            self.writes.append((cyc + 1, v))
             v &= 1
             if v != self.pin: self.pin = v; self.edges.append((cyc + 1, v))
         else: raise Exception(hex(w))
@@ -71,6 +75,30 @@ def run(words, until, offset=19, fast=True):
     while c < until:
         c += sm.step(c, fast, until)
     return sm.edges
+
+def run_writes(words, until, prog=None, offset=19, fast=True):
+    """Every SET PINS write of one state machine: [(cycle_visible, value)]."""
+    mem = load(offset, prog); sm = SM(mem, offset, words); c = 0
+    while c < until:
+        c += sm.step(c, fast, until)
+    return sm.writes
+
+def block_pins(sm_writes, npins):
+    """PIO output-level latch shared by several SMs writing the same pin range
+    (datasheet 11.5.6: last write wins; same cycle -> highest-numbered SM wins).
+    sm_writes: list indexed by SM number of [(cycle, value)]. Returns per-pin edges."""
+    ev = sorted((c, sm, v) for sm, ws in enumerate(sm_writes) for c, v in ws)
+    level = [0] * npins; edges = [[] for _ in range(npins)]
+    i = 0
+    while i < len(ev):
+        c = ev[i][0]; j = i
+        while j < len(ev) and ev[j][0] == c: j += 1
+        v = max(ev[i:j], key=lambda e: e[1])[2]  # highest SM this cycle
+        for b in range(npins):
+            nb = (v >> b) & 1
+            if nb != level[b]: level[b] = nb; edges[b].append((c, nb))
+        i = j
+    return edges
 
 def rises(edges): return [c for c, v in edges if v == 1]
 def falls(edges): return [c for c, v in edges if v == 0]

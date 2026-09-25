@@ -9,6 +9,9 @@
 // GPIO map is in board.h):
 //   - CH1 / CH2 (GP13 / GP12): the two laser trigger pulses. Shared width; CH2's
 //     rising edge follows CH1's by exactly DELAY (to the nearest PIO cycle).
+//     COMBINE 1 puts BOTH pulses on BOTH outputs (two light sources fired in sync
+//     with the same double pulse): the CH1 and CH2 state machines then each drive
+//     GP12 and GP13 together (pio_pulse.cpp, dual-pin program).
 //   - MARKER (GP11): a low-rate pulse, once every MARKERDIV pulse pairs and
 //     phase-locked to CH1, that the board's jumper (J10) can also select as the
 //     camera Trigger line instead of the raw laser pulse (mirrors the original
@@ -198,6 +201,12 @@ void restartPulses(const RealizedTiming &rt, bool lasersLive) {
     g_startPending = false;
     closeLaserGate();
     stopPulseChannelsLow(g_group, 3);
+    // Pin mapping for this pulse train (all state machines are stopped, latches LOW):
+    // split = CH1 -> GP13, CH2 -> GP12; COMBINE = both drive GP12..GP13.
+    static_assert(kPinCh1 == kPinCh2 + 1, "COMBINE needs the laser pins consecutive");
+    const uint lasers = rt.combine ? 2u : 1u;
+    g_ch1.setOutputs(rt.combine ? kPinCh2 : kPinCh1, lasers);  // cannot fail: reserved at boot
+    g_ch2.setOutputs(kPinCh2, lasers);
     // Cannot fail: realizeTiming() already ran the same feasibility checks.
     g_ch1.configure(PulseCycles{rt.periodCycles, 0, rt.widthCycles});
     g_ch2.configure(PulseCycles{rt.periodCycles, rt.delayCycles, rt.widthCycles});
@@ -277,7 +286,10 @@ const char *applyPulseParams(const PulseParams &p, RealizedTiming *realized) {
     if (const char *why = realizeTiming(p, clkHz(), &rt)) {
         return why;
     }
-    const bool pulseChanged = !g_configured || rt.periodCycles != g_rt.periodCycles ||
+    if (g_armed && g_configured && rt.combine != g_rt.combine) {
+        return "DISARM first: COMBINE changes what both laser outputs carry";
+    }
+    const bool pulseChanged = !g_configured || rt.combine != g_rt.combine || rt.periodCycles != g_rt.periodCycles ||
                               rt.widthCycles != g_rt.widthCycles || rt.delayCycles != g_rt.delayCycles ||
                               rt.markerPeriodCycles != g_rt.markerPeriodCycles ||
                               rt.markerWidthCycles != g_rt.markerWidthCycles;
@@ -337,6 +349,7 @@ void setup() {
     g_pioReady = claimPioStateMachines() &&
                  g_ch1.begin(kPio, kSmCh1, kPinCh1, false) &&   // laser pins: routed by laser_gate
                  g_ch2.begin(kPio, kSmCh2, kPinCh2, false) &&
+                 pulseReserveDualProgram(kPio) &&  // COMBINE mode: never fails later
                  g_marker.begin(kPio, kSmMarker, kPinMarker, true) &&
                  g_sync.begin(kPio, kSmSync, kPinSync);
 

@@ -1,5 +1,5 @@
 // Host harness for the REAL firmware timing header (src/pulse_timing.h).
-// Reads "clk freq width delay mdiv mwidth [sync]" lines, prints the realized
+// Reads "clk freq width delay mdiv mwidth [sync [combine]]" lines, prints the realized
 // cycles, formatted values and FIFO words in the format check_random.py,
 // check_marker_lock.py and check_sync.py expect.
 #include <cstdio>
@@ -9,12 +9,13 @@
 int main() {
     char line[256];
     while (fgets(line, sizeof line, stdin)) {
-        unsigned long clk, f, w, d, md, mw, sy = 1000000;
-        int n = sscanf(line, "%lu %lu %lu %lu %lu %lu %lu", &clk, &f, &w, &d, &md, &mw, &sy);
+        unsigned long clk, f, w, d, md, mw, sy = 1000000, cb = 0;
+        int n = sscanf(line, "%lu %lu %lu %lu %lu %lu %lu %lu", &clk, &f, &w, &d, &md, &mw, &sy, &cb);
         if (n < 6) continue;
         PulseParams p;
         p.freqHz = (uint32_t)f; p.widthNs = (uint32_t)w; p.delayNs = (uint32_t)d;
         p.markerDiv = (uint32_t)md; p.markerWidthNs = (uint32_t)mw; p.syncHz = (uint32_t)sy;
+        p.combine = (uint32_t)cb;
         RealizedTiming rt;
         const char *why = realizeTiming(p, (uint32_t)clk, &rt);
         if (why) { printf("ERR %s\n", why); continue; }
