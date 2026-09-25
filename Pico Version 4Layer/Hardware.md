@@ -114,8 +114,11 @@ up across the two rows, it is wrong.
 All eight module grounds are bonded. Every other socket pad is unconnected — and, once the
 module is seated, physically inaccessible. There is no GPIO breakout header.
 
-**The module body occupies roughly x 158–180, y 43–96 in board coordinates.** Nothing may be
-placed there.
+**The module body occupies roughly x 158–180, y 31–82 in board coordinates**, with its micro-USB at
+the top board edge (the sockets start at y = 32.385; they were moved 13.97 mm up on 2026-09-25 so
+the control port can be reached through the enclosure wall). Nothing may be placed there. The
+silkscreen labels the two top-edge ports `CONTROL / PROGRAM — PICO MICRO-USB` and
+`POWER ONLY — USB-C PD 15 V` (J17).
 
 ---
 
@@ -621,7 +624,7 @@ Layout decisions made in the final DFM / assembly / signal-integrity review (202
 - **GND stitching:** 47 stitching vias along the board edges and in the south-east quadrant, plus
   local vias at the decoupling capacitors and IC ground pins that previously reached the planes
   only through thermal spokes.
-- **Silkscreen** shows the Pico outline with a "PICO USB END" arrow and a pin-1 mark (a module fitted the other way round would put the
+- **Silkscreen** shows the Pico outline, the `CONTROL / PROGRAM` and `POWER ONLY` port labels, and a pin-1 mark (a module fitted the other way round would put the
   board's +5 V on one of its GPIO pins), and J10/J11 are labelled as described under
   Signal chains. All board text is at least 1.0 mm high.
 

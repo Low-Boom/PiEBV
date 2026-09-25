@@ -1,7 +1,7 @@
 {
     "$schema": "https://schemas.kicad.org/drc.v1.json",
     "coordinate_units": "mm",
-    "date": "2026-09-25T15:37:52",
+    "date": "2026-09-25T15:51:46",
     "ignored_checks": [
         {
             "description": "Footprint has no courtyard defined",
@@ -781,7 +781,7 @@
                     "description": "Footprint J14",
                     "pos": {
                         "x": 160.015,
-                        "y": 46.355
+                        "y": 32.385
                     },
                     "uuid": "d595c2e5-33a9-4a39-90e4-187de9e17b86"
                 }
@@ -796,7 +796,7 @@
                     "description": "PTH pad 1 [<no net>] of J14",
                     "pos": {
                         "x": 160.015,
-                        "y": 46.355
+                        "y": 32.385
                     },
                     "uuid": "acc5f02a-7796-4f6b-8df3-e020b877dc5b"
                 }
@@ -811,7 +811,7 @@
                     "description": "PTH pad 2 [<no net>] of J14",
                     "pos": {
                         "x": 160.015,
-                        "y": 48.895
+                        "y": 34.925
                     },
                     "uuid": "b4f57dd8-61f4-4a14-91da-94e9582b8ba2"
                 }
@@ -826,7 +826,7 @@
                     "description": "PTH pad 4 [<no net>] of J14",
                     "pos": {
                         "x": 160.015,
-                        "y": 53.975
+                        "y": 40.005
                     },
                     "uuid": "fff95e92-a5f5-4918-9fe4-3967e1431ab6"
                 }
@@ -841,7 +841,7 @@
                     "description": "PTH pad 5 [<no net>] of J14",
                     "pos": {
                         "x": 160.015,
-                        "y": 56.515
+                        "y": 42.545
                     },
                     "uuid": "7069ab12-1daa-425c-8be3-99ac580e7664"
                 }
@@ -856,7 +856,7 @@
                     "description": "PTH pad 6 [<no net>] of J14",
                     "pos": {
                         "x": 160.015,
-                        "y": 59.055
+                        "y": 45.085
                     },
                     "uuid": "8686e212-7742-4ef3-8740-8ffee05c09d2"
                 }
@@ -871,7 +871,7 @@
                     "description": "PTH pad 7 [<no net>] of J14",
                     "pos": {
                         "x": 160.015,
-                        "y": 61.595
+                        "y": 47.625
                     },
                     "uuid": "79a9f4c9-268b-40c3-9527-4644fa130b56"
                 }
@@ -886,7 +886,7 @@
                     "description": "PTH pad 9 [<no net>] of J14",
                     "pos": {
                         "x": 160.015,
-                        "y": 66.675
+                        "y": 52.705
                     },
                     "uuid": "e794e108-acd3-4c21-8d69-7f32e2907c79"
                 }
@@ -901,7 +901,7 @@
                     "description": "PTH pad 10 [<no net>] of J14",
                     "pos": {
                         "x": 160.015,
-                        "y": 69.215
+                        "y": 55.245
                     },
                     "uuid": "25cf14ed-f910-4328-bb88-1bac91ab6d3d"
                 }
@@ -916,7 +916,7 @@
                     "description": "PTH pad 11 [<no net>] of J14",
                     "pos": {
                         "x": 160.015,
-                        "y": 71.755
+                        "y": 57.785
                     },
                     "uuid": "fdcb6e62-3963-49d5-8634-edfc3b3f43a3"
                 }
@@ -931,7 +931,7 @@
                     "description": "PTH pad 12 [<no net>] of J14",
                     "pos": {
                         "x": 160.015,
-                        "y": 74.295
+                        "y": 60.325
                     },
                     "uuid": "1af010f6-d9cf-4771-b602-3e2f44bba6be"
                 }
@@ -946,7 +946,7 @@
                     "description": "PTH pad 14 [PWM_1MHz] of J14",
                     "pos": {
                         "x": 160.015,
-                        "y": 79.375
+                        "y": 65.405
                     },
                     "uuid": "4212e975-033b-47e7-8309-ccc63ec963a1"
                 }
@@ -961,7 +961,7 @@
                     "description": "PTH pad 15 [PWM_Trig] of J14",
                     "pos": {
                         "x": 160.015,
-                        "y": 81.915
+                        "y": 67.945
                     },
                     "uuid": "c854b88c-eb28-4a6e-ab19-340b3ea5a4d1"
                 }
@@ -976,7 +976,7 @@
                     "description": "PTH pad 16 [_PULSE_OUT_CH2] of J14",
                     "pos": {
                         "x": 160.015,
-                        "y": 84.455
+                        "y": 70.485
                     },
                     "uuid": "362d94b0-f6b7-4748-b0d5-f43fbf404835"
                 }
@@ -991,7 +991,7 @@
                     "description": "PTH pad 17 [_PULSE_OUT_CH1] of J14",
                     "pos": {
                         "x": 160.015,
-                        "y": 86.995
+                        "y": 73.025
                     },
                     "uuid": "bbcb5947-6258-44f3-aa73-7d4f42da90ed"
                 }
@@ -1006,7 +1006,7 @@
                     "description": "PTH pad 19 [<no net>] of J14",
                     "pos": {
                         "x": 160.015,
-                        "y": 92.075
+                        "y": 78.105
                     },
                     "uuid": "99f75e1e-2368-4324-a936-8cea9b440144"
                 }
@@ -1021,7 +1021,7 @@
                     "description": "PTH pad 20 [<no net>] of J14",
                     "pos": {
                         "x": 160.015,
-                        "y": 94.615
+                        "y": 80.645
                     },
                     "uuid": "7eb29d50-3963-4812-8066-84fdf041656e"
                 }
@@ -1036,7 +1036,7 @@
                     "description": "Footprint J15",
                     "pos": {
                         "x": 177.795,
-                        "y": 46.355
+                        "y": 32.385
                     },
                     "uuid": "0e27a222-75b3-480e-8ad2-00d853274bd5"
                 }
@@ -1051,7 +1051,7 @@
                     "description": "PTH pad 4 [<no net>] of J15",
                     "pos": {
                         "x": 177.795,
-                        "y": 53.975
+                        "y": 40.005
                     },
                     "uuid": "5c7f52a3-7467-4706-90ef-a765be455cd9"
                 }
@@ -1066,7 +1066,7 @@
                     "description": "PTH pad 6 [<no net>] of J15",
                     "pos": {
                         "x": 177.795,
-                        "y": 59.055
+                        "y": 45.085
                     },
                     "uuid": "2ba89418-7e8b-4573-b72b-46929cd19ae5"
                 }
@@ -1081,7 +1081,7 @@
                     "description": "PTH pad 7 [<no net>] of J15",
                     "pos": {
                         "x": 177.795,
-                        "y": 61.595
+                        "y": 47.625
                     },
                     "uuid": "fc2585d2-33e8-44cf-a516-66765256a954"
                 }
@@ -1096,7 +1096,7 @@
                     "description": "PTH pad 9 [<no net>] of J15",
                     "pos": {
                         "x": 177.795,
-                        "y": 66.675
+                        "y": 52.705
                     },
                     "uuid": "032a39d8-4b45-4b9e-a247-554835c18123"
                 }
@@ -1111,7 +1111,7 @@
                     "description": "PTH pad 10 [<no net>] of J15",
                     "pos": {
                         "x": 177.795,
-                        "y": 69.215
+                        "y": 55.245
                     },
                     "uuid": "1ffe551b-ddc9-4172-963c-e2bbe9fff638"
                 }
@@ -1126,7 +1126,7 @@
                     "description": "PTH pad 11 [<no net>] of J15",
                     "pos": {
                         "x": 177.795,
-                        "y": 71.755
+                        "y": 57.785
                     },
                     "uuid": "1beb9562-4f7e-4be7-96dd-f40b09225f29"
                 }
@@ -1141,7 +1141,7 @@
                     "description": "PTH pad 12 [<no net>] of J15",
                     "pos": {
                         "x": 177.795,
-                        "y": 74.295
+                        "y": 60.325
                     },
                     "uuid": "696e8378-e591-44e5-bda7-a9c562ff7182"
                 }
@@ -1156,7 +1156,7 @@
                     "description": "PTH pad 14 [<no net>] of J15",
                     "pos": {
                         "x": 177.795,
-                        "y": 79.375
+                        "y": 65.405
                     },
                     "uuid": "30d2351e-7d3e-401a-94fd-14c3dec16be0"
                 }
@@ -1171,7 +1171,7 @@
                     "description": "PTH pad 15 [<no net>] of J15",
                     "pos": {
                         "x": 177.795,
-                        "y": 81.915
+                        "y": 67.945
                     },
                     "uuid": "61327d47-0e92-40a8-ad19-73df74979524"
                 }
@@ -1186,7 +1186,7 @@
                     "description": "PTH pad 16 [<no net>] of J15",
                     "pos": {
                         "x": 177.795,
-                        "y": 84.455
+                        "y": 70.485
                     },
                     "uuid": "0ba60abd-b575-41ed-9b28-07816c5c9629"
                 }
@@ -1201,7 +1201,7 @@
                     "description": "PTH pad 17 [<no net>] of J15",
                     "pos": {
                         "x": 177.795,
-                        "y": 86.995
+                        "y": 73.025
                     },
                     "uuid": "0a415e1c-fd17-40ce-921d-e6e3f902ad9b"
                 }
@@ -1216,7 +1216,7 @@
                     "description": "PTH pad 19 [<no net>] of J15",
                     "pos": {
                         "x": 177.795,
-                        "y": 92.075
+                        "y": 78.105
                     },
                     "uuid": "a0cdd5ae-8587-4c42-aaba-af4bca319b32"
                 }
@@ -1231,7 +1231,7 @@
                     "description": "PTH pad 20 [<no net>] of J15",
                     "pos": {
                         "x": 177.795,
-                        "y": 94.615
+                        "y": 80.645
                     },
                     "uuid": "76b25967-1000-418e-8af7-ebfead953c1f"
                 }
@@ -1681,7 +1681,7 @@
                     "description": "Pad 1 [_PULSE_OUT_CH1] of R17 on F.Cu",
                     "pos": {
                         "x": 156.3,
-                        "y": 86.995
+                        "y": 73.025
                     },
                     "uuid": "bf9cb40a-d39d-4e96-a5b0-296aea0cc595"
                 }
@@ -1696,7 +1696,7 @@
                     "description": "Pad 1 [_PULSE_OUT_CH2] of R18 on F.Cu",
                     "pos": {
                         "x": 156.3,
-                        "y": 84.455
+                        "y": 70.485
                     },
                     "uuid": "713662f9-d8ef-4cde-98df-d4f483e123d0"
                 }
@@ -1740,7 +1740,7 @@
                 {
                     "description": "Footprint TP3",
                     "pos": {
-                        "x": 155.002076,
+                        "x": 152.002076,
                         "y": 34.093171
                     },
                     "uuid": "e0a1d2d5-f533-41f1-b938-92a5abec9d0b"
@@ -1755,7 +1755,7 @@
                 {
                     "description": "PTH pad 1 [PWM_1MHz] of TP3",
                     "pos": {
-                        "x": 155.002076,
+                        "x": 152.002076,
                         "y": 34.093171
                     },
                     "uuid": "a2890105-0bbe-4398-bebd-d3cb9eca1b00"

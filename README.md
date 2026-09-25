@@ -81,16 +81,18 @@ interlock and Connectors.
 ## The board
 
 Orientation used below: the USB-C connector J17 is on the **top** edge, and the three BNCs stick
-out of the **right** edge. The Pico sits in two sockets left of centre, and the six camera ports
-run along the bottom.
+out of the **right** edge. The Pico sits in two sockets left of centre with its micro-USB at the
+top edge, and the six camera ports run along the bottom. The two USB ports on the top edge are
+labelled on the silkscreen: **`CONTROL / PROGRAM — PICO MICRO-USB`** (data: serial commands and
+firmware) and **`POWER ONLY — USB-C PD 15 V`** (J17).
 
 ```
- top edge:  TP3 (1 MHz scope point)                 J17 USB-C PD power
-           +--------------------------------------------------------------+
-           |            +--------+                                   J16 =|  ENABLE/TRIG/GND
-           |            |  Pico  |       J11 (laser enable)                |
-           |            | 2 W in |                                     J7 =|  Laser 1  (BNC)
-           |            | J14/15 |           J10 (trigger select)  TP4     |
+ top edge:  TP3   Pico micro-USB = CONTROL          J17 USB-C = POWER ONLY
+           +------------+--------+----------------------------------------+
+           |            |  Pico  |                                   J16 =|  ENABLE/TRIG/GND
+           |            |  2 W   |       J11 (laser enable)                |
+           |            | in J14 |                                     J7 =|  Laser 1  (BNC)
+           |            | / J15  |           J10 (trigger select)  TP4     |
            |            +--------+                                     J8 =|  Laser 2  (BNC)
            |                                                              |
            |  J1   J2   J3   J4   J5   J6   (camera ports)             J12 =|  Pixel reset (BNC)
@@ -105,7 +107,7 @@ run along the bottom.
 | **J7** | BNC, Laser 1 (CH1) | LDP-V trigger input (50 Ω) | 0 / ~4.8 V into 50 Ω; ~12 V open-circuit |
 | **J8** | BNC, Laser 2 (CH2) | Second LDP-V | same as J7 |
 | **J12** | BNC, pixel-reset **input** | Your reset source | Active LOW: pull to ground to hold all six cameras in reset. Open = cameras running. Accepts 3.3 V or 5 V logic, open-drain or a switch; the source must sink 1 mA. A 1.8 V logic high is **not** guaranteed to release reset. Do not add a 50 Ω terminator. |
-| **J17** | USB-C, **power only** | USB-C PD charger that offers 15 V | No data. Programming and serial always use the Pico's own USB port. |
+| **J17** | USB-C, **power only** (silkscreen `POWER ONLY`) | USB-C PD charger that offers 15 V | No data. Programming and serial always use the Pico's own micro-USB, next to it on the top edge (`CONTROL / PROGRAM`). |
 | **J10** | 1×3 trigger-source jumper | shunt | see [Jumpers](#jumpers) |
 | **J11** | 1×3 laser interlock | shunt, or a normally-closed E-stop switch | see [Jumpers](#jumpers) |
 | **J16** | 1×3 right-angle header, right edge | probes, or an external interlock | 1 ENABLE (pull LOW to inhibit the lasers) · 2 TRIG (camera trigger node) · 3 GND. **Never fit a shunt.** |
@@ -148,8 +150,8 @@ ground. Use it to check CH2 timing without loading J8. The matching CH1 point is
 
 Fit a **Raspberry Pi Pico 2 W** (or a plain Pico 2, which needs the `pico2` firmware image) with
 male headers into sockets J14 (left) and J15 (right). Seat it **component side up, with its
-micro-USB connector toward the top edge**, as the silkscreen outline and its "PICO USB END" arrow
-show. Pico pin 1 then goes into the top-left socket hole, marked `1`. Fitted the other way round,
+micro-USB connector at the top edge**, where the silkscreen reads `CONTROL / PROGRAM — PICO
+MICRO-USB`. Pico pin 1 then goes into the top-left socket hole, marked `1`. Fitted the other way round,
 the board's +5 V would land on one of the module's GPIO pins and could destroy it.
 
 Fit the Pico before connecting any camera. Without it, the camera sync and reset lines float.

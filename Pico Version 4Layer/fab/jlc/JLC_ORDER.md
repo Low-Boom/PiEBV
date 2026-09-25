@@ -91,11 +91,15 @@ these in the preview against the board's pin-1 marks and correct the rotation th
 - **Right edge:** the three BNC barrels stand 20.8 mm past the board edge (Laser 1, Laser 2, Pixel
   reset from top to bottom), for a panel with matching holes. J16's pins also stick out on the
   right edge.
-- **Top edge:** J17 (USB-C power) is flush with the edge and needs a cut-out. TP3's pins stick out
-  of the top edge.
+- **Top edge — two USB ports, labelled on the silkscreen:**
+  - **J17 USB-C, `POWER ONLY`**: centred 82 mm from the board's left edge, flush with the top edge,
+    sitting on the board surface. Needs a cut-out.
+  - **Pico micro-USB, `CONTROL / PROGRAM`** (serial commands and firmware): centred about 37 mm
+    from the left edge, at the top edge, raised about 13 mm above the board surface on the sockets
+    (8.5 mm socket + 2.5 mm header spacer + module). Needs a cut-out at that height; confirm the
+    height on the first assembled board.
+  - TP3's pins stick out of the top edge to the left of the Pico.
 - **Inside the enclosure, reached from above:**
-  - The Pico's micro-USB — the only data and serial port — is about 14 mm in from the top edge,
-    raised on the sockets. Plan a cable path or an opening for it.
   - The six camera IDC headers stand vertically between about 17 and 30 mm in from the bottom edge, so the
     ribbons leave upward.
   - J10 and J11 (the E-stop wiring) are inside as well.

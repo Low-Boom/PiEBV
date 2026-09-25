@@ -8,7 +8,7 @@ Ref,Val,Package,PosX,PosY,Rot,Side
 "C7","2.2uF","C_0805_2012Metric_Pad1.18x1.45mm_HandSolder",140.970000,-90.487500,180.000000,top
 "C8","0.1uF","C_0805_2012Metric_Pad1.18x1.45mm_HandSolder",232.500000,-117.000000,180.000000,top
 "C9","0.1uF","C_0805_2012Metric_Pad1.18x1.45mm_HandSolder",210.700000,-91.135000,180.000000,top
-"C10","10uF 25V","C_1206_3216Metric_Pad1.33x1.80mm_HandSolder",210.000000,-84.100000,90.000000,top
+"C10","10uF 50V","C_1206_3216Metric_Pad1.33x1.80mm_HandSolder",210.000000,-84.100000,90.000000,top
 "C11","1uF","C_0805_2012Metric_Pad1.18x1.45mm_HandSolder",205.000000,-37.900000,180.000000,top
 "C12","10uF 50V","C_1206_3216Metric_Pad1.33x1.80mm_HandSolder",225.000000,-47.300000,0.000000,top
 "C13","0.1uF","C_0805_2012Metric_Pad1.18x1.45mm_HandSolder",228.000000,-40.600000,0.000000,top
@@ -26,8 +26,8 @@ Ref,Val,Package,PosX,PosY,Rot,Side
 "J10","Trig","PinHeader_1x03_P2.54mm_Vertical",199.000000,-101.000000,90.000000,top
 "J11","Laser Enable","PinHeader_1x03_P2.54mm_Vertical",191.000000,-73.500000,90.000000,top
 "J12","Pixel Reset","BNC_Amphenol_B6252HB-NPP3G-50_Horizontal",245.000000,-120.650000,-90.000000,top
-"J14","Pico Socket A","PinSocket_1x20_P2.54mm_Vertical",160.015000,-46.355000,0.000000,top
-"J15","Pico Socket B","PinSocket_1x20_P2.54mm_Vertical",177.795000,-46.355000,0.000000,top
+"J14","Pico Socket A","PinSocket_1x20_P2.54mm_Vertical",160.015000,-32.385000,0.000000,top
+"J15","Pico Socket B","PinSocket_1x20_P2.54mm_Vertical",177.795000,-32.385000,0.000000,top
 "J16","Laser En/PWM Trig/GND","PinHeader_1x03_P2.54mm_Horizontal",250.000000,-55.000000,0.000000,top
 "J17","USB-C PD in","USB_C_Receptacle_HRO_TYPE-C-31-M-12",214.000000,-33.650000,180.000000,top
 "L1","4.7uH","L_Cenker_CKCS4030",231.200000,-44.000000,0.000000,top
@@ -45,10 +45,10 @@ Ref,Val,Package,PosX,PosY,Rot,Side
 "R14","1R","R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",213.300000,-74.095000,180.000000,top
 "R15","10k","R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",205.000000,-49.000000,90.000000,top
 "R16","100k","R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",202.600000,-85.000000,-90.000000,top
-"R17","10k","R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",155.300000,-86.995000,180.000000,top
-"R18","10k","R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",155.300000,-84.455000,180.000000,top
+"R17","10k","R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",155.300000,-73.025000,180.000000,top
+"R18","10k","R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",155.300000,-70.485000,180.000000,top
 "R19","100","R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",199.000000,-96.900000,-90.000000,top
-"TP3","1MHz sync + GND","PinHeader_1x02_P2.54mm_Horizontal",155.002076,-34.093171,90.000000,top
+"TP3","1MHz sync + GND","PinHeader_1x02_P2.54mm_Horizontal",152.002076,-34.093171,90.000000,top
 "TP4","CH2 monitor + GND","PinHeader_1x02_P2.54mm_Vertical",207.750000,-101.000000,90.000000,top
 "U1","74LVC1G04","SOT-23-5_HandSoldering",149.860000,-110.807500,0.000000,top
 "U2","SN74LVC04AD","SOIC127P600X175-14N",142.110000,-110.172500,0.000000,top
