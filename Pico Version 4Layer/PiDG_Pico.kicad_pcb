@@ -10195,7 +10195,7 @@
 				)
 			)
 		)
-		(property "Value" "10uF 25V"
+		(property "Value" "10uF 50V"
 			(at 0 1.85 90)
 			(layer "F.Fab")
 			(uuid "c44afe57-ecf6-482b-ab87-6a0c1409415b")
@@ -17484,6 +17484,18 @@
 				(size 1.2 1.2)
 				(thickness 0.15)
 			)
+		)
+	)
+	(gr_text "JLCJLCJLCJLC"
+		(at 195 145 0)
+		(layer "B.SilkS")
+		(uuid "824ddeb9-dd90-45b8-8d4b-bd5fad8e4e57")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify mirror)
 		)
 	)
 	(segment

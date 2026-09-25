@@ -408,7 +408,7 @@ U13 is a TI UCC27524 dual 5 A driver, non-inverting, on **VDD = +12V** with ENA/
 (pin 6) with its own GND via, and GND (pin 3) drops straight to the In1 plane through a via under
 the package — a board loop of roughly 1.5–2 nH, against the 7–13 nH of the earlier layout, which
 fed VDD only from C10 via 15 mm of trace and two vias. That keeps the ~100 mA, few-ns output
-edges from bouncing VDD into the pulse top. C10 (10 µF) remains the bulk reservoir. Its inputs are TTL-compatible independent of VDD (high above
+edges from bouncing VDD into the pulse top. C10 (10 µF) remains the bulk reservoir. U13's inputs are TTL-compatible independent of VDD (high above
 1.8–2.3 V, 1 V hysteresis), so the 5 V AHCT gates drive it unchanged. Output pull-up is
 **2.5 / 5 / 7.5 Ω** (min/typ/max, PMOS only — which is what holds a steady load high during a
 pulse); pull-down 0.15–1 Ω, so the low level into 50 Ω is well under the 0.2 V limit.
@@ -625,19 +625,15 @@ Layout decisions made in the final DFM / assembly / signal-integrity review (202
   board's +5 V on one of its GPIO pins), and J10/J11 are labelled as described under
   Signal chains. All board text is at least 1.0 mm high.
 
-**JLCPCB assembly files** (`fab/jlc/`) cover the 51 SMD parts. The through-hole parts (IDC
-headers, BNCs, sockets, pin headers) are hand-soldered: their footprint origins sit on pin 1
-rather than the body centre, so leave them out of a JLC placement unless you correct them.
-Before ordering:
-
-- **Fill in the `LCSC Part #` column** (it is deliberately empty). Match the qualifiers in the
-  human BOM: R12/R13 must be 0.1 %, R6/R7/R14 1 %, the 0.1 µF line 50 V (C9 sits on 12 V), C14/C15
-  25 V X5R so they keep ≥ 10 µF at 5 V. U9, U13, U14, U15, U17 and the AHCT/Schmitt logic parts
-  must be exactly the listed part numbers (see the BOM notes).
-- **Check every IC's rotation in JLC's placement preview.** Pin 1 is top-left in every footprint,
-  but JLC's library zero orientation varies by part: SOT-23-5/6, SC-70-6, SOIC-8/14, SSOP-10 and
-  the USB-C receptacle commonly need a 90° or 180° correction there.
-- **Two jumper shunts** (J10 on 2‑3, J11 on 1‑2) are loose parts, not placed.
+**JLCPCB order:** the board is set up for full assembly by JLCPCB, with every SMD and
+through-hole part fitted, so nothing needs soldering on delivery. `fab/jlc/JLC_ORDER.md` is the
+checklist: order-form settings, remarks to paste, the parts that need Global Sourcing (U14 CH224K
+and U9 NCP718 were out of stock on 2026-09-25, and the 69.8 Ω R6/R7 stock is thin), rotations to
+check in the placement preview, the cost estimate, what to do on delivery (plug in a Pico 2 WH,
+flash the firmware, fit J10, wire the E-stop to J11), and enclosure notes. The JLC BOM carries an
+LCSC number on every line; through-hole parts sit in the placement file at their pad centre,
+because their footprint origins are on pin 1. The back silkscreen carries JLC's `JLCJLCJLCJLC`
+order-number placeholder.
 
 ---
 
@@ -649,7 +645,7 @@ Before ordering:
 | `PiDG_Pico.kicad_pcb` | board |
 | `PiDG_Pico_BOM.csv` | BOM (hand-maintained; `export_bom` ignores DNP attributes) |
 | `PiDG_Pico_CPL.csv` | pick-and-place, all 67 placed parts (KiCad columns), mounting holes excluded |
-| `fab/jlc/PiDG_Pico_JLC_BOM.csv`, `fab/jlc/PiDG_Pico_JLC_CPL.csv` | JLCPCB assembly upload files for the 51 SMD parts (see Manufacturing notes) |
+| `fab/jlc/PiDG_Pico_JLC_BOM.csv`, `fab/jlc/PiDG_Pico_JLC_CPL.csv`, `fab/jlc/JLC_ORDER.md` | JLCPCB full-assembly upload files (all 67 parts, LCSC numbers) and the order checklist |
 | `fab/gerbers/`, `fab/PiDG_Pico_Gerbers.zip` | gerbers, Excellon drill (PTH/NPTH) and job file, from the board's stored plot settings |
 | `libs/PiDG_Local.kicad_sym` | Pico 2 W and UCC27524 symbols |
 | `libs/PiDG_Local.pretty/` | `*_EdgeTrim` footprint variants (see below) |

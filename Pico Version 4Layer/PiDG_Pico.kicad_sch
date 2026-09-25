@@ -21776,7 +21776,7 @@
 				)
 			)
 		)
-		(property "Value" "10uF 25V"
+		(property "Value" "10uF 50V"
 			(at 391.62 62.69 0)
 			(show_name no)
 			(do_not_autoplace no)
