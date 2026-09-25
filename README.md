@@ -474,9 +474,11 @@ COMBINE 0   ->  OK COMBINE=0 (CH1 on LASER 1, CH2 on LASER 2)
   `ERR COMBINE rejected: DISARM first: COMBINE changes what both laser outputs carry`.
 - **The laser limits count both pulses**, because each driver now receives two per period:
   - duty: 2 × WIDTH × FREQ ≤ 0.1 % (at WIDTH 100 ns the maximum FREQ halves to 5 kHz);
-  - spacing: `DELAY` ≥ 10 µs **and** period − `DELAY` ≥ 10 µs, rising edge to rising edge. That is
-    the LDP-V 10-70's 100 kHz maximum repetition rate (`kLaserMinSpacingNs` in `src/pulse_timing.h`;
-    the 240-100 alone would allow 500 ns). It also guarantees the two pulses never overlap.
+  - spacing: **no minimum** beyond keeping the two pulses apart. `DELAY` must exceed `WIDTH` by at
+    least one PIO clock cycle (6.667 ns), e.g. `DELAY` ≥ 106.667 ns at `WIDTH 100`. At exactly
+    `DELAY` = `WIDTH` the second pulse would start on the cycle the first ends, and the two would
+    fuse into one pulse of twice the width. Check your own laser driver's minimum pulse spacing —
+    the firmware does not impose one.
 - The timing is the same cycle-exact timing as the normal mode: the CH1 and CH2 state machines each
   drive both laser pins.
 - The monitor points follow: TP4 and J10 pin 1 both show the double pulse, and with J10 on 1-2 the
@@ -505,7 +507,7 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
   WIDTH × FREQ ≤ 0.1 %. Requests that would exceed them are rejected, not clamped, and the error tells
   you the highest FREQ allowed at the current WIDTH. To change the limits for other drivers, edit
   `kLaserMaxWidthNs` / `kLaserMaxDutyPpm` in `src/pulse_timing.h`. With `COMBINE 1` the duty counts
-  both pulses and the pulses must be ≥ 10 µs apart ([Combined mode](#combined-mode-combine)).
+  both pulses and `DELAY` must exceed `WIDTH` ([Combined mode](#combined-mode-combine)).
 - **Minimum width** is 3 cycles (20.000 ns) for WIDTH and MARKERWIDTH. The LDP-V 240-100's own 60 ns
   minimum is not enforced; shorter pulses simply under-drive it.
 - **Low frequencies:** with MARKERDIV at 100 the lowest FREQ is 4 Hz. Lower MARKERDIV first (to ≤ 28

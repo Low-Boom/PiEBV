@@ -2,7 +2,7 @@
 
 1. Every accept/reject decision of the real src/pulse_timing.h (through the harness)
    matches an exact-rational model of the COMBINE limits: duty counts 2 pulses per
-   period, and DELAY and period - DELAY are each >= kLaserMinSpacingNs (10 us).
+   period, and DELAY >= WIDTH + 1 cycle (the pulses must not touch; no other spacing rule).
 2. For every accepted set, CH1 and CH2 run the dual-pin program (SET PINS,3) in the
    PIO model on the shared latch of the two laser pins, and BOTH pins show, every
    period: a pulse of WIDTH at CH1's rise, a pulse of WIDTH exactly DELAY later, and
@@ -18,7 +18,6 @@ from pio_model import PROG_DUAL, block_pins, falls, rises, run_writes
 
 HARNESS = os.environ.get("PIDG_HARNESS") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "harness.exe" if os.name == "nt" else "harness")
-MIN_SPACING_NS = 10000
 random.seed(4242)
 
 
@@ -35,8 +34,9 @@ for clk in clks:
         w = random.choice([17, 20, 50, 100, 500, 1000, 1003, 1004, random.randint(0, 1100)])
         P = rnd(F(clk, f))
         per_ns = int(P * F(10**9, clk))
-        d = random.choice([0, 100, 9990, 9999, 10000, 10001, 10010, 20000, per_ns // 2,
-                           per_ns - 10000 + random.randint(-15, 15), random.randint(0, max(1, per_ns))])
+        wn = int(rnd(F(w * clk, 10**9)) * F(10**9, clk))  # realized width in ns (approx.)
+        d = random.choice([0, 100, w, w + 1, w + 3, w + 7, w + 10, wn + random.randint(-8, 12), 10000, per_ns // 2,
+                           per_ns - w - 40 + random.randint(-15, 15), random.randint(0, max(1, per_ns))])
         cases.append((clk, f, w, max(0, d), 100 if f >= 4 else 1, 2000))
 inp = "".join("%d %d %d %d %d %d 1000000 1\n" % c for c in cases)
 out = subprocess.run([HARNESS], input=inp, capture_output=True, text=True).stdout.splitlines()
@@ -50,7 +50,7 @@ for c, line in zip(cases, out):
     W = rnd(F(w * clk, 10**9)); D = rnd(F(d * clk, 10**9)); MW = rnd(F(mw * clk, 10**9))
     ok = (1 <= P <= 0xFFFFFFFF and Pm <= 0xFFFFFFFF and W >= 3 and MW >= 3 and
           F(W * 10**9, clk) <= 1000 and F(2 * W, P) <= F(1, 1000) and
-          F(D * 10**9, clk) >= MIN_SPACING_NS and D <= P and F((P - D) * 10**9, clk) >= MIN_SPACING_NS and
+          D >= W + 1 and
           D + W + 5 <= P and MW + 5 <= Pm)
     if line.startswith("ERR"):
         nrej += 1
@@ -70,10 +70,11 @@ for c, line in zip(cases, out):
     until = K * P + D + 20
     pins = block_pins([run_writes(w1, until, PROG_DUAL), run_writes(w2, until, PROG_DUAL)], 2)
     good = pins[0] == pins[1]  # both laser outputs identical
-    r, fl = rises(pins[0]), falls(pins[0])
-    expect_r = sorted([8 + k * P for k in range(K + 1)] + [8 + k * P + D for k in range(K + 1)])
+    r = [x for x in rises(pins[0]) if x < until]  # same window as the expectation below
+    fl = falls(pins[0])
+    expect_r = sorted([8 + k * P for k in range(K + 2)] + [8 + k * P + D for k in range(K + 2)])
     expect_r = [x for x in expect_r if x < until]
-    good = good and r == expect_r[:len(r)] and len(r) >= 2 * K
+    good = good and r == expect_r and len(r) >= 2 * K
     good = good and all(b - a == W for a, b in zip(r, fl))
     nsim += 1
     if not good:
@@ -82,3 +83,18 @@ for c, line in zip(cases, out):
 print("combined: accepted", nacc, "rejected", nrej, "simulated", nsim, "mismatches", len(mism))
 for m in mism[:10]:
     print(m)
+
+# Boundary: why COMBINE needs DELAY >= WIDTH + 1 cycle. At DELAY == WIDTH, CH2 rises on
+# the very cycle CH1 falls, and the higher-numbered SM (CH2) wins the shared latch, so
+# the two pulses fuse into ONE pulse of 2 x WIDTH. One cycle later there is a 1-cycle gap.
+P = 1000
+bad = []
+for W in (3, 15, 150):
+    for D, want_pulses in ((W, 1), (W + 1, 2)):
+        w1, w2 = (0, W - 3, P - (W - 3) - 8), (D, W - 3, P - D - (W - 3) - 8)
+        pins = block_pins([run_writes(w1, P, PROG_DUAL), run_writes(w2, P, PROG_DUAL)], 2)
+        n = len([x for x in rises(pins[0]) if x < P])
+        widths = [b - a for a, b in zip(rises(pins[0]), falls(pins[0]))][:n]
+        if n != want_pulses or (n == 1 and widths != [2 * W]) or (n == 2 and widths != [W, W]):
+            bad.append((W, D, n, widths))
+print("boundary DELAY=WIDTH merges, DELAY=WIDTH+1 cycle separates:", "ok" if not bad else bad)

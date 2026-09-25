@@ -47,7 +47,7 @@ const pio_program_t kPulseProgram = {
 // every cycle is otherwise identical, so the cycle model and FIFO words are shared.
 // CH1 and CH2 both run it on the two laser pins; the PIO output level of a pin is
 // the last value any state machine wrote (RP2350 datasheet 11.5.6), and the laser
-// limits keep the two channels' pulses >= kLaserMinSpacingNs apart, so each laser
+// timing check requires DELAY >= WIDTH + 1 cycle so the pulses never touch, so each laser
 // pin carries CH1's pulse and then CH2's pulse, exactly DELAY later.
 const uint16_t kPulseDualInstructions[] = {
     (uint16_t)pio_encode_pull(false, true),      // 0: delay word -> OSR

@@ -45,12 +45,10 @@ constexpr uint32_t kLaserMaxWidthNs = 1000;
 constexpr uint32_t kLaserMaxDutyPpm = 1000;  // 0.1 %
 constexpr const char *kLaserLimitSource = "PicoLas LDP-V 10-70";
 // COMBINE 1 puts both pulses of a pair on EACH laser output, so each driver sees
-// two pulses per period: the duty counts both, and consecutive pulses must be at
-// least this far apart (rising edge to rising edge). 10 us = the LDP-V 10-70's
-// 100 kHz maximum repetition rate (the 240-100 allows 2 MHz, i.e. 500 ns). In the
-// normal split mode each driver sees one pulse per period, and the duty limit
-// already keeps that period >= 20 us.
-constexpr uint32_t kLaserMinSpacingNs = 10000;
+// two pulses per period and the duty check counts both. There is deliberately no
+// minimum pulse spacing (it depends on the attached driver): the only rule is the
+// physical one that the two pulses must not touch on the shared pins, i.e.
+// DELAY >= WIDTH + 1 cycle (see realizeTiming()).
 
 // ---------------------------------------------------------------- parameters
 struct PulseParams {
@@ -258,24 +256,15 @@ inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTim
                  (unsigned long)kLaserMaxDutyPpm, (unsigned long)fmax, p.combine ? ", 2 pulses per output" : "");
         return why;
     }
-    // Pulse spacing per driver with COMBINE: CH1 -> CH2 is DELAY, CH2 -> next CH1 is
-    // period - DELAY; both must be >= kLaserMinSpacingNs. This also keeps the two
-    // pulses from ever overlapping on the shared pins.
-    if (p.combine) {
-        const uint64_t minSpacing = (uint64_t)kLaserMinSpacingNs * clk;  // in cycles x 1e9
-        if ((uint64_t)delay * 1000000000ULL < minSpacing) {
-            pulseFormatNs(delay, clk, a, sizeof(a));
-            snprintf(why, sizeof(why), "laser limit: COMBINE needs DELAY >= %lu ns (realized %s ns)",
-                     (unsigned long)kLaserMinSpacingNs, a);
-            return why;
-        }
-        if (delay > period || (uint64_t)(period - delay) * 1000000000ULL < minSpacing) {
-            const uint64_t minCyc = (minSpacing + 999999999ULL) / 1000000000ULL;
-            pulseFormatNs(period > minCyc ? period - minCyc : 0, clk, a, sizeof(a));
-            snprintf(why, sizeof(why), "laser limit: COMBINE needs period - DELAY >= %lu ns; max DELAY %s ns",
-                     (unsigned long)kLaserMinSpacingNs, a);
-            return why;
-        }
+    // COMBINE: both state machines write the same two pins, and a pin keeps the last
+    // level written. If CH2 rose before CH1 fell, CH1's fall would cut CH2's pulse
+    // off (DELAY == WIDTH merges them into one). So CH2 may rise no earlier than one
+    // cycle after CH1 falls: DELAY >= WIDTH + 1 cycle, i.e. any low gap > 0. (The
+    // gap from CH2's fall to the next CH1 rise is >= 5 cycles by the fit check.)
+    if (p.combine && delay < width + 1) {
+        pulseFormatNs(width + 1, clk, a, sizeof(a));
+        snprintf(why, sizeof(why), "COMBINE needs DELAY > WIDTH so the two pulses stay separate (min DELAY %s ns)", a);
+        return why;
     }
 
     const PulseCycles ch1{(uint32_t)period, 0, width};

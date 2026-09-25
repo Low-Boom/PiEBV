@@ -172,9 +172,11 @@ The CH1 and CH2 state machines then each run a dual-pin copy of the pulse progra
 on GP12–GP13; identical cycle timing), and the shared PIO output latch makes each laser pin carry
 CH1's pulse and then CH2's, exactly DELAY later (checked cycle-exact in
 `tools/timing_check/check_combined.py`). Each driver then sees two pulses per period, so the duty
-check counts both (`2 × WIDTH × FREQ ≤ 0.1 %`) and both gaps, `DELAY` and `period − DELAY`, must be
-≥ `kLaserMinSpacingNs` = 10 µs: the LDP-V 10-70's 100 kHz maximum repetition rate. That also rules
-out overlapping pulses on the shared pins. COMBINE can only be changed while DISARMED. **Do not
+check counts both (`2 × WIDTH × FREQ ≤ 0.1 %`). There is deliberately **no minimum pulse spacing**
+(it depends on the attached driver, so check its datasheet): the only rule is that the pulses stay
+separate on the shared pins, `DELAY ≥ WIDTH + 1 PIO cycle` (6.667 ns). At `DELAY = WIDTH`, CH2 rises
+on the cycle CH1 falls, the higher-numbered state machine wins the latch, and the two pulses fuse
+into one of 2 × WIDTH — past the 1 µs width limit at WIDTH 1000. COMBINE can only be changed while DISARMED. **Do not
 use a BNC tee instead**: tying J7 and J8 together, or splitting one output to two drivers, gives
 3–3.4 V pulses, or 6.9 V where the pulses overlap (see Laser outputs).
 

@@ -201,10 +201,9 @@ void printHelp(uint32_t clkHz) {
     g_out.print(F(" ns and WIDTH x FREQ <= "));
     g_out.print(buf);
     g_out.println(F(" % duty. Changes that would exceed them are rejected."));
-    g_out.print(F("With COMBINE 1 each output carries 2 pulses per period: the duty counts both,\n"
-                  "and DELAY and period - DELAY must each be >= "));
-    g_out.print(kLaserMinSpacingNs);
-    g_out.println(F(" ns. Change COMBINE only while DISARMED."));
+    g_out.println(F("With COMBINE 1 each output carries 2 pulses per period: the duty counts both,\n"
+                    "and DELAY must exceed WIDTH (by >= 1 cycle) so the pulses stay separate.\n"
+                    "Change COMBINE only while DISARMED."));
     g_out.println(F(
         "MARKER and SYNC run while DISARMED; CH1/CH2 are held LOW. ARM, and pulse\n"
         "changes while armed, restart CH1/CH2/MARKER together after a hold-off of up\n"
