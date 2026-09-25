@@ -225,6 +225,7 @@ feed-through terminators).
    MARKERDIV=100
    MARKERWIDTH=2000 (actual 2000.000 ns, 300 cyc)
    SYNC=1000000 (actual 1000000.000 Hz, divider 75+0/256)
+   COMBINE=0 (CH1 on LASER 1, CH2 on LASER 2)
    ARMED=0
    HW=OK
    ...
