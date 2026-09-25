@@ -4269,7 +4269,7 @@
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal with elongated pad for handsoldering. (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor handsolder")
 		(property "Reference" "R9"
-			(at 0 1.65 90)
+			(at 0 -1.6 90)
 			(layer "F.SilkS")
 			(uuid "26d394eb-ab27-4f3a-9d73-8985d68a3c0c")
 			(effects
@@ -14031,7 +14031,7 @@
 		(descr "Through hole straight pin header, 1x03, 2.54mm pitch, single row")
 		(tags "Through hole pin header THT 1x03 2.54mm single row")
 		(property "Reference" "J10"
-			(at 0 -3.175 0)
+			(at 2 -6 0)
 			(layer "F.SilkS")
 			(uuid "104271a3-c6a6-458e-b087-f5d9fde4d23c")
 			(effects
@@ -17262,6 +17262,28 @@
 			)
 		)
 	)
+	(gr_text "CH2"
+		(at 207.75 103.4 0)
+		(layer "F.SilkS")
+		(uuid "ac416eef-0767-480c-86fe-e5ffadaaa773")
+		(effects
+			(font
+				(size 1 0.7)
+				(thickness 0.15)
+			)
+		)
+	)
+	(gr_text "GND"
+		(at 210.29 103.4 0)
+		(layer "F.SilkS")
+		(uuid "8b6ee96d-bea9-41ce-84d0-cfbb163bb98d")
+		(effects
+			(font
+				(size 1 0.7)
+				(thickness 0.15)
+			)
+		)
+	)
 	(gr_text "1"
 		(at 157.3 46.355 0)
 		(layer "F.SilkS")
@@ -17284,6 +17306,28 @@
 			)
 		)
 	)
+	(gr_text "LASER INTERLOCK: ON = 1-2"
+		(at 193.54 77.6 0)
+		(layer "F.SilkS")
+		(uuid "3be4f490-0e49-43ff-937e-cf125ffbb747")
+		(effects
+			(font
+				(size 1 0.8)
+				(thickness 0.15)
+			)
+		)
+	)
+	(gr_text "E-STOP: NC SWITCH ACROSS 1-2"
+		(at 193.54 79.2 0)
+		(layer "F.SilkS")
+		(uuid "f9694ed6-39f1-45ff-b3ee-1256176c288d")
+		(effects
+			(font
+				(size 1 0.8)
+				(thickness 0.15)
+			)
+		)
+	)
 	(gr_text "OFF"
 		(at 196.08 75.9 0)
 		(layer "F.SilkS")
@@ -17293,6 +17337,53 @@
 				(size 1 0.8)
 				(thickness 0.15)
 			)
+		)
+	)
+	(gr_text "SCOPE ONLY"
+		(at 209.02 105 0)
+		(layer "F.SilkS")
+		(uuid "bf68f39e-4839-477c-ac6b-56049d8d18b5")
+		(effects
+			(font
+				(size 1 0.8)
+				(thickness 0.15)
+			)
+		)
+	)
+	(gr_text "CAMERA TRIGGER:"
+		(at 197.4 100.3 0)
+		(layer "F.SilkS")
+		(uuid "aafd758f-4dc9-4e05-b489-038e004b0283")
+		(effects
+			(font
+				(size 1 0.8)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "TRG-MKR = MARKER"
+		(at 197.4 101.8 0)
+		(layer "F.SilkS")
+		(uuid "5e180db4-03c7-4156-85b1-a04662ecec99")
+		(effects
+			(font
+				(size 1 0.8)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "TRG-CH1 = LASER 1"
+		(at 197.4 103.3 0)
+		(layer "F.SilkS")
+		(uuid "c6ada579-39cc-4dd2-8e29-36e3661d61de")
+		(effects
+			(font
+				(size 1 0.8)
+				(thickness 0.15)
+			)
+			(justify right)
 		)
 	)
 	(gr_text "PICO USB END"

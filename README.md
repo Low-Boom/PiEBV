@@ -107,10 +107,10 @@ run along the bottom.
 | **J12** | BNC, pixel-reset **input** | Your reset source | Active LOW: pull to ground to hold all six cameras in reset. Open = cameras running. Accepts 3.3 V or 5 V logic, open-drain or a switch; the source must sink 1 mA. A 1.8 V logic high is **not** guaranteed to release reset. Do not add a 50 Ω terminator. |
 | **J17** | USB-C, **power only** | USB-C PD charger that offers 15 V | No data. Programming and serial always use the Pico's own USB port. |
 | **J10** | 1×3 trigger-source jumper | shunt | see [Jumpers](#jumpers) |
-| **J11** | 1×3 laser-enable jumper | shunt | see [Jumpers](#jumpers) |
+| **J11** | 1×3 laser interlock | shunt, or a normally-closed E-stop switch | see [Jumpers](#jumpers) |
 | **J16** | 1×3 right-angle header, right edge | probes, or an external interlock | 1 ENABLE (pull LOW to inhibit the lasers) · 2 TRIG (camera trigger node) · 3 GND. **Never fit a shunt.** |
 | **TP3** | 1×2 right-angle header, top edge | scope | 1 = 1 MHz sync straight from the Pico (3.3 V) · 2 = GND |
-| **TP4** | 1×2 header next to J10 | scope | 1 = CH2 pulse straight from the Pico (3.3 V, idles LOW while DISARMED) · 2 = GND |
+| **TP4** | 1×2 header next to J10, `CH2` / `GND` | scope only | 1 = CH2 pulse straight from the Pico (3.3 V, idles LOW while DISARMED) · 2 = GND |
 
 **External interlock on J16.** J16 pin 1 (ENABLE) is pulled up to 5 V on the board. Pulling it LOW,
 with a switch or open-collector output to pin 3 or with a 3.3 V or 5 V logic low, disables both
@@ -126,7 +126,23 @@ Both headers are numbered 1-2-3 from **left to right**; pin 1 has the square pad
 | **J11** laser enable | `ON` … `OFF` | **Lasers enabled** (the firmware must also be ARMED) | Lasers inhibited | Lasers inhibited (fail-safe) |
 | **J10** trigger source | `CH1 TRG MKR` | Cameras triggered by every Laser 1 pulse (only while ARMED) | **Cameras triggered by the reference marker** (normal) | Camera triggers held low |
 
-On J10, `TRG` (pin 2) feeds the camera trigger buffers; shunt it to `CH1` or to `MKR` (marker).
+**J11 — laser interlock and safety switch.** The silkscreen reads `ON` / `OFF` and
+`LASER INTERLOCK: ON = 1-2`, `E-STOP: NC SWITCH ACROSS 1-2`. For a safety (E-stop) switch, remove
+the shunt and wire a **normally-closed** switch across pins 1 and 2. Closed = lasers enabled
+(subject to ARM and the 12 V rail); pressing the switch **or** breaking its cable opens the circuit,
+and R8 then holds the interlock off, so the stop is fail-safe. Don't use J16 pin 1 as the E-stop
+input: it is enabled when open, so a broken cable there would leave the lasers enabled.
+
+**J10 — camera trigger source.** The silkscreen reads `CH1 TRG MKR` under the pins, with
+`CAMERA TRIGGER: TRG-MKR = MARKER / TRG-CH1 = LASER 1` beside it. `TRG` (pin 2) feeds the trigger
+input (pin 4) of all six camera ports. Shunt `TRG` to `MKR` for the reference marker (normal, runs
+while disarmed), or to `CH1` for a trigger on every Laser 1 pulse (only while ARMED). Never shunt all
+three pins.
+
+**TP4 — CH2 scope point.** Labelled `CH2` / `GND` and `SCOPE ONLY`. Pin 1 is the raw Laser 2 pulse
+from the Pico (GP12, 3.3 V logic, before the interlock and driver; LOW while DISARMED), pin 2 is
+ground. Use it to check CH2 timing without loading J8. The matching CH1 point is J10 pin 1 (through
+100 Ω). Probe only — never drive TP4.
 
 ### Seating the Pico
 

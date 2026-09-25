@@ -463,6 +463,12 @@ R2 wins: 5 V × 10/(3.3+10) ≈ **3.76 V**, against U10's (74AHCT1G08) **VIH of 
 0.7 × VCC = 3.5 V and the margin only ~260 mV.) AHCT also means an external interlock signal on
 J16.1 can be 3.3 V logic.
 
+**Safety (E-stop) switch: wire it across J11 1‑2.** Replace the shunt with a *normally-closed*
+switch between J11.1 and J11.2. Closed, it acts like the shunt; pressing it or breaking its cable
+opens the circuit and R8 pulls U10.1 low, so the stop fails safe. J16.1 is the wrong place for an
+E-stop: it is enabled when open. The silkscreen beside J11 reads `LASER INTERLOCK: ON = 1-2` and
+`E-STOP: NC SWITCH ACROSS 1-2`.
+
 The original Teensy design had no pull-down here and defaulted to *armed* with the header
 empty. R8 is the one deliberate behavioural change to the interlock.
 
@@ -544,7 +550,8 @@ still go through the Pico's own USB port.
 > triggers.
 
 TP3 and TP4 are scope points with a local ground pin (TP4, like J10.1, idles LOW while the
-firmware is DISARMED). The TRIG and 1 MHz taps feed U5 and U1,
+firmware is DISARMED). TP4 is labelled `CH2` / `GND` / `SCOPE ONLY`; J10 carries
+`CAMERA TRIGGER: TRG-MKR = MARKER / TRG-CH1 = LASER 1` beside its `CH1 TRG MKR` pin labels. The TRIG and 1 MHz taps feed U5 and U1,
 which run from the 1.8 V rail: external drive there needs **VIH ≥ 1.17 V, VIL ≤ 0.63 V**, and
 the inputs are 5.5 V-tolerant. Note that both taps are normally driven by a Pico GPIO, so an
 external source would fight it — treat them as monitor points.
