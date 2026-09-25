@@ -52,14 +52,15 @@ The target equipment is two **PicoLas LDP-V** laser-diode drivers (10-70 and 240
   at 0 V:
   1. the firmware is ARMED (`ARM` command);
   2. a shunt is on **J11 pins 1-2** (the hardware interlock; no shunt or pins 2-3 = disabled);
-  3. the 12 V laser-driver rail is in regulation, which needs a 15 V USB-C PD charger on **J17**.
+  3. the 12 V laser-driver rail is inside its 11.0–13.1 V window (checked by U18), which needs a
+     15 V USB-C PD charger on **J17**.
 
   The firmware cannot see gates 2 and 3, so `ARMED=1` alone does not mean the outputs are live.
 - **Losing the USB link does not disarm.** If the Pico's USB cable is pulled, the PC sleeps or a
   script is killed while ARMED, the board keeps running from J17 and the lasers keep pulsing, with
   no way to send `DISARM`. Stop them in hardware: move the J11 shunt off 1-2, pull J16 pin 1 low,
   or unplug J17.
-- **J7 and J8 are for 50 Ω loads only.** Into 50 Ω they give 0 V / about 4.8 V (4.55–5.16 V
+- **J7 and J8 are for 50 Ω loads only.** Into 50 Ω they give 0 V / about 4.8 V (4.61–5.08 V
   worst case), which is what the LDP-V wants. Unterminated, or into a 1 MΩ scope input, they
   swing to about **12 V**.
 - **One laser driver per output — never use a BNC tee.** Each output is built to drive exactly one
@@ -69,12 +70,15 @@ The target equipment is two **PicoLas LDP-V** laser-diode drivers (10-70 and 240
     overlap (DELAY shorter than WIDTH, e.g. `DELAY 0`) both outputs push together and the input sees
     **6.9 V**, above its 5.2 V damage threshold.
   - One output split to two drivers: each sees **3.0 V**, too low for either.
-  - The PiDG itself survives both at low duty (see the output rating below).
+  - The PiDG itself survives both (see the output rating below).
 
   To fire **one light source with both pulses**, or **two sources in sync with the same double
   pulse**, use `COMBINE 1` instead (see [Combined mode](#combined-mode-combine)): each output then
   carries both pulses, one driver per output.
-- **Board output rating (not enforced by the firmware).** R6/R7 are 0.125 W 0805 resistors. While an output is high into 50 Ω it dissipates about 0.65 W in its resistor, so keep each output's duty (WIDTH × FREQ, twice that with `COMBINE 1`) below about **19 %**. Both outputs high at once draw about 190 mA from the 12 V regulator (U17, rated 100 mA); its 10 µF reservoir covers short pulses (about 10–20 mV of sag per µs), but long simultaneous pulses sag the amplitude and can trip the power-good gate, which switches the outputs off.
+- **Board output rating: no limit to observe.** R6/R7 are 2 W resistors and the 12 V regulator (U17)
+  delivers 500 mA with a 400 mA current limit, so the board carries any duty the firmware accepts.
+  An output held high into 50 Ω dissipates 0.66 W in its resistor (both outputs draw ~200 mA), and
+  even an output held high into a shorted BNC stays within the resistor's rating (1.9 W).
 - **Before any debugger (SWD) session: send `DISARM` and remove the J11 shunt** (or unplug J17).
   A debugger reset can leave a laser output high for milliseconds.
 - **Before uploading new firmware, send `DISARM`.** The upload reboots the Pico. A reboot that lands
@@ -257,11 +261,12 @@ Open items).
 
 - **Before the first power-up on J17**, with no power applied: check that `VBUS_PD` is not shorted
   to GND, CC1 or CC2 (at J17 and U14), and that +5V_PD and +5V are not shorted to GND (at U16). J17
-  (0.5 mm pitch) and U16 (0.65 mm) are where solder bridges are likely, and a VBUS-to-CC bridge
-  would put up to 20 V on U14. Also check that J17's four shell legs are soldered.
+  and U17 (0.5 mm pitch) and U16 (0.65 mm) are where solder bridges are likely: a VBUS-to-CC bridge
+  would put up to 20 V on U14, and an IN-to-OUT bridge on U17 15 V on the 12 V rail. Also check that J17's four shell legs are soldered.
 - **Laser outputs,** into a 50 Ω-terminated scope with no driver connected:
-  - `LASER_PWR_OK` (U13 pins 1 and 8) reads about 12 V with the charger on J17;
-  - amplitude 0 V to 4.55–5.16 V;
+  - +12V at C17 reads 11.65–12.17 V (typically 11.9 V), and `LASER_PWR_OK` (U13 pins 1 and 8)
+    reads about 12 V, with the charger on J17;
+  - amplitude 0 V to 4.61–5.08 V;
   - CH2 exactly `DELAY` after CH1 (`DELAY 13` should give 13.3 ns);
   - the first pulse after `ARM` is full width;
   - 0 V after `DISARM` and after a full power cycle; and, while ARMED with pulses running, 0 V once
@@ -511,7 +516,8 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
     `WIDTH` before the next pair's CH1 starts (this also caps `WIDTH` at half the period);
   - **minimum width** of 3 cycles (20.000 ns) for WIDTH and MARKERWIDTH;
   - with `COMBINE 1`, `DELAY` > `WIDTH` ([Combined mode](#combined-mode-combine)).
-- **Board output rating:** keep each output's duty below about 19 % into 50 Ω (see Safety).
+- **Board output rating:** none to observe; the outputs carry any duty the firmware accepts, even
+  into a shorted BNC (see Safety).
 - **Low frequencies:** with MARKERDIV at 100 the lowest FREQ is 4 Hz. Lower MARKERDIV first (to ≤ 28
   for 1 Hz).
 - **Hardware delays:** the laser driver stage adds about 13–25 ns, common to both channels, so the
@@ -589,7 +595,7 @@ TX_DROPPED=0
 | `ERR … rejected: DELAY must leave >= WIDTH …` | DELAY + 2 × WIDTH longer than 1/FREQ | Shorten DELAY or WIDTH, or lower FREQ; the message gives the max DELAY |
 | `ERR … marker period …` at low FREQ | MARKERDIV × period too long | Lower MARKERDIV first (≤ 28 for 1 Hz) |
 | `ERR ARM …`, or `HW=ERR …` in STATUS | The pulse hardware did not start | Re-flash the firmware; if it persists, report the `STATUS` output |
-| `ARMED=1` but no laser pulses | J11 not on 1-2; J16 ENABLE pulled low; J17 unplugged or the charger isn't giving 15 V; still in the hold-off (`START_PENDING_US` > 0) | Check each gate. Measure `VBUS_PD` at C12 (about 15 V). |
+| `ARMED=1` but no laser pulses | J11 not on 1-2; J16 ENABLE pulled low; J17 unplugged or the charger isn't giving 15 V; still in the hold-off (`START_PENDING_US` > 0) | Check each gate. Measure `VBUS_PD` at C12 (about 15 V) and +12V at C17 (about 11.9 V; U18 holds the outputs off outside 11.0–13.1 V). |
 | Outputs dead after a reset or power cycle | The board always restarts DISARMED | Send `ARM` |
 | About 12 V pulses on the scope | Scope input is 1 MΩ, not 50 Ω | Use 50 Ω termination; the laser driver provides its own |
 | About 3 V pulses at the laser driver | Two 50 Ω loads in parallel (e.g. a tee into both a 50 Ω scope input and the driver) | Monitor with a high-impedance probe, or on TP4 (CH2) / J10 pin 1 (CH1, through 100 Ω) |

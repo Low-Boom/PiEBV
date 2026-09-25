@@ -9,8 +9,8 @@ library on 2026-09-25; re-check stock on the day you order.
 | Step | File |
 |---|---|
 | PCB | `../PiDG_Pico_Gerbers.zip` |
-| BOM | `PiDG_Pico_JLC_BOM.csv` — 34 lines, every one with an LCSC part number |
-| CPL | `PiDG_Pico_JLC_CPL.csv` — all 67 placed parts (through-hole parts at their pad centre) |
+| BOM | `PiDG_Pico_JLC_BOM.csv` — 40 lines, every one with an LCSC part number |
+| CPL | `PiDG_Pico_JLC_CPL.csv` — all 75 placed parts (through-hole parts at their pad centre) |
 
 ## PCB options
 
@@ -41,7 +41,8 @@ library on 2026-09-25; re-check stock on the day you order.
 > J17 (USB-C) is flush with the top board edge by design. J7, J8, J12 (BNC) overhang the right edge
 > by about 21 mm, and J16 / TP3 (right-angle headers) overhang their edges, all by design — please
 > hand-solder these, no wave fixture. J14/J15 are sockets for a plug-in module: seat them flat and
-> perpendicular. Do not substitute U9, U12, U13, U14, U15, U17, U7/U8/U10, R6/R7, R12/R13 or R14.
+> perpendicular. Do not substitute U9, U12, U13, U14, U15, U17 (adjustable LT3065 only), U18,
+> U7/U8/U10, R6/R7 (68 ohm 2 W 2512) or R12/R13 (0.1 %).
 
 ## Parts that need action before ordering
 
@@ -49,18 +50,17 @@ library on 2026-09-25; re-check stock on the day you order.
 |---|---|---|---|---|
 | U14 | WCH CH224K | C970725 | **0** | Pre-stock it through JLC Global Sourcing (Parts Manager), or buy and consign it. Do **not** accept CH224A: different CFG1 rating and resistor table. |
 | U9 | onsemi NCP718ASN180T1G | C513024 | **0** | Global Sourcing (Digi-Key/Mouser stock it) or consign. The TECH PUBLIC copy (C18212639) is not the specified part. |
-| R6, R7 | 69.8 Ω 1 % 0805 | C104481 | 22 | Enough for 5 boards (10 + attrition) but thin. Backup: C273981 (Yageo, 18) or Global Sourcing. Must stay 69.8 Ω — 68 Ω or 71.5 Ω put the laser amplitude outside the 4.5–5.2 V window. |
 
-Everything else was in stock in quantity. Nine lines are JLC basic parts; the rest are extended
-(about $3 loading fee each in Economic).
+Everything else was in stock in quantity (U17 LT3065: 799, enough for 5 boards). Eleven lines are
+JLC basic parts; the rest are extended (about $3 loading fee each in Economic).
 
 ## Placement preview — check before approving
 
 Pin 1 is top-left in every KiCad footprint, but JLC's library orientation varies. Check each of
 these in the preview against the board's pin-1 marks and correct the rotation there if needed:
 
-- SOT-23-5: U1, U3, U5, U7, U8, U9, U10, U12 · TSOT-23-6: U15 · SC-70-6: U16
-- SOIC-8: U13, U17 · SOIC-14: U2, U4, U6 · ESSOP-10 with exposed pad: U14
+- SOT-23-5: U1, U3, U5, U7, U8, U9, U10, U12 · TSOT-23-6: U15 · SOT-23-6: U18 · SC-70-6: U16
+- SOIC-8: U13 · SOIC-14: U2, U4, U6 · ESSOP-10 with exposed pad: U14 · DFN-10 with exposed pad: U17
 - J17 USB-C (opening toward the top edge) · J1–J6 IDC headers (key notch as on the silkscreen)
 - J7/J8/J12 BNCs (barrels past the right edge) · J16/TP3 (pins pointing off the board edge)
 
@@ -69,9 +69,9 @@ these in the preview against the board's pin-1 marks and correct the rotation th
 | Item | Estimate |
 |---|---|
 | 5 bare boards | ≈ $25–45 (JLC's calculator needs a login — confirm there) |
-| Assembly fees, 5 boards | ≈ $100 (setup + stencil ≈ $10, ≈ 24 extended-part loading fees ≈ $74, joints and hand soldering ≈ $17) |
-| Components, 5 boards | ≈ $90–110 (SMD ≈ $6 per board, through-hole ≈ $12 per board, plus attrition) |
-| **Total** | **≈ $220–260**, plus shipping (≈ $10–35 to Tokyo, 2–7 days) and Global Sourcing premiums |
+| Assembly fees, 5 boards | ≈ $115 (setup + stencil ≈ $10, ≈ 28 extended-part loading fees ≈ $86, joints and hand soldering ≈ $19) |
+| Components, 5 boards | ≈ $120–140 (SMD ≈ $12 per board, through-hole ≈ $12 per board, plus attrition) |
+| **Total** | **≈ $260–300**, plus shipping (≈ $10–35 to Tokyo, 2–7 days) and Global Sourcing premiums |
 
 ## Not supplied by JLC — do on delivery (no soldering)
 
