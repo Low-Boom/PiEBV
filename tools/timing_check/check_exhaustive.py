@@ -10,7 +10,7 @@ for _ in range(500):
     # also check offset independence
     assert run(w, 6*P+50, offset=0, fast=False) == a
 print("fast==slow, offset-independent: ok")
-# 2) exhaustive small configs with FIXED math: CH1 (D=0), CH2 (D), marker (D=0, period P*M)
+# 2) exhaustive small configs with FIXED math: CH1 (D=0) and CH2 (D) (the marker is CH1's program with its own width)
 bad = 0; n = 0
 for P in range(8, 48):
     for W in range(0, P + 2):

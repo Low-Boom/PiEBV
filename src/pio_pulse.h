@@ -3,10 +3,10 @@
 //
 // Two PIO program shapes cover everything this board needs:
 //  - PulseChannel: free-running "delay, then pulse-high, then idle-low" loop.
-//    Used for the two laser outputs (CH1/CH2) and the low-rate marker/alt
-//    trigger output. Channels started together stay phase-locked forever,
+//    Used for the two laser outputs (CH1/CH2), the camera trigger marker and
+//    the pixel-reset gate. Channels started together stay phase-locked forever,
 //    because their periods are exact integer cycle counts on a common clock
-//    (the marker period is exactly MARKERDIV x the laser period in cycles).
+//    (all of them run at the laser period, so the marker rises with every CH1).
 //  - SyncChannel: a bare 2-instruction toggle loop for the continuous camera
 //    sync clock; frequency is set purely via the state machine clock divider.
 //

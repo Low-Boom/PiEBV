@@ -117,7 +117,6 @@ const char *applyPulseParams(const PulseParams &p, RealizedTiming *realized) {
     }
     const bool pulseChanged = !g_configured || rt.combine != g_rt.combine || rt.periodCycles != g_rt.periodCycles ||
                               rt.widthCycles != g_rt.widthCycles || rt.delayCycles != g_rt.delayCycles ||
-                              rt.markerPeriodCycles != g_rt.markerPeriodCycles ||
                               rt.markerWidthCycles != g_rt.markerWidthCycles || rt.pixGate != g_rt.pixGate ||
                               rt.pixResetStartCycles != g_rt.pixResetStartCycles ||
                               rt.pixResetCycles != g_rt.pixResetCycles;

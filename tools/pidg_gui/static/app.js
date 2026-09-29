@@ -13,7 +13,6 @@ const META = {
   DELAY: { group: "laser", label: "Δt (CH2 delay)", kind: "ns", help: "CH2 rise after CH1 rise" },
   COMBINE: { group: "laser", label: "Outputs", kind: "select",
     options: [[0, "Split"], [1, "Combined"]] },  // the realized line spells out the routing
-  MARKERDIV: { group: "camera", label: "Marker every", kind: "count", unit: "pairs" },
   MARKERWIDTH: { group: "camera", label: "Marker width", kind: "ns" },
   PIXGATE: { group: "pix", label: "Gate", kind: "select",
     options: [[0, "Off (J12 only)"], [1, "While ARMED"], [2, "Always"]] },
@@ -246,7 +245,6 @@ function realizedText(name, f, clk) {
   if (f.unit === "Hz" && f.divider !== undefined) {
     return "actual " + fmtHz(f.actual) + " · divider " + f.divider.toFixed(3) + (f.jitter ? " (1-cycle jitter)" : "");
   }
-  if (name === "MARKERDIV") return "marker every " + f.value + " pairs";
   return f.detail || "";
 }
 
@@ -402,7 +400,6 @@ function timingModel(st, clk) {
   const c = (k) => (f[k] && f[k].cycles !== undefined ? f[k].cycles : 0);
   const m = {
     clk, P: c("FREQ"), W: c("WIDTH"), D: c("DELAY"), MW: c("MARKERWIDTH"),
-    MD: f.MARKERDIV ? f.MARKERDIV.value : 1,
     combine: f.COMBINE ? f.COMBINE.value : 0,
     gate: f.PIXGATE ? f.PIXGATE.value : null,
     L: c("PIXLEAD"), G: c("PIXLAG"),
@@ -420,7 +417,7 @@ function buildRows(m, k0, k1) {
     const t = k * P;
     ch1.push([t, t + W]);
     ch2.push([t + D, t + D + W]);
-    if (((k % m.MD) + m.MD) % m.MD === 0) mk.push([t, t + MW]);
+    mk.push([t, t + MW]);  // the marker fires with every pair
     free.push([t - L, t + D + W + G]);
   }
   const l1 = m.combine ? ch1.concat(ch2) : ch1;
@@ -429,7 +426,7 @@ function buildRows(m, k0, k1) {
   const rows = [
     { name: "Laser 1", sub: "J7" + (m.combine ? " · both pulses" : " · CH1"), color: 1, highs: l1, inactive: !m.armed, note: lasersNote, state: ["LOW", "HIGH"] },
     { name: "Laser 2", sub: "J8" + (m.combine ? " · both pulses" : " · CH2"), color: 2, highs: l2, inactive: !m.armed, note: lasersNote, state: ["LOW", "HIGH"] },
-    { name: "Marker", sub: "J10 MKR · every " + m.MD + " pairs", color: 3, highs: mk, state: ["LOW", "HIGH"] },
+    { name: "Marker", sub: "J10 MKR · every pair", color: 3, highs: mk, state: ["LOW", "HIGH"] },
   ];
   if (m.gate !== null) {
     const on = m.gate > 0;
@@ -629,8 +626,7 @@ function renderCharts(st, clk) {
   // sequence: three pairs
   const K = 3;
   const s0 = (gateOn ? -L : 0) - 0.06 * P, s1 = (K - 1) * P + Math.max(lastFall + (gateOn ? G : 0), P * 0.35) + 0.06 * P;
-  $("seqTitle").textContent = "Sequence: " + K + " consecutive pairs (period " + fmtTime(P, 3) + ")" +
-    (m.MD > K ? " · the marker repeats every " + m.MD + " pairs" : "");
+  $("seqTitle").textContent = "Sequence: " + K + " consecutive pairs (period " + fmtTime(P, 3) + ")";
   const seqRows = buildRows(m, -1, K);
   const w2 = drawChart($("seqChart"), m, seqRows, s0, s1, {
     top: 22,
@@ -657,7 +653,7 @@ function renderEdges(m) {
     [2, "Laser 2", "rise", m.D], [2, "Laser 2", "fall", m.D + m.W],
   ];
   if (m.combine) rows.push([1, "Laser 1", "rise (CH2)", m.D], [1, "Laser 1", "fall (CH2)", m.D + m.W], [2, "Laser 2", "rise (CH1)", 0], [2, "Laser 2", "fall (CH1)", m.W]);
-  rows.push([3, "Marker (every " + m.MD + " pairs)", "rise", 0], [3, "Marker", "fall", m.MW]);
+  rows.push([3, "Marker", "rise", 0], [3, "Marker", "fall", m.MW]);
   if (m.gate) rows.push([4, "Pixel reset", "released (TDRSTN high)", -m.L], [4, "Pixel reset", "asserted (TDRSTN low)", Math.max(m.W, m.D + m.W) + m.G]);
   rows.push([1, "Next pair", "CH1 rise", m.P]);
   rows.sort((a, b) => a[3] - b[3]);

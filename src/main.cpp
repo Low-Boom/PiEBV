@@ -12,10 +12,10 @@
 //     COMBINE 1 puts BOTH pulses on BOTH outputs (two light sources fired in sync
 //     with the same double pulse): the CH1 and CH2 state machines then each drive
 //     GP12 and GP13 together (pio_pulse.cpp, dual-pin program).
-//   - MARKER (GP11): a low-rate pulse, once every MARKERDIV pulse pairs and
-//     phase-locked to CH1, that the board's jumper (J10) can also select as the
-//     camera Trigger line instead of the raw laser pulse (mirrors the original
-//     D5/"PWM_Trig").
+//   - MARKER (GP11): a pulse of MARKERWIDTH with every pulse pair, rising with
+//     CH1, that the board's jumper (J10) selects as the camera Trigger line
+//     instead of the raw laser pulse (the original D5/"PWM_Trig" marked only
+//     every Nth pair). Each camera timestamps it into its event stream.
 //   - SYNC (GP10): the continuous camera sync clock (mirrors the original
 //     D4/1MHz hardware-PWM output). Runs on pio1: it is independent of the
 //     laser timing, and pio0's fourth state machine is the pixel-reset gate.
@@ -248,7 +248,7 @@ void restartPulses(const RealizedTiming &rt, bool lasersLive) {
     // Cannot fail: realizeTiming() already ran the same feasibility checks.
     g_ch1.configure(PulseCycles{rt.periodCycles, 0, rt.widthCycles});
     g_ch2.configure(PulseCycles{rt.periodCycles, rt.delayCycles, rt.widthCycles});
-    g_marker.configure(PulseCycles{rt.markerPeriodCycles, 0, rt.markerWidthCycles});
+    g_marker.configure(PulseCycles{rt.periodCycles, 0, rt.markerWidthCycles});  // every pulse pair
     if (rt.pixGate) {
         g_pixGate.configure(PulseCycles{rt.periodCycles, rt.pixResetStartCycles, rt.pixResetCycles});
     }
@@ -337,7 +337,6 @@ const char *applyPulseParams(const PulseParams &p, RealizedTiming *realized) {
     }
     const bool pulseChanged = !g_configured || rt.combine != g_rt.combine || rt.periodCycles != g_rt.periodCycles ||
                               rt.widthCycles != g_rt.widthCycles || rt.delayCycles != g_rt.delayCycles ||
-                              rt.markerPeriodCycles != g_rt.markerPeriodCycles ||
                               rt.markerWidthCycles != g_rt.markerWidthCycles || rt.pixGate != g_rt.pixGate ||
                               rt.pixResetStartCycles != g_rt.pixResetStartCycles ||
                               rt.pixResetCycles != g_rt.pixResetCycles;

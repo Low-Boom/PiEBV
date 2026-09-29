@@ -84,7 +84,7 @@ ReplyOut g_out;
 
 // ---------------------------------------------------------------- fields
 // How a field's realized value is shown.
-enum class Unit : uint8_t { None, Ns, Hz, Sync, Mode, PixMode };
+enum class Unit : uint8_t { Ns, Hz, Sync, Mode, PixMode };
 
 struct FieldCommand {
     const char *name;
@@ -97,7 +97,6 @@ const FieldCommand kFields[] = {
     {"FREQ", &PulseParams::freqHz, Unit::Hz, &RealizedTiming::periodCycles},
     {"WIDTH", &PulseParams::widthNs, Unit::Ns, &RealizedTiming::widthCycles},
     {"DELAY", &PulseParams::delayNs, Unit::Ns, &RealizedTiming::delayCycles},
-    {"MARKERDIV", &PulseParams::markerDiv, Unit::None, nullptr},
     {"MARKERWIDTH", &PulseParams::markerWidthNs, Unit::Ns, &RealizedTiming::markerWidthCycles},
     {"SYNC", &PulseParams::syncHz, Unit::Sync, &RealizedTiming::syncDiv256},
     {"COMBINE", &PulseParams::combine, Unit::Mode, &RealizedTiming::combine},
@@ -119,7 +118,7 @@ void printField(const FieldCommand &f, uint32_t value, const RealizedTiming &r) 
         g_out.print(value == 0   ? F(" (off: pixel reset from J12 only)")
                     : value == 1 ? F(" (pixels reset between pulse pairs while ARMED)")
                                  : F(" (pixels reset between pulse pairs, also while DISARMED)"));
-    } else if (f.unit != Unit::None && r.clkHz != 0) {
+    } else if (r.clkHz != 0) {
         const uint32_t n = r.*(f.realized);
         char num[32];
         g_out.print(F(" (actual "));
@@ -151,7 +150,6 @@ void printField(const FieldCommand &f, uint32_t value, const RealizedTiming &r) 
                 }
                 g_out.print(')');
                 break;
-            case Unit::None:
             case Unit::Mode:
             case Unit::PixMode:
                 break;
@@ -196,8 +194,7 @@ void printHelp(uint32_t clkHz) {
         "FREQ <Hz>          pulse-pair repetition frequency\n"
         "WIDTH <ns>         CH1/CH2 pulse width\n"
         "DELAY <ns>         CH2 rising edge after CH1 rising edge\n"
-        "MARKERDIV <N>      marker fires once every N pulse pairs\n"
-        "MARKERWIDTH <ns>   marker pulse width\n"
+        "MARKERWIDTH <ns>   marker pulse width (the marker fires with every pulse pair)\n"
         "SYNC <Hz>          camera sync clock frequency\n"
         "COMBINE <0|1>      1 = both pulses on BOTH laser outputs (two sources, one\n"
         "                   double pulse); 0 = CH1 on LASER 1, CH2 on LASER 2\n"
@@ -424,6 +421,11 @@ void Protocol::dispatch(char *line) {
 
     if (strcasecmp(cmd, "HELP") == 0) {
         printHelp(realized_.clkHz ? realized_.clkHz : 150000000u);
+        return;
+    }
+
+    if (strcasecmp(cmd, "MARKERDIV") == 0) {  // removed setting: say why, for old host scripts
+        reportErr("MARKERDIV", "removed: the marker fires with every pulse pair");
         return;
     }
 

@@ -32,8 +32,8 @@
 // No laser-driver ratings are imposed: pulse width, duty and pulse spacing all
 // depend on the attached driver, and the unit is used with more than one. The
 // firmware only enforces what the PIO programs physically need: widths of >= 3
-// cycles (20 ns at 150 MHz), DELAY + WIDTH fitting in the period, the marker and
-// SYNC counter ranges, and with COMBINE 1 (both pulses on both outputs, sharing
+// cycles (20 ns at 150 MHz), DELAY + WIDTH and MARKERWIDTH fitting in the period,
+// the SYNC divider range, and with COMBINE 1 (both pulses on both outputs, sharing
 // the pins) DELAY >= WIDTH + 1 cycle so the two pulses never touch.
 //
 // Pixel-reset gate (PIXGATE 1/2): a fourth state machine runs the same pulse
@@ -49,8 +49,7 @@ struct PulseParams {
     uint32_t freqHz = 1000;         // pulse-pair repetition frequency
     uint32_t widthNs = 100;         // CH1/CH2 pulse width (inside every attached laser driver's range)
     uint32_t delayNs = 10000;       // CH2-after-CH1 delay (rising edge to rising edge)
-    uint32_t markerDiv = 100;       // marker fires once every N pulse pairs
-    uint32_t markerWidthNs = 2000;  // marker pulse width
+    uint32_t markerWidthNs = 2000;  // marker pulse width (the marker fires with every pulse pair)
     uint32_t syncHz = 1000000;      // camera sync clock frequency
     uint32_t combine = 0;           // 0: CH1 -> LASER 1, CH2 -> LASER 2. 1: both pulses on BOTH outputs
     uint32_t pixGate = 0;           // camera pixel reset between pulse pairs: 0 off, 1 while ARMED, 2 always
@@ -64,8 +63,7 @@ struct RealizedTiming {
     uint32_t periodCycles = 0;        // CH1/CH2 period
     uint32_t widthCycles = 0;         // CH1/CH2 high time
     uint32_t delayCycles = 0;         // CH2 rising edge minus CH1 rising edge, exactly
-    uint32_t markerPeriodCycles = 0;  // exactly periodCycles * markerDiv (phase-locked to CH1)
-    uint32_t markerWidthCycles = 0;
+    uint32_t markerWidthCycles = 0;   // the marker runs at periodCycles, rising with CH1
     uint32_t syncDiv256 = 0;          // SYNC state-machine clock divider in 1/256 steps
     uint32_t combine = 0;             // 1: CH1 and CH2 pulses both drive both laser outputs
     uint32_t pixGate = 0;             // 0 off, 1 while ARMED, 2 always
@@ -201,27 +199,23 @@ inline void syncFormatHz(uint32_t div256, uint32_t clk_hz, char *buf, size_t len
 
 // ---------------------------------------------------------------- validation
 // Turns a parameter set into exact cycle counts and runs every check on the
-// REALIZED values, without touching hardware. Periods are derived in cycles:
-// the marker period is exactly periodCycles * markerDiv (never re-rounded from
-// ns), so the marker stays phase-locked to CH1 for every FREQ.
+// REALIZED values, without touching hardware. The marker marks every pulse pair:
+// it runs at exactly periodCycles, starting with CH1, so it rises with every CH1
+// pulse for every FREQ.
 // Returns nullptr and fills *rt on success, otherwise a short reason (valid
 // until the next call).
 inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTiming *rt) {
     static char why[160];
     char a[32];
-    if (p.freqHz == 0 || p.markerDiv == 0 || p.syncHz == 0) {
+    if (p.freqHz == 0 || p.syncHz == 0) {
         return "value must be > 0";
     }
     if (p.combine > 1) {
         return "COMBINE must be 0 (split) or 1 (both pulses on both outputs)";
     }
     const uint64_t period = pulseHzToCycles(p.freqHz, clk);
-    const uint64_t markerPeriod = period * p.markerDiv;
     if (period == 0 || period > 0xFFFFFFFFULL) {
         return "FREQ out of range";
-    }
-    if (markerPeriod > 0xFFFFFFFFULL) {
-        return "marker period (MARKERDIV x period) is over 2^32-1 PIO cycles";
     }
     // ns < 2^32 always gives < 2^32 cycles at clk < 1 GHz.
     const uint32_t width = (uint32_t)pulseNsToCycles(p.widthNs, clk);
@@ -264,7 +258,7 @@ inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTim
 
     const PulseCycles ch1{(uint32_t)period, 0, width};
     const PulseCycles ch2{(uint32_t)period, delay, width};
-    const PulseCycles marker{(uint32_t)markerPeriod, 0, markerWidth};
+    const PulseCycles marker{(uint32_t)period, 0, markerWidth};
     if (computePulseCounts(ch1, nullptr) != PulseFit::Ok) {
         return "WIDTH does not fit in the period";
     }
@@ -275,7 +269,11 @@ inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTim
         return why;
     }
     if (computePulseCounts(marker, nullptr) != PulseFit::Ok) {
-        return "MARKERWIDTH does not fit in the marker period";
+        const int64_t maxWidth = (int64_t)period - (int64_t)(kPulseFixedOverheadCycles - kPulseMinWidthCycles);
+        pulseFormatNs(maxWidth > 0 ? (uint64_t)maxWidth : 0, clk, a, sizeof(a));
+        snprintf(why, sizeof(why),
+                 "MARKERWIDTH must fit in the period (MARKERWIDTH <= 1/FREQ - 5 cycles); max MARKERWIDTH %s ns", a);
+        return why;
     }
 
     // Pixel-reset gate: reset from DELAY + WIDTH + PIXLAG after CH1 (the last laser pulse
@@ -326,7 +324,6 @@ inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTim
     rt->periodCycles = (uint32_t)period;
     rt->widthCycles = width;
     rt->delayCycles = delay;
-    rt->markerPeriodCycles = (uint32_t)markerPeriod;
     rt->markerWidthCycles = markerWidth;
     rt->syncDiv256 = (uint32_t)div256;
     rt->combine = p.combine;

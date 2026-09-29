@@ -20,19 +20,18 @@ for clk in clks:
         d = random.choice([0, 1, 3, 4, 6, 7, 10, 13, 14, 20, 10000, random.randint(0, 2*10**6),
                            max(0, int((P - rnd(F(w*clk, 10**9)) - 5) * F(10**9, clk)) + random.randint(-20, 20)),
                            max(0, int((P - 2 * rnd(F(w*clk, 10**9))) * F(10**9, clk)) + random.randint(-20, 20))])
-        md = random.choice([1, 2, 3, 7, 100, 300, random.randint(1, 30000)])
         mw = random.choice([0, 13, 20, 2000, random.randint(0, 50000)])
-        cases.append((clk, f, w, d, md, mw))
+        cases.append((clk, f, w, d, mw))
 inp = "\n".join(" ".join(map(str, c)) for c in cases) + "\n"
 out = subprocess.run([HARNESS], input=inp, capture_output=True, text=True).stdout.splitlines()
 assert len(out) == len(cases)
 nacc = nrej = nsim = 0; mism = []
 for c, line in zip(cases, out):
-    clk, f, w, d, md, mw = c
-    P = rnd(F(clk, f)); Pm = P * md
+    clk, f, w, d, mw = c
+    P = rnd(F(clk, f)); Pm = P  # the marker fires with every pulse pair
     W = rnd(F(w * clk, 10**9)); D = rnd(F(d * clk, 10**9)); MW = rnd(F(mw * clk, 10**9))
-    ok = (1 <= P <= 0xFFFFFFFF and Pm <= 0xFFFFFFFF and W >= 3 and MW >= 3 and
-          D + W + 5 <= P and D + 2 * W <= P and MW + 5 <= Pm)
+    ok = (1 <= P <= 0xFFFFFFFF and W >= 3 and MW >= 3 and
+          D + W + 5 <= P and D + 2 * W <= P and MW + 5 <= P)
     if line.startswith("ERR"):
         nrej += 1
         if ok: mism.append(("rejected but legal", c, line))
@@ -45,7 +44,7 @@ for c, line in zip(cases, out):
     if t[6:10] != [fmt3(F(clk, P)), fmt3(F(W * 10**9, clk)), fmt3(F(D * 10**9, clk)), fmt3(F(MW * 10**9, clk))]:
         mism.append(("format", c, t[6:10])); continue
     w1 = tuple(map(int, t[10:13])); w2 = tuple(map(int, t[13:16])); w3 = tuple(map(int, t[16:19]))
-    # simulate: CH1, CH2 for 4 periods, marker for 3 marker periods (only if cheap)
+    # simulate: CH1, CH2 for 4 periods, marker for 3 periods (only if cheap)
     K = 4
     e1 = run(w1, K * P + D + 20); e2 = run(w2, K * P + D + 20)
     r1, r2 = rises(e1), rises(e2)
@@ -56,7 +55,8 @@ for c, line in zip(cases, out):
     if Pm < 2**31:
         e3 = run(w3, 3 * Pm + 20); r3 = rises(e3)
         good = good and r3[0] == 8 and all(b - a == Pm for a, b in zip(r3, r3[1:])) and \
-               all(fl - r == MW for r, fl in zip(r3, falls(e3)))
+               all(fl - r == MW for r, fl in zip(r3, falls(e3))) and \
+               all(x == y for x, y in zip(r3, r1))  # rises with every CH1
     nsim += 1
     if not good: mism.append(("sim", c, r1[:3], r2[:3]))
 print("accepted", nacc, "rejected", nrej, "simulated", nsim, "mismatches", len(mism))

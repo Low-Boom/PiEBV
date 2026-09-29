@@ -37,20 +37,20 @@ for clk in clks:
         wn = int(rnd(F(w * clk, 10**9)) * F(10**9, clk))  # realized width in ns (approx.)
         d = random.choice([0, 100, w, w + 1, w + 3, w + 7, w + 10, wn + random.randint(-8, 12), 10000, per_ns // 2,
                            per_ns - w - 40 + random.randint(-15, 15), random.randint(0, max(1, per_ns))])
-        cases.append((clk, f, w, max(0, d), 100 if f >= 4 else 1, 2000))
-inp = "".join("%d %d %d %d %d %d 1000000 1\n" % c for c in cases)
+        cases.append((clk, f, w, max(0, d), 2000))
+inp = "".join("%d %d %d %d %d 1000000 1\n" % c for c in cases)
 out = subprocess.run([HARNESS], input=inp, capture_output=True, text=True).stdout.splitlines()
 assert len(out) == len(cases), (len(out), len(cases))
 
 nacc = nrej = nsim = 0
 mism = []
 for c, line in zip(cases, out):
-    clk, f, w, d, md, mw = c
-    P = rnd(F(clk, f)); Pm = P * md
+    clk, f, w, d, mw = c
+    P = rnd(F(clk, f))
     W = rnd(F(w * clk, 10**9)); D = rnd(F(d * clk, 10**9)); MW = rnd(F(mw * clk, 10**9))
-    ok = (1 <= P <= 0xFFFFFFFF and Pm <= 0xFFFFFFFF and W >= 3 and MW >= 3 and
+    ok = (1 <= P <= 0xFFFFFFFF and W >= 3 and MW >= 3 and
           D >= W + 1 and
-          D + W + 5 <= P and D + 2 * W <= P and MW + 5 <= Pm)
+          D + W + 5 <= P and D + 2 * W <= P and MW + 5 <= P)
     if line.startswith("ERR"):
         nrej += 1
         if ok:
