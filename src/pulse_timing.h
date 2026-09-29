@@ -35,6 +35,14 @@
 // cycles (20 ns at 150 MHz), DELAY + WIDTH fitting in the period, the marker and
 // SYNC counter ranges, and with COMBINE 1 (both pulses on both outputs, sharing
 // the pins) DELAY >= WIDTH + 1 cycle so the two pulses never touch.
+//
+// Pixel-reset gate (PIXGATE 1/2): a fourth state machine runs the same pulse
+// program on GP16, whose output is INVERTED in the GPIO block, so its "pulse" is the
+// camera pixel reset (TDRSTN low). Every period it asserts reset PIXLAG after the
+// last laser pulse falls (CH1 rise + DELAY + WIDTH + PIXLAG) and releases it PIXLEAD
+// before the next CH1 rise; the pixels are free for the whole pulse pair. The
+// program needs PIXLEAD >= 5 cycles and a reset of >= 3 cycles per period.
+constexpr uint32_t kPixGateMinLeadCycles = 5;
 
 // ---------------------------------------------------------------- parameters
 struct PulseParams {
@@ -45,6 +53,9 @@ struct PulseParams {
     uint32_t markerWidthNs = 2000;  // marker pulse width
     uint32_t syncHz = 1000000;      // camera sync clock frequency
     uint32_t combine = 0;           // 0: CH1 -> LASER 1, CH2 -> LASER 2. 1: both pulses on BOTH outputs
+    uint32_t pixGate = 0;           // camera pixel reset between pulse pairs: 0 off, 1 while ARMED, 2 always
+    uint32_t pixLeadNs = 10000;     // pixels released this long before CH1 rises
+    uint32_t pixLagNs = 100000;     // pixels reset again this long after the last laser pulse falls
 };
 
 // What the hardware actually produces for a PulseParams, in PIO clock cycles.
@@ -57,6 +68,11 @@ struct RealizedTiming {
     uint32_t markerWidthCycles = 0;
     uint32_t syncDiv256 = 0;          // SYNC state-machine clock divider in 1/256 steps
     uint32_t combine = 0;             // 1: CH1 and CH2 pulses both drive both laser outputs
+    uint32_t pixGate = 0;             // 0 off, 1 while ARMED, 2 always
+    uint32_t pixLeadCycles = 0;       // PIXLEAD, realized (shown even while the gate is off)
+    uint32_t pixLagCycles = 0;        // PIXLAG, realized
+    uint32_t pixResetStartCycles = 0; // reset asserted this long after CH1 rises (gate SM delay); 0 = gate off
+    uint32_t pixResetCycles = 0;      // reset length per period (gate SM high time); 0 = gate off
 };
 
 // ---------------------------------------------------------------- pulse program
@@ -262,6 +278,42 @@ inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTim
         return "MARKERWIDTH does not fit in the marker period";
     }
 
+    // Pixel-reset gate: reset from DELAY + WIDTH + PIXLAG after CH1 (the last laser pulse
+    // falls at DELAY + WIDTH in both COMBINE modes) until PIXLEAD before the next CH1.
+    if (p.pixGate > 2) {
+        return "PIXGATE must be 0 (off), 1 (pixel reset between pulse pairs while ARMED) or 2 (always)";
+    }
+    const uint64_t pixLead = pulseNsToCycles(p.pixLeadNs, clk);
+    const uint64_t pixLag = pulseNsToCycles(p.pixLagNs, clk);
+    uint64_t pixStart = 0, pixReset = 0;
+    if (p.pixGate) {
+        if (pixLead < kPixGateMinLeadCycles) {
+            pulseFormatNs(kPixGateMinLeadCycles, clk, a, sizeof(a));
+            snprintf(why, sizeof(why), "PIXLEAD realizes below the %lu-cycle minimum (%s ns)",
+                     (unsigned long)kPixGateMinLeadCycles, a);
+            return why;
+        }
+        pixStart = (uint64_t)delay + width + pixLag;
+        if (pixStart + kPulseMinWidthCycles + pixLead > period) {
+            const int64_t maxLag = (int64_t)period - (int64_t)kPulseMinWidthCycles - (int64_t)pixLead -
+                                   (int64_t)delay - (int64_t)width;
+            if (maxLag < 0) {
+                return "PIXLEAD + DELAY + WIDTH leave no time to reset the pixels in 1/FREQ: "
+                       "lower PIXLEAD or FREQ";
+            }
+            pulseFormatNs((uint64_t)maxLag, clk, a, sizeof(a));
+            snprintf(why, sizeof(why),
+                     "PIXLEAD + DELAY + WIDTH + PIXLAG must leave >= %lu cycles of pixel reset in 1/FREQ; "
+                     "max PIXLAG %s ns", (unsigned long)kPulseMinWidthCycles, a);
+            return why;
+        }
+        pixReset = period - pixLead - pixStart;
+        if (computePulseCounts(PulseCycles{(uint32_t)period, (uint32_t)pixStart, (uint32_t)pixReset}, nullptr) !=
+            PulseFit::Ok) {
+            return "pixel-reset gate does not fit in the period";  // unreachable: covered above
+        }
+    }
+
     const uint64_t div256 = syncDiv256For(p.syncHz, clk);
     if (div256 < kSyncMinDiv256 || div256 > kSyncMaxDiv256) {
         snprintf(why, sizeof(why), "SYNC out of range (%lu..%lu Hz)",
@@ -278,5 +330,10 @@ inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTim
     rt->markerWidthCycles = markerWidth;
     rt->syncDiv256 = (uint32_t)div256;
     rt->combine = p.combine;
+    rt->pixGate = p.pixGate;
+    rt->pixLeadCycles = (uint32_t)std::min<uint64_t>(pixLead, 0xFFFFFFFFULL);
+    rt->pixLagCycles = (uint32_t)std::min<uint64_t>(pixLag, 0xFFFFFFFFULL);
+    rt->pixResetStartCycles = (uint32_t)pixStart;
+    rt->pixResetCycles = (uint32_t)pixReset;
     return nullptr;
 }

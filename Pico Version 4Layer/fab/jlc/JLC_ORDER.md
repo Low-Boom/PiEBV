@@ -9,8 +9,8 @@ library on 2026-09-25; re-check stock on the day you order.
 | Step | File |
 |---|---|
 | PCB | `../PiDG_Pico_Gerbers.zip` |
-| BOM | `PiDG_Pico_JLC_BOM.csv` — 40 lines, every one with an LCSC part number |
-| CPL | `PiDG_Pico_JLC_CPL.csv` — all 75 placed parts (through-hole parts at their pad centre) |
+| BOM | `PiDG_Pico_JLC_BOM.csv` — 41 lines, every one with an LCSC part number |
+| CPL | `PiDG_Pico_JLC_CPL.csv` — all 76 placed parts (through-hole parts at their pad centre) |
 
 ## PCB options
 
@@ -41,7 +41,8 @@ library on 2026-09-25; re-check stock on the day you order.
 > J17 (USB-C) is flush with the top board edge by design. J7, J8, J12 (BNC) overhang the right edge
 > by about 21 mm, and J16 / TP3 (right-angle headers) overhang their edges, all by design — please
 > hand-solder these, no wave fixture. J14/J15 are sockets for a plug-in module: seat them flat and
-> perpendicular. Do not substitute U9, U12, U13, U14, U15, U17 (adjustable LT3065 only), U18,
+> perpendicular. Do not substitute U3 (NAND 74LVC1G00, not a 1G04), U9, U12, U13, U14, U15,
+> U17 (adjustable LT3065 only), U18,
 > U7/U8/U10, R6/R7 (68 ohm 2 W 2512) or R12/R13 (0.1 %).
 
 ## Parts that need action before ordering
@@ -69,7 +70,7 @@ these in the preview against the board's pin-1 marks and correct the rotation th
 | Item | Estimate |
 |---|---|
 | 5 bare boards | ≈ $25–45 (JLC's calculator needs a login — confirm there) |
-| Assembly fees, 5 boards | ≈ $115 (setup + stencil ≈ $10, ≈ 28 extended-part loading fees ≈ $86, joints and hand soldering ≈ $19) |
+| Assembly fees, 5 boards | ≈ $115 (setup + stencil ≈ $10, ≈ 29 extended-part loading fees ≈ $89, joints and hand soldering ≈ $19) |
 | Components, 5 boards | ≈ $120–140 (SMD ≈ $12 per board, through-hole ≈ $12 per board, plus attrition) |
 | **Total** | **≈ $260–300**, plus shipping (≈ $10–35 to Tokyo, 2–7 days) and Global Sourcing premiums |
 

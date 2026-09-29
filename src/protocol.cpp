@@ -84,7 +84,7 @@ ReplyOut g_out;
 
 // ---------------------------------------------------------------- fields
 // How a field's realized value is shown.
-enum class Unit : uint8_t { None, Ns, Hz, Sync, Mode };
+enum class Unit : uint8_t { None, Ns, Hz, Sync, Mode, PixMode };
 
 struct FieldCommand {
     const char *name;
@@ -101,6 +101,9 @@ const FieldCommand kFields[] = {
     {"MARKERWIDTH", &PulseParams::markerWidthNs, Unit::Ns, &RealizedTiming::markerWidthCycles},
     {"SYNC", &PulseParams::syncHz, Unit::Sync, &RealizedTiming::syncDiv256},
     {"COMBINE", &PulseParams::combine, Unit::Mode, &RealizedTiming::combine},
+    {"PIXGATE", &PulseParams::pixGate, Unit::PixMode, &RealizedTiming::pixGate},
+    {"PIXLEAD", &PulseParams::pixLeadNs, Unit::Ns, &RealizedTiming::pixLeadCycles},
+    {"PIXLAG", &PulseParams::pixLagNs, Unit::Ns, &RealizedTiming::pixLagCycles},
 };
 
 // Prints "NAME=value" plus the realized value -- " (actual X ns, N cyc)",
@@ -112,6 +115,10 @@ void printField(const FieldCommand &f, uint32_t value, const RealizedTiming &r) 
     g_out.print(value);
     if (f.unit == Unit::Mode) {
         g_out.print(value ? F(" (CH1 + CH2 on LASER 1 and LASER 2)") : F(" (CH1 on LASER 1, CH2 on LASER 2)"));
+    } else if (f.unit == Unit::PixMode) {
+        g_out.print(value == 0   ? F(" (off: pixel reset from J12 only)")
+                    : value == 1 ? F(" (pixels reset between pulse pairs while ARMED)")
+                                 : F(" (pixels reset between pulse pairs, also while DISARMED)"));
     } else if (f.unit != Unit::None && r.clkHz != 0) {
         const uint32_t n = r.*(f.realized);
         char num[32];
@@ -146,10 +153,30 @@ void printField(const FieldCommand &f, uint32_t value, const RealizedTiming &r) 
                 break;
             case Unit::None:
             case Unit::Mode:
+            case Unit::PixMode:
                 break;
         }
     }
     g_out.println();
+}
+
+// The pixel-reset window the gate realizes each period (STATUS only).
+void printPixReset(const RealizedTiming &r) {
+    g_out.print(F("PIXRESET="));
+    if (!r.pixGate || r.clkHz == 0) {
+        g_out.println(F("off"));
+        return;
+    }
+    char num[32];
+    pulseFormatNs(r.pixResetCycles, r.clkHz, num, sizeof(num));
+    g_out.print(num);
+    g_out.print(F(" ns per period, from CH1 + "));
+    pulseFormatNs(r.pixResetStartCycles, r.clkHz, num, sizeof(num));
+    g_out.print(num);
+    g_out.print(F(" ns; pixels free "));
+    pulseFormatNs(r.periodCycles - r.pixResetCycles, r.clkHz, num, sizeof(num));
+    g_out.print(num);
+    g_out.println(F(" ns around each pulse pair"));
 }
 
 void printArmed(bool armed) {
@@ -174,6 +201,10 @@ void printHelp(uint32_t clkHz) {
         "SYNC <Hz>          camera sync clock frequency\n"
         "COMBINE <0|1>      1 = both pulses on BOTH laser outputs (two sources, one\n"
         "                   double pulse); 0 = CH1 on LASER 1, CH2 on LASER 2\n"
+        "PIXGATE <0|1|2>    camera pixel reset between pulse pairs, ANDed with the J12\n"
+        "                   input: 0 = off (J12 only), 1 = while ARMED, 2 = always\n"
+        "PIXLEAD <ns>       pixels released this long before each CH1 (>= 5 cycles)\n"
+        "PIXLAG <ns>        pixels reset again this long after the last laser pulse\n"
         "ARM                enable the laser outputs (the board boots DISARMED)\n"
         "DISARM             disable the laser outputs: always accepted, immediate, and\n"
         "                   recognised anywhere in the input, even mid-line\n"
@@ -196,7 +227,10 @@ void printHelp(uint32_t clkHz) {
     g_out.println(F("No laser-driver limits are imposed (pulse width, duty, spacing): check your\n"
                     "driver's ratings. DELAY <= 1/FREQ - 2 x WIDTH, so pulse pairs stay separated.\n"
                     "With COMBINE 1 each output carries both pulses, so DELAY must also exceed\n"
-                    "WIDTH (by >= 1 cycle). Change COMBINE only while DISARMED."));
+                    "WIDTH (by >= 1 cycle). Change COMBINE only while DISARMED.\n"
+                    "With PIXGATE on, PIXLEAD + DELAY + WIDTH + PIXLAG must leave >= 3 cycles of\n"
+                    "pixel reset per period. The first pulse pair after a start has no reset\n"
+                    "before it; every later pair does."));
     g_out.println(F(
         "MARKER and SYNC run while DISARMED; CH1/CH2 are held LOW. ARM, and pulse\n"
         "changes while armed, restart CH1/CH2/MARKER together after a hold-off of up\n"
@@ -371,6 +405,7 @@ void Protocol::dispatch(char *line) {
         for (const auto &f : kFields) {
             printField(f, params_->*(f.field), realized_);
         }
+        printPixReset(realized_);
         printArmed(hooks_.isArmed());
         if (hooks_.printSystemStatus) {
             hooks_.printSystemStatus(g_out);

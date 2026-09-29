@@ -10626,6 +10626,207 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "74xGxx:74LVC1G00"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "U"
+				(at -5.08 7.62 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "74LVC1G00"
+				(at 7.62 -7.62 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" "https://www.ti.com/lit/ds/symlink/sn74lvc1g00.pdf"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Single NAND Gate, Low-Voltage CMOS"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "Single Gate NAND LVC CMOS"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "SOT?23* Texas?R-PDSO-G5?DCK* Texas?R-PDSO-N5?DRL* Texas?X2SON*0.8x0.8mm*P0.48mm*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "74LVC1G00_0_1"
+				(arc
+					(start 0 5.08)
+					(mid 5.0579 0)
+					(end 0 -5.08)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 -5.08) (xy -7.62 -5.08) (xy -7.62 5.08) (xy 0 5.08)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+			)
+			(symbol "74LVC1G00_1_1"
+				(pin input line
+					(at -15.24 2.54 0)
+					(length 7.62)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at -15.24 -2.54 0)
+					(length 7.62)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at 0 -10.16 90)
+					(length 5.08)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin output inverted
+					(at 12.7 0 180)
+					(length 7.62)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at 0 10.16 270)
+					(length 5.08)
+					(name "VCC"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 	)
 	(text "USB-C PD input. U14 requests 15 V. U15 buck + U16 ideal diode feed the +5V plane (Pico VSYS).\nU17 makes the 11.9 V +12V rail for U13; U18 gates U13's enables (see the note by U17).\nPico VBUS is NOT on +5V: USB reaches VSYS only through the Pico's own Schottky."
 		(exclude_from_sim no)
@@ -11113,10 +11314,6 @@
 		(uuid "65c5eefe-0c07-41ae-a735-3bd13a10c1f9")
 	)
 	(no_connect
-		(at 157.48 227.33)
-		(uuid "67dcbc27-b914-4c51-b85f-5a9b24b7f84e")
-	)
-	(no_connect
 		(at 340.36 172.72)
 		(uuid "6a8a1a21-8610-4ad3-aa37-2daaf9399d80")
 	)
@@ -11293,10 +11490,6 @@
 		(uuid "e4831e5b-c8cf-4dee-ba0f-8f06305f12af")
 	)
 	(no_connect
-		(at 224.79 275.59)
-		(uuid "ea94936f-bbb9-4637-9ff6-69c3259c6945")
-	)
-	(no_connect
 		(at 137.16 280.67)
 		(uuid "eaf2948a-1bfb-42d9-84de-9ab1032314cd")
 	)
@@ -11331,6 +11524,133 @@
 	(no_connect
 		(at 194.31 273.05)
 		(uuid "fe678645-4fc4-4d0e-9092-71ddabdb4978")
+	)
+	(wire
+		(pts
+			(xy 59.69 77.47) (xy 86.36 77.47)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c18da872-d815-4457-9041-c5bb8855cc01")
+	)
+	(wire
+		(pts
+			(xy 59.69 97.79) (xy 59.69 111.76)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5f49272e-7d0e-4176-af3f-3826df36f5f3")
+	)
+	(wire
+		(pts
+			(xy 59.69 111.76) (xy 86.36 111.76)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7bd8f452-e539-4dd7-8e41-44d977a34b66")
+	)
+	(wire
+		(pts
+			(xy 40.64 90.17) (xy 44.45 90.17)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e527a4c2-7574-4ae2-9788-7d6e1e7467fe")
+	)
+	(label "PIXRST"
+		(at 40.64 90.17 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "a74a71e4-f739-425e-a2c1-16356c5782dc")
+	)
+	(wire
+		(pts
+			(xy 38.1 85.09) (xy 41.91 85.09)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ba9091af-ae29-4eea-aa66-0fd1163cbc6a")
+	)
+	(wire
+		(pts
+			(xy 41.91 85.09) (xy 44.45 85.09)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "dd7e449a-5d2e-4103-8aa7-9b0f83bad950")
+	)
+	(junction
+		(at 41.91 85.09)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "0ca1f0eb-8741-407a-b0a7-bd3dc8ca435f")
+	)
+	(label "PIXRST_GATE"
+		(at 38.1 85.09 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "cdc03d08-4e3a-4a6f-aaee-198671a64730")
+	)
+	(wire
+		(pts
+			(xy 41.91 82.55) (xy 41.91 85.09)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "73048823-cbe4-42c9-bb5f-bba1b4b44ad0")
+	)
+	(text "U3 = NAND. Via U4 the\ncameras get TDRSTN =\nPIXRST AND PIXRST_GATE:\nJ12 or the Pico (GP16,\nPIXGATE) resets the\npixels. R24 holds the\ngate high otherwise."
+		(exclude_from_sim no)
+		(at 15.24 113.03 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "dc008b6b-1ff5-4f91-b2d1-667a92c75941")
+	)
+	(label "PIXRST_GATE"
+		(at 224.79 275.59 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "e1f07a95-93d3-45de-add5-3e8d309c3a6b")
+	)
+	(label "PIXRST_GATE"
+		(at 157.48 227.33 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "46e12361-ee96-493c-82e1-11d74f16b07c")
 	)
 	(wire
 		(pts
@@ -12927,16 +13247,6 @@
 	)
 	(wire
 		(pts
-			(xy 43.18 87.63) (xy 44.45 87.63)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "7e158132-e476-4246-892e-9148998eb13e")
-	)
-	(wire
-		(pts
 			(xy 54.61 67.31) (xy 66.04 67.31)
 		)
 		(stroke
@@ -13337,16 +13647,6 @@
 	)
 	(wire
 		(pts
-			(xy 54.61 97.79) (xy 54.61 111.76)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "aff41c21-a124-4c52-907a-357f121f591c")
-	)
-	(wire
-		(pts
 			(xy 351.79 29.21) (xy 354.33 29.21)
 		)
 		(stroke
@@ -13554,16 +13854,6 @@
 			(type default)
 		)
 		(uuid "c9bfd90e-dde9-482a-8ccd-7ee1a7527398")
-	)
-	(wire
-		(pts
-			(xy 43.18 76.2) (xy 43.18 87.63)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "cb8db1d8-532e-4845-87d8-e58772aa202b")
 	)
 	(wire
 		(pts
@@ -13847,16 +14137,6 @@
 	)
 	(wire
 		(pts
-			(xy 54.61 111.76) (xy 86.36 111.76)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "e0af40e3-97af-4a2e-bd8f-b1e56a8829ee")
-	)
-	(wire
-		(pts
 			(xy 109.22 29.21) (xy 109.22 87.63)
 		)
 		(stroke
@@ -13874,16 +14154,6 @@
 			(type default)
 		)
 		(uuid "e14a73fc-7b4c-40fc-9a10-7d5bb5cae322")
-	)
-	(wire
-		(pts
-			(xy 54.61 77.47) (xy 86.36 77.47)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "e272458c-c287-4c36-81c9-364f560f9197")
 	)
 	(wire
 		(pts
@@ -14154,16 +14424,6 @@
 			(justify left bottom)
 		)
 		(uuid "05b014f4-5b3a-49b0-8b53-df5f5f44e82f")
-	)
-	(label "PIXRST"
-		(at 43.18 76.2 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "0781262f-4c51-49af-8add-2e7701ebcd22")
 	)
 	(label "Sync3"
 		(at 176.53 31.75 0)
@@ -20280,7 +20540,7 @@
 		)
 	)
 	(symbol
-		(lib_id "74xGxx:74LVC1G04")
+		(lib_id "74xGxx:74LVC1G00")
 		(at 59.69 87.63 0)
 		(unit 1)
 		(body_style 1)
@@ -20300,7 +20560,7 @@
 				)
 			)
 		)
-		(property "Value" "74LVC1G04"
+		(property "Value" "74LVC1G00"
 			(at 65.278 82.804 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -20321,7 +20581,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://www.ti.com/lit/ds/symlink/sn74lvc1g04.pdf"
+		(property "Datasheet" "https://www.ti.com/lit/ds/symlink/sn74lvc1g00.pdf"
 			(at 59.69 87.63 0)
 			(hide yes)
 			(show_name no)
@@ -20332,7 +20592,7 @@
 				)
 			)
 		)
-		(property "Description" "Single NOT Gate, Low-Voltage CMOS"
+		(property "Description" "Pixel-reset combiner (1.8 V): NAND of PIXRST (J12 via U12) and PIXRST_GATE (Pico GP16); through U4 the cameras see TDRSTN = PIXRST AND GATE"
 			(at 59.69 87.63 0)
 			(hide yes)
 			(show_name no)
@@ -28178,6 +28438,164 @@
 			(project "PiDG_Pico"
 				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
 					(reference "#PWR153")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R_Small")
+		(at 41.91 80.01 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "3f6741e6-9105-43e4-a457-fbb87ec3e770")
+		(property "Reference" "R24"
+			(at 43.434 79.375 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "10k"
+			(at 43.434 81.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
+			(at 41.91 80.01 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 41.91 80.01 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "PIXRST_GATE pull-up: gate high (no pixel reset) unless the Pico drives it low"
+			(at 41.91 80.01 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "fa5210f2-ccec-4975-a427-1a754336198d")
+		)
+		(pin "2"
+			(uuid "52b09ec1-763d-4971-8c12-467345100dc0")
+		)
+		(instances
+			(project "PiDG_Pico"
+				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
+					(reference "R24")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:+3V3")
+		(at 41.91 77.47 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board no)
+		(in_pos_files no)
+		(dnp no)
+		(uuid "9ddb1297-9e19-439b-8822-ad66def73dd3")
+		(property "Reference" "#PWR154"
+			(at 41.91 71.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "+3V3"
+			(at 41.91 73.66 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 41.91 77.47 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 41.91 77.47 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+3V3\""
+			(at 41.91 77.47 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "4e722433-1094-41fe-8da0-98853b770784")
+		)
+		(instances
+			(project "PiDG_Pico"
+				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
+					(reference "#PWR154")
 					(unit 1)
 				)
 			)
