@@ -49,7 +49,7 @@ struct PulseParams {
     uint32_t freqHz = 1000;         // pulse-pair repetition frequency
     uint32_t widthNs = 100;         // CH1/CH2 pulse width (inside every attached laser driver's range)
     uint32_t delayNs = 10000;       // CH2-after-CH1 delay (rising edge to rising edge)
-    uint32_t markerWidthNs = 2000;  // marker pulse width (the marker fires with every pulse pair)
+    uint32_t markerWidthNs = 2000;  // marker pulse width
     uint32_t syncHz = 1000000;      // camera sync clock frequency
     uint32_t combine = 0;           // 0: CH1 -> LASER 1, CH2 -> LASER 2. 1: both pulses on BOTH outputs
     uint32_t pixGate = 0;           // camera pixel reset between pulse pairs: 0 off, 1 while ARMED, 2 always

@@ -385,7 +385,7 @@ dedicated gate per camera.
 J1–J6 pin 4
 
 J10 selects the trigger source: a shunt on **2‑3** triggers the cameras from the marker
-(normal; it fires with every pulse pair, rising with CH1, with its own `MARKERWIDTH`), a shunt
+(normal; it rises with CH1 and has its own `MARKERWIDTH`), a shunt
 on **1‑2** triggers them from every laser CH1 pulse instead. Prophesee specifies a 500 ns minimum
 trigger-input pulse, so 1‑2 is only dependable with `WIDTH` ≥ 500 ns. CH1 pulses
 exist only while the firmware is ARMED; with the lasers disarmed, 1‑2 gives the cameras no

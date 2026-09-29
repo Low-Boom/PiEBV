@@ -194,7 +194,7 @@ void printHelp(uint32_t clkHz) {
         "FREQ <Hz>          pulse-pair repetition frequency\n"
         "WIDTH <ns>         CH1/CH2 pulse width\n"
         "DELAY <ns>         CH2 rising edge after CH1 rising edge\n"
-        "MARKERWIDTH <ns>   marker pulse width (the marker fires with every pulse pair)\n"
+        "MARKERWIDTH <ns>   marker pulse width\n"
         "SYNC <Hz>          camera sync clock frequency\n"
         "COMBINE <0|1>      1 = both pulses on BOTH laser outputs (two sources, one\n"
         "                   double pulse); 0 = CH1 on LASER 1, CH2 on LASER 2\n"

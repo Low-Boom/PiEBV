@@ -292,6 +292,7 @@ function render() {
   $("target").disabled = connected;
   $("customTarget").disabled = connected;
   $("ident").textContent = connected ? (snap.identity || snap.target) : (snap && snap.error ? snap.error : "Not connected");
+  $("ident").title = $("ident").textContent;
   for (const b of document.querySelectorAll("#armBtn, .apply, #cmdSend")) b.disabled = !connected;
   for (const b of document.querySelectorAll(".disarm")) b.disabled = !connected;
 
@@ -305,6 +306,7 @@ function render() {
 
   if (!st) {
     if (connected && snap.error) $("ident").textContent = snap.error;
+    renderSysline(null);
     renderCharts(null);
     return;
   }
@@ -334,15 +336,32 @@ function render() {
     ["Start hold-off", pending > 0 ? fmtTime(pending * 1e-6, 0) : "none"],
     ["Hardware", sys.HW || "?"],
   ]);
-  kv($("systemInfo"), [
-    ["Identity", snap.identity || ""],
-    ["Link", snap.target],
-    ["Clock", clk.toLocaleString("en-US") + " Hz (" + (1e9 / clk).toFixed(3) + " ns per cycle)"],
-    ["Last reset", sys.RESET + (sys.WDT_RESETS && sys.WDT_RESETS !== "0" ? " · watchdog resets " + sys.WDT_RESETS : "")],
-    ["Watchdog", (sys.WDT_MS || "?") + " ms"],
-    ["Reply bytes dropped", sys.TX_DROPPED || "0"],
-  ]);
+  renderSysline(sys, clk);
   renderCharts(st, clk);
+}
+
+// The board's system keys, compact, under the identity in the header. A watchdog reset
+// or dropped replies are flagged (the README: stop and check before re-arming).
+function renderSysline(sys, clk) {
+  const box = $("sysline");
+  box.replaceChildren();
+  if (!sys) return;
+  const wdtResets = parseInt(sys.WDT_RESETS || "0", 10), dropped = parseInt(sys.TX_DROPPED || "0", 10);
+  const items = [
+    [fmtHz(clk) + " clock (" + (1e9 / clk).toFixed(3) + " ns steps)", false],
+    ["last reset " + (sys.RESET || "?"), sys.RESET === "WATCHDOG"],
+  ];
+  if (wdtResets > 0) items.push([wdtResets + " watchdog reset" + (wdtResets > 1 ? "s" : "") + " since power-on", true]);
+  items.push(["watchdog " + (parseInt(sys.WDT_MS || "0", 10) / 1000) + " s", false]);
+  items.push([dropped > 0 ? dropped.toLocaleString("en-US") + " reply bytes dropped" : "no replies dropped", dropped > 0]);
+  items.forEach(([text, warn], i) => {
+    if (i) box.append(" · ");
+    const s = document.createElement("span");
+    s.textContent = (warn ? "⚠ " : "") + text;
+    if (warn) s.className = "warn";
+    box.append(s);
+  });
+  box.title = box.textContent;
 }
 
 function renderSync(f) {
@@ -417,7 +436,7 @@ function buildRows(m, k0, k1) {
     const t = k * P;
     ch1.push([t, t + W]);
     ch2.push([t + D, t + D + W]);
-    mk.push([t, t + MW]);  // the marker fires with every pair
+    mk.push([t, t + MW]);
     free.push([t - L, t + D + W + G]);
   }
   const l1 = m.combine ? ch1.concat(ch2) : ch1;
@@ -426,7 +445,7 @@ function buildRows(m, k0, k1) {
   const rows = [
     { name: "Laser 1", sub: "J7" + (m.combine ? " · both pulses" : " · CH1"), color: 1, highs: l1, inactive: !m.armed, note: lasersNote, state: ["LOW", "HIGH"] },
     { name: "Laser 2", sub: "J8" + (m.combine ? " · both pulses" : " · CH2"), color: 2, highs: l2, inactive: !m.armed, note: lasersNote, state: ["LOW", "HIGH"] },
-    { name: "Marker", sub: "J10 MKR · every pair", color: 3, highs: mk, state: ["LOW", "HIGH"] },
+    { name: "Marker", sub: "J10 MKR", color: 3, highs: mk, state: ["LOW", "HIGH"] },
   ];
   if (m.gate !== null) {
     const on = m.gate > 0;

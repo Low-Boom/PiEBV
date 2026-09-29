@@ -14,7 +14,10 @@
       <input id="customTarget" type="text" placeholder="COM7 or socket://host:port" hidden aria-label="Custom device">
       <button id="connectBtn" class="primary">Connect</button>
       <button id="refreshPorts" title="Rescan serial ports" aria-label="Rescan serial ports">↻</button>
-      <span id="ident" class="ident">Not connected</span>
+      <div class="ident-block">
+        <span id="ident" class="ident">Not connected</span>
+        <span id="sysline" class="sysline"></span>
+      </div>
     </div>
     <button id="themeBtn" title="Colour theme: follows the system" aria-label="Colour theme">◐</button>
     <div class="safety">
@@ -84,11 +87,6 @@
         <div class="card-head"><h2>Other settings</h2></div>
         <div id="otherFields"></div>
         <div class="card-foot"><button class="apply primary" data-group="other">Apply</button><span class="msg"></span></div>
-      </section>
-
-      <section class="card" id="systemCard">
-        <div class="card-head"><h2>System</h2></div>
-        <dl class="kv" id="systemInfo"></dl>
       </section>
     </div>
 

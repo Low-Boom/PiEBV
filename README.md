@@ -24,7 +24,7 @@ between them, and keeps upto six event cameras synchronised to the same clock.
 | **Laser 1** (CH1) | BNC J7 | 5 V into 50 Ω | Trigger for the first laser driver (PicoLas LDP-V) |
 | **Laser 2** (CH2) | BNC J8 | 5 V into 50 Ω | Trigger for the second laser driver; rises exactly `DELAY` after Laser 1 |
 | **Sync** | Camera ports J1–J6, pin 5 | 1.8 V, 1 MHz by default | Common clock for all six cameras (they run as sync slaves) |
-| **Trigger** | J1–J6, pin 4 | 1.8 V | Marker with every pulse pair, rising with Laser 1: each camera timestamps it into its event stream (or the Laser 1 pulse itself; see [J10](#jumpers)) |
+| **Trigger** | J1–J6, pin 4 | 1.8 V | Marker, rising with Laser 1: each camera timestamps it into its event stream (or the Laser 1 pulse itself; see [J10](#jumpers)) |
 | **Pixel reset** | J1–J6, pin 3 | 1.8 V, active low | Follows the J12 BNC input; optionally also held low by the Pico between pulse pairs (`PIXGATE`) |
 
 - CH1 and CH2 share one pulse `WIDTH` and one repetition rate `FREQ`.
@@ -167,11 +167,11 @@ input: it is enabled when open, so a broken cable there would leave the lasers e
 
 **J10 — camera trigger source.** The silkscreen reads `CH1 TRG MKR` under the pins, with
 `CAMERA TRIGGER: TRG-MKR = MARKER / TRG-CH1 = LASER 1` to its right. `TRG` (pin 2) feeds the trigger
-input (pin 4) of all six camera ports. Shunt `TRG` to `MKR` for the marker (normal): it fires with
-every pulse pair, rising with Laser 1, and runs while disarmed. Shunt it to `CH1` to trigger on the
-Laser 1 pulse itself, only while ARMED. Prophesee specifies a minimum trigger-input pulse of 500 ns,
-so `CH1` is only dependable with `WIDTH` ≥ 500 ns; the marker has its own width (`MARKERWIDTH`, 2 µs).
-Never shunt all three pins.
+input (pin 4) of all six camera ports. Shunt `TRG` to `MKR` for the marker (normal): it rises with
+Laser 1 and runs while disarmed. Shunt it to `CH1` to trigger on the Laser 1 pulse itself, only
+while ARMED. Prophesee specifies a minimum trigger-input pulse of 500 ns, so `CH1` is only
+dependable with `WIDTH` ≥ 500 ns; the marker has its own width (`MARKERWIDTH`, 2 µs). Never shunt
+all three pins.
 
 **TP4 — CH2 scope point.** Labelled `CH2` / `GND` and `SCOPE ONLY`. Pin 1 is the raw Laser 2 pulse
 from the Pico (GP12, 3.3 V logic, before the interlock and driver; LOW while DISARMED), pin 2 is
@@ -436,7 +436,7 @@ needed. Until then, use USB.
 | `FREQ [n]` | Hz | 1000 | 1 up to where 2 × WIDTH + DELAY still fits in 1/FREQ | Pulse-pair repetition rate |
 | `WIDTH [n]` | ns | 100 | ≥ 17 (realizes to ≥ 20.000 ns), and 2 × WIDTH + DELAY ≤ 1/FREQ. No upper limit. | Width of both CH1 and CH2 pulses |
 | `DELAY [n]` | ns | 10000 | 0 up to 1/FREQ − 2 × WIDTH, so pulse pairs stay separated (with `COMBINE 1`, more than WIDTH); the error message gives the exact limit | CH2 rising edge after CH1 rising edge. `0` makes them coincide. |
-| `MARKERWIDTH [n]` | ns | 2000 | 17 up to 1/FREQ − 5 cycles | Width of the marker, which fires with every pulse pair, rising with CH1 (there is no setting to mark fewer pairs) |
+| `MARKERWIDTH [n]` | ns | 2000 | 17 up to 1/FREQ − 5 cycles | Marker pulse width (the marker rises with CH1) |
 | `SYNC [n]` | Hz | 1000000 | 1145 … 75 000 000 | Camera sync clock frequency (free-running square wave). **Leave it at 1 MHz for the IDS/Prophesee cameras** ([why](#timing)); the web GUI keeps it fixed. |
 | `COMBINE [n]` | 0 / 1 | 0 | 0 or 1; change only while DISARMED | 0: CH1 → Laser 1, CH2 → Laser 2. 1: **both** pulses on **both** outputs ([details](#combined-mode-combine)) |
 | `PIXGATE [n]` | 0 / 1 / 2 | 0 | 0, 1 or 2 | Camera pixel reset between pulse pairs: 0 off (J12 only), 1 while ARMED, 2 always ([details](#pixel-reset-gate-pixgate)) |
@@ -575,11 +575,10 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
 - **Quantization:** times round to the nearest 6.667 ns cycle; frequencies round to the nearest whole
   period in cycles. All limits are checked on the rounded (realized) values.
 - **CH2 − CH1 = DELAY exactly**, to the cycle.
-- **The marker fires with every pulse pair.** It rises on the same cycle as every CH1 pulse and runs
-  at exactly the CH1 period, so it never drifts off the pulse it marks. Each camera timestamps the
-  marker into its event stream, which gives every pair its own reference time. A marker only every
-  N pairs is no longer possible (the old `MARKERDIV` setting is gone). At the default 2 µs
-  `MARKERWIDTH`, FREQ can go up to about 490 kHz; lower `MARKERWIDTH` for more.
+- **The marker** rises on the same cycle as every CH1 pulse and runs at exactly the CH1 period, so
+  it never drifts off the pulse it marks. Each camera timestamps it into its event stream, which
+  gives every pair its own reference time. At the default 2 µs `MARKERWIDTH`, FREQ can go up to
+  about 490 kHz; lower `MARKERWIDTH` for more.
 - **SYNC** is independent of the laser timing. The IDS uEye EVS cameras (Prophesee IMX636) need it at
   **1 MHz**: a sync slave counts its 1 µs event timestamps on this clock, and Prophesee requires Sync In
   to be "a 1MHz pulse train to correspond to the internally generated 1µs timestamp resolution". Any
