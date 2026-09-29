@@ -188,7 +188,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .swatch { display: inline-block; width: 14px; height: 2px; border-radius: 1px; vertical-align: middle; margin-right: 6px; }
 
 /* ---------------------------------------------------------------- settings */
-.field { display: grid; grid-template-columns: minmax(120px, 11em) 1fr auto; gap: 2px 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--grid); }
+.field { display: grid; grid-template-columns: minmax(120px, 11em) minmax(0, 20em) auto; justify-content: start; gap: 2px 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--grid); }
 .field:last-of-type { border-bottom: 0; }
 .field label { font-weight: 600; }
 .field .code { color: var(--text-muted); font-size: 11px; font-weight: 400; margin-left: 4px; }
@@ -205,7 +205,13 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .kv dt { color: var(--text-secondary); }
 .kv dd { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .hint { font-size: 12px; color: var(--text-secondary); margin: 8px 0 0; }
-.arm-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 4px 0 8px; }
+.arm-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+/* Arming: one short full-width strip above the timing chart; wraps on narrow screens. */
+.arm-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; padding: 10px 16px; }
+.arm-strip h2 { margin: 0; }
+.arm-strip .hint { margin: 0; flex: 1 1 360px; }
+.kv.inline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; }
+.kv.inline dd { margin-right: 14px; }
 
 /* ---------------------------------------------------------------- console */
 .console {
