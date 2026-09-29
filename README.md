@@ -25,7 +25,7 @@ between them, and keeps upto six event cameras synchronised to the same clock.
 | **Laser 2** (CH2) | BNC J8 | 5 V into 50 Ω | Trigger for the second laser driver; rises exactly `DELAY` after Laser 1 |
 | **Sync** | Camera ports J1–J6, pin 5 | 1.8 V, 1 MHz by default | Common clock for all six cameras (they run as sync slaves) |
 | **Trigger** | J1–J6, pin 4 | 1.8 V | Reference marker once every `MARKERDIV` pulse pairs (or every Laser 1 pulse; see [J10](#jumpers)) |
-| **Pixel reset** | J1–J6, pin 3 | 1.8 V, active low | Follows the J12 BNC input; no firmware involved |
+| **Pixel reset** | J1–J6, pin 3 | 1.8 V, active low | Follows the J12 BNC input; optionally also held low by the Pico between pulse pairs (`PIXGATE`) |
 
 - CH1 and CH2 share one pulse `WIDTH` and one repetition rate `FREQ`.
 - Every time is set in whole steps of **6.667 ns** (one cycle of the 150 MHz clock). Every reply shows the
@@ -125,7 +125,7 @@ firmware) and **`POWER ONLY — USB-C PD 15 V`** (J17).
 | **J1–J6** | 2×5 IDC headers, cameras 1–6 | Camera 8-pin I/O harness (pin *n* = camera pin *n*) | 1 NC · 2 GND · 3 pixel reset (`TDRSTN`, active low) · 4 trigger · 5 sync · 6 NC · 7 GND · 8 NC · 9, 10 NC. All signals **1.8 V**. Pin 1 is the top-left pin. |
 | **J7** | BNC, Laser 1 (CH1) | LDP-V trigger input (50 Ω) | 0 / ~4.8 V into 50 Ω; ~12 V open-circuit |
 | **J8** | BNC, Laser 2 (CH2) | Second LDP-V | same as J7 |
-| **J12** | BNC, pixel-reset **input** | Your reset source | Active LOW: pull to ground to hold all six cameras in reset. Open = cameras running. Accepts 3.3 V or 5 V logic, open-drain or a switch; the source must sink 1 mA. A 1.8 V logic high is **not** guaranteed to release reset. Do not add a 50 Ω terminator. |
+| **J12** | BNC, pixel-reset **input** | Your reset source | Active LOW: pull to ground to hold all six cameras in reset. Open = cameras running. Accepts 3.3 V or 5 V logic, open-drain or a switch; the source must sink 1 mA. A 1.8 V logic high is **not** guaranteed to release reset. Do not add a 50 Ω terminator. The Pico's optional gate ([`PIXGATE`](#pixel-reset-gate-pixgate)) is ANDed with it. |
 | **J17** | USB-C, **power only** (silkscreen `POWER ONLY`) | USB-C PD charger that offers 15 V | No data. Programming and serial always use the Pico's own micro-USB, next to it on the top edge (`CONTROL / PROGRAM`). |
 | **J10** | 1×3 trigger-source jumper | shunt | see [Jumpers](#jumpers) |
 | **J11** | 1×3 laser interlock | shunt, or a normally-closed E-stop switch | see [Jumpers](#jumpers) |
@@ -416,6 +416,9 @@ needed. Until then, use USB.
 | `MARKERWIDTH [n]` | ns | 2000 | 17 up to the marker period − 5 cycles | Marker pulse width |
 | `SYNC [n]` | Hz | 1000000 | 1145 … 75 000 000 | Camera sync clock frequency (free-running square wave) |
 | `COMBINE [n]` | 0 / 1 | 0 | 0 or 1; change only while DISARMED | 0: CH1 → Laser 1, CH2 → Laser 2. 1: **both** pulses on **both** outputs ([details](#combined-mode-combine)) |
+| `PIXGATE [n]` | 0 / 1 / 2 | 0 | 0, 1 or 2 | Camera pixel reset between pulse pairs: 0 off (J12 only), 1 while ARMED, 2 always ([details](#pixel-reset-gate-pixgate)) |
+| `PIXLEAD [n]` | ns | 10000 | ≥ 30 (realizes to ≥ 5 cycles); the window must fit in 1/FREQ | Pixels released this long before each CH1 |
+| `PIXLAG [n]` | ns | 100000 | PIXLEAD + DELAY + WIDTH + PIXLAG ≤ 1/FREQ − 3 cycles | Pixels reset again this long after the last laser pulse |
 | `ARM` | – | disarmed | exactly `ARM`, no argument | Enable the laser outputs |
 | `DISARM` | – | – | – | Disable the laser outputs at once; recognised anywhere in the input |
 | `ARM?` | – | – | – | Report the arm state: `ARMED=0` or `ARMED=1` |
@@ -491,6 +494,49 @@ COMBINE 0   ->  OK COMBINE=0 (CH1 on LASER 1, CH2 on LASER 2)
 - The monitor points follow: TP4 and J10 pin 1 both show the double pulse, and with J10 on 1-2 the
   cameras are triggered on both pulses.
 
+### Pixel-reset gate (`PIXGATE`)
+
+The Pico can hold every camera's pixels in reset (TDRSTN low) **between pulse pairs**, like a
+shutter: the pixels are free from `PIXLEAD` before CH1 until `PIXLAG` after the last laser pulse,
+and in reset for the rest of each period. Background and noise events between pairs are
+suppressed, and every pair starts from freshly reset pixels.
+
+```
+            pair k                                        pair k+1
+CH1     ____|‾|______________________________________________|‾|______
+CH2     _________|‾|______________________________________________|‾|_
+TDRSTN  ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾|__________________________|‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾   (low = pixels in reset)
+                   |<------>|                          |<------>|
+                    PIXLAG       pixels in reset         PIXLEAD
+```
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `PIXGATE 0` | ✓ | Off: the pixel reset comes from J12 only (as before) |
+| `PIXGATE 1` | | Gate between pulse pairs **while ARMED**; off while DISARMED |
+| `PIXGATE 2` | | Gate between pulse pairs **always**, also while DISARMED (bench tests without lasers) |
+| `PIXLEAD n` | 10000 ns | Pixels released this long before each CH1 rising edge (≥ 5 cycles, 33.333 ns) |
+| `PIXLAG n` | 100000 ns | Pixels reset again this long after the last laser pulse falls |
+
+```
+PIXGATE 1   ->  OK PIXGATE=1 (pixels reset between pulse pairs while ARMED)
+PIXLAG 50000 -> OK PIXLAG=50000 (actual 50000.000 ns, 7500 cyc)
+```
+
+- **J12 still works.** The board ANDs the two (U3): the pixels are in reset whenever J12 is low
+  **or** the gate is. With `PIXGATE 0`, J12 alone controls the reset, exactly as before.
+- **Choose PIXLEAD and PIXLAG on the bench.** How long the sensor needs after a reset before it
+  responds normally, and how long after a laser flash its events keep arriving, are not published.
+  Start generous (the defaults), look at the event stream, then tighten. The window must fit:
+  `PIXLEAD + DELAY + WIDTH + PIXLAG` ≤ 1/FREQ − 3 cycles; the error message gives the largest
+  `PIXLAG` that fits.
+- **The first pulse pair after a start has no reset before it**; every later pair does. The gate is
+  timed from the same state-machine start as CH1/CH2, cycle-exact.
+- STATUS shows the realized window as `PIXRESET=` (reset time per period, when it starts after CH1,
+  and how long the pixels are free around each pair).
+- A pixel reset also puts a timestamped marker (trigger channel ID 1) into each camera's event
+  stream when the SDK's trigger channel is enabled.
+
 ### Timing
 
 ```
@@ -557,6 +603,10 @@ MARKERDIV=100
 MARKERWIDTH=2000 (actual 2000.000 ns, 300 cyc)
 SYNC=1000000 (actual 1000000.000 Hz, divider 75+0/256)
 COMBINE=0 (CH1 on LASER 1, CH2 on LASER 2)
+PIXGATE=0 (off: pixel reset from J12 only)
+PIXLEAD=10000 (actual 10000.000 ns, 1500 cyc)
+PIXLAG=100000 (actual 100000.000 ns, 15000 cyc)
+PIXRESET=off
 ARMED=1
 HW=OK
 START_PENDING_US=0
@@ -572,6 +622,8 @@ TX_DROPPED=0
 |---|---|
 | `FREQ` … `SYNC` | Each setting as asked for, with its realized value |
 | `COMBINE` | 0 = CH1 on Laser 1, CH2 on Laser 2; 1 = both pulses on both outputs |
+| `PIXGATE`, `PIXLEAD`, `PIXLAG` | The pixel-reset gate settings |
+| `PIXRESET` | `off`, or the realized gate: reset time per period, its start after CH1, and how long the pixels are free around each pair |
 | `ARMED` | Firmware arm state (1/0). J11 and the 12 V rail are separate gates. |
 | `HW` | `OK`, or `ERR outputs not started: …` if the pulse hardware failed at boot |
 | `START_PENDING_US` | Microseconds until pulses start after an `ARM` (0 = none pending) |
@@ -603,6 +655,7 @@ TX_DROPPED=0
 | Cameras receive no trigger | J10 on 1-2 while DISARMED, or no J10 shunt | J10 on 2-3 |
 | Cameras don't synchronise | A camera set as sync master; SYNC changed | Set every camera to sync slave; `SYNC 1000000` |
 | All cameras stuck in pixel reset | A 50 Ω terminator on J12; the source holding it low; a 1.8 V source that can't release it | Remove the terminator; drive J12 with 3.3 V or 5 V logic, or leave it open |
+| Cameras see no events around the laser pulses with `PIXGATE` on | PIXLEAD too short for the sensor to recover, or PIXLAG shorter than the sensor's event latency | Increase PIXLEAD and PIXLAG, or set `PIXGATE 0` to compare |
 | `RESET=WATCHDOG` in STATUS | The firmware hung and rebooted itself, DISARMED | Note what you were doing and report it; re-arm deliberately |
 | `TX_DROPPED` keeps rising | The host is not reading the replies | Read every reply line |
 | `pio run -t upload` can't find the Pico | Auto-reset failed | Unplug J17, then hold BOOTSEL while plugging in the Pico's USB, and upload again or copy the UF2 |
@@ -647,6 +700,7 @@ python check_random.py
 python check_marker_lock.py
 python check_sync.py
 python check_combined.py
+python check_pixgate.py
 ```
 
 The expected output is listed in [its README](tools/timing_check/README.md). These checks don't replace

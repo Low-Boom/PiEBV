@@ -17,14 +17,20 @@
 //     camera Trigger line instead of the raw laser pulse (mirrors the original
 //     D5/"PWM_Trig").
 //   - SYNC (GP10): the continuous camera sync clock (mirrors the original
-//     D4/1MHz hardware-PWM output).
+//     D4/1MHz hardware-PWM output). Runs on pio1: it is independent of the
+//     laser timing, and pio0's fourth state machine is the pixel-reset gate.
+//   - PIXGATE (GP16): optional camera pixel reset between pulse pairs. pio0 SM3
+//     runs the pulse program with the pin's output inverted, so its pulse holds
+//     every camera's TDRSTN low from PIXLAG after the last laser pulse until
+//     PIXLEAD before the next CH1. U3 ANDs it with the J12 BNC input, so either
+//     source resets the pixels; stopped, the gate is high and J12 alone rules.
 //
 // Laser arming. The firmware boots DISARMED: CH1/CH2 are held LOW by
 // laser_gate (from a pre-init hook, before anything else runs), while SYNC and
 // MARKER run. ARM restarts CH1, CH2 and MARKER together after the restart
 // hold-off, so the first laser pulse after ARM is full width and correctly
 // phased; DISARM gates CH1/CH2 LOW immediately and cancels a pending start. The
-// hardware interlock (J11 / U10) and power-good gate (U17) act independently of
+// hardware interlock (J11 / U10) and power-good gate (U18) act independently of
 // this.
 //
 // Watchdog. A hardware watchdog (kWatchdogMs) resets the chip if loop() stops
@@ -39,6 +45,7 @@
 #include <cstdio>
 #include "board.h"
 #include "hardware/clocks.h"
+#include "hardware/gpio.h"
 #include "hardware/pio.h"
 #include "hardware/structs/powman.h"
 #include "hardware/structs/watchdog.h"
@@ -54,7 +61,9 @@ PIO kPio = pio0;
 constexpr uint kSmCh1 = 0;
 constexpr uint kSmCh2 = 1;
 constexpr uint kSmMarker = 2;
-constexpr uint kSmSync = 3;
+constexpr uint kSmPixGate = 3;
+PIO kSyncPio = pio1;  // SYNC is independent of the laser timing
+constexpr uint kSmSync = 0;
 
 #if defined(ARDUINO_RASPBERRY_PI_PICO_2W)
 constexpr const char *kBoardName = "Pico 2 W";
@@ -87,8 +96,13 @@ constexpr uint32_t kWdtCountMagic = 0x50494447;  // 'PIDG'
 PulseChannel g_ch1;
 PulseChannel g_ch2;
 PulseChannel g_marker;
+PulseChannel g_pixGate;  // pixel-reset gate: output INVERTED, latch high = pixels in reset
 SyncChannel g_sync;
-PulseChannel *const g_group[] = {&g_ch1, &g_ch2, &g_marker};
+// Started and stopped together. The first three always run; the gate (last) runs only
+// while PIXGATE asks for it (pulseGroupCount()).
+PulseChannel *const g_group[] = {&g_ch1, &g_ch2, &g_marker, &g_pixGate};
+constexpr size_t kGroupAll = 4;
+PulseChannel *const g_pixGateOnly[] = {&g_pixGate};
 
 PulseParams g_params;
 RealizedTiming g_rt;  // what is loaded in the state machines now
@@ -104,6 +118,7 @@ uint32_t g_lastLaserPeriodCycles = 0;  // period of the last pulse train on the 
 bool g_startPending = false;           // CH1/CH2/MARKER loaded, waiting out the hold-off
 uint64_t g_startDueUs = 0;
 uint32_t g_pendingPeriodCycles = 0;
+size_t g_pendingGroupCount = 3;
 
 struct ResetInfo {
     RP2040::resetReason_t reason = RP2040::UNKNOWN_RESET;
@@ -152,17 +167,38 @@ void feedWatchdog() {
     }
 }
 
-// Claims all four pio0 state machines before anything else can. If any is
-// already taken (nothing in this build takes one), pio0 is left alone and ARM is
-// refused.
+// Claims all four pio0 state machines and pio1's SYNC state machine before anything
+// else can. If any is already taken, nothing is claimed and ARM is refused. (On a Pico
+// 2 W the core's CYW43 init in initVariant() has already claimed a state machine, but
+// the SDK allocates from the highest PIO down, so it lands on pio2.)
 bool claimPioStateMachines() {
     for (uint sm = 0; sm < 4; ++sm) {
         if (pio_sm_is_claimed(kPio, sm)) {
             return false;
         }
     }
+    if (pio_sm_is_claimed(kSyncPio, kSmSync)) {
+        return false;
+    }
     pio_claim_sm_mask(kPio, 0xFu);
+    pio_sm_claim(kSyncPio, kSmSync);
     return true;
+}
+
+// Routes GP16 to pio0 with its output INVERTED before the pad is driven, so the gate
+// pin goes straight from "input, pulled high by R24" to "driven high" (latch LOW ->
+// pin HIGH = pixels free) with no reset glitch. pio_gpio_init() rewrites GPIO_CTRL
+// (clearing OUTOVER), so the inversion is set after it and before the pin direction.
+void initPixGatePin() {
+    pio_gpio_init(kPio, kPinPixGate);
+    gpio_set_outover(kPinPixGate, GPIO_OVERRIDE_INVERT);
+    pio_sm_set_consecutive_pindirs(kPio, kSmPixGate, kPinPixGate, 1, true);
+}
+
+// How many of g_group run for a pulse train: the gate joins under PIXGATE 2 always,
+// and under PIXGATE 1 only while the laser pads carry pulses.
+size_t pulseGroupCount(const RealizedTiming &rt, bool lasersLive) {
+    return (rt.pixGate == 2 || (rt.pixGate == 1 && lasersLive)) ? kGroupAll : kGroupAll - 1;
 }
 
 // Gates the laser pads LOW; if they were live, the quiet period starts now (the
@@ -175,7 +211,8 @@ void closeLaserGate() {
     }
 }
 
-// (Re)loads CH1, CH2 and MARKER from `rt` and restarts them together:
+// (Re)loads CH1, CH2, MARKER (and the pixel-reset gate) from `rt` and restarts them
+// together:
 //  1. Gate the laser pads LOW if they are live (a pulse in flight is cut short,
 //     never stretched) and start the quiet period.
 //  2. Halt all three state machines with one CTRL write and force their PIO output
@@ -196,11 +233,12 @@ void closeLaserGate() {
 // new laser periods -- has passed since the pads last carried pulses keeps the
 // spacing between laser pulses >= the set period under any command sequence. At boot
 // the old period is taken as the worst case (1 s, FREQ >= 1 Hz), which also covers a
-// reset that happened while armed. MARKER pauses during the hold-off.
+// reset that happened while armed. MARKER pauses during the hold-off, and the pixel-
+// reset gate stays open (latch LOW -> pin HIGH) until the train starts.
 void restartPulses(const RealizedTiming &rt, bool lasersLive) {
     g_startPending = false;
     closeLaserGate();
-    stopPulseChannelsLow(g_group, 3);
+    stopPulseChannelsLow(g_group, kGroupAll);  // gate latch LOW = pixels free
     // Pin mapping for this pulse train (all state machines are stopped, latches LOW):
     // split = CH1 -> GP13, CH2 -> GP12; COMBINE = both drive GP12..GP13.
     static_assert(kPinCh1 == kPinCh2 + 1, "COMBINE needs the laser pins consecutive");
@@ -211,8 +249,11 @@ void restartPulses(const RealizedTiming &rt, bool lasersLive) {
     g_ch1.configure(PulseCycles{rt.periodCycles, 0, rt.widthCycles});
     g_ch2.configure(PulseCycles{rt.periodCycles, rt.delayCycles, rt.widthCycles});
     g_marker.configure(PulseCycles{rt.markerPeriodCycles, 0, rt.markerWidthCycles});
+    if (rt.pixGate) {
+        g_pixGate.configure(PulseCycles{rt.periodCycles, rt.pixResetStartCycles, rt.pixResetCycles});
+    }
     if (!lasersLive) {
-        startPulseChannelsInSync(g_group, 3);
+        startPulseChannelsInSync(g_group, pulseGroupCount(rt, false));
         return;
     }
     // ceil(period in us) + 1: the +1 covers the 1 us resolution of both timestamps,
@@ -221,6 +262,7 @@ void restartPulses(const RealizedTiming &rt, bool lasersLive) {
     const uint64_t holdUs = (holdCycles * 1000000ULL + rt.clkHz - 1) / rt.clkHz + 1;
     g_startDueUs = g_quietSinceUs + holdUs;
     g_pendingPeriodCycles = rt.periodCycles;
+    g_pendingGroupCount = pulseGroupCount(rt, true);
     g_startPending = true;
 }
 
@@ -232,7 +274,7 @@ void servicePendingStart() {
     g_startPending = false;
     laser::gateOpen(kPio, kSmCh1);  // SMs are still disabled: SIO LOW -> PIO latch LOW, no edge
     g_lastLaserPeriodCycles = g_pendingPeriodCycles;
-    startPulseChannelsInSync(g_group, 3);
+    startPulseChannelsInSync(g_group, g_pendingGroupCount);
 }
 
 // Protocol hook: microseconds until a pending laser start, or 0.
@@ -252,7 +294,11 @@ const char *setArmed(bool arm) {
             // A start was waiting out the hold-off: cancel it, and restart the loaded
             // channels behind the closed gate so MARKER resumes.
             g_startPending = false;
-            startPulseChannelsInSync(g_group, 3);
+            startPulseChannelsInSync(g_group, pulseGroupCount(g_rt, false));
+        } else if (g_armed && g_rt.pixGate == 1) {
+            // PIXGATE 1 gates only while ARMED: stop the gate, which leaves its latch
+            // LOW, i.e. the pixels free (a reset in progress ends early, never later).
+            stopPulseChannelsLow(g_pixGateOnly, 1);
         }
         g_armed = false;
         return nullptr;
@@ -280,7 +326,7 @@ bool isArmed() {
 // goes through the same safe restart as ARM, lasers staying armed.
 const char *applyPulseParams(const PulseParams &p, RealizedTiming *realized) {
     if (!g_pioReady) {
-        return "pio0 unavailable";
+        return "pio0/pio1 unavailable";
     }
     RealizedTiming rt;
     if (const char *why = realizeTiming(p, clkHz(), &rt)) {
@@ -292,7 +338,9 @@ const char *applyPulseParams(const PulseParams &p, RealizedTiming *realized) {
     const bool pulseChanged = !g_configured || rt.combine != g_rt.combine || rt.periodCycles != g_rt.periodCycles ||
                               rt.widthCycles != g_rt.widthCycles || rt.delayCycles != g_rt.delayCycles ||
                               rt.markerPeriodCycles != g_rt.markerPeriodCycles ||
-                              rt.markerWidthCycles != g_rt.markerWidthCycles;
+                              rt.markerWidthCycles != g_rt.markerWidthCycles || rt.pixGate != g_rt.pixGate ||
+                              rt.pixResetStartCycles != g_rt.pixResetStartCycles ||
+                              rt.pixResetCycles != g_rt.pixResetCycles;
     const bool syncChanged = !g_configured || rt.syncDiv256 != g_rt.syncDiv256;
 
     if (syncChanged) {
@@ -351,7 +399,11 @@ void setup() {
                  g_ch2.begin(kPio, kSmCh2, kPinCh2, false) &&
                  pulseReserveDualProgram(kPio) &&  // COMBINE mode: never fails later
                  g_marker.begin(kPio, kSmMarker, kPinMarker, true) &&
-                 g_sync.begin(kPio, kSmSync, kPinSync);
+                 g_pixGate.begin(kPio, kSmPixGate, kPinPixGate, false) &&  // pin: initPixGatePin()
+                 g_sync.begin(kSyncPio, kSmSync, kPinSync);
+    if (g_pioReady) {
+        initPixGatePin();
+    }
 
     // Applies the compiled-in defaults: SYNC and MARKER start, lasers stay DISARMED.
     // (The hooks are installed even if pio0 is unavailable, so commands still get
@@ -360,7 +412,7 @@ void setup() {
         &g_params, ProtocolHooks{applyPulseParams, setArmed, isArmed, startPendingUs, printSystemStatus,
                                  printIdentity});
     if (!g_pioReady) {
-        why = "pio0 unavailable (state machine already claimed or instruction memory full)";
+        why = "pio0/pio1 unavailable (state machine already claimed or instruction memory full)";
     }
     if (why) {
         snprintf(g_hwWhy, sizeof(g_hwWhy), "outputs not started: %s", why);  // copy: `why` may be a reused buffer

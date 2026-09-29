@@ -20,7 +20,7 @@ This board is the Raspberry Pi Pico 2 W redesign of the original Teensy 4.1 desi
 | Power | **USB-C PD input (J17, 15 V)** for the laser driver and the whole board; the Pico's own USB still powers the logic when J17 is unplugged |
 | Rails | **1.8 V** (camera I/O) · 3.3 V (MCU, pixel-reset input) · 5 V (logic, Pico VSYS) · **12 V** (11.9 V, laser driver U13, from J17 only) |
 | Design rules | 0.2 mm clearance, 0.2 mm track, 0.6/0.3 mm via, 0.25 mm copper-to-edge |
-| Placeable parts | 75, plus 4 NPTH mounting holes |
+| Placeable parts | 76, plus 4 NPTH mounting holes |
 
 Layer use:
 
@@ -124,8 +124,9 @@ silkscreen labels the two top-edge ports `CONTROL / PROGRAM — PICO MICRO-USB` 
 
 ## Firmware pin map
 
-The firmware (`../src/`) drives all four signals from pio0 state machines (SM0 CH1, SM1 CH2,
-SM2 MARKER, SM3 SYNC), so any GPIO works — there is no PWM-slice constraint. CH1/CH2 reach
+The firmware (`../src/`) drives all five signals from PIO state machines (pio0: SM0 CH1, SM1 CH2,
+SM2 MARKER, SM3 PIXGATE; pio1: SM0 SYNC), so any GPIO works — there is no PWM-slice constraint.
+CH1, CH2, MARKER and PIXGATE are enabled on the same clock cycle, so they stay in exact phase. CH1/CH2 reach
 their pads only while ARMED; otherwise `src/laser_gate.cpp` drives them LOW.
 
 | Constant | GPIO | Board net | Drives |
@@ -134,6 +135,7 @@ their pads only while ARMED; otherwise `src/laser_gate.cpp` drives them LOW.
 | `kPinMarker` | 11 | `PWM_Trig` | J10.3 → (jumper) → U5 → U6 → Trigger1‑6 |
 | `kPinCh2` | 12 | `_PULSE_OUT_CH2` | U8 → U13 → J8 (Laser 2); R18 10 k to GND |
 | `kPinCh1` | 13 | `_PULSE_OUT_CH1` | U7 → U13 → J7 (Laser 1); R17 10 k to GND; R19 100 Ω → J10.1 |
+| `kPinPixGate` | 16 (J15 pad 20) | `PIXRST_GATE` | U3.1 (NAND with the J12 input) → U4 → TDRSTN1‑6; R24 10 k to +3V3. Output inverted in the GPIO block. |
 
 **CH1 is the higher GPIO and CH2 the lower** — the opposite order to the Teensy original
 (D2 = CH1, D3 = CH2). Do not "tidy" these into ascending order.
@@ -175,6 +177,16 @@ CH1 falls, the higher-numbered state machine wins the latch, and the two pulses 
 2 × WIDTH. COMBINE can only be changed while DISARMED. **Do not
 use a BNC tee instead**: tying J7 and J8 together, or splitting one output to two drivers, gives
 3–3.4 V pulses, or 6.9 V where the pulses overlap (see Laser outputs).
+
+**Pixel-reset gate (`PIXGATE`).** pio0 SM3 runs the same pulse program on GP16, with the pad's
+output inverted in the GPIO block (`GPIO_OVERRIDE_INVERT`), so the program's pulse is the pixel
+reset: it asserts TDRSTN low `PIXLAG` after the last laser pulse falls (CH1 rise + DELAY + WIDTH +
+PIXLAG) and releases it `PIXLEAD` before the next CH1 rise, cycle-exact and phase-locked to CH1
+(checked in `tools/timing_check/check_pixgate.py`). `PIXGATE 1` runs it only while the laser
+pads carry pulses, `PIXGATE 2` always. A stopped gate leaves its output latch LOW, i.e. the pin
+HIGH, so DISARM, a restart hold-off and a reset all leave the pixels free. Rules: PIXLEAD ≥ 5
+cycles and PIXLEAD + DELAY + WIDTH + PIXLAG ≤ 1/FREQ − 3 cycles. The first pair after a start
+has no reset before it. SYNC moved to pio1 to free SM3; it is independent of the laser timing.
 
 ### Timing: what you set is what you get
 
@@ -389,10 +401,17 @@ six camera trigger lines idle low rather than following a floating input on ~145
 > that ties GP13 (through R19) to GP11. J11 is marked **ON** (pins 1‑2, lasers enabled) and
 > **OFF** (pins 2‑3).
 
-**Pixel reset** (no MCU involvement — pure hardware pass-through)
+**Pixel reset** (J12 in hardware, optionally gated by the Pico)
 J12 BNC → `PIXRST_IN` (R5 3k3 pull-up to **+3V3**) → U12.2 (**74LVC1G17** Schmitt buffer,
-VCC 3.3 V) → `PIXRST` → U3.2 (74LVC1G04, 1.8 V) → `PIXRST_N` → U4 ×6 (1.8 V) → `TDRSTN1..6`
-→ J1–J6 pin 3
+VCC 3.3 V) → `PIXRST` → U3.2 (**74LVC1G00** NAND, 1.8 V) → `PIXRST_N` → U4 ×6 (1.8 V) → `TDRSTN1..6`
+→ J1–J6 pin 3. U3.1 is `PIXRST_GATE`: Pico GP16 (J15 pad 20), R24 10 k pull-up to +3V3.
+
+**The Pico gate.** U3 is a NAND, so through U4 the cameras get TDRSTN = J12 **AND**
+`PIXRST_GATE`: the pixels are held in reset whenever J12 is low **or** GP16 is low. The gate idles
+high — R24 before the firmware runs, and the firmware drives it high while `PIXGATE` is 0 — so
+with the gate off J12 behaves exactly as it always has. GP16 drives U3 directly at 3.3 V; U3's
+inputs are 5.5 V-tolerant at VCC = 1.8 V (VIH 1.17 V). The firmware side is described under
+Firmware pin map / Pixel-reset gate.
 
 **Active LOW at the BNC: pull J12 low to reset.** One buffer and two inversions, so TDRSTN
 follows J12 directly, and TDRSTN is active low at the camera (`0 = pixels in reset`). An open
@@ -684,8 +703,8 @@ order-number placeholder.
 | `PiDG_Pico.kicad_sch` | schematic |
 | `PiDG_Pico.kicad_pcb` | board |
 | `PiDG_Pico_BOM.csv` | BOM (hand-maintained; `export_bom` ignores DNP attributes) |
-| `PiDG_Pico_CPL.csv` | pick-and-place, all 75 placed parts (KiCad columns), mounting holes excluded |
-| `fab/jlc/PiDG_Pico_JLC_BOM.csv`, `fab/jlc/PiDG_Pico_JLC_CPL.csv`, `fab/jlc/JLC_ORDER.md` | JLCPCB full-assembly upload files (all 75 parts, LCSC numbers) and the order checklist |
+| `PiDG_Pico_CPL.csv` | pick-and-place, all 76 placed parts (KiCad columns), mounting holes excluded |
+| `fab/jlc/PiDG_Pico_JLC_BOM.csv`, `fab/jlc/PiDG_Pico_JLC_CPL.csv`, `fab/jlc/JLC_ORDER.md` | JLCPCB full-assembly upload files (all 76 parts, LCSC numbers) and the order checklist |
 | `fab/gerbers/`, `fab/PiDG_Pico_Gerbers.zip` | gerbers, Excellon drill (PTH/NPTH) and job file, from the board's stored plot settings |
 | `libs/PiDG_Local.kicad_sym` | Pico 2 W, UCC27524, LT3065 and TPS3700 symbols |
 | `libs/PiDG_Local.pretty/` | `*_EdgeTrim` footprint variants (see below) |
@@ -708,7 +727,7 @@ coordinate and length at 1/100 of the true mm value despite declaring `"coordina
 "mm"` — multiply by 100.
 
 Current state: DRC 0 violations, 0 unconnected items; ERC 0 violations. A
-`kicad-cli pcb drc --schematic-parity` run additionally reports ~185 parity *warnings*, none
+`kicad-cli pcb drc --schematic-parity` run additionally reports ~187 parity *warnings*, none
 electrical: board net names lack the `/` root-sheet prefix the schematic generates for local
 labels (`TDRSTN1` vs `/TDRSTN1` — connectivity identical), unused J14/J15 socket pads carry no
 net rather than `unconnected-(…)`, `Datasheet`/`Description` field text differs, and
