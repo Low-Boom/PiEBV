@@ -228,8 +228,7 @@ function fieldRow(name) {
   input.addEventListener("keydown", (ev) => {
     if (ev.key === "Enter") { ev.preventDefault(); applyNames([name]); }
   });
-  const box = $(GROUP_BOX[meta.group] || "otherFields");
-  box.insertBefore(row, box.querySelector(".field.readonly"));  // read-only rows stay last
+  $(GROUP_BOX[meta.group] || "otherFields").appendChild(row);
   return row;
 }
 
@@ -323,7 +322,6 @@ function render() {
       row.querySelector(".realized").textContent = realizedText(name, f, clk);
     }
   }
-  renderSync(st.fields.SYNC);
   $("pixCard").hidden = !st.fields.PIXGATE;
   $("otherCard").hidden = !$("otherFields").children.length;
   if (st.pixreset) {
@@ -336,21 +334,26 @@ function render() {
     ["Start hold-off", pending > 0 ? fmtTime(pending * 1e-6, 0) : "none"],
     ["Hardware", sys.HW || "?"],
   ]);
-  renderSysline(sys, clk);
+  renderSysline(sys, clk, st.fields.SYNC);
   renderCharts(st, clk);
 }
 
-// The board's system keys, compact, under the identity in the header. A watchdog reset
-// or dropped replies are flagged (the README: stop and check before re-arming).
-function renderSysline(sys, clk) {
+// The board's system keys, compact, under the identity in the header. A watchdog reset,
+// dropped replies or a sync clock other than 1 MHz (set outside this page; the cameras'
+// timestamps would be scaled) are flagged.
+function renderSysline(sys, clk, sync) {
   const box = $("sysline");
   box.replaceChildren();
   if (!sys) return;
   const wdtResets = parseInt(sys.WDT_RESETS || "0", 10), dropped = parseInt(sys.TX_DROPPED || "0", 10);
-  const items = [
+  const items = [];
+  if (sync && sync.value !== FIXED.SYNC) {
+    items.push(["sync " + fmtHz(sync.actual) + ", not 1 MHz: send SYNC 1000000 in the console, or reset the board", true]);
+  }
+  items.push(
     [fmtHz(clk) + " clock (" + (1e9 / clk).toFixed(3) + " ns steps)", false],
     ["last reset " + (sys.RESET || "?"), sys.RESET === "WATCHDOG"],
-  ];
+  );
   if (wdtResets > 0) items.push([wdtResets + " watchdog reset" + (wdtResets > 1 ? "s" : "") + " since power-on", true]);
   items.push(["watchdog " + (parseInt(sys.WDT_MS || "0", 10) / 1000) + " s", false]);
   items.push([dropped > 0 ? dropped.toLocaleString("en-US") + " reply bytes dropped" : "no replies dropped", dropped > 0]);
@@ -362,16 +365,6 @@ function renderSysline(sys, clk) {
     box.append(s);
   });
   box.title = box.textContent;
-}
-
-function renderSync(f) {
-  $("syncRow").hidden = !f;
-  if (!f) return;
-  const std = f.value === FIXED.SYNC;
-  $("syncValue").textContent = fmtHz(f.actual);
-  $("syncNote").textContent = std ? "fixed: the cameras count their 1 µs timestamps on this clock"
-    : "⚠ not 1 MHz, so the cameras' timestamps are scaled. Changed outside this page: reset the board, or send SYNC 1000000 in the console.";
-  $("syncNote").classList.toggle("warn", !std);
 }
 
 function kv(dl, pairs) {
