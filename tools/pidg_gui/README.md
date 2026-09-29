@@ -43,15 +43,15 @@ never uses 1200 baud, which would reboot the Pico into its bootloader.
 | Part | What it does |
 |---|---|
 | Header | Device list, with PiDG boards marked; **↻** rescans. **Connect**/**Disconnect**, the board's identity line, the theme button, the **ARMED** indicator and **DISARM**. |
-| Timing chart | One pulse pair, with Laser 1, Laser 2, marker, pixel reset and sync on a common time axis. Time 0 is the CH1 rising edge. **Pulses** zooms to the two laser pulses. **Pulses + reset window** also shows the `PIXLEAD`/`PIXLAG` window. Hover for the level of every signal at that instant. |
+| Timing chart | One pulse pair, with Laser 1, Laser 2, marker and pixel reset on a common time axis. (The sync clock runs continuously, so it is not drawn.) Time 0 is the CH1 rising edge. **Pulses** zooms to the two laser pulses. **Pulses + reset window** also shows the `PIXLEAD`/`PIXLAG` window. Hover for the level of every signal at that instant. |
 | Sequence chart | Three consecutive pairs: marker on every `MARKERDIV`th pair, pixel-reset gate between pairs. |
 | Edge table | Every edge's realized time after CH1, in ns and in PIO cycles (6.667 ns at 150 MHz). |
 | Laser pulses | `FREQ`, `WIDTH`, `DELAY` (Δt), `COMBINE`. |
-| Cameras | `MARKERDIV`, `MARKERWIDTH`, `SYNC`. |
+| Cameras | `MARKERDIV`, `MARKERWIDTH`, and the sync clock read-only. `SYNC` is fixed at 1 MHz in the GUI, because the cameras count their 1 µs event timestamps on it (Prophesee requires a 1 MHz Sync In); the row warns if the board reports anything else. |
 | Pixel-reset gate | `PIXGATE`, `PIXLEAD`, `PIXLAG`. Hidden if the firmware predates the gate. |
 | Arming | **ARM** and **DISARM**, with the firmware's arming state, start hold-off and `HW` status. |
 | System | Identity, link, PIO clock, last reset reason (and watchdog resets), watchdog timeout, and the count of reply bytes dropped (`TX_DROPPED`). |
-| Console | Every command and reply on the link. You can type any command here, exactly as in a serial terminal. The page's own once-a-second `STATUS` poll is kept out of the console. |
+| Console | Full width at the bottom, and resizable by dragging its bottom edge. Shows every command and reply on the link. You can type any command here, exactly as in a serial terminal, except `SYNC` with a value other than 1000000. The page's own once-a-second `STATUS` poll is kept out of the console. |
 
 **Entering values**
 - Type into a field and press **Enter** (that field only) or **Apply** (the whole card).

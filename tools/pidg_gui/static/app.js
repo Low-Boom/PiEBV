@@ -15,13 +15,14 @@ const META = {
     options: [[0, "Split"], [1, "Combined"]] },  // the realized line spells out the routing
   MARKERDIV: { group: "camera", label: "Marker every", kind: "count", unit: "pairs" },
   MARKERWIDTH: { group: "camera", label: "Marker width", kind: "ns" },
-  SYNC: { group: "camera", label: "Sync clock", kind: "hz" },
   PIXGATE: { group: "pix", label: "Gate", kind: "select",
     options: [[0, "Off (J12 only)"], [1, "While ARMED"], [2, "Always"]] },
   PIXLEAD: { group: "pix", label: "Release before CH1", kind: "ns" },
   PIXLAG: { group: "pix", label: "Reset after last pulse", kind: "ns" },
 };
 const GROUP_BOX = { laser: "laserFields", camera: "cameraFields", pix: "pixFields", other: "otherFields" };
+// Shown read-only, never set from the page (the server refuses other values too).
+const FIXED = { SYNC: 1000000 };
 
 let snap = null;        // last /api/state reply
 let dirty = {};         // NAME -> text typed by the user, not yet applied
@@ -228,7 +229,8 @@ function fieldRow(name) {
   input.addEventListener("keydown", (ev) => {
     if (ev.key === "Enter") { ev.preventDefault(); applyNames([name]); }
   });
-  $(GROUP_BOX[meta.group] || "otherFields").appendChild(row);
+  const box = $(GROUP_BOX[meta.group] || "otherFields");
+  box.insertBefore(row, box.querySelector(".field.readonly"));  // read-only rows stay last
   return row;
 }
 
@@ -310,6 +312,7 @@ function render() {
   }
   const clk = parseInt(sys.CLK || "150000000", 10);
   for (const name of st.order) {
+    if (name in FIXED) continue;
     const row = fieldRow(name);
     const f = st.fields[name];
     const input = row.querySelector("input, select");
@@ -320,6 +323,7 @@ function render() {
       row.querySelector(".realized").textContent = realizedText(name, f, clk);
     }
   }
+  renderSync(st.fields.SYNC);
   $("pixCard").hidden = !st.fields.PIXGATE;
   $("otherCard").hidden = !$("otherFields").children.length;
   if (st.pixreset) {
@@ -341,6 +345,16 @@ function render() {
     ["Reply bytes dropped", sys.TX_DROPPED || "0"],
   ]);
   renderCharts(st, clk);
+}
+
+function renderSync(f) {
+  $("syncRow").hidden = !f;
+  if (!f) return;
+  const std = f.value === FIXED.SYNC;
+  $("syncValue").textContent = fmtHz(f.actual);
+  $("syncNote").textContent = std ? "fixed: the cameras count their 1 µs timestamps on this clock"
+    : "⚠ not 1 MHz, so the cameras' timestamps are scaled. Changed outside this page: reset the board, or send SYNC 1000000 in the console.";
+  $("syncNote").classList.toggle("warn", !std);
 }
 
 function kv(dl, pairs) {
@@ -374,7 +388,9 @@ async function sendCommand() {
     const r = await api("/api/command", { line });
     if (r.error) toast(r.error);
     if (r.state) snap = r.state;
-  } catch (e) { toast(String(e.message || e)); }
+  } catch (e) {  // refused by the GUI server, or the server is unreachable
+    appendLog([{ dir: ">", text: line }, { dir: "<", text: "ERR " + (e.message || e) }]);
+  }
   render();
   const lg = await api("/api/log?since=" + logSeq).catch(() => null);
   if (lg) { appendLog(lg.entries || []); logSeq = lg.next || logSeq; }
@@ -390,7 +406,6 @@ function timingModel(st, clk) {
     combine: f.COMBINE ? f.COMBINE.value : 0,
     gate: f.PIXGATE ? f.PIXGATE.value : null,
     L: c("PIXLEAD"), G: c("PIXLAG"),
-    syncHz: f.SYNC ? f.SYNC.actual : 0,
     armed: !!sys.ARMED,
   };
   m.s = (cyc) => cyc / clk;  // cycles -> seconds
@@ -426,7 +441,6 @@ function buildRows(m, k0, k1) {
       state: ["reset", "free"],
     });
   }
-  rows.push({ name: "Sync", sub: fmtHz(m.syncHz) + " · free-running", color: 5, band: true, state: ["", "running"] });
   return rows;
 }
 
@@ -492,12 +506,6 @@ function drawChart(box, m, rows, t0, t1, opts) {
     txt(svg, 28, yLo - amp / 2 - 2, r.name, "row-label");
     txt(svg, 28, yLo - amp / 2 + 12, r.sub, "row-sub");
     const g = el("g", { class: r.inactive ? "inactive" : "" }, svg);
-    if (r.band) {
-      el("rect", { x: left, y: yHi, width: plotW, height: amp, fill: color, class: "band", rx: 2 }, g);
-      txt(svg, left + 8, yLo - amp / 2 + 4, "clock runs continuously, not phase-locked to the pulses", "note");
-      r.level = () => 1;
-      return;
-    }
     const highs = mergeClip(r.highs, t0, t1);
     // change points
     let level = highs.length && highs[0][0] <= t0 ? 1 : 0;
@@ -638,7 +646,6 @@ function renderCharts(st, clk) {
   const notes = [];
   for (const r of pairRows) if (r.note && !notes.includes(r.note)) notes.push(r.note);
   if (w1 || w2) notes.push("Pulses narrower than 2 px are drawn 2 px wide.");
-  notes.push("Sync is shown as a band: it is free-running and not phase-locked to the laser pulses.");
   if (m.combine) notes.push("COMBINE 1: both lasers carry CH1's and CH2's pulse.");
   $("chartNote").textContent = notes.join(" ");
   renderEdges(m);

@@ -437,7 +437,7 @@ needed. Until then, use USB.
 | `DELAY [n]` | ns | 10000 | 0 up to 1/FREQ − 2 × WIDTH, so pulse pairs stay separated (with `COMBINE 1`, more than WIDTH); the error message gives the exact limit | CH2 rising edge after CH1 rising edge. `0` makes them coincide. |
 | `MARKERDIV [n]` | count | 100 | ≥ 1, and MARKERDIV × period ≤ 2³²−1 cycles (about 28.6 s) | Marker fires once every *n* pulse pairs |
 | `MARKERWIDTH [n]` | ns | 2000 | 17 up to the marker period − 5 cycles | Marker pulse width |
-| `SYNC [n]` | Hz | 1000000 | 1145 … 75 000 000 | Camera sync clock frequency (free-running square wave) |
+| `SYNC [n]` | Hz | 1000000 | 1145 … 75 000 000 | Camera sync clock frequency (free-running square wave). **Leave it at 1 MHz for the IDS/Prophesee cameras** ([why](#timing)); the web GUI keeps it fixed. |
 | `COMBINE [n]` | 0 / 1 | 0 | 0 or 1; change only while DISARMED | 0: CH1 → Laser 1, CH2 → Laser 2. 1: **both** pulses on **both** outputs ([details](#combined-mode-combine)) |
 | `PIXGATE [n]` | 0 / 1 / 2 | 0 | 0, 1 or 2 | Camera pixel reset between pulse pairs: 0 off (J12 only), 1 while ARMED, 2 always ([details](#pixel-reset-gate-pixgate)) |
 | `PIXLEAD [n]` | ns | 10000 | ≥ 30 (realizes to ≥ 5 cycles); the window must fit in 1/FREQ | Pixels released this long before each CH1 |
@@ -578,7 +578,11 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
 - **CH2 − CH1 = DELAY exactly**, to the cycle.
 - **The marker** rises together with a CH1 pulse, and its period is exactly `MARKERDIV` × the CH1
   period, so it never drifts off the pulse it marks.
-- **SYNC** is independent of the laser timing.
+- **SYNC** is independent of the laser timing. The IDS uEye EVS cameras (Prophesee IMX636) need it at
+  **1 MHz**: a sync slave counts its 1 µs event timestamps on this clock, and Prophesee requires Sync In
+  to be "a 1MHz pulse train to correspond to the internally generated 1µs timestamp resolution". Any
+  other frequency scales every camera's timestamps. An IMX636 slave also streams nothing until the clock
+  arrives. Other SYNC values are only for other equipment.
 - **No laser-driver limits.** Pulse width, duty and spacing are not limited by the firmware — they
   depend on the attached driver, so set values within its ratings. What is enforced is only what
   keeps the waveform correct:

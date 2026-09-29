@@ -62,8 +62,14 @@
       </section>
 
       <section class="card" id="cameraCard">
-        <div class="card-head"><h2>Cameras</h2><span class="sub">Marker trigger and sync clock</span></div>
-        <div id="cameraFields"></div>
+        <div class="card-head"><h2>Cameras</h2><span class="sub">Trigger marker and sync clock</span></div>
+        <div id="cameraFields">
+          <div class="field readonly" id="syncRow">
+            <label>Sync clock<span class="code">SYNC</span></label>
+            <div class="input"><span class="value" id="syncValue">—</span></div>
+            <div class="realized" id="syncNote">fixed at 1 MHz</div>
+          </div>
+        </div>
         <div class="card-foot"><button class="apply primary" data-group="camera">Apply</button><span class="msg"></span></div>
       </section>
 
@@ -84,16 +90,16 @@
         <div class="card-head"><h2>System</h2></div>
         <dl class="kv" id="systemInfo"></dl>
       </section>
-
-      <section class="card keep" id="consoleCard">
-        <div class="card-head"><h2>Console</h2><span class="sub">Every command and reply on the link</span></div>
-        <div class="console" id="console" aria-live="polite"></div>
-        <div class="console-row">
-          <input id="cmdInput" type="text" placeholder="Command, e.g. HELP or DELAY 12000" aria-label="Command">
-          <button id="cmdSend">Send</button>
-        </div>
-      </section>
     </div>
+
+    <section class="card keep" id="consoleCard">
+      <div class="card-head"><h2>Console</h2><span class="sub">Every command and reply on the link</span></div>
+      <div class="console" id="console" aria-live="polite"></div>
+      <div class="console-row">
+        <input id="cmdInput" type="text" placeholder="Command, e.g. HELP or DELAY 12000" aria-label="Command">
+        <button id="cmdSend">Send</button>
+      </div>
+    </section>
   </main>
   <div class="toast" id="toast" role="status"></div>
   <script src="app.js"></script>
