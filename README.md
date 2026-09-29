@@ -223,7 +223,8 @@ feed-through terminators).
    now (lasers inhibited).
 4. **Power up:** the charger into J17, and the Pico's micro-USB into your computer.
 5. **Open a serial terminal** on the Pico's port ([how](#usb-serial)). Turn on local echo, because
-   the firmware does not echo what you type. Type `STATUS` and press Enter. You should see:
+   the firmware does not echo what you type. (Or use the [web GUI](#web-gui); its console takes the
+   same commands.) Type `STATUS` and press Enter. You should see:
    ```
    FREQ=1000 (actual 1000.000 Hz, period 150000 cyc)
    WIDTH=100 (actual 100.000 ns, 15 cyc)
@@ -318,6 +319,25 @@ control to None; under Terminal set Local echo to Force on.
 The firmware prints a one-line banner only if a terminal is already open in the first 1.5 s after
 reset. A terminal opened later sees nothing until you type something. Try `ID?`.
 
+### Web GUI
+
+[`tools/pidg_gui`](tools/pidg_gui) is a browser interface for the same commands. It shows every
+setting with its realized value, and draws the timing of one PIV pulse pair (and a three-pair
+sequence) from the board's own `STATUS`. It runs a small local web server; the only dependency is
+pyserial:
+
+```
+python -m pip install pyserial
+python tools/pidg_gui/pidg_gui.py --connect auto        # then http://127.0.0.1:8765
+```
+
+- It opens the Pico's serial port itself, so close any other terminal first.
+- Esc or DISARM disarms from anywhere on the page. Closing the page does not disarm.
+- `--connect sim` runs it against [`tools/pidg_sim`](tools/pidg_sim) instead: the firmware's
+  real protocol code, built for your computer, with no board needed.
+
+See [its README](tools/pidg_gui/README.md) for the full guide.
+
 ### Scripting (Python)
 
 [`tools/pidg_example.py`](tools/pidg_example.py) is a complete example using pyserial
@@ -382,6 +402,9 @@ either would be firmware-only work:
 - carry the same text commands over the wireless link;
 - add authentication;
 - decide whether `ARM` may be sent wirelessly (`DISARM` must always stay reachable).
+
+The [web GUI](#web-gui) needs no change for this. It accepts a network address such as
+`socket://pidg.local:4242` wherever it takes a serial port.
 
 The board has solid copper under the module's antenna, which shortens the radio's range. That is
 acceptable: the aim would be short range (a few metres, Bluetooth-like), so no board change is
@@ -715,6 +738,8 @@ a scope check on the board.
 | `src/` | Firmware: `main.cpp` (setup, arming, watchdog), `protocol.*` (serial commands), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `laser_gate.*` (laser output gate), `board.h` (pin map) |
 | `platformio.ini` | Build configuration (pinned platform; `pico2w` and `pico2` environments) |
 | `tools/pidg_example.py` | Python host example |
+| `tools/pidg_gui/` | Web GUI: settings, timing chart and console in the browser, over USB serial |
+| `tools/pidg_sim/` | Protocol simulator: the firmware's command code built for a host computer (for the GUI and scripts, without a board) |
 | `tools/timing_check/` | Host-side timing verification |
 | `Pico Version 4Layer/` | **Current hardware:** KiCad project, [Hardware.md](Pico%20Version%204Layer/Hardware.md) (full hardware reference), BOM, placement file, `fab/` gerbers, drill files and JLCPCB assembly files |
 | `Chris Teensy Version/` | The original Teensy 4.1 design this project is derived from |

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PiDG Control</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="disconnected">
+  <header>
+    <div class="brand"><b>PiDG</b><span>PIV delay generator</span></div>
+    <div class="conn">
+      <select id="target" aria-label="Device"></select>
+      <input id="customTarget" type="text" placeholder="COM7 or socket://host:port" hidden aria-label="Custom device">
+      <button id="connectBtn" class="primary">Connect</button>
+      <button id="refreshPorts" title="Rescan serial ports" aria-label="Rescan serial ports">↻</button>
+      <span id="ident" class="ident">Not connected</span>
+    </div>
+    <button id="themeBtn" title="Colour theme: follows the system" aria-label="Colour theme">◐</button>
+    <div class="safety">
+      <span id="armPill" class="pill" role="status"><span class="dot" aria-hidden="true"></span><span id="armText">—</span></span>
+      <button id="disarmBtn" class="disarm" title="Disarm the laser outputs (Esc)">DISARM</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="card" id="timingCard">
+      <div class="card-head">
+        <h2>Timing of one PIV pulse pair</h2>
+        <span class="sub" id="timingSub">Realized values, as the hardware produces them. Time 0 = the CH1 rising edge.</span>
+        <span class="spacer"></span>
+        <div class="seg" role="group" aria-label="Pair view zoom">
+          <button id="fitPulses" aria-pressed="true">Pulses</button>
+          <button id="fitWindow" aria-pressed="false">Pulses + reset window</button>
+        </div>
+      </div>
+      <div class="chart" id="pairChart"></div>
+      <div class="chart-title" id="seqTitle">Sequence</div>
+      <div class="chart" id="seqChart"></div>
+      <div class="legend-note" id="chartNote"></div>
+      <details class="edges">
+        <summary>Edge table (realized times)</summary>
+        <table id="edgeTable"><thead><tr><th>Signal</th><th>Edge</th><th class="num">Time after CH1</th><th class="num">PIO cycles</th></tr></thead><tbody></tbody></table>
+      </details>
+    </section>
+
+    <div class="grid">
+      <section class="card" id="laserCard">
+        <div class="card-head"><h2>Laser pulses</h2></div>
+        <div id="laserFields"></div>
+        <div class="card-foot"><button class="apply primary" data-group="laser">Apply</button><span class="msg"></span></div>
+      </section>
+
+      <section class="card" id="armCard">
+        <div class="card-head"><h2>Arming</h2></div>
+        <div class="arm-row">
+          <button id="armBtn" class="arm">ARM</button>
+          <button id="disarmBtn2" class="disarm">DISARM</button>
+        </div>
+        <dl class="kv" id="armInfo"></dl>
+        <p class="hint">The firmware cannot see the J11 interlock or the 12 V power gate: ARMED=1 alone does not mean the outputs are live. Esc disarms from anywhere on this page. Closing the page does not disarm.</p>
+      </section>
+
+      <section class="card" id="cameraCard">
+        <div class="card-head"><h2>Cameras</h2><span class="sub">Marker trigger and sync clock</span></div>
+        <div id="cameraFields"></div>
+        <div class="card-foot"><button class="apply primary" data-group="camera">Apply</button><span class="msg"></span></div>
+      </section>
+
+      <section class="card" id="pixCard" hidden>
+        <div class="card-head"><h2>Pixel-reset gate</h2><span class="sub">Holds TDRSTN low between pulse pairs</span></div>
+        <div id="pixFields"></div>
+        <p class="hint" id="pixSummary"></p>
+        <div class="card-foot"><button class="apply primary" data-group="pix">Apply</button><span class="msg"></span></div>
+      </section>
+
+      <section class="card" id="otherCard" hidden>
+        <div class="card-head"><h2>Other settings</h2></div>
+        <div id="otherFields"></div>
+        <div class="card-foot"><button class="apply primary" data-group="other">Apply</button><span class="msg"></span></div>
+      </section>
+
+      <section class="card" id="systemCard">
+        <div class="card-head"><h2>System</h2></div>
+        <dl class="kv" id="systemInfo"></dl>
+      </section>
+
+      <section class="card keep" id="consoleCard">
+        <div class="card-head"><h2>Console</h2><span class="sub">Every command and reply on the link</span></div>
+        <div class="console" id="console" aria-live="polite"></div>
+        <div class="console-row">
+          <input id="cmdInput" type="text" placeholder="Command, e.g. HELP or DELAY 12000" aria-label="Command">
+          <button id="cmdSend">Send</button>
+        </div>
+      </section>
+    </div>
+  </main>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
