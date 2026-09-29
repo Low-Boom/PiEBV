@@ -12,13 +12,13 @@ for clk in (150000000, 125000000, 200000000, 133000000, 300000000):
     for _ in range(600):
         s = random.choice([1, 1000, 1144, 1145, 1146, 50000, 1000000, 999999, 7000000, 37500000, 75000000, 75000001,
                            75200000, 100000000, random.randint(1, 80000000), random.randint(1000, 2000000)])
-        cases.append((clk, 1000, 100, 10000, 100, 2000, s))
+        cases.append((clk, 1000, 100, 10000, 2000, s))
 inp = "\n".join(" ".join(map(str, c)) for c in cases) + "\n"
 out = subprocess.run([HARNESS], input=inp, capture_output=True, text=True).stdout.splitlines()
 assert len(out) == len(cases)
 bad = 0; acc = 0
 for c, line in zip(cases, out):
-    clk, s = c[0], c[6]
+    clk, s = c[0], c[5]
     d = rnd(F(clk * 128, s))
     legal = 256 <= d <= (65535 << 8 | 255)
     if line.startswith("ERR"):

@@ -24,7 +24,7 @@ between them, and keeps upto six event cameras synchronised to the same clock.
 | **Laser 1** (CH1) | BNC J7 | 5 V into 50 Ω | Trigger for the first laser driver (PicoLas LDP-V) |
 | **Laser 2** (CH2) | BNC J8 | 5 V into 50 Ω | Trigger for the second laser driver; rises exactly `DELAY` after Laser 1 |
 | **Sync** | Camera ports J1–J6, pin 5 | 1.8 V, 1 MHz by default | Common clock for all six cameras (they run as sync slaves) |
-| **Trigger** | J1–J6, pin 4 | 1.8 V | Reference marker once every `MARKERDIV` pulse pairs (or every Laser 1 pulse; see [J10](#jumpers)) |
+| **Trigger** | J1–J6, pin 4 | 1.8 V | Marker, rising with Laser 1: each camera timestamps it into its event stream (or the Laser 1 pulse itself; see [J10](#jumpers)) |
 | **Pixel reset** | J1–J6, pin 3 | 1.8 V, active low | Follows the J12 BNC input; optionally also held low by the Pico between pulse pairs (`PIXGATE`) |
 
 - CH1 and CH2 share one pulse `WIDTH` and one repetition rate `FREQ`.
@@ -156,7 +156,7 @@ Both headers are numbered 1-2-3 from **left to right**; pin 1 has the square pad
 | Jumper | Silkscreen | Shunt on 1-2 (left pair) | Shunt on 2-3 (right pair) | No shunt |
 |---|---|---|---|---|
 | **J11** laser enable | `ON` … `OFF` | **Lasers enabled** (the firmware must also be ARMED) | Lasers inhibited | Lasers inhibited (fail-safe) |
-| **J10** trigger source | `CH1 TRG MKR` | Cameras triggered by every Laser 1 pulse (only while ARMED) | **Cameras triggered by the reference marker** (normal) | Camera triggers held low |
+| **J10** trigger source | `CH1 TRG MKR` | Cameras triggered by every Laser 1 pulse (only while ARMED) | **Cameras triggered by the marker** (normal) | Camera triggers held low |
 
 **J11 — laser interlock and safety switch.** The silkscreen reads `ON` / `OFF` and
 `LASER INTERLOCK: ON = 1-2`, `E-STOP: NC SWITCH ACROSS 1-2`. For a safety (E-stop) switch, remove
@@ -167,9 +167,11 @@ input: it is enabled when open, so a broken cable there would leave the lasers e
 
 **J10 — camera trigger source.** The silkscreen reads `CH1 TRG MKR` under the pins, with
 `CAMERA TRIGGER: TRG-MKR = MARKER / TRG-CH1 = LASER 1` to its right. `TRG` (pin 2) feeds the trigger
-input (pin 4) of all six camera ports. Shunt `TRG` to `MKR` for the reference marker (normal, runs
-while disarmed), or to `CH1` for a trigger on every Laser 1 pulse (only while ARMED). Never shunt all
-three pins.
+input (pin 4) of all six camera ports. Shunt `TRG` to `MKR` for the marker (normal): it rises with
+Laser 1 and runs while disarmed. Shunt it to `CH1` to trigger on the Laser 1 pulse itself, only
+while ARMED. Prophesee specifies a minimum trigger-input pulse of 500 ns, so `CH1` is only
+dependable with `WIDTH` ≥ 500 ns; the marker has its own width (`MARKERWIDTH`, 2 µs). Never shunt
+all three pins.
 
 **TP4 — CH2 scope point.** Labelled `CH2` / `GND` and `SCOPE ONLY`. Pin 1 is the raw Laser 2 pulse
 from the Pico (GP12, 3.3 V logic, before the interlock and driver; LOW while DISARMED), pin 2 is
@@ -223,12 +225,12 @@ feed-through terminators).
    now (lasers inhibited).
 4. **Power up:** the charger into J17, and the Pico's micro-USB into your computer.
 5. **Open a serial terminal** on the Pico's port ([how](#usb-serial)). Turn on local echo, because
-   the firmware does not echo what you type. Type `STATUS` and press Enter. You should see:
+   the firmware does not echo what you type. (Or use the [web GUI](#web-gui); its console takes the
+   same commands.) Type `STATUS` and press Enter. You should see:
    ```
    FREQ=1000 (actual 1000.000 Hz, period 150000 cyc)
    WIDTH=100 (actual 100.000 ns, 15 cyc)
    DELAY=10000 (actual 10000.000 ns, 1500 cyc)
-   MARKERDIV=100
    MARKERWIDTH=2000 (actual 2000.000 ns, 300 cyc)
    SYNC=1000000 (actual 1000000.000 Hz, divider 75+0/256)
    COMBINE=0 (CH1 on LASER 1, CH2 on LASER 2)
@@ -253,7 +255,7 @@ feed-through terminators).
    `DISARM` when you're done.
 
 Settings are **not saved**. Every reset or power cycle restores the defaults (FREQ 1000, WIDTH 100,
-DELAY 10000, MARKERDIV 100, MARKERWIDTH 2000, SYNC 1000000) and leaves the lasers DISARMED.
+DELAY 10000, MARKERWIDTH 2000, SYNC 1000000) and leaves the lasers DISARMED.
 
 ### Before connecting lasers or cameras
 
@@ -317,6 +319,25 @@ control to None; under Terminal set Local echo to Force on.
 
 The firmware prints a one-line banner only if a terminal is already open in the first 1.5 s after
 reset. A terminal opened later sees nothing until you type something. Try `ID?`.
+
+### Web GUI
+
+[`tools/pidg_gui`](tools/pidg_gui) is a browser interface for the same commands. It shows every
+setting with its realized value, and draws the timing of one PIV pulse pair (and a three-pair
+sequence) from the board's own `STATUS`. It runs a small local web server; the only dependency is
+pyserial:
+
+```
+python -m pip install pyserial
+python tools/pidg_gui/pidg_gui.py --connect auto        # then http://127.0.0.1:8765
+```
+
+- It opens the Pico's serial port itself, so close any other terminal first.
+- Esc or DISARM disarms from anywhere on the page. Closing the page does not disarm.
+- `--connect sim` runs it against [`tools/pidg_sim`](tools/pidg_sim) instead: the firmware's
+  real protocol code, built for your computer, with no board needed.
+
+See [its README](tools/pidg_gui/README.md) for the full guide.
 
 ### Scripting (Python)
 
@@ -383,6 +404,9 @@ either would be firmware-only work:
 - add authentication;
 - decide whether `ARM` may be sent wirelessly (`DISARM` must always stay reachable).
 
+The [web GUI](#web-gui) needs no change for this. It accepts a network address such as
+`socket://pidg.local:4242` wherever it takes a serial port.
+
 The board has solid copper under the module's antenna, which shortens the radio's range. That is
 acceptable: the aim would be short range (a few metres, Bluetooth-like), so no board change is
 needed. Until then, use USB.
@@ -412,9 +436,8 @@ needed. Until then, use USB.
 | `FREQ [n]` | Hz | 1000 | 1 up to where 2 × WIDTH + DELAY still fits in 1/FREQ | Pulse-pair repetition rate |
 | `WIDTH [n]` | ns | 100 | ≥ 17 (realizes to ≥ 20.000 ns), and 2 × WIDTH + DELAY ≤ 1/FREQ. No upper limit. | Width of both CH1 and CH2 pulses |
 | `DELAY [n]` | ns | 10000 | 0 up to 1/FREQ − 2 × WIDTH, so pulse pairs stay separated (with `COMBINE 1`, more than WIDTH); the error message gives the exact limit | CH2 rising edge after CH1 rising edge. `0` makes them coincide. |
-| `MARKERDIV [n]` | count | 100 | ≥ 1, and MARKERDIV × period ≤ 2³²−1 cycles (about 28.6 s) | Marker fires once every *n* pulse pairs |
-| `MARKERWIDTH [n]` | ns | 2000 | 17 up to the marker period − 5 cycles | Marker pulse width |
-| `SYNC [n]` | Hz | 1000000 | 1145 … 75 000 000 | Camera sync clock frequency (free-running square wave) |
+| `MARKERWIDTH [n]` | ns | 2000 | 17 up to 1/FREQ − 5 cycles | Marker pulse width (the marker rises with CH1) |
+| `SYNC [n]` | Hz | 1000000 | 1145 … 75 000 000 | Camera sync clock frequency (free-running square wave). **Leave it at 1 MHz for the IDS/Prophesee cameras** ([why](#timing)); the web GUI keeps it fixed. |
 | `COMBINE [n]` | 0 / 1 | 0 | 0 or 1; change only while DISARMED | 0: CH1 → Laser 1, CH2 → Laser 2. 1: **both** pulses on **both** outputs ([details](#combined-mode-combine)) |
 | `PIXGATE [n]` | 0 / 1 / 2 | 0 | 0, 1 or 2 | Camera pixel reset between pulse pairs: 0 off (J12 only), 1 while ARMED, 2 always ([details](#pixel-reset-gate-pixgate)) |
 | `PIXLEAD [n]` | ns | 10000 | ≥ 30 (realizes to ≥ 5 cycles); the window must fit in 1/FREQ | Pixels released this long before each CH1 |
@@ -432,7 +455,6 @@ needed. Until then, use USB.
 DELAY 1003     ->  OK DELAY=1003 (actual 1000.000 ns, 150 cyc)
 DELAY          ->  DELAY=1003 (actual 1000.000 ns, 150 cyc)
 WIDTH 101      ->  OK WIDTH=101 (actual 100.000 ns, 15 cyc)
-MARKERDIV 50   ->  OK MARKERDIV=50
 SYNC 2000000   ->  OK SYNC=2000000 (actual 2000000.000 Hz, divider 37+128/256, 1-cycle jitter)
 ARM            ->  OK ARMED=1 (laser pulses start after a 498 us hold-off)
 DISARM         ->  OK ARMED=0
@@ -459,7 +481,7 @@ ID?            ->  PiDG delay generator (Pico 2 W), firmware built Sep 24 2026 2
   closer than the set period, whatever sequence of commands arrives. When the pulses start, CH1, CH2 and
   the marker start together, and the first pulse is full width. `START_PENDING_US` in `STATUS` shows the
   time remaining.
-- Changing `FREQ`, `WIDTH`, `DELAY`, `MARKERDIV` or `MARKERWIDTH` while armed goes through the same
+- Changing `FREQ`, `WIDTH`, `DELAY` or `MARKERWIDTH` while armed goes through the same
   hold-off and stays armed. A change that realizes to the same cycle counts (e.g. `WIDTH 100` →
   `WIDTH 101`) restarts nothing.
 - **DISARM** is never refused. The outputs go low the moment the `M` arrives, the rest of that line
@@ -545,7 +567,7 @@ CH1  (J7)  _|‾‾‾‾|______________________________________________________
              WIDTH
 CH2  (J8)  ____________|‾‾‾‾|__________________________________________________________
             |<-DELAY-->|
-MARKER     _|‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾|____________ ... next one MARKERDIV periods later
+MARKER     _|‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾|____________________________________________|‾‾‾‾‾‾‾
              MARKERWIDTH
 SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ ... free-running, 1 MHz default
 ```
@@ -553,9 +575,15 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
 - **Quantization:** times round to the nearest 6.667 ns cycle; frequencies round to the nearest whole
   period in cycles. All limits are checked on the rounded (realized) values.
 - **CH2 − CH1 = DELAY exactly**, to the cycle.
-- **The marker** rises together with a CH1 pulse, and its period is exactly `MARKERDIV` × the CH1
-  period, so it never drifts off the pulse it marks.
-- **SYNC** is independent of the laser timing.
+- **The marker** rises on the same cycle as every CH1 pulse and runs at exactly the CH1 period, so
+  it never drifts off the pulse it marks. Each camera timestamps it into its event stream, which
+  gives every pair its own reference time. At the default 2 µs `MARKERWIDTH`, FREQ can go up to
+  about 490 kHz; lower `MARKERWIDTH` for more.
+- **SYNC** is independent of the laser timing. The IDS uEye EVS cameras (Prophesee IMX636) need it at
+  **1 MHz**: a sync slave counts its 1 µs event timestamps on this clock, and Prophesee requires Sync In
+  to be "a 1MHz pulse train to correspond to the internally generated 1µs timestamp resolution". Any
+  other frequency scales every camera's timestamps. An IMX636 slave also streams nothing until the clock
+  arrives. Other SYNC values are only for other equipment.
 - **No laser-driver limits.** Pulse width, duty and spacing are not limited by the firmware — they
   depend on the attached driver, so set values within its ratings. What is enforced is only what
   keeps the waveform correct:
@@ -565,8 +593,7 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
   - with `COMBINE 1`, `DELAY` > `WIDTH` ([Combined mode](#combined-mode-combine)).
 - **Board output rating:** none to observe; the outputs carry any duty the firmware accepts, even
   into a shorted BNC (see Safety).
-- **Low frequencies:** with MARKERDIV at 100 the lowest FREQ is 4 Hz. Lower MARKERDIV first (to ≤ 28
-  for 1 Hz).
+- **Low frequencies:** FREQ goes down to 1 Hz.
 - **Hardware delays:** the laser driver stage adds about 13–25 ns, common to both channels, so the
   CH1–CH2 delay at J7/J8 is preserved to within the driver's channel-to-channel matching (1–2 ns).
 
@@ -579,19 +606,19 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
 | `ERR <NAME> takes one value` | More than one number |
 | `ERR ARM takes no argument` | Anything after `ARM` |
 | `ERR line too long` | More than 95 characters; the whole line is ignored |
-| `ERR <NAME> rejected: value must be > 0` | FREQ, MARKERDIV or SYNC set to 0 |
+| `ERR <NAME> rejected: value must be > 0` | FREQ or SYNC set to 0 |
 | `ERR <NAME> rejected: WIDTH realizes below the 3-cycle minimum (20.000 ns)` | WIDTH ≤ 16 ns (same for MARKERWIDTH) |
 | `ERR <NAME> rejected: DELAY must leave >= WIDTH before the next pulse pair (DELAY <= 1/FREQ - 2 x WIDTH); max DELAY … ns` | DELAY too long for the period at this WIDTH |
 | `ERR <NAME> rejected: WIDTH too long for the period: 2 x WIDTH must fit in 1/FREQ` | WIDTH over half the period |
 | `ERR <NAME> rejected: COMBINE needs DELAY > WIDTH so the two pulses stay separate (min DELAY … ns)` | With `COMBINE 1`, DELAY not above WIDTH |
-| `ERR <NAME> rejected: MARKERWIDTH does not fit in the marker period` | MARKERWIDTH too long |
-| `ERR <NAME> rejected: marker period (MARKERDIV x period) is over 2^32-1 PIO cycles` | Low FREQ with a large MARKERDIV |
+| `ERR <NAME> rejected: MARKERWIDTH must fit in the period (MARKERWIDTH <= 1/FREQ - 5 cycles); max MARKERWIDTH … ns` | MARKERWIDTH too long for the period, e.g. after raising FREQ |
+| `ERR MARKERDIV removed: the marker fires with every pulse pair` | `MARKERDIV` is no longer a setting |
 | `ERR <NAME> rejected: FREQ out of range` | FREQ above 300 MHz |
 | `ERR <NAME> rejected: SYNC out of range (1145..75000000 Hz)` | SYNC outside its range |
 | `ERR ARM …` / `ERR <NAME> rejected: pio0 unavailable` | The pulse hardware failed to start at boot (`HW=` in STATUS) |
 
 `<NAME>` is the setting you were changing, which is not always the one named in the reason. For
-example, `FREQ 1` with MARKERDIV 100 reports a marker-period error.
+example, `FREQ 600000` with the default 2 µs `MARKERWIDTH` reports a `MARKERWIDTH` error.
 
 ### STATUS
 
@@ -599,7 +626,6 @@ example, `FREQ 1` with MARKERDIV 100 reports a marker-period error.
 FREQ=15 (actual 15.000 Hz, period 10000000 cyc)
 WIDTH=100 (actual 100.000 ns, 15 cyc)
 DELAY=10000 (actual 10000.000 ns, 1500 cyc)
-MARKERDIV=100
 MARKERWIDTH=2000 (actual 2000.000 ns, 300 cyc)
 SYNC=1000000 (actual 1000000.000 Hz, divider 75+0/256)
 COMBINE=0 (CH1 on LASER 1, CH2 on LASER 2)
@@ -646,7 +672,7 @@ TX_DROPPED=0
 | The port vanishes and an `RP2350` drive appears | The port was opened at 1200 baud (reboot-to-bootloader) | Use any other baud rate. Copy `firmware.uf2` to the drive, or unplug both J17 and the Pico's USB. |
 | `ERR … unknown command` for everything | A typo, the `FREQ?` form, old Teensy-style `6,cmd;` framing, or XON/XOFF flow control | Use bare names; set flow control to None |
 | `ERR … rejected: DELAY must leave >= WIDTH …` | DELAY + 2 × WIDTH longer than 1/FREQ | Shorten DELAY or WIDTH, or lower FREQ; the message gives the max DELAY |
-| `ERR … marker period …` at low FREQ | MARKERDIV × period too long | Lower MARKERDIV first (≤ 28 for 1 Hz) |
+| `ERR … MARKERWIDTH must fit in the period …` at high FREQ | The marker (default 2 µs) is longer than 1/FREQ − 5 cycles | Lower MARKERWIDTH first; the message gives the max |
 | `ERR ARM …`, or `HW=ERR …` in STATUS | The pulse hardware did not start | Re-flash the firmware; if it persists, report the `STATUS` output |
 | `ARMED=1` but no laser pulses | J11 not on 1-2; J16 ENABLE pulled low; J17 unplugged or the charger isn't giving 15 V; still in the hold-off (`START_PENDING_US` > 0) | Check each gate. Measure `VBUS_PD` at C12 (about 15 V) and +12V at C17 (about 11.9 V; U18 holds the outputs off outside 11.0–13.1 V). |
 | Outputs dead after a reset or power cycle | The board always restarts DISARMED | Send `ARM` |
@@ -715,6 +741,8 @@ a scope check on the board.
 | `src/` | Firmware: `main.cpp` (setup, arming, watchdog), `protocol.*` (serial commands), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `laser_gate.*` (laser output gate), `board.h` (pin map) |
 | `platformio.ini` | Build configuration (pinned platform; `pico2w` and `pico2` environments) |
 | `tools/pidg_example.py` | Python host example |
+| `tools/pidg_gui/` | Web GUI: settings, timing chart and console in the browser, over USB serial |
+| `tools/pidg_sim/` | Protocol simulator: the firmware's command code built for a host computer (for the GUI and scripts, without a board) |
 | `tools/timing_check/` | Host-side timing verification |
 | `Pico Version 4Layer/` | **Current hardware:** KiCad project, [Hardware.md](Pico%20Version%204Layer/Hardware.md) (full hardware reference), BOM, placement file, `fab/` gerbers, drill files and JLCPCB assembly files |
 | `Chris Teensy Version/` | The original Teensy 4.1 design this project is derived from |

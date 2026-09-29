@@ -156,7 +156,7 @@ values within your driver's ratings. The checks are the ones that keep the wavef
 - **Minimum width:** WIDTH and MARKERWIDTH realize to ≥ 3 cycles (≤ 16 ns is **rejected**, not
   clamped; the shortest pulse is 20.000 ns). The program itself needs `DELAY ≤ 1/FREQ − WIDTH − 5
   cycles`, which binds only at 3–4-cycle widths.
-- The marker period (MARKERDIV × period ≤ 2³² − 1 cycles) and the SYNC divider range.
+- The marker fits in the period (MARKERWIDTH ≤ 1/FREQ − 5 cycles), and the SYNC divider range.
 
 **Board output rating: nothing to observe.** R6/R7 are **2 W 2512** resistors and U17 is a 500 mA
 regulator with a 400 mA current limit, so the outputs carry any duty the firmware accepts (up to
@@ -197,10 +197,12 @@ has no reset before it. SYNC moved to pio1 to free SM3; it is independent of the
   this revision loaded CH2 two cycles short, so it fired 13.33 ns early — a 1.3 % velocity error
   at 1 µs separation. The fix is exact in a cycle-accurate model of the PIO; see
   `../tools/timing_check/`.
-- **MARKER is phase-locked to CH1**: its period is exactly MARKERDIV × the laser period in
-  cycles. Before, the two periods were rounded separately, via a period truncated to whole
-  nanoseconds, so MARKER drifted off the pulse it marks — e.g. by 5 cycles per marker period
-  at 3 kHz with MARKERDIV 100.
+- **MARKER fires with every pulse pair** and is phase-locked to CH1: it runs the same program
+  at exactly the laser period in cycles, started on the same cycle, so it rises with every CH1
+  pulse. (The Teensy original, and earlier PiDG firmware with `MARKERDIV`, marked only every Nth
+  pair; before that fix the marker period was also rounded separately and drifted off the pulse
+  it marked.) Each camera timestamps the marker into its event stream, which gives every PIV pair
+  its own reference time.
 - **SYNC** is realized with the PIO's 8.8 fixed-point clock divider. The default 1 MHz is
   exact (divider 75). Other values are reported with their actual average frequency; a
   fractional divider adds 1-cycle (6.667 ns) edge jitter, which the reply notes.
@@ -382,8 +384,10 @@ dedicated gate per camera.
 `GP11` → J10.3 → *[J10 jumper]* → `PWM_TRIG_TAP` → U5.2 → `TRIG_N` → U6 ×6 → `Trigger1..6` →
 J1–J6 pin 4
 
-J10 selects the trigger source: a shunt on **2‑3** triggers the cameras from the reference
-marker (normal), a shunt on **1‑2** triggers them from every laser CH1 pulse instead — which
+J10 selects the trigger source: a shunt on **2‑3** triggers the cameras from the marker
+(normal; it rises with CH1 and has its own `MARKERWIDTH`), a shunt
+on **1‑2** triggers them from every laser CH1 pulse instead. Prophesee specifies a 500 ns minimum
+trigger-input pulse, so 1‑2 is only dependable with `WIDTH` ≥ 500 ns. CH1 pulses
 exist only while the firmware is ARMED; with the lasers disarmed, 1‑2 gives the cameras no
 trigger (use 2‑3, or ARM with J11 on 2‑3, for camera-only work). J10.1 reaches `_PULSE_OUT_CH1`
 through **R19 (100 Ω)**; like TP4 it idles LOW while DISARMED. Without R19, the 1‑2 shunt would
@@ -396,7 +400,7 @@ six camera trigger lines idle low rather than following a floating input on ~145
 ≤ 0.05 V even at worst-case input leakage, and loads the selected GPIO by only 330 µA.
 
 > J10's silkscreen reads **`CH1 / TRG / MKR`** (pins 1/2/3): shunt TRG to CH1 for a camera
-> trigger on every laser CH1 pulse, or TRG to MKR for the reference marker. (Earlier layouts
+> trigger on every laser CH1 pulse, or TRG to MKR for the marker. (Earlier layouts
 > read `MON / IN / OUT`, which mislabelled pin 1.) Never fit a shunt across all three pins —
 > that ties GP13 (through R19) to GP11. J11 is marked **ON** (pins 1‑2, lasers enabled) and
 > **OFF** (pins 2‑3).
@@ -628,14 +632,14 @@ Ordered by what would bite hardest.
    - amplitude 0 V to 4.61–5.08 V (typically ~4.84 V) — the budget rests on datasheet corners
      for U17's reference and U13's ROH, so a measurement closes it;
    - CH2 rising edge exactly DELAY after CH1 (e.g. `DELAY 10000` → 10.000 µs, `DELAY 13` →
-     13.3 ns), and MARKER staying on the same CH1 pulse for minutes at `FREQ 3000`;
+     13.3 ns), and MARKER rising with every CH1 pulse for minutes at `FREQ 3000`;
    - the first pulse after `ARM` full width, and no two CH1 pulses closer than 1/FREQ while a
      host loops `ARM`/`DISARM` as fast as it can;
    - J7/J8 at 0 V after `DISARM`, after a reset (a power cycle of both J17 and the Pico USB —
      neither the board nor the Pico 2 W has a reset button — and a watchdog timeout forced
      over SWD as described under Boot and arming), and — while ARMED with pulses running — with
      J17 unplugged and during plug-in;
-   - MARKER staying on the same CH1 pulse at a FREQ whose period is not a whole number of
+   - MARKER rising with every CH1 pulse at a FREQ whose period is not a whole number of
      cycles, e.g. `FREQ 7000`.
 2. **Check the charger's PD behaviour.** The CH224K datasheet does not say what it does when
    the charger lacks the requested 15 V. The board is safe either way — U18 keeps the lasers
