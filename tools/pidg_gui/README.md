@@ -46,8 +46,7 @@ never uses 1200 baud, which would reboot the Pico into its bootloader.
 | Timing chart | One pulse pair, with Laser 1, Laser 2, marker and pixel reset on a common time axis. (The sync clock runs continuously, so it is not drawn.) Time 0 is the CH1 rising edge. **Pulses** zooms to the two laser pulses. **Pulses + reset window** also shows the `PIXLEAD`/`PIXLAG` window. Hover for the level of every signal at that instant. |
 | Sequence chart | Three consecutive pairs, with the marker and the pixel-reset gate between pairs. |
 | Edge table | Every edge's realized time after CH1, in ns and in PIO cycles (6.667 ns at 150 MHz). |
-| Laser pulses | `FREQ`, `WIDTH`, `DELAY` (Δt), `COMBINE`. |
-| Cameras | `MARKERWIDTH`. The sync clock is not shown: `SYNC` is fixed at 1 MHz in the GUI, because the cameras count their 1 µs event timestamps on it (Prophesee requires a 1 MHz Sync In). If the board ever reports another value, the header's system line warns. |
+| Timing settings | `FREQ`, `WIDTH`, `DELAY` (Δt), `COMBINE`, and the camera marker's `MARKERWIDTH`, with one **Apply**. The sync clock is not shown: `SYNC` is fixed at 1 MHz in the GUI, because the cameras count their 1 µs event timestamps on it (Prophesee requires a 1 MHz Sync In). If the board ever reports another value, the header's system line warns. |
 | Pixel-reset gate | `PIXGATE`, `PIXLEAD`, `PIXLAG`. Hidden if the firmware predates the gate. |
 | Arming | **ARM** and **DISARM**, with the firmware's arming state, start hold-off and `HW` status. |
 | Console | Full width at the bottom, and resizable by dragging its bottom edge. Shows every command and reply on the link. You can type any command here, exactly as in a serial terminal, except `SYNC` with a value other than 1000000. The page's own once-a-second `STATUS` poll is kept out of the console. |

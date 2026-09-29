@@ -8,18 +8,18 @@ const SVGNS = "http://www.w3.org/2000/svg";
 
 // ---------------------------------------------------------------- field metadata
 const META = {
-  FREQ: { group: "laser", label: "Pair rate", kind: "hz", help: "pulse pairs per second" },
-  WIDTH: { group: "laser", label: "Pulse width", kind: "ns", help: "both laser pulses" },
-  DELAY: { group: "laser", label: "Δt (CH2 delay)", kind: "ns", help: "CH2 rise after CH1 rise" },
-  COMBINE: { group: "laser", label: "Outputs", kind: "select",
+  FREQ: { group: "timing", label: "Pair rate", kind: "hz", help: "pulse pairs per second" },
+  WIDTH: { group: "timing", label: "Pulse width", kind: "ns", help: "both laser pulses" },
+  DELAY: { group: "timing", label: "Δt (CH2 delay)", kind: "ns", help: "CH2 rise after CH1 rise" },
+  COMBINE: { group: "timing", label: "Outputs", kind: "select",
     options: [[0, "Split"], [1, "Combined"]] },  // the realized line spells out the routing
-  MARKERWIDTH: { group: "camera", label: "Marker width", kind: "ns" },
+  MARKERWIDTH: { group: "timing", label: "Marker width", kind: "ns", help: "camera trigger marker" },
   PIXGATE: { group: "pix", label: "Gate", kind: "select",
     options: [[0, "Off (J12 only)"], [1, "While ARMED"], [2, "Always"]] },
   PIXLEAD: { group: "pix", label: "Release before CH1", kind: "ns" },
   PIXLAG: { group: "pix", label: "Reset after last pulse", kind: "ns" },
 };
-const GROUP_BOX = { laser: "laserFields", camera: "cameraFields", pix: "pixFields", other: "otherFields" };
+const GROUP_BOX = { timing: "timingFields", pix: "pixFields", other: "otherFields" };
 // Shown read-only, never set from the page (the server refuses other values too).
 const FIXED = { SYNC: 1000000 };
 
@@ -310,7 +310,8 @@ function render() {
     return;
   }
   const clk = parseInt(sys.CLK || "150000000", 10);
-  for (const name of st.order) {
+  const names = Object.keys(META).filter((n) => n in st.fields).concat(st.order.filter((n) => !(n in META)));
+  for (const name of names) {  // META order (laser settings, then the marker), then unknown keys
     if (name in FIXED) continue;
     const row = fieldRow(name);
     const f = st.fields[name];

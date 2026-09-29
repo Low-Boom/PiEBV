@@ -48,10 +48,10 @@
     </section>
 
     <div class="grid">
-      <section class="card" id="laserCard">
-        <div class="card-head"><h2>Laser pulses</h2></div>
-        <div id="laserFields"></div>
-        <div class="card-foot"><button class="apply primary" data-group="laser">Apply</button><span class="msg"></span></div>
+      <section class="card" id="settingsCard">
+        <div class="card-head"><h2>Timing settings</h2><span class="sub">Laser pulses and camera marker</span></div>
+        <div id="timingFields"></div>
+        <div class="card-foot"><button class="apply primary" data-group="timing">Apply</button><span class="msg"></span></div>
       </section>
 
       <section class="card" id="armCard">
@@ -62,12 +62,6 @@
         </div>
         <dl class="kv" id="armInfo"></dl>
         <p class="hint">The firmware cannot see the J11 interlock or the 12 V power gate: ARMED=1 alone does not mean the outputs are live. Esc disarms from anywhere on this page. Closing the page does not disarm.</p>
-      </section>
-
-      <section class="card" id="cameraCard">
-        <div class="card-head"><h2>Cameras</h2><span class="sub">Trigger marker</span></div>
-        <div id="cameraFields"></div>
-        <div class="card-foot"><button class="apply primary" data-group="camera">Apply</button><span class="msg"></span></div>
       </section>
 
       <section class="card" id="pixCard" hidden>
