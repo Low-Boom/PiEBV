@@ -21,8 +21,8 @@ between them, and keeps upto six event cameras synchronised to the same clock.
 
 | Output | Where | Signal | Role |
 |---|---|---|---|
-| **Laser 1** (CH1) | BNC J7 | 5 V into 50 Ω | Trigger for the first laser driver (PicoLas LDP-V) |
-| **Laser 2** (CH2) | BNC J8 | 5 V into 50 Ω | Trigger for the second laser driver; rises exactly `DELAY` after Laser 1 |
+| **Laser 1** (CH1) | BNC J7 | 5 V into 50 Ω, or into a high-impedance input (jumper J18) | Trigger for the first laser driver (PicoLas LDP-V) |
+| **Laser 2** (CH2) | BNC J8 | 5 V into 50 Ω, or into a high-impedance input (jumper J19) | Trigger for the second laser driver; rises exactly `DELAY` after Laser 1 |
 | **Sync** | Camera ports J1–J6, pin 5 | 1.8 V, 1 MHz by default | Common clock for all six cameras (they run as sync slaves) |
 | **Trigger** | J1–J6, pin 4 | 1.8 V | Marker, rising with Laser 1: each camera timestamps it into its event stream (or the Laser 1 pulse itself; see [J10](#jumpers)) |
 | **Pixel reset** | J1–J6, pin 3 | 1.8 V, active low | Follows the J12 BNC input; optionally also held low by the Pico between pulse pairs (`PIXGATE`) |
@@ -60,11 +60,16 @@ The target equipment is two **PicoLas LDP-V** laser-diode drivers (10-70 and 240
   script is killed while ARMED, the board keeps running from J17 and the lasers keep pulsing, with
   no way to send `DISARM`. Stop them in hardware: move the J11 shunt off 1-2, pull J16 pin 1 low,
   or unplug J17.
-- **J7 and J8 are for 50 Ω loads only.** Into 50 Ω they give 0 V / about 4.8 V (4.61–5.08 V
-  worst case), which is what the LDP-V wants. Unterminated, or into a 1 MΩ scope input, they
-  swing to about **12 V**.
+- **Set each laser output's mode before connecting anything to it:** jumper J18 for J7 (Laser 1),
+  J19 for J8 (Laser 2) ([details](#jumpers)).
+  - **1-2 = 50 Ω mode,** for the LDP-V or any other 50 Ω-terminated input: 0 V / about 4.8 V
+    (4.61–5.08 V worst case). Unterminated, or into a 1 MΩ scope input, it swings to about **12 V**.
+  - **2-3 = Hi-Z mode,** for inputs that don't terminate (TTL or 5 V CMOS logic, a 1 MΩ scope):
+    0 V / about 4.8 V open circuit (4.62–5.06 V) from a 50 Ω back-terminated source. Into a 50 Ω
+    load it gives only 2.3–2.6 V, so an LDP-V will not fire. Not for inputs rated for 3.3 V only.
+  - **No shunt** gives ~12 V open circuit and ~3.5 V into 50 Ω. Neither is right: always fit one.
 - **One laser driver per output — never use a BNC tee.** Each output is built to drive exactly one
-  50 Ω input. Simulated, with 1–2 m of coax:
+  input. Simulated in 50 Ω mode, with 1–2 m of coax:
   - J7 and J8 tied together into one driver: each pulse reaches only **3.4 V** (the idle output
     sinks half of it), below the LDP-V's 4.5 V minimum, so the driver fires badly. Where the pulses
     overlap (DELAY shorter than WIDTH, e.g. `DELAY 0`) both outputs push together and the input sees
@@ -75,10 +80,13 @@ The target equipment is two **PicoLas LDP-V** laser-diode drivers (10-70 and 240
   To fire **one light source with both pulses**, or **two sources in sync with the same double
   pulse**, use `COMBINE 1` instead (see [Combined mode](#combined-mode-combine)): each output then
   carries both pulses, one driver per output.
-- **Board output rating: no limit to observe.** R6/R7 are 2 W resistors and the 12 V regulator (U17)
-  delivers 500 mA with a 400 mA current limit, so the board carries any duty the firmware accepts.
-  An output held high into 50 Ω dissipates 0.66 W in its resistor (both outputs draw ~200 mA), and
-  even an output held high into a shorted BNC stays within the resistor's rating (1.9 W).
+- **Board output rating: no limit to observe.** R6/R7 and R25–R28 are 2 W resistors and the 12 V
+  regulator (U17) delivers 500 mA with a 400 mA current limit, so the board carries any duty the
+  firmware accepts (up to 67 %, with `COMBINE 1`). An output high into 50 Ω dissipates 0.66 W in its
+  resistor (both outputs draw ~200 mA); into a shorted BNC at the firmware's highest duty, at most
+  1.4 W. Only an output stuck high into a short (a fault: the firmware never holds it there) reaches
+  1.6–2.05 W in R6/R7, at the edge of their 2 W rating. Hi-Z mode draws less: ~60 mA while high, and
+  at most 0.51 W in R25/R26 even stuck high into a short.
 - **Before any debugger (SWD) session: send `DISARM` and remove the J11 shunt** (or unplug J17).
   A debugger reset can leave a laser output high for milliseconds.
 - **Before uploading new firmware, send `DISARM`.** The upload reboots the Pico. A reboot that lands
@@ -110,9 +118,9 @@ firmware) and **`POWER ONLY — USB-C PD 15 V`** (J17).
            +------------+--------+----------------------------------------+
            |            |  Pico  |  (J16 = ENABLE / TRIG / GND)            |
            |            |  2 W   |       J11 (laser enable)                |
-           |            | in J14 |                                     J7 =|  Laser 1  (BNC)
+           |            | in J14 |                          J18 (mode) J7 =|  Laser 1  (BNC)
            |            | / J15  |      TP4     J10 (trigger select)       |
-           |            +--------+                                     J8 =|  Laser 2  (BNC)
+           |            +--------+                          J19 (mode) J8 =|  Laser 2  (BNC)
            |                                                              |
            |  J1   J2   J3   J4   J5   J6   (camera ports)             J12 =|  Pixel reset (BNC)
            +--------------------------------------------------------------+
@@ -123,12 +131,13 @@ firmware) and **`POWER ONLY — USB-C PD 15 V`** (J17).
 | Ref | What | Connect to | Signal |
 |---|---|---|---|
 | **J1–J6** | 2×5 IDC headers, cameras 1–6 | Camera 8-pin I/O harness (pin *n* = camera pin *n*) | 1 NC · 2 GND · 3 pixel reset (`TDRSTN`, active low) · 4 trigger · 5 sync · 6 NC · 7 GND · 8 NC · 9, 10 NC. All signals **1.8 V**. Pin 1 is the top-left pin. |
-| **J7** | BNC, Laser 1 (CH1) | LDP-V trigger input (50 Ω) | 0 / ~4.8 V into 50 Ω; ~12 V open-circuit |
-| **J8** | BNC, Laser 2 (CH2) | Second LDP-V | same as J7 |
+| **J7** | BNC, Laser 1 (CH1) | LDP-V trigger input (50 Ω), or a high-impedance input | Mode set by J18. 50 Ω mode: 0 / ~4.8 V into 50 Ω, ~12 V open circuit. Hi-Z mode: 0 / ~4.8 V open circuit, 2.3–2.6 V into 50 Ω |
+| **J8** | BNC, Laser 2 (CH2) | Second LDP-V, or a high-impedance input | Same as J7, mode set by J19 |
 | **J12** | BNC, pixel-reset **input** | Your reset source | Active LOW: pull to ground to hold all six cameras in reset. Open = cameras running. Accepts 3.3 V or 5 V logic, open-drain or a switch; the source must sink 1 mA. A 1.8 V logic high is **not** guaranteed to release reset. Do not add a 50 Ω terminator. The Pico's optional gate ([`PIXGATE`](#pixel-reset-gate-pixgate)) is ANDed with it. |
 | **J17** | USB-C, **power only** (silkscreen `POWER ONLY`) | USB-C PD charger that offers 15 V | No data. Programming and serial always use the Pico's own micro-USB, next to it on the top edge (`CONTROL / PROGRAM`). |
 | **J10** | 1×3 trigger-source jumper | shunt | see [Jumpers](#jumpers) |
 | **J11** | 1×3 laser interlock | shunt, or a normally-closed E-stop switch | see [Jumpers](#jumpers) |
+| **J18**, **J19** | 1×3 laser output-mode jumpers (J18 = Laser 1, J19 = Laser 2) | shunt | see [Jumpers](#jumpers) |
 | **J16** | 1×3 right-angle header, top edge between the Pico and J17 | probes, or a secondary interlock | 1 `ENABLE IN` (pull LOW = lasers off) · 2 `TRIG OUT` (camera trigger, monitor only) · 3 GND. **Never fit a shunt.** |
 | **TP3** | 1×2 right-angle header, top edge | scope | 1 = 1 MHz sync straight from the Pico (3.3 V) · 2 = GND |
 | **TP4** | 1×2 header left of J10, `CH2` / `GND` | scope only | 1 = CH2 pulse straight from the Pico (3.3 V, idles LOW while DISARMED) · 2 = GND |
@@ -151,12 +160,15 @@ and `NOT FAIL-SAFE: E-STOP ON J11` below.
 
 ### Jumpers
 
-Both headers are numbered 1-2-3 from **left to right**; pin 1 has the square pad.
+J10 and J11 are numbered 1-2-3 from **left to right**. J18 and J19 stand upright between R6/R7 and
+the BNCs: J18's pin 1 is at the top, J19's at the bottom. Pin 1 always has the square pad.
 
-| Jumper | Silkscreen | Shunt on 1-2 (left pair) | Shunt on 2-3 (right pair) | No shunt |
+| Jumper | Silkscreen | Shunt on 1-2 | Shunt on 2-3 | No shunt |
 |---|---|---|---|---|
 | **J11** laser enable | `ON` … `OFF` | **Lasers enabled** (the firmware must also be ARMED) | Lasers inhibited | Lasers inhibited (fail-safe) |
 | **J10** trigger source | `CH1 TRG MKR` | Cameras triggered by every Laser 1 pulse (only while ARMED) | **Cameras triggered by the marker** (normal) | Camera triggers held low |
+| **J18** Laser 1 output mode | `50Ω` beside pins 1-2, `HiZ` beside 2-3 | **50 Ω mode** (normal): for the LDP-V or another 50 Ω input | Hi-Z mode: for TTL/CMOS inputs or a 1 MΩ scope | ~12 V open circuit, ~3.5 V into 50 Ω: always fit a shunt |
+| **J19** Laser 2 output mode | as J18 | as J18 | as J18 | as J18 |
 
 **J11 — laser interlock and safety switch.** The silkscreen reads `ON` / `OFF` and
 `LASER INTERLOCK: ON = 1-2`, `E-STOP: NC SWITCH ACROSS 1-2`. For a safety (E-stop) switch, remove
@@ -172,6 +184,22 @@ Laser 1 and runs while disarmed. Shunt it to `CH1` to trigger on the Laser 1 pul
 while ARMED. Prophesee specifies a minimum trigger-input pulse of 500 ns, so `CH1` is only
 dependable with `WIDTH` ≥ 500 ns; the marker has its own width (`MARKERWIDTH`, 2 µs). Never shunt
 all three pins.
+
+**J18 / J19 — laser output mode.** Each laser output has a 47 Ω series resistor (R25/R26) and an
+82 Ω shunt to ground (R27/R28) that its jumper switches in. The silkscreen reads `LASER 1 OUT` /
+`LASER 2 OUT` beside each block, with `50Ω` and `HiZ` next to the pin pairs.
+- **1-2, 50 Ω mode** shorts the 47 Ω out, leaving the original output: a ~73 Ω source that gives
+  4.61–5.08 V into a 50 Ω input. Use it for the PicoLas LDP-V and anything else with a 50 Ω input.
+- **2-3, Hi-Z mode** adds the 47 Ω in series and the 82 Ω shunt: 4.62–5.06 V open circuit from a
+  48–50 Ω source. Because the source matches the coax, a long cable to an unterminated input gives a
+  clean 5 V edge with no overshoot. Use it for TTL or 5 V CMOS inputs, scopes at 1 MΩ and other
+  instruments that don't terminate. It is still too much for an input rated for 3.3 V only.
+- **Wrong mode or no shunt:** an LDP-V on Hi-Z mode sees 2.3–2.6 V and will not fire (no harm done),
+  but don't use that as a laser inhibit: J11 is the interlock;
+  a high-impedance input on 50 Ω mode sees ~12 V, which can damage 5 V logic; with no shunt the output
+  is ~12 V open circuit and ~3.5 V into 50 Ω.
+- The jumpers are independent, so one output can drive an LDP-V and the other a TTL input. The
+  firmware cannot see them, and the pulse timing is the same in both modes.
 
 **TP4 — CH2 scope point.** Labelled `CH2` / `GND` and `SCOPE ONLY`. Pin 1 is the raw Laser 2 pulse
 from the Pico (GP12, 3.3 V logic, before the interlock and driver; LOW while DISARMED), pin 2 is
@@ -221,8 +249,8 @@ feed-through terminators).
    the firmware. (Later updates can use `pio run -t upload`; see
    [Building from source](#building-from-source).)
 2. **Seat the Pico**, component side up, USB toward the top edge ([details](#seating-the-pico)).
-3. **Set the jumpers:** J10 on **2-3** (cameras triggered by the marker). Leave **J11 empty** for
-   now (lasers inhibited).
+3. **Set the jumpers:** J10 on **2-3** (cameras triggered by the marker), and J18 and J19 on
+   **1-2** (50 Ω outputs, for the LDP-V). Leave **J11 empty** for now (lasers inhibited).
 4. **Power up:** the charger into J17, and the Pico's micro-USB into your computer.
 5. **Open a serial terminal** on the Pico's port ([how](#usb-serial)). Turn on local echo, because
    the firmware does not echo what you type. (Or use the [web GUI](#web-gui); its console takes the
@@ -244,8 +272,8 @@ feed-through terminators).
    WIDTH 100      ->  OK WIDTH=100 (actual 100.000 ns, 15 cyc)
    DELAY 10000    ->  OK DELAY=10000 (actual 10000.000 ns, 1500 cyc)
    ```
-7. **Bench-check the laser outputs with no laser connected.** Connect J7 and J8 to the scope with
-   **50 Ω termination**. Fit J11 on **1-2**, then type `ARM`. Within one pulse period you should see:
+7. **Bench-check the laser outputs with no laser connected.** With J18 and J19 on 1-2, connect J7
+   and J8 to the scope with **50 Ω termination**. Fit J11 on **1-2**, then type `ARM`. Within one pulse period you should see:
    - pulses from 0 V to about 4.8 V;
    - the J8 edge exactly `DELAY` after the J7 edge.
 
@@ -266,14 +294,16 @@ Open items).
   to GND, CC1 or CC2 (at J17 and U14), and that +5V_PD and +5V are not shorted to GND (at U16). J17
   and U17 (0.5 mm pitch) and U16 (0.65 mm) are where solder bridges are likely: a VBUS-to-CC bridge
   would put up to 20 V on U14, and an IN-to-OUT bridge on U17 15 V on the 12 V rail. Also check that J17's four shell legs are soldered.
-- **Laser outputs,** into a 50 Ω-terminated scope with no driver connected:
+- **Laser outputs,** with J18/J19 on 1-2, into a 50 Ω-terminated scope with no driver connected:
   - +12V at C17 reads 11.65–12.17 V (typically 11.9 V), and `LASER_PWR_OK` (U13 pins 1 and 8)
     reads about 12 V, with the charger on J17;
   - amplitude 0 V to 4.61–5.08 V;
   - CH2 exactly `DELAY` after CH1 (`DELAY 13` should give 13.3 ns);
   - the first pulse after `ARM` is full width;
   - 0 V after `DISARM` and after a full power cycle; and, while ARMED with pulses running, 0 V once
-    J17 is unplugged, with no stray pulse while it is plugged back in.
+    J17 is unplugged, with no stray pulse while it is plugged back in;
+  - then with J18/J19 on 2-3 and the scope at 1 MΩ: 0 V to 4.62–5.06 V, with no overshoot at the end
+    of the longest cable you will use. Put the shunts back on the mode you need afterwards.
 - **Charger:** measure `VBUS_PD` at C12 (about 15 V) with the charger you will actually use.
 - **Cameras:** with **one** camera, measure pixel reset, trigger and sync at the camera end of the
   harness, and confirm the camera is not driving pin 5 (it must be a sync slave). Only then connect
@@ -676,7 +706,9 @@ TX_DROPPED=0
 | `ERR ARM …`, or `HW=ERR …` in STATUS | The pulse hardware did not start | Re-flash the firmware; if it persists, report the `STATUS` output |
 | `ARMED=1` but no laser pulses | J11 not on 1-2; J16 ENABLE pulled low; J17 unplugged or the charger isn't giving 15 V; still in the hold-off (`START_PENDING_US` > 0) | Check each gate. Measure `VBUS_PD` at C12 (about 15 V) and +12V at C17 (about 11.9 V; U18 holds the outputs off outside 11.0–13.1 V). |
 | Outputs dead after a reset or power cycle | The board always restarts DISARMED | Send `ARM` |
-| About 12 V pulses on the scope | Scope input is 1 MΩ, not 50 Ω | Use 50 Ω termination; the laser driver provides its own |
+| About 12 V pulses on the scope | J18/J19 on 1-2 (50 Ω mode) into a 1 MΩ scope input | Use 50 Ω termination (the laser driver provides its own), or move the shunt to 2-3 for a high-impedance load |
+| About 2.5 V pulses at the laser driver | J18/J19 on 2-3 (Hi-Z mode) into the driver's 50 Ω input | Move the shunt to 1-2 |
+| One output gives ~3.5 V into 50 Ω, or ~12 V open circuit | No shunt on that output's J18/J19 | Fit the shunt: 1-2 for 50 Ω, 2-3 for Hi-Z |
 | About 3 V pulses at the laser driver | Two 50 Ω loads in parallel (e.g. a tee into both a 50 Ω scope input and the driver) | Monitor with a high-impedance probe, or on TP4 (CH2) / J10 pin 1 (CH1, through 100 Ω) |
 | Cameras receive no trigger | J10 on 1-2 while DISARMED, or no J10 shunt | J10 on 2-3 |
 | Cameras don't synchronise | A camera set as sync master; SYNC changed | Set every camera to sync slave; `SYNC 1000000` |

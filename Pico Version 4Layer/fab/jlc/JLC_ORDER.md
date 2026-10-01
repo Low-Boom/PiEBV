@@ -2,15 +2,15 @@
 
 Goal: boards that arrive fully assembled — every SMD **and** through-hole part fitted by JLCPCB —
 so nothing needs soldering on delivery. Part numbers and stock were checked against JLC's parts
-library on 2026-09-25; re-check stock on the day you order.
+library on 2026-09-25 (R25–R28 on 2026-10-01); re-check stock on the day you order.
 
 ## Files to upload
 
 | Step | File |
 |---|---|
 | PCB | `../PiDG_Pico_Gerbers.zip` |
-| BOM | `PiDG_Pico_JLC_BOM.csv` — 41 lines, every one with an LCSC part number |
-| CPL | `PiDG_Pico_JLC_CPL.csv` — all 76 placed parts (through-hole parts at their pad centre) |
+| BOM | `PiDG_Pico_JLC_BOM.csv` — 43 lines, every one with an LCSC part number |
+| CPL | `PiDG_Pico_JLC_CPL.csv` — all 82 placed parts (through-hole parts at their pad centre) |
 
 ## PCB options
 
@@ -43,7 +43,7 @@ library on 2026-09-25; re-check stock on the day you order.
 > hand-solder these, no wave fixture. J14/J15 are sockets for a plug-in module: seat them flat and
 > perpendicular. Do not substitute U3 (NAND 74LVC1G00, not a 1G04), U9, U12, U13, U14, U15,
 > U17 (adjustable LT3065 only), U18,
-> U7/U8/U10, R6/R7 (68 ohm 2 W 2512) or R12/R13 (0.1 %).
+> U7/U8/U10, R6/R7 (68 ohm 2 W 2512), R25-R28 (47 / 82 ohm 2 W 2512) or R12/R13 (0.1 %).
 
 ## Parts that need action before ordering
 
@@ -70,9 +70,9 @@ these in the preview against the board's pin-1 marks and correct the rotation th
 | Item | Estimate |
 |---|---|
 | 5 bare boards | ≈ $25–45 (JLC's calculator needs a login — confirm there) |
-| Assembly fees, 5 boards | ≈ $115 (setup + stencil ≈ $10, ≈ 29 extended-part loading fees ≈ $89, joints and hand soldering ≈ $19) |
+| Assembly fees, 5 boards | ≈ $121 (setup + stencil ≈ $10, ≈ 31 extended-part loading fees ≈ $95, joints and hand soldering ≈ $19) |
 | Components, 5 boards | ≈ $120–140 (SMD ≈ $12 per board, through-hole ≈ $12 per board, plus attrition) |
-| **Total** | **≈ $260–300**, plus shipping (≈ $10–35 to Tokyo, 2–7 days) and Global Sourcing premiums |
+| **Total** | **≈ $265–305**, plus shipping (≈ $10–35 to Tokyo, 2–7 days) and Global Sourcing premiums |
 
 ## Not supplied by JLC — do on delivery (no soldering)
 
@@ -80,8 +80,9 @@ these in the preview against the board's pin-1 marks and correct the rotation th
    plug it in, component side up, USB toward the top edge (see the silkscreen outline). JLC's
    Pico 2 W (C42394205) comes without headers.
 2. **Flash the firmware** (see the top-level README, Quick start).
-3. **Jumpers:** fit a shunt on **J10 2-3** (LCSC C100114, or any 2.54 mm shunt). On **J11**, wire the
-   normally-closed E-stop switch across pins 1-2, or fit a shunt on 1-2 for bench work.
+3. **Jumpers:** fit a shunt on **J10 2-3** (LCSC C100114, or any 2.54 mm shunt), and on **J18** and
+   **J19 1-2** (50 Ω laser outputs, for the LDP-V; 2-3 for a high-impedance load). On **J11**, wire
+   the normally-closed E-stop switch across pins 1-2, or fit a shunt on 1-2 for bench work.
 4. **Before the first power-up on J17:** the continuity checks in the README (Before connecting
    lasers or cameras).
 
@@ -106,4 +107,5 @@ these in the preview against the board's pin-1 marks and correct the rotation th
 - **Inside the enclosure, reached from above:**
   - The six camera IDC headers stand vertically between about 17 and 30 mm in from the bottom edge, so the
     ribbons leave upward.
-  - J10 and J11 (the E-stop wiring) are inside as well.
+  - J10, J11 (the E-stop wiring), and the laser output-mode jumpers J18/J19 (between the 2512
+    resistors and the BNCs) are inside as well.

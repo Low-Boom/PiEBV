@@ -11527,6 +11527,279 @@
 	)
 	(wire
 		(pts
+			(xy 132.08 180.34) (xy 137.16 180.34)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c9704876-6a76-4c39-aa2d-60adafa689f5")
+	)
+	(label "CH1_DRIVE"
+		(at 132.08 180.34 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "a792b28f-6ecc-4d02-a318-f85239866b62")
+	)
+	(wire
+		(pts
+			(xy 142.24 180.34) (xy 152.4 180.34)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c70743f2-8113-40f1-92af-7f681d7be0fe")
+	)
+	(label "CH1_OUT"
+		(at 143.51 180.34 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "169a52f8-0b37-4d2f-877d-4a4ff4784843")
+	)
+	(wire
+		(pts
+			(xy 157.48 185.42) (xy 157.48 190.5)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b409fd56-3304-4820-8435-b57a8f6e3b0a")
+	)
+	(wire
+		(pts
+			(xy 132.08 187.96) (xy 135.89 187.96)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "aeb1667b-544d-4cf5-bf43-5a35eaa42ed1")
+	)
+	(label "CH1_DRIVE"
+		(at 135.89 187.96 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "55b06b7e-bce7-4b29-9737-1c417d5e03bf")
+	)
+	(wire
+		(pts
+			(xy 132.08 190.5) (xy 135.89 190.5)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6b5e9280-6004-4592-9869-7046b2c88df2")
+	)
+	(label "CH1_OUT"
+		(at 135.89 190.5 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "b3f60025-c51e-4de8-962a-37f4b3f2e0cc")
+	)
+	(wire
+		(pts
+			(xy 132.08 193.04) (xy 142.24 193.04)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "97963738-f906-4632-9143-46c2c1ce92b3")
+	)
+	(label "CH1_TERM"
+		(at 133.35 193.04 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "93065a82-d4f2-43b3-a927-a23a4af1526e")
+	)
+	(wire
+		(pts
+			(xy 142.24 198.12) (xy 142.24 203.2)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fea8a145-6eca-4e5b-a183-eb82a05b66cf")
+	)
+	(text "LASER 1 OUTPUT (J7)"
+		(exclude_from_sim no)
+		(at 122 175.26 0)
+		(effects
+			(font
+				(size 1.524 1.524)
+			)
+			(justify left bottom)
+		)
+		(uuid "a9fa5706-26ad-4f67-975e-622c9a18f829")
+	)
+	(wire
+		(pts
+			(xy 187.96 180.34) (xy 193.04 180.34)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "265a9bab-df11-47a6-ac0f-e311d8ff0904")
+	)
+	(label "CH2_DRIVE"
+		(at 187.96 180.34 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "444d1b91-eb6a-42e3-8a4c-49d97a7ae2bb")
+	)
+	(wire
+		(pts
+			(xy 198.12 180.34) (xy 208.28 180.34)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "dd2cad64-86e9-44c5-a01b-e06d2e7666f7")
+	)
+	(label "CH2_OUT"
+		(at 199.39 180.34 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "f1afb44b-59a8-4bc2-bac9-001023ef03a3")
+	)
+	(wire
+		(pts
+			(xy 213.36 185.42) (xy 213.36 190.5)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "83c3bed3-e9bc-4b79-8928-d22999db0c7c")
+	)
+	(wire
+		(pts
+			(xy 187.96 187.96) (xy 191.77 187.96)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "231912b6-b0c8-4616-bdfe-199db4da009c")
+	)
+	(label "CH2_DRIVE"
+		(at 191.77 187.96 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "d92fa0bc-7c7a-4b14-824f-22afb8e42733")
+	)
+	(wire
+		(pts
+			(xy 187.96 190.5) (xy 191.77 190.5)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6856e8a2-ef6d-46ef-b0a0-c46005eb4c89")
+	)
+	(label "CH2_OUT"
+		(at 191.77 190.5 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "11a16a37-1e83-4680-b44b-be379d069edc")
+	)
+	(wire
+		(pts
+			(xy 187.96 193.04) (xy 198.12 193.04)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b273cb52-5a07-418a-a4e7-4dfb5123e6a4")
+	)
+	(label "CH2_TERM"
+		(at 189.23 193.04 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "b08cd18c-d127-4f18-ac98-ee9bcb2f3a55")
+	)
+	(wire
+		(pts
+			(xy 198.12 198.12) (xy 198.12 203.2)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e809f820-499d-4091-839e-4630bc0c60c6")
+	)
+	(text "LASER 2 OUTPUT (J8)"
+		(exclude_from_sim no)
+		(at 177.88 175.26 0)
+		(effects
+			(font
+				(size 1.524 1.524)
+			)
+			(justify left bottom)
+		)
+		(uuid "6fd7dca9-868f-4a6c-9d14-b27312a3bcbb")
+	)
+	(text "Output mode, one shunt per channel (J18 = Laser 1, J19 = Laser 2):\n  1-2  50 ohm: series 47R bypassed. 4.61-5.08 V into a 50 ohm load (PicoLas LDP-V); ~12 V open circuit.\n  2-3  Hi-Z: 68R + 47R in series, 82R shunt -> 4.62-5.06 V open circuit from a 48-50 ohm source\n       (back-terminated, no overshoot on long cables); 2.3-2.6 V into 50 ohm: an LDP-V will not trigger.\n  No shunt: ~12 V open circuit, ~3.5 V into 50 ohm. Ship with both shunts on 1-2."
+		(exclude_from_sim no)
+		(at 122 217.17 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "79630f96-a65b-4012-8b30-789e5926a044")
+	)
+	(wire
+		(pts
 			(xy 59.69 77.47) (xy 86.36 77.47)
 		)
 		(stroke
@@ -12357,16 +12630,6 @@
 	)
 	(wire
 		(pts
-			(xy 416.56 63.5) (xy 416.56 68.58)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "23717236-46a4-485e-9eaf-259684ed80eb")
-	)
-	(wire
-		(pts
 			(xy 210.82 34.29) (xy 213.36 34.29)
 		)
 		(stroke
@@ -12944,16 +13207,6 @@
 			(type default)
 		)
 		(uuid "5fc0e2f7-d39c-4abe-8da2-289bb2af9f61")
-	)
-	(wire
-		(pts
-			(xy 411.48 29.21) (xy 408.94 29.21)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "61c3bfc6-cf4e-40d7-93de-9daa21a02ec7")
 	)
 	(wire
 		(pts
@@ -13927,16 +14180,6 @@
 	)
 	(wire
 		(pts
-			(xy 411.48 58.42) (xy 408.94 58.42)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d1a94d46-ee71-41b3-8c6a-205e4d752761")
-	)
-	(wire
-		(pts
 			(xy 100.33 138.43) (xy 228.6 138.43)
 		)
 		(stroke
@@ -14234,16 +14477,6 @@
 			(type default)
 		)
 		(uuid "e746bf1f-547d-4dfe-939a-f7b2cf8a6b44")
-	)
-	(wire
-		(pts
-			(xy 416.56 34.29) (xy 416.56 39.37)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "e96131a9-438c-46ee-9154-e8784a96cdb6")
 	)
 	(wire
 		(pts
@@ -14758,15 +14991,6 @@
 		)
 		(uuid "9570d895-e8e0-46d7-8928-02cd95c0e3f9")
 	)
-	(label "CH1_DRIVE"
-		(at 408.94 29.21 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-		)
-		(uuid "95e1b159-a6b0-4c27-b2eb-0d4a00188ab7")
-	)
 	(label "PWM_TRIG_TAP"
 		(at 44.45 130.81 0)
 		(effects
@@ -14776,15 +15000,6 @@
 			(justify left bottom)
 		)
 		(uuid "99ae7b85-f9fe-4a27-a04f-51be285494a6")
-	)
-	(label "CH2_DRIVE"
-		(at 408.94 58.42 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-		)
-		(uuid "9b985ca2-a14e-4e18-83d1-f9458b844f87")
 	)
 	(label "TDRSTN5"
 		(at 236.22 29.21 0)
@@ -16702,7 +16917,7 @@
 				)
 			)
 		)
-		(property "Description" "Back-termination, 2 W 2512: 11.9 V x 50/(50+68+ROH) = 4.61-5.08 V into the 50 ohm LDP-V trigger input"
+		(property "Description" "Series resistor, 2 W 2512. 50 ohm mode (J19 on 1-2): 11.9 V x 50/(50+68+ROH) = 4.61-5.08 V into the 50 ohm LDP-V trigger input"
 			(at 400.05 39.37 0)
 			(hide yes)
 			(show_name no)
@@ -19570,7 +19785,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 416.56 68.58 0)
+		(at 213.36 190.5 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -19580,7 +19795,7 @@
 		(dnp no)
 		(uuid "5d016e70-65df-4e14-b715-be29274d98fa")
 		(property "Reference" "#PWR115"
-			(at 416.56 62.23 0)
+			(at 213.36 184.15 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -19591,7 +19806,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 416.56 64.77 0)
+			(at 213.36 186.69 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -19601,7 +19816,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 416.56 68.58 0)
+			(at 213.36 190.5 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -19612,7 +19827,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 416.56 68.58 0)
+			(at 213.36 190.5 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -19623,7 +19838,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 416.56 68.58 0)
+			(at 213.36 190.5 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -20273,7 +20488,7 @@
 				)
 			)
 		)
-		(property "Description" "Back-termination, 2 W 2512: 11.9 V x 50/(50+68+ROH) = 4.61-5.08 V into the 50 ohm LDP-V trigger input"
+		(property "Description" "Series resistor, 2 W 2512. 50 ohm mode (J18 on 1-2): 11.9 V x 50/(50+68+ROH) = 4.61-5.08 V into the 50 ohm LDP-V trigger input"
 			(at 400.05 44.45 0)
 			(hide yes)
 			(show_name no)
@@ -22349,7 +22564,7 @@
 	)
 	(symbol
 		(lib_id "Connector:Conn_Coaxial")
-		(at 416.56 29.21 0)
+		(at 157.48 180.34 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -22360,7 +22575,7 @@
 		(fields_autoplaced yes)
 		(uuid "a6d1d3c7-47a2-48b6-8dd6-b0293317c64a")
 		(property "Reference" "J7"
-			(at 420.37 28.2331 0)
+			(at 161.29 179.3631 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -22371,7 +22586,7 @@
 			)
 		)
 		(property "Value" "Laser 1"
-			(at 420.37 30.7731 0)
+			(at 161.29 181.9031 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -22382,7 +22597,7 @@
 			)
 		)
 		(property "Footprint" "Connector_Coaxial:BNC_Amphenol_B6252HB-NPP3G-50_Horizontal"
-			(at 416.56 29.21 0)
+			(at 157.48 180.34 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -22393,7 +22608,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 416.56 29.21 0)
+			(at 157.48 180.34 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -22404,7 +22619,7 @@
 			)
 		)
 		(property "Description" "coaxial connector (BNC, SMA, SMB, SMC, Cinch/RCA, LEMO, ...)"
-			(at 416.56 29.21 0)
+			(at 157.48 180.34 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -24503,7 +24718,7 @@
 	)
 	(symbol
 		(lib_id "Connector:Conn_Coaxial")
-		(at 416.56 58.42 0)
+		(at 213.36 180.34 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -24514,7 +24729,7 @@
 		(fields_autoplaced yes)
 		(uuid "d2bf12f8-1ac5-4f46-b5fc-58982db7eec9")
 		(property "Reference" "J8"
-			(at 420.37 57.4431 0)
+			(at 217.17 179.3631 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -24525,7 +24740,7 @@
 			)
 		)
 		(property "Value" "Laser 2"
-			(at 420.37 59.9831 0)
+			(at 217.17 181.9031 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -24536,7 +24751,7 @@
 			)
 		)
 		(property "Footprint" "Connector_Coaxial:BNC_Amphenol_B6252HB-NPP3G-50_Horizontal"
-			(at 416.56 58.42 0)
+			(at 213.36 180.34 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -24547,7 +24762,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 416.56 58.42 0)
+			(at 213.36 180.34 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -24558,7 +24773,7 @@
 			)
 		)
 		(property "Description" "coaxial connector (BNC, SMA, SMB, SMC, Cinch/RCA, LEMO, ...)"
-			(at 416.56 58.42 0)
+			(at 213.36 180.34 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25538,7 +25753,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 416.56 39.37 0)
+		(at 157.48 190.5 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -25548,7 +25763,7 @@
 		(dnp no)
 		(uuid "e9f05821-35e4-4f0c-9862-0323eaaa402c")
 		(property "Reference" "#PWR114"
-			(at 416.56 33.02 0)
+			(at 157.48 184.15 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25559,7 +25774,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 416.56 35.56 0)
+			(at 157.48 186.69 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -25569,7 +25784,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 416.56 39.37 0)
+			(at 157.48 190.5 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25580,7 +25795,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 416.56 39.37 0)
+			(at 157.48 190.5 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25591,7 +25806,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 416.56 39.37 0)
+			(at 157.48 190.5 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -28596,6 +28811,648 @@
 			(project "PiDG_Pico"
 				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
 					(reference "#PWR154")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R_Small")
+		(at 139.7 180.34 90)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "5c1d910d-a543-4902-884e-7c9c9a375da1")
+		(property "Reference" "R25"
+			(at 139.7 177.8 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "47"
+			(at 139.7 182.88 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_2512_6332Metric_Pad1.40x3.35mm_HandSolder"
+			(at 139.7 180.34 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 139.7 180.34 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Laser 1 Hi-Z-mode series resistor, 2 W 2512: with J18 on 2-3, 68+47 ohm in series and R27 82 ohm to GND give 4.62-5.06 V open circuit from a ~50 ohm source. J18 on 1-2 bypasses it (50 ohm mode)"
+			(at 139.7 180.34 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "23714390-6969-4697-ac8e-23907115d859")
+		)
+		(pin "2"
+			(uuid "b93a271a-2e40-49f0-8cde-e94e662ac5e6")
+		)
+		(instances
+			(project "PiDG_Pico"
+				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
+					(reference "R25")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:Conn_01x03_Pin")
+		(at 127 190.5 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "278d54aa-7f05-4e0f-8f42-a012cd1bb34f")
+		(property "Reference" "J18"
+			(at 123.444 188.214 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "Laser 1 mode"
+			(at 130.556 195.326 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical"
+			(at 127 190.5 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 127 190.5 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Laser 1 output mode: 1-2 = 50 ohm load (R25 bypassed); 2-3 = Hi-Z load (R25 47 ohm in series, R27 82 ohm shunt). Ship with the shunt on 1-2"
+			(at 127 190.5 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "436cfff5-fd93-4da0-b709-da598ea904e6")
+		)
+		(pin "2"
+			(uuid "cee37da1-e8b1-4c9b-ab3c-36971e255294")
+		)
+		(pin "3"
+			(uuid "d049981b-9b4e-4619-a93d-9770dde03fd5")
+		)
+		(instances
+			(project "PiDG_Pico"
+				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
+					(reference "J18")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R_Small")
+		(at 142.24 195.58 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "c4c5083a-d623-4047-bd05-ab108eefaa67")
+		(property "Reference" "R27"
+			(at 144.78 194.3099 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.016 1.016)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "82"
+			(at 144.78 196.8499 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_2512_6332Metric_Pad1.40x3.35mm_HandSolder"
+			(at 142.24 195.58 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 142.24 195.58 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Laser 1 Hi-Z-mode shunt to GND, 2 W 2512 (via J18 2-3): sets the ~5 V open-circuit level and the ~50 ohm source impedance"
+			(at 142.24 195.58 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "21e66de5-ea22-456e-9f27-78abf17661aa")
+		)
+		(pin "1"
+			(uuid "c3998ef2-31b8-4a7d-a715-99d3395a5061")
+		)
+		(instances
+			(project "PiDG_Pico"
+				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
+					(reference "R27")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 142.24 203.2 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "f6e9e993-710e-44cb-b838-4f3f3f2235a0")
+		(property "Reference" "#PWR155"
+			(at 142.24 196.85 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 142.24 199.39 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 142.24 203.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 142.24 203.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 142.24 203.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "3dd36d2c-5f7f-40c0-a5b8-2aa776fa191d")
+		)
+		(instances
+			(project "PiDG_Pico"
+				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
+					(reference "#PWR155")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R_Small")
+		(at 195.58 180.34 90)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "35958e05-db4b-4a76-93be-2825dc4d1b81")
+		(property "Reference" "R26"
+			(at 195.58 177.8 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "47"
+			(at 195.58 182.88 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_2512_6332Metric_Pad1.40x3.35mm_HandSolder"
+			(at 195.58 180.34 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 195.58 180.34 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Laser 2 Hi-Z-mode series resistor, 2 W 2512: with J19 on 2-3, 68+47 ohm in series and R28 82 ohm to GND give 4.62-5.06 V open circuit from a ~50 ohm source. J19 on 1-2 bypasses it (50 ohm mode)"
+			(at 195.58 180.34 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "e89d3485-e122-4c64-ae20-aeb141a9cde3")
+		)
+		(pin "2"
+			(uuid "764ff53c-b0f3-4566-8caa-9c6c8a221cfa")
+		)
+		(instances
+			(project "PiDG_Pico"
+				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
+					(reference "R26")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:Conn_01x03_Pin")
+		(at 182.88 190.5 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "afbd90be-73e4-4faf-a62e-92301d022412")
+		(property "Reference" "J19"
+			(at 179.324 188.214 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "Laser 2 mode"
+			(at 186.436 195.326 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical"
+			(at 182.88 190.5 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 182.88 190.5 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Laser 2 output mode: 1-2 = 50 ohm load (R26 bypassed); 2-3 = Hi-Z load (R26 47 ohm in series, R28 82 ohm shunt). Ship with the shunt on 1-2"
+			(at 182.88 190.5 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "5a783c0d-f6ae-4700-b374-849ab14e8079")
+		)
+		(pin "2"
+			(uuid "e61667b2-211f-4733-b75e-908a133441a5")
+		)
+		(pin "3"
+			(uuid "4f47a61d-87ce-48cb-813e-ae125023a102")
+		)
+		(instances
+			(project "PiDG_Pico"
+				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
+					(reference "J19")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R_Small")
+		(at 198.12 195.58 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "6e5d30b6-69d5-4553-ad41-543409816877")
+		(property "Reference" "R28"
+			(at 200.66 194.3099 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.016 1.016)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "82"
+			(at 200.66 196.8499 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_2512_6332Metric_Pad1.40x3.35mm_HandSolder"
+			(at 198.12 195.58 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 198.12 195.58 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Laser 2 Hi-Z-mode shunt to GND, 2 W 2512 (via J19 2-3): sets the ~5 V open-circuit level and the ~50 ohm source impedance"
+			(at 198.12 195.58 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "00a86618-53b8-4cd3-b2e0-7cbaeb804ff2")
+		)
+		(pin "1"
+			(uuid "1a525da6-bca5-4a69-bda4-f98ce23d0f5d")
+		)
+		(instances
+			(project "PiDG_Pico"
+				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
+					(reference "R28")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 198.12 203.2 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "6ae512cc-a98b-4f0a-bca8-51de2aaa13f7")
+		(property "Reference" "#PWR156"
+			(at 198.12 196.85 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 198.12 199.39 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 198.12 203.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 198.12 203.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 198.12 203.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "c4919093-f321-4711-be7c-bdf65acd7874")
+		)
+		(instances
+			(project "PiDG_Pico"
+				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
+					(reference "#PWR156")
 					(unit 1)
 				)
 			)
