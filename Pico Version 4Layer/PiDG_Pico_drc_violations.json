@@ -1,7 +1,7 @@
 {
     "$schema": "https://schemas.kicad.org/drc.v1.json",
     "coordinate_units": "mm",
-    "date": "2026-09-29T22:07:20",
+    "date": "2026-10-01T15:39:22",
     "ignored_checks": [
         {
             "description": "Footprint has no courtyard defined",
@@ -595,10 +595,10 @@
             "type": "footprint_symbol_field_mismatch"
         },
         {
-            "description": "Pad net (CH1_DRIVE) doesn't match net given by schematic (/CH1_DRIVE)",
+            "description": "Pad net (CH1_OUT) doesn't match net given by schematic (/CH1_OUT)",
             "items": [
                 {
-                    "description": "PTH pad 1 [CH1_DRIVE] of J7",
+                    "description": "PTH pad 1 [CH1_OUT] of J7",
                     "pos": {
                         "x": 245.0,
                         "y": 80.645
@@ -625,10 +625,10 @@
             "type": "footprint_symbol_field_mismatch"
         },
         {
-            "description": "Pad net (CH2_DRIVE) doesn't match net given by schematic (/CH2_DRIVE)",
+            "description": "Pad net (CH2_OUT) doesn't match net given by schematic (/CH2_OUT)",
             "items": [
                 {
-                    "description": "PTH pad 1 [CH2_DRIVE] of J8",
+                    "description": "PTH pad 1 [CH2_OUT] of J8",
                     "pos": {
                         "x": 245.0,
                         "y": 100.33
@@ -1345,6 +1345,96 @@
             "type": "net_conflict"
         },
         {
+            "description": "Pad net (CH1_DRIVE) doesn't match net given by schematic (/CH1_DRIVE)",
+            "items": [
+                {
+                    "description": "PTH pad 1 [CH1_DRIVE] of J18",
+                    "pos": {
+                        "x": 236.5,
+                        "y": 78.105
+                    },
+                    "uuid": "039b6ccc-1917-447b-90b7-9e71dd11ec66"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "Pad net (CH1_OUT) doesn't match net given by schematic (/CH1_OUT)",
+            "items": [
+                {
+                    "description": "PTH pad 2 [CH1_OUT] of J18",
+                    "pos": {
+                        "x": 236.5,
+                        "y": 80.645
+                    },
+                    "uuid": "b4ae7ccb-b88b-44fa-a468-4035d6ec83ef"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "Pad net (CH1_TERM) doesn't match net given by schematic (/CH1_TERM)",
+            "items": [
+                {
+                    "description": "PTH pad 3 [CH1_TERM] of J18",
+                    "pos": {
+                        "x": 236.5,
+                        "y": 83.185
+                    },
+                    "uuid": "6de37bc0-ccaa-440f-a527-ae68b5929c7e"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "Pad net (CH2_DRIVE) doesn't match net given by schematic (/CH2_DRIVE)",
+            "items": [
+                {
+                    "description": "PTH pad 1 [CH2_DRIVE] of J19",
+                    "pos": {
+                        "x": 236.5,
+                        "y": 102.869999
+                    },
+                    "uuid": "37076765-e03a-4140-aba8-9a53a4069bb9"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "Pad net (CH2_OUT) doesn't match net given by schematic (/CH2_OUT)",
+            "items": [
+                {
+                    "description": "PTH pad 2 [CH2_OUT] of J19",
+                    "pos": {
+                        "x": 236.5,
+                        "y": 100.329999
+                    },
+                    "uuid": "be6469cd-ec6e-4f1a-b49a-39a531b75550"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "Pad net (CH2_TERM) doesn't match net given by schematic (/CH2_TERM)",
+            "items": [
+                {
+                    "description": "PTH pad 3 [CH2_TERM] of J19",
+                    "pos": {
+                        "x": 236.5,
+                        "y": 97.789999
+                    },
+                    "uuid": "59400423-7de5-4b63-8e1b-88487bb82282"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
             "description": "Pad net (+5V_PD) doesn't match net given by schematic (/+5V_PD)",
             "items": [
                 {
@@ -1684,6 +1774,96 @@
                         "y": 96.0
                     },
                     "uuid": "3a9e84b1-329a-4fee-8b53-71354f7da08e"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "Pad net (CH1_DRIVE) doesn't match net given by schematic (/CH1_DRIVE)",
+            "items": [
+                {
+                    "description": "Pad 1 [CH1_DRIVE] of R25 on F.Cu",
+                    "pos": {
+                        "x": 227.0,
+                        "y": 80.645
+                    },
+                    "uuid": "1c2bccb5-d403-4fc0-9cd4-d686f0d94500"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "Pad net (CH1_OUT) doesn't match net given by schematic (/CH1_OUT)",
+            "items": [
+                {
+                    "description": "Pad 2 [CH1_OUT] of R25 on F.Cu",
+                    "pos": {
+                        "x": 233.1,
+                        "y": 80.645
+                    },
+                    "uuid": "0f5f2a6c-39c8-41cc-aea0-4b587fd6825d"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "Pad net (CH2_DRIVE) doesn't match net given by schematic (/CH2_DRIVE)",
+            "items": [
+                {
+                    "description": "Pad 1 [CH2_DRIVE] of R26 on F.Cu",
+                    "pos": {
+                        "x": 227.0,
+                        "y": 100.33
+                    },
+                    "uuid": "ad534dec-ef84-4956-a327-a84e0cd375b7"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "Pad net (CH2_OUT) doesn't match net given by schematic (/CH2_OUT)",
+            "items": [
+                {
+                    "description": "Pad 2 [CH2_OUT] of R26 on F.Cu",
+                    "pos": {
+                        "x": 233.1,
+                        "y": 100.33
+                    },
+                    "uuid": "4d2cf0ca-5d58-4471-8537-eca31b56d35b"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "Pad net (CH1_TERM) doesn't match net given by schematic (/CH1_TERM)",
+            "items": [
+                {
+                    "description": "Pad 1 [CH1_TERM] of R27 on F.Cu",
+                    "pos": {
+                        "x": 236.5,
+                        "y": 87.2
+                    },
+                    "uuid": "c84f0c53-af0f-4eca-8413-a24ff59530f5"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "Pad net (CH2_TERM) doesn't match net given by schematic (/CH2_TERM)",
+            "items": [
+                {
+                    "description": "Pad 1 [CH2_TERM] of R28 on F.Cu",
+                    "pos": {
+                        "x": 236.5,
+                        "y": 93.774999
+                    },
+                    "uuid": "90245a45-ea19-4cb9-9f8a-e0f35f69bb07"
                 }
             ],
             "severity": "warning",

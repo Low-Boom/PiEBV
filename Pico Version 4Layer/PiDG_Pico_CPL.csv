@@ -34,6 +34,8 @@ Ref,Val,Package,PosX,PosY,Rot,Side
 "J15","Pico Socket B","PinSocket_1x20_P2.54mm_Vertical",177.795000,-32.385000,0.000000,top
 "J16","Laser En/PWM Trig/GND","PinHeader_1x03_P2.54mm_Horizontal",187.800000,-38.000000,90.000000,top
 "J17","USB-C PD in","USB_C_Receptacle_HRO_TYPE-C-31-M-12",214.000000,-33.650000,180.000000,top
+"J18","Laser 1 mode","PinHeader_1x03_P2.54mm_Vertical",236.500000,-78.105000,0.000000,top
+"J19","Laser 2 mode","PinHeader_1x03_P2.54mm_Vertical",236.500000,-102.869999,180.000000,top
 "L1","4.7uH","L_Cenker_CKCS4030",231.200000,-44.000000,0.000000,top
 "R2","3k3","R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",183.000000,-73.500000,0.000000,top
 "R3","3k3","R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",191.000000,-64.000000,0.000000,top
@@ -56,6 +58,10 @@ Ref,Val,Package,PosX,PosY,Rot,Side
 "R22","6.04k","R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",207.400000,-74.050000,90.000000,top
 "R23","31.6k","R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",207.400000,-70.300000,90.000000,top
 "R24","10k","R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",178.795000,-96.000000,180.000000,top
+"R25","47","R_2512_6332Metric_Pad1.40x3.35mm_HandSolder",230.050000,-80.645000,0.000000,top
+"R26","47","R_2512_6332Metric_Pad1.40x3.35mm_HandSolder",230.050000,-100.330000,0.000000,top
+"R27","82","R_2512_6332Metric_Pad1.40x3.35mm_HandSolder",233.450000,-87.200000,180.000000,top
+"R28","82","R_2512_6332Metric_Pad1.40x3.35mm_HandSolder",233.450000,-93.774999,180.000000,top
 "TP3","1MHz sync + GND","PinHeader_1x02_P2.54mm_Horizontal",152.002076,-38.000000,90.000000,top
 "TP4","CH2 monitor + GND","PinHeader_1x02_P2.54mm_Vertical",205.210000,-101.000000,90.000000,top
 "U1","74LVC1G04","SOT-23-5_HandSoldering",149.860000,-110.807500,0.000000,top
