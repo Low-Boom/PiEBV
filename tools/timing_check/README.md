@@ -45,4 +45,4 @@ Set `PIDG_HARNESS` to use a harness binary somewhere else. Expected key lines:
 | `check_pixgate.py` | `pixgate: accepted 793 rejected 807 gated 513 simulated 513 mismatches 0`, then `boundary PIXLEAD >= 5 cycles, reset >= 3 cycles: ok` |
 
 These checks cover the arithmetic and the program's cycle behaviour. They do not
-replace a scope check on the board (see Hardware.md, Open items).
+replace a scope check on the board (see Hardware.md, First-board checks).

@@ -4,7 +4,8 @@ A small local web server that drives the PiDG over USB serial. The browser page 
 the serial commands do, and draws the timing of one PIV pulse pair above the settings.
 
 - **Everything shown comes from the board.** The chart, the edge table and every "actual …" line
-  come from the board's own `STATUS` reply (realized cycles), not from the values you typed.
+  come from the board's own `STATUS` reply, so they show what the hardware actually produces after
+  rounding, not the values you typed.
 - **It uses the ordinary firmware.** The page sends the same commands you would type
   (`FREQ 15`, `DELAY 10000`, …), so no firmware change is needed.
 - **One server, many tabs.** The server owns the serial port, and any number of browser tabs can
@@ -42,7 +43,7 @@ never uses 1200 baud, which would reboot the Pico into its bootloader.
 
 | Part | What it does |
 |---|---|
-| Header | Device list, with PiDG boards marked; **↻** rescans. **Connect**/**Disconnect**; the board's identity and, under it, its system line (PIO clock, last reset reason, watchdog resets, watchdog timeout, reply bytes dropped; a watchdog reset, dropped replies or a sync clock other than 1 MHz are flagged ⚠); the theme button, the **ARMED** indicator and **DISARM**. |
+| Header | Device list, with PiDG boards marked; **↻** rescans. **Connect**/**Disconnect**. The board's identity and, under it, a system line: clock, why it last restarted, crash restarts (watchdog), the watchdog timeout and reply bytes dropped. A crash restart, dropped replies or a sync clock other than 1 MHz are flagged ⚠. Then the theme button, the **ARMED** indicator and **DISARM**. |
 | Arming | A short strip above the charts: **ARM** and **DISARM**, with the firmware's arming state, start hold-off and `HW` status. |
 | Timing chart | One pulse pair, with Laser 1, Laser 2, marker and pixel reset on a common time axis. (The sync clock runs continuously, so it is not drawn.) Time 0 is the CH1 rising edge. **Pulses** zooms to the two laser pulses. **Pulses + reset window** also shows the `PIXLEAD`/`PIXLAG` window. Hover for the level of every signal at that instant. |
 | Sequence chart | Three consecutive pairs, with the marker and the pixel-reset gate between pairs. |
