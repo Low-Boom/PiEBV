@@ -513,10 +513,10 @@ CHn_DRIVE ──┬── R25/R26 47 Ω 2 W ──┬── CHn_OUT ── BNC c
   trace; pin 1 reaches back to `CHn_DRIVE` in a loop over the resistor, and the shunt and its GND via
   sit beside the jumper. In Hi-Z mode that loop is an unterminated stub of ~14 mm, far too short to
   matter at these edge rates. From the 47 Ω resistor onward the two channels are mirror images about
-  the line between the J7 and J8 centre pins. R6/R7 are not symmetric about that line, so CH1's copper
-  path from U13 to its BNC is ~2.6 mm longer than CH2's (it was ~0.6 mm before this change): ~15 ps,
-  negligible against U13's 1–2 ns channel-to-channel matching. The silkscreen reads `LASER n OUT`,
-  with `50Ω` and `HiZ` beside the pin pairs.
+  the line between the J7 and J8 centre pins. R6/R7 are not symmetric about that line, so CH1's feed
+  from R6 takes larger 45° corners to make up the difference: U13 to the 47 Ω resistor is 19.593 mm on
+  both channels, and so is every path on to the BNCs, in both modes (it was 0.6 mm unequal before this
+  change). The silkscreen reads `LASER n OUT`, with `50Ω` and `HiZ` beside the pin pairs.
 
 > **Match the output mode to the load.** In 50 Ω mode an open-circuit or high-impedance load
 > sees ~12 V (the source is ~73 Ω); use Hi-Z mode for those. **One driver per output — no BNC
