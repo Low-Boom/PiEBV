@@ -4163,7 +4163,7 @@
 				)
 			)
 		)
-		(property "Description" "CH224K CFG1: 56k to GND requests 15 V (6k8=9 V, 24k=12 V, open=20 V)"
+		(property "Description" "CH224A CFG1: 56k to GND requests 15 V (6k8=9 V, 24k=12 V, 120k=20 V, 210k=28 V; open is outside the table)"
 			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
@@ -4287,7 +4287,7 @@
 				)
 			)
 		)
-		(property "Value" "10k"
+		(property "Value" "0"
 			(at 0 1.65 90)
 			(layer "F.Fab")
 			(uuid "9787cdd2-65e5-4cd6-8fcb-9e96d0f9fef6")
@@ -4309,7 +4309,7 @@
 				)
 			)
 		)
-		(property "Description" "CH224K VBUS sense resistor (datasheet: 10k)"
+		(property "Description" "CH224A VBUS (pin 8) shorted to VHV: 0 ohm, per WCH guide 7.2.1 (was 10k for CH224K)"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
@@ -4455,7 +4455,7 @@
 				)
 			)
 		)
-		(property "Description" "CH224K VDD decoupling"
+		(property "Description" "CH224A VHV decoupling (on VBUS_PD, up to 20 V)"
 			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
@@ -15613,7 +15613,7 @@
 				)
 			)
 		)
-		(property "Value" "1k"
+		(property "Value" "0"
 			(at 0 1.83 90)
 			(layer "F.Fab")
 			(uuid "fa479175-abbd-4c57-9f68-89706fdfc65d")
@@ -15635,7 +15635,7 @@
 				)
 			)
 		)
-		(property "Description" "CH224K VDD feed (datasheet: 1k). 1206: dissipates 0.14 W at 15 V"
+		(property "Description" "CH224A VHV (pin 1) feed: 0 ohm, per WCH CH224K-to-CH224A guide 7.2.1 (was 1k for CH224K VDD)"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
@@ -18190,7 +18190,7 @@
 				)
 			)
 		)
-		(property "Value" "CH224K"
+		(property "Value" "CH224A"
 			(at 0 3.4 270)
 			(layer "F.Fab")
 			(uuid "31466298-5c1d-4d1e-8c12-ae3684ef434d")
@@ -18212,7 +18212,7 @@
 				)
 			)
 		)
-		(property "Description" "USB PD sink controller. R10 = 56k on CFG1 requests 15 V."
+		(property "Description" "USB PD sink controller, WCH CH224A (pin-compatible successor of the discontinued CH224K). R10 = 56k on CFG1 requests 15 V."
 			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)

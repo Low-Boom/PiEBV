@@ -331,7 +331,7 @@ Two inputs. **J17 (USB-C, power only)** is the main supply. The **Pico's own USB
 and on its own runs everything *except the laser outputs*.
 
 ```
-J17 USB-C ─ U14 CH224K (asks the charger for 15 V) ─ VBUS_PD (5 V until agreed, then 15 V)
+J17 USB-C ─ U14 CH224A (asks the charger for 15 V) ─ VBUS_PD (5 V until negotiated, then 15 V)
    ├─ U15 AP63205WU buck ─ +5V_PD ─ U16 LM66100 ideal diode ─┐
    │                                                        ├─ +5V plane = Pico VSYS
    │               Pico USB VBUS ─ Pico's own Schottky D1 ───┘
@@ -339,20 +339,23 @@ J17 USB-C ─ U14 CH224K (asks the charger for 15 V) ─ VBUS_PD (5 V until agre
         U18 TPS3700 window on +12V (11.0–13.1 V) ─ LASER_PWR_OK ─ U13 ENA/ENB  (R16 100k pull-up)
 ```
 
-### VBUS_PD (the charger input)
-
-U14 is a WCH CH224K USB-PD sink controller: it negotiates the voltage with the charger. R10 = 56 kΩ
-on CFG1 requests **15 V** (CH224K table: 6k8 = 9 V, 24k = 12 V, 56k = 15 V, open = 20 V, so never
-leave R10 off). CFG2/CFG3 are grounded, DP/DM are shorted at the chip (the datasheet's way of
-switching off the QC/BC1.2 protocols), and PG is unused. VDD is fed through R11 = 1 kΩ (1206,
-0.14 W at 15 V) and the VBUS sense pin through R15 = 10 kΩ, both per the datasheet.
-
-VBUS_PD sits at 5 V until the PD agreement completes, then at 15 V. The CH224K has no output switch,
-so everything downstream must work at both, and does. Any charger rated **above 27 W** must offer
-15 V under the USB-PD rules; a smaller one may not, and the laser outputs then stay off (see
-[Power-good gate](#power-good-gate-u18)). C12 (10 µF) is the only large capacitor on VBUS_PD,
-which keeps the board near the USB-C 10 µF limit for a sink.
-
+**VBUS_PD.** U14 is a WCH **CH224A** PD sink, the pin-compatible successor of the CH224K (the
+CH224K is discontinued; chapter 7 of the CH224 datasheet V2.x is WCH's migration guide). R10 =
+56 kΩ on CFG1 requests **15 V** (CH224A table 5-1: 6k8 = 9 V, 24k = 12 V, 56k = 15 V, 120k = 20 V,
+210k = 28 V — never leave R10 off: an open CFG1 is outside the table). CFG2/CFG3 are grounded
+(WCH allows this in single-resistor mode; the CH224A's internal 7–15 kΩ pull-ups then draw well
+under 1 mA), DP/DM are shorted at the chip (carried over from the CH224K's PD-only connection; J17's
+D+/D− are open, so no QC/BC1.2 request can reach the charger), and PG is unused. The VHV supply
+pin (pin 1) and the VBUS sense pin (pin 8) connect straight to VBUS_PD through **R11 = R15 = 0 Ω**,
+as WCH's guide (§7.2.1) requires for the CH224A; the CH224K needed 1 kΩ and 10 kΩ on the same pads.
+Do not fit those values with a CH224A (1 kΩ drops VHV below its 3.3 V minimum before the contract),
+and do not fit a CH224K with 0 Ω (its pin 1 is a 3.6 V VDD pin). VHV, VBUS, CC1 and CC2 are rated to
+32 V (the CH224K's CC pins: 8 V). Until the PD contract completes VBUS_PD sits at 5 V; after
+it, 15 V. The CH224A has no output switch, so everything downstream must tolerate both, and
+does. Any charger rated **above 27 W** must offer 15 V under the USB-PD rules; a smaller one may
+not, and the laser outputs then stay disabled (see below). C12 (10 µF) is the only large
+capacitor on VBUS_PD (C11 at U14 and C16 at U17 are 1 µF each), which keeps the board near the
+USB-C 10 µF sink limit.
 ### +5 V
 
 U15 (Diodes AP63205WU buck, fixed 5.00 V ±1 %, 3.8–32 V in) makes +5V_PD. With VBUS_PD still at
@@ -373,6 +376,16 @@ Loads on +5V: the Pico (VSYS), U7, U8, U10 (74AHCT1G08), **U9 (the 1.8 V regulat
 the R2/R3 pull-ups. Decoupling: C4, C5 (0.1 µF), C6 (1 µF, U9's input).
 
 ### +12 V (the laser driver supply)
+
+* with J17 unplugged — +12V = 0 V, U13 in UVLO (and U18 below its own UVLO holds OUTA low);
+* before the PD contract (VBUS_PD = 5 V) and with a 5 V-only charger — U17 in dropout, +12V ≈ 4.7 V;
+* **if the charger only offers 9 V** — +12V ≈ 8.7 V, far below the undervoltage threshold. The
+  CH224A datasheet (like the CH224K's) does not say what it does when 15 V is unavailable, which is
+  why the rail sits well above 9 V;
+* in dropout or current limit, e.g. on a 12 V PDO or under an overload — +12V below ~11 V;
+* **if U17 fails short** — +12V would follow VBUS_PD to 15 V and put ~6.3 V into the LDP-V
+  trigger input; the overvoltage side switches the outputs off. It is there to catch a failed
+  regulator, not to police the 5.2 V limit, which U17's own accuracy guarantees.
 
 U17 is an Analog Devices **LT3065** (adjustable linear regulator, 45 V / 500 mA, DFN-10 with an
 exposed pad), with SHDN tied to IN:
@@ -768,43 +781,47 @@ M3, unplated, mechanical only.
 
 Ordered by what would bite hardest.
 
-1. **Check the laser outputs before connecting a laser driver.** With J17 on a 15 V PD charger,
-   check +12V at C17 (11.65–12.17 V, typically 11.9 V) and that `LASER_PWR_OK` (U13 pins 1/8) is
-   high (~12 V). Fit J11 on 1-2 and J18 and J19 on 1-2 (50 Ω mode), send `ARM`, then scope J7 and
-   J8 through a **50 Ω-terminated** input:
-   - amplitude 0 V to 4.61–5.08 V (typically ~4.84 V). The budget rests on datasheet corners for
+1. **Bench-verify the laser outputs before connecting a laser driver.** With J17 on a 15 V PD
+   charger, check +12V at C17 (11.65–12.17 V, typically 11.9 V) and that `LASER_PWR_OK` (U13 pins
+   1/8) is high (~12 V). Fit J11 on 1-2 and J18/J19 on 1-2 (50 Ω mode), send `ARM`, then scope J7
+   and J8 through a **50 Ω-terminated** input:
+   - amplitude 0 V to 4.61–5.08 V (typically ~4.84 V); the budget rests on datasheet corners for
      U17's reference and U13's output resistance, so a measurement closes it;
-   - CH2 rising exactly DELAY after CH1 (e.g. `DELAY 10000` → 10.000 µs, `DELAY 13` → 13.3 ns), and
-     MARKER rising with every CH1 pulse for minutes at `FREQ 3000`;
-   - MARKER rising with every CH1 pulse at a FREQ whose period isn't a whole number of cycles, e.g.
-     `FREQ 7000`;
+   - CH2 rising exactly DELAY after CH1 (e.g. `DELAY 10000` → 10.000 µs, `DELAY 13` → 13.3 ns),
+     and MARKER rising with every CH1 pulse for minutes at `FREQ 3000`;
+   - MARKER rising with every CH1 pulse at a FREQ whose period is not a whole number of cycles,
+     e.g. `FREQ 7000`;
    - the first pulse after `ARM` full width, and no two CH1 pulses closer than 1/FREQ while a host
      loops `ARM`/`DISARM` as fast as it can;
    - J7/J8 at 0 V after `DISARM`; after a reset (a power cycle of both J17 and the Pico USB, since
-     neither the board nor the Pico 2 W has a reset button, and a watchdog timeout forced over SWD as
-     described under [Boot and arming](#boot-and-arming)); and, while ARMED with pulses running,
+     neither the board nor the Pico 2 W has a reset button, and a watchdog timeout forced over SWD
+     as described under [Boot and arming](#boot-and-arming)); and, while ARMED with pulses running,
      with J17 unplugged and while it is plugged back in;
    - Hi-Z mode: J18/J19 on 2-3 and the scope at 1 MΩ, 0 V to 4.62–5.06 V, with no overshoot at the
      far end of a 2 m cable (the source is ~49 Ω).
-2. **Check the charger's PD behaviour.** The CH224K datasheet doesn't say what the chip does when
-   the charger lacks the requested 15 V. The board is safe either way (U18 keeps the lasers off
-   below ~11 V), but a small charger may leave them off. Measure VBUS_PD (C12) with the charger you
-   will use.
-3. **Check the camera signals before plugging in six cameras.** IDS documents the pins as 1.8 V but
-   publishes no VIH/VIL, input pull or absolute maximum. With one camera, measure TDRSTN, Trigger and
-   Sync at the camera end of the harness, and confirm the camera isn't driving pin 5 (i.e. that it
-   is set as a sync slave).
-4. **No 50 Ω termination on the J12 pixel-reset input,** only R5's 3k3 pull-up and U12's CMOS
-   input. U12's 0.5–0.8 V of hysteresis absorbs moderate ringing from an unterminated coax run.
-   *Don't* add a 49.9 Ω resistor to ground as it stands: against R5 it would hold J12 at ~50 mV,
-   keeping all six cameras in reset unless the source actively drives high.
-5. **Before the first USB-C power-up, check the fine-pitch parts for solder bridges.** J17's and
+2. **Check the charger's PD behaviour.** The CH224A datasheet does not say what it does when the
+   charger lacks the requested 15 V. The board is safe either way (U18 keeps the lasers disabled
+   below ~11 V), but a small charger may leave them disabled. Measure VBUS_PD (C12) with the charger
+   you will deploy. This also confirms that the CH224A completes the PD contract with DP/DM shorted
+   at the chip (a connection carried over from the CH224K; WCH documents it only for the CH224K).
+   If it does not, VBUS_PD stays at 5 V: lasers off, logic still running.
+3. **Bench-confirm the camera I/O before plugging in six cameras.** IDS documents the pins as 1.8 V
+   but publishes no VIH/VIL, input pull or absolute maximum. With one camera, measure TDRSTN,
+   Trigger and Sync at the camera end of the harness, and confirm pin 5 is not being driven by the
+   camera (i.e. that it is configured as a sync slave).
+4. **No 50 Ω termination on the J12 pixel-reset input** — only R5's 3k3 pull-up and U12's CMOS
+   input. U12's 0.5–0.8 V of hysteresis absorbs moderate ringing from an unterminated coax run. Do
+   *not* add a 49.9 Ω resistor to ground as-is: against R5 it would hold J12 at ~50 mV, keeping all
+   six cameras in reset unless the source actively drives high.
+5. **Before the first USB-C PD power-up, check the fine-pitch parts for solder bridges.** J17's and
    U17's pads are 0.5 mm pitch and U16's 0.65 mm, on lead-free HASL. With no power applied, check
-   that VBUS_PD is not shorted to GND, CC1 or CC2 (at J17 and the U14 pins), and that +5V_PD and +5V
-   are not shorted to GND (at U16). A VBUS-to-CC bridge would put up to 20 V on U14. Check U17's IN
-   (pins 1-3) against OUT (pins 9-10) too: a bridge there would put 15 V on +12V (U18 would then
-   hold the outputs off). Also confirm that J17's four shell legs are soldered (they are
-   through-hole with no paste).
+   that VBUS_PD is not shorted to GND, CC1 or CC2 (at J17 and U14 pins), and that +5V_PD and +5V are
+   not shorted to GND (at U16). U14's CC pins are rated to 32 V, but a VBUS-to-CC bridge would put
+   VBUS_PD on the cable's CC line. U14 pins 1 (VHV) and 8 (VBUS) sit directly on VBUS_PD through
+   the 0 Ω R11/R15, so also check U14 pin 1 against pin 2 (GND) and pin 8 against pin 9 (CFG1, rated
+   only 3.8 V). Check U17's IN (pins 1-3) against OUT (pins 9-10) too: a bridge there would put 15 V
+   on +12V (U18 would then hold the outputs off). Also confirm that J17's four shell legs are
+   soldered (they are through-hole with no paste).
 
 **Not an open item: Wi-Fi / Bluetooth.** The firmware doesn't use the radio; the Pico 2 W is fitted
 only because it is easier to buy than the plain Pico 2. All four copper layers run solid under the
@@ -833,14 +850,16 @@ antenna keep-out is needed.
   pins). J10, J11, J16, J18 and J19 are labelled as described above. All board text is at least
   1.0 mm high.
 
-**JLCPCB order.** The board is set up for full assembly by JLCPCB, with every SMD and through-hole
-part fitted, so nothing needs soldering on delivery. [`fab/jlc/JLC_ORDER.md`](fab/jlc/JLC_ORDER.md)
-is the checklist: order-form settings, remarks to paste, the parts that need sourcing (U14 CH224K
-and U9 NCP718 were out of stock on 2026-09-25), rotations to check in the placement preview, the
-cost estimate, what to do on delivery, and enclosure notes. The JLC BOM carries an LCSC number on
-every line; through-hole parts sit in the placement file at their pad centre, because their
-footprint origins are on pin 1. The back silkscreen carries JLC's `JLCJLCJLCJLC` order-number
-placeholder.
+**JLCPCB order:** the board is set up for full assembly by JLCPCB, with every SMD and
+through-hole part fitted, so nothing needs soldering on delivery. `fab/jlc/JLC_ORDER.md` is the
+checklist: order-form settings, remarks to paste, the parts that need Global Sourcing (U9 NCP718
+was out of stock on 2026-09-25 and 2026-10-02; U14 changed from the discontinued CH224K to the
+in-stock CH224A on 2026-10-02), rotations to
+check in the placement preview, the cost estimate, what to do on delivery (plug in a Pico 2 WH,
+flash the firmware, fit J10, wire the E-stop to J11), and enclosure notes. The JLC BOM carries an
+LCSC number on every line; through-hole parts sit in the placement file at their pad centre,
+because their footprint origins are on pin 1. The back silkscreen carries JLC's `JLCJLCJLCJLC`
+order-number placeholder.
 
 ---
 

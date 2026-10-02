@@ -17456,7 +17456,7 @@
 				)
 			)
 		)
-		(property "Value" "10k"
+		(property "Value" "0"
 			(at 360.68 155.575 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -17488,7 +17488,7 @@
 				)
 			)
 		)
-		(property "Description" "CH224K VBUS sense resistor (datasheet: 10k)"
+		(property "Description" "CH224A VBUS (pin 8) shorted to VHV: 0 ohm, per WCH guide 7.2.1 (was 10k for CH224K)"
 			(at 360.68 152.4 0)
 			(hide yes)
 			(show_name no)
@@ -17772,7 +17772,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "CH224K"
+		(property "Value" "CH224A"
 			(at 369.57 180.34 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -17805,7 +17805,7 @@
 				)
 			)
 		)
-		(property "Description" "USB PD sink controller. R10 = 56k on CFG1 requests 15 V."
+		(property "Description" "USB PD sink controller, WCH CH224A (pin-compatible successor of the discontinued CH224K). R10 = 56k on CFG1 requests 15 V."
 			(at 365.76 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -18332,7 +18332,7 @@
 				)
 			)
 		)
-		(property "Description" "CH224K CFG1: 56k to GND requests 15 V (6k8=9 V, 24k=12 V, open=20 V)"
+		(property "Description" "CH224A CFG1: 56k to GND requests 15 V (6k8=9 V, 24k=12 V, 120k=20 V, 210k=28 V; open is outside the table)"
 			(at 386.08 167.64 0)
 			(hide yes)
 			(show_name no)
@@ -23858,7 +23858,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "1k"
+		(property "Value" "0"
 			(at 369.824 151.13 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -23891,7 +23891,7 @@
 				)
 			)
 		)
-		(property "Description" "CH224K VDD feed (datasheet: 1k). 1206: dissipates 0.14 W at 15 V"
+		(property "Description" "CH224A VHV (pin 1) feed: 0 ohm, per WCH CH224K-to-CH224A guide 7.2.1 (was 1k for CH224K VDD)"
 			(at 368.3 149.86 0)
 			(hide yes)
 			(show_name no)
@@ -25111,7 +25111,7 @@
 				)
 			)
 		)
-		(property "Description" "CH224K VDD decoupling"
+		(property "Description" "CH224A VHV decoupling (on VBUS_PD, up to 20 V)"
 			(at 378.46 156.21 0)
 			(hide yes)
 			(show_name no)
