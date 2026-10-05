@@ -78,7 +78,7 @@ boards.
 | Power | **USB-C PD input (J17, 15 V)** for the laser driver and the whole board; the Pico's own USB still powers the logic when J17 is unplugged |
 | Rails | **1.8 V** (camera signals) · 3.3 V (Pico, pixel-reset input) · 5 V (logic, Pico VSYS) · **12 V** (11.9 V, laser driver U13, from J17 only) |
 | Design rules | 0.2 mm clearance, 0.2 mm track, 0.6/0.3 mm via, 0.25 mm copper-to-edge |
-| Parts | 82 placed parts, plus 4 unplated mounting holes |
+| Parts | 80 placed parts, plus 4 unplated mounting holes |
 
 **Layers**
 
@@ -346,10 +346,10 @@ CH224K is discontinued; chapter 7 of the CH224 datasheet V2.x is WCH's migration
 (WCH allows this in single-resistor mode; the CH224A's internal 7–15 kΩ pull-ups then draw well
 under 1 mA), DP/DM are shorted at the chip (carried over from the CH224K's PD-only connection; J17's
 D+/D− are open, so no QC/BC1.2 request can reach the charger), and PG is unused. The VHV supply
-pin (pin 1) and the VBUS sense pin (pin 8) connect straight to VBUS_PD through **R11 = R15 = 0 Ω**,
-as WCH's guide (§7.2.1) requires for the CH224A; the CH224K needed 1 kΩ and 10 kΩ on the same pads.
-Do not fit those values with a CH224A (1 kΩ drops VHV below its 3.3 V minimum before the contract),
-and do not fit a CH224K with 0 Ω (its pin 1 is a 3.6 V VDD pin). VHV, VBUS, CC1 and CC2 are rated to
+pin (pin 1) and the VBUS sense pin (pin 8) connect **directly to VBUS_PD** by copper, as WCH's
+guide (§7.2.1) requires for the CH224A. The CH224K needed 1 kΩ (R11) and 10 kΩ (R15) there; both
+resistors were removed from the board, so a CH224K can no longer be fitted (its pin 1 is a 3.6 V
+VDD pin and would be destroyed). VHV, VBUS, CC1 and CC2 are rated to
 32 V (the CH224K's CC pins: 8 V). Until the PD contract completes VBUS_PD sits at 5 V; after
 it, 15 V. The CH224A has no output switch, so everything downstream must tolerate both, and
 does. Any charger rated **above 27 W** must offer 15 V under the USB-PD rules; a smaller one may
@@ -817,8 +817,8 @@ Ordered by what would bite hardest.
    U17's pads are 0.5 mm pitch and U16's 0.65 mm, on lead-free HASL. With no power applied, check
    that VBUS_PD is not shorted to GND, CC1 or CC2 (at J17 and U14 pins), and that +5V_PD and +5V are
    not shorted to GND (at U16). U14's CC pins are rated to 32 V, but a VBUS-to-CC bridge would put
-   VBUS_PD on the cable's CC line. U14 pins 1 (VHV) and 8 (VBUS) sit directly on VBUS_PD through
-   the 0 Ω R11/R15, so also check U14 pin 1 against pin 2 (GND) and pin 8 against pin 9 (CFG1, rated
+   VBUS_PD on the cable's CC line. U14 pins 1 (VHV) and 8 (VBUS) sit directly on VBUS_PD, so also
+   check U14 pin 1 against pin 2 (GND) and pin 8 against pin 9 (CFG1, rated
    only 3.8 V). Check U17's IN (pins 1-3) against OUT (pins 9-10) too: a bridge there would put 15 V
    on +12V (U18 would then hold the outputs off). Also confirm that J17's four shell legs are
    soldered (they are through-hole with no paste).
@@ -870,7 +870,7 @@ order-number placeholder.
 | `PiDG_Pico.kicad_sch` | schematic |
 | `PiDG_Pico.kicad_pcb` | board |
 | `PiDG_Pico_BOM.csv` | parts list (hand-maintained; KiCad's `export_bom` ignores DNP attributes) |
-| `PiDG_Pico_CPL.csv` | placement file, all 82 placed parts (KiCad columns), mounting holes excluded |
+| `PiDG_Pico_CPL.csv` | placement file, all 80 placed parts (KiCad columns), mounting holes excluded |
 | `fab/jlc/PiDG_Pico_JLC_BOM.csv`, `fab/jlc/PiDG_Pico_JLC_CPL.csv`, `fab/jlc/JLC_ORDER.md` | JLCPCB full-assembly upload files (all 82 parts, LCSC numbers) and the order checklist |
 | `fab/gerbers/`, `fab/PiDG_Pico_Gerbers.zip` | gerbers, Excellon drill files (plated and unplated) and job file, from the board's stored plot settings |
 | `libs/PiDG_Local.kicad_sym` | Pico 2 W, UCC27524, LT3065 and TPS3700 symbols |

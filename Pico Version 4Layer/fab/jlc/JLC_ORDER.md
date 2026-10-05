@@ -10,8 +10,8 @@ order.
 | Step | File |
 |---|---|
 | PCB | `../PiDG_Pico_Gerbers.zip` |
-| BOM (parts list) | `PiDG_Pico_JLC_BOM.csv`: 43 lines, every one with an LCSC part number |
-| CPL (placement file) | `PiDG_Pico_JLC_CPL.csv`: all 82 placed parts (through-hole parts at their pad centre) |
+| BOM (parts list) | `PiDG_Pico_JLC_BOM.csv`: 42 lines, every one with an LCSC part number |
+| CPL (placement file) | `PiDG_Pico_JLC_CPL.csv`: all 80 placed parts (through-hole parts at their pad centre) |
 
 ## PCB options
 
@@ -45,7 +45,6 @@ order.
 > perpendicular. Do not substitute U3 (NAND 74LVC1G00, not a 1G04), U9, U12, U13,
 > U14 (CH224A only, not CH224K), U15, U17 (adjustable LT3065 only), U18,
 > U7/U8/U10, R6/R7 (68 ohm 2 W 2512), R25-R28 (47 / 82 ohm 2 W 2512) or R12/R13 (0.1 %).
-> R11 and R15 are 0 ohm by design.
 
 ## Parts that need action before ordering
 
@@ -59,12 +58,12 @@ Two parts were out of stock at JLC. Either have JLC buy them from another distri
 
 **U14 changed on 2026-10-02:** the CH224K (C970725) is discontinued (LCSC: "Discontinued"; JLC stock 4,
 pre-order closed). The board now uses the pin-compatible **WCH CH224A** (C42459160, JLC stock 18,122 on
-2026-10-02), with **R11 and R15 changed to 0 Ω** (C17888 1206, C17477 0805, both basic) as WCH's
-CH224K-to-CH224A guide (datasheet §7.2.1) requires. R10 stays 56 kΩ: the CH224A table also gives 15 V.
-Same footprint and pads. Check U14's rotation in the placement preview — JLC's CH224A library model may
-differ from its CH224K one.
+2026-10-02). As WCH's CH224K-to-CH224A guide (datasheet §7.2.1) requires, U14's VHV and VBUS pins now
+connect directly to VBUS_PD: R11 (1 kΩ) and R15 (10 kΩ) were removed from the board on 2026-10-05 and
+replaced by copper. R10 stays 56 kΩ: the CH224A table also gives 15 V. Same U14 footprint and pads.
+Check U14's rotation in the placement preview — JLC's CH224A library model may differ from its CH224K one.
 
-Everything else was in stock in quantity on 2026-09-25 (U17 LT3065: 799, enough for 5 boards). Twelve
+Everything else was in stock in quantity on 2026-09-25 (U17 LT3065: 799, enough for 5 boards). Ten
 lines are JLC basic parts; the rest are extended (about $3 loading fee each in Economic).
 
 ## Placement preview — check before approving

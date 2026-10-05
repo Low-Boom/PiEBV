@@ -11116,12 +11116,6 @@
 		(uuid "ea4d26c0-bb51-4936-9fd0-fd2b8f5d298b")
 	)
 	(junction
-		(at 373.38 152.4)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "eb2b045a-f5f3-4237-a21e-30beeeebaa28")
-	)
-	(junction
 		(at 72.39 140.97)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -11524,6 +11518,26 @@
 	(no_connect
 		(at 194.31 273.05)
 		(uuid "fe678645-4fc4-4d0e-9092-71ddabdb4978")
+	)
+	(wire
+		(pts
+			(xy 368.3 147.32) (xy 368.3 152.4)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f011ba28-ec25-426f-b47a-0082d0ccee30")
+	)
+	(wire
+		(pts
+			(xy 358.14 152.4) (xy 363.22 152.4)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "57dbaa69-71f7-48ac-a973-3b4df9fb66c8")
 	)
 	(wire
 		(pts
@@ -17436,85 +17450,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:R_Small")
-		(at 360.68 152.4 90)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "2e8ed12a-c3d9-4dfb-8772-6a855617c58a")
-		(property "Reference" "R15"
-			(at 360.68 149.225 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "0"
-			(at 360.68 155.575 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
-			(at 360.68 152.4 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 360.68 152.4 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "CH224A VBUS (pin 8) shorted to VHV: 0 ohm, per WCH guide 7.2.1 (was 10k for CH224K)"
-			(at 360.68 152.4 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "abbb6dfc-2397-457a-8ef2-a7018754b6e9")
-		)
-		(pin "2"
-			(uuid "f858dd96-8c3e-4b57-a7fc-659f0868aa63")
-		)
-		(instances
-			(project "PiDG_Pico"
-				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
-					(reference "R15")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "power:GND")
 		(at 372.11 104.14 0)
 		(unit 1)
@@ -21406,83 +21341,6 @@
 		)
 	)
 	(symbol
-		(lib_id "power:PWR_FLAG")
-		(at 373.38 152.4 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board no)
-		(in_pos_files no)
-		(dnp no)
-		(uuid "87713809-76cf-4052-a9c8-bd6a60dfc2dc")
-		(property "Reference" "#FLG12"
-			(at 373.38 150.495 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "PWR_FLAG"
-			(at 373.38 148.59 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 373.38 152.4 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 373.38 152.4 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Special symbol for telling ERC where power comes from"
-			(at 373.38 152.4 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "22d8df5b-b411-46b5-b1ba-6f0c95dff232")
-		)
-		(instances
-			(project "PiDG_Pico"
-				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
-					(reference "#FLG12")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "power:GND")
 		(at 381 218.44 0)
 		(unit 1)
@@ -23831,87 +23689,6 @@
 			(project "PiDG_Pico"
 				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
 					(reference "#PWR118")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Device:R_Small")
-		(at 368.3 149.86 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "bda2ddd0-7c7d-44ad-a7fc-4f7005320c09")
-		(property "Reference" "R11"
-			(at 369.824 149.225 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "0"
-			(at 369.824 151.13 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Resistor_SMD:R_1206_3216Metric_Pad1.30x1.75mm_HandSolder"
-			(at 368.3 149.86 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 368.3 149.86 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "CH224A VHV (pin 1) feed: 0 ohm, per WCH CH224K-to-CH224A guide 7.2.1 (was 1k for CH224K VDD)"
-			(at 368.3 149.86 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "a30dd95a-c586-4358-bcbe-5b214d793b9a")
-		)
-		(pin "2"
-			(uuid "8493dbd6-3005-4719-81cf-618d0f5ac2e2")
-		)
-		(instances
-			(project "PiDG_Pico"
-				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
-					(reference "R11")
 					(unit 1)
 				)
 			)
