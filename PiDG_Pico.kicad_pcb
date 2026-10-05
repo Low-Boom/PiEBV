@@ -9199,7 +9199,7 @@
 				)
 			)
 		)
-		(property "Description" "Dual 50-ohm-matched laser trigger driver (see HARDWARE_DESIGN.md 2.2)"
+		(property "Description" "Dual laser trigger driver, UCC27524 (see Hardware.md, Laser outputs)"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)

@@ -4,9 +4,7 @@ This is the design reference for the PiDG board: what each part of the circuit d
 built that way, and what to check on the first boards. It is for anyone building, checking or
 changing the hardware. To *use* the board, see the [README](README.md).
 
-The board is a Raspberry Pi Pico 2 W redesign of the original Teensy 4.1 design (the `Chris Teensy Version/` folder, removed from the repo on
-2026-10-05; it is still in git history up to commit 8e10bc9). This document covers **only** the
-4-layer Pico version.
+The board is built around a socketed Raspberry Pi Pico 2 W, on 4 copper layers.
 
 **Status:** passes KiCad's design-rule check (DRC) and electrical-rule check (ERC) with 0
 violations. Not yet built: work through the [first-board checks](#first-board-checks) on the first
@@ -192,8 +190,8 @@ ARMED; otherwise `src/laser_gate.cpp` holds them LOW.
 | `kPinCh1` | 13 | `_PULSE_OUT_CH1` | U7 → U13 → J7 (Laser 1); R17 10 k to GND; R19 100 Ω → J10.1 |
 | `kPinPixGate` | 16 (J15 pad 20) | `PIXRST_GATE` | U3.1 (NAND with the J12 input) → U4 → TDRSTN1–6; R24 10 k to +3V3. Output inverted in the GPIO block. |
 
-**CH1 is the higher GPIO and CH2 the lower**, the opposite of the Teensy original (D2 = CH1,
-D3 = CH2). Don't "tidy" them into ascending order.
+**CH1 is the higher GPIO (GP13) and CH2 the lower (GP12).** The order is deliberate; don't "tidy"
+them into ascending order.
 
 `src/board.h` repeats this table as a comment. Keep the two in step: when the constants and the
 schematic once drifted apart, the whole board looked dead.
@@ -678,8 +676,7 @@ is enabled when open. The silkscreen beside J11 reads `LASER INTERLOCK: ON = 1-2
 `E-STOP: NC SWITCH ACROSS 1-2`, and the pins are marked **ON** (1-2, lasers enabled) and **OFF**
 (2-3).
 
-The original Teensy design had no pull-down here and was *enabled* with the header empty. R8 is the
-one deliberate change to the interlock's behaviour.
+Without R8 the interlock would be *enabled* with the header empty; R8 makes an empty J11 fail safe.
 
 **Three gates in series.** The firmware's ARM state acts before U7/U8 (DISARMED holds their pulse
 inputs LOW), the J11/U10 interlock acts at U7/U8, and the power-good gate (`LASER_PWR_OK`, see
@@ -701,7 +698,7 @@ connecting cameras.
 
 ### J1–J6: cameras
 
-2×5 IDC headers, 2.54 mm. Identical to the Teensy design, pin for pin, and mapped 1:1 onto the 8-pin
+2×5 IDC headers, 2.54 mm, mapped 1:1 onto the 8-pin
 I/O connector of the **IDS uEye UE-39B0XCP-E** (IDS part 1011378) for pins 1–8:
 
 | Pin | Board | Camera (IDS datasheet, verbatim) |
@@ -881,13 +878,11 @@ order-number placeholder.
 |---|---|
 | `PiDG_Pico.kicad_sch` | schematic |
 | `PiDG_Pico.kicad_pcb` | board |
-| `PiDG_Pico_BOM.csv` | parts list (hand-maintained; KiCad's `export_bom` ignores DNP attributes) |
-| `PiDG_Pico_CPL.csv` | placement file, all 80 placed parts (KiCad columns), mounting holes excluded |
+| `fab/PiDG_Pico_BOM.csv` | master parts list with the design-constraint NOTE rows (hand-maintained; KiCad's `export_bom` ignores DNP attributes). The JLC BOM in `fab/jlc/` is derived from it. |
 | `fab/jlc/PiDG_Pico_JLC_BOM.csv`, `fab/jlc/PiDG_Pico_JLC_CPL.csv`, `fab/jlc/JLC_ORDER.md` | JLCPCB full-assembly upload files (all 82 parts, LCSC numbers) and the order checklist |
 | `fab/gerbers/`, `fab/PiDG_Pico_Gerbers.zip` | gerbers, Excellon drill files (plated and unplated) and job file, from the board's stored plot settings |
 | `libs/PiDG_Local.kicad_sym` | Pico 2 W, UCC27524, LT3065 and TPS3700 symbols |
 | `libs/PiDG_Local.pretty/` | `*_EdgeTrim` footprint variants (see below) and the J7/J8/J12 BNC footprint (see [BNCs](#bncs-50-ω)) |
-| `libs/RPi_Pico.pretty/` | official RPi castellated-module footprint (unused: the board uses sockets) |
 | `src/` | firmware: `board.h` (pin map), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `laser_gate.*` (CH1/CH2 gate, start-up hook), `protocol.*` (serial commands), `main.cpp` (arming, hold-off, watchdog) |
 | `platformio.ini` | build configuration: platform pinned to an exact commit; `pico2w` (default) and `pico2` builds |
 | `tools/timing_check/` | checks `pulse_timing.h` against a cycle-level PIO model (see its README) |

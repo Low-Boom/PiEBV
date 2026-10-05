@@ -28,3 +28,8 @@ _autosave-*
 tools/jlc_cpl/eda/
 tools/jlc_cpl/kpads.json
 tools/jlc_cpl/cpl_new.csv
+# KiCad check reports (regenerate with kicad-cli; not kept in the repo)
+erc.json
+*_drc_violations.json
+# KiCad per-user view settings (layer visibility, open files)
+*.kicad_prl

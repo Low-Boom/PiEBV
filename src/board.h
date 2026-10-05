@@ -13,8 +13,8 @@
 //                                                                TDRSTN1..6; R24 10k to +3V3. Driven INVERTED
 //                                                                (main.cpp): PIO latch high = pixels in reset.
 //
-// CH1 is the HIGHER GPIO and CH2 the lower -- the opposite order to the Teensy
-// original (D2 = CH1, D3 = CH2), so do not "tidy" these into ascending order.
+// CH1 is the HIGHER GPIO and CH2 the lower. The order is deliberate, so do not
+// "tidy" these into ascending order.
 // GP2-GP5 (used by an earlier firmware) are not connected on this board.
 
 constexpr unsigned kPinSync = 10;

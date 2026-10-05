@@ -3,10 +3,8 @@
 // PlatformIO's official "raspberrypi" platform/Mbed core has no RP2350
 // support; the wireless radio of a Pico 2 W is unused by this firmware.
 //
-// Reimplements the Teensy 4.1 "IDS EVS Event-camera Synchronizer" firmware
-// (IDS_EVS_Sync_v2.ino, the reference baseline; removed from the repo on
-// 2026-10-05, still in git history up to commit 8e10bc9) using PIO state machines instead of CPU busy-waits. Outputs (the
-// GPIO map is in board.h):
+// IDS EVS event-camera synchronizer, implemented with PIO state machines (no
+// CPU busy-waits). Outputs (the GPIO map is in board.h):
 //   - CH1 / CH2 (GP13 / GP12): the two laser trigger pulses. Shared width; CH2's
 //     rising edge follows CH1's by exactly DELAY (to the nearest PIO cycle).
 //     COMBINE 1 puts BOTH pulses on BOTH outputs (two light sources fired in sync
@@ -14,10 +12,9 @@
 //     GP12 and GP13 together (pio_pulse.cpp, dual-pin program).
 //   - MARKER (GP11): a pulse of MARKERWIDTH with every pulse pair, rising with
 //     CH1, that the board's jumper (J10) selects as the camera Trigger line
-//     instead of the raw laser pulse (the original D5/"PWM_Trig" marked only
-//     every Nth pair). Each camera timestamps it into its event stream.
-//   - SYNC (GP10): the continuous camera sync clock (mirrors the original
-//     D4/1MHz hardware-PWM output). Runs on pio1: it is independent of the
+//     instead of the raw laser pulse. Each camera timestamps it into its event
+//     stream.
+//   - SYNC (GP10): the continuous 1 MHz camera sync clock. Runs on pio1: it is independent of the
 //     laser timing, and pio0's fourth state machine is the pixel-reset gate.
 //   - PIXGATE (GP16): optional camera pixel reset between pulse pairs. pio0 SM3
 //     runs the pulse program with the pin's output inverted, so its pulse holds

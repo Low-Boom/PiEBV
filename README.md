@@ -756,7 +756,7 @@ TX_DROPPED=0
 | Port opens but nothing appears | The greeting is only sent in the first 1.5 s, and the firmware does not echo | Type `ID?` or `STATUS`; turn on local echo |
 | Commands work but no replies arrive | The terminal has DTR off | Turn DTR on in the terminal settings |
 | The port vanishes and an `RP2350` drive appears | The port was opened at 1200 baud, which restarts the Pico into its bootloader | Use any other baud rate. Copy `firmware.uf2` to the drive, or unplug both J17 and the Pico's USB. |
-| `ERR … unknown command` for everything | A typo, the `FREQ?` form, old Teensy-style `6,cmd;` framing, or XON/XOFF flow control | Use bare names; set flow control to None |
+| `ERR … unknown command` for everything | A typo, the `FREQ?` form, the old `6,cmd;` framing, or XON/XOFF flow control | Use bare names; set flow control to None |
 | `ERR … rejected: DELAY must leave >= WIDTH …` | DELAY + 2 × WIDTH is longer than 1/FREQ | Shorten DELAY or WIDTH, or lower FREQ; the message gives the longest allowed DELAY |
 | `ERR … MARKERWIDTH must fit in the period …` at high FREQ | The marker (2 µs by default) is longer than the period allows | Shorten MARKERWIDTH first; the message gives the limit |
 | `ERR ARM …`, or `HW=ERR …` in STATUS | The pulse hardware did not start | Load the firmware again; if it keeps happening, report the `STATUS` output |
@@ -832,8 +832,7 @@ replace a scope check on the board.
 | `tools/timing_check/` | Timing checks run on a computer |
 | `PiDG_Pico.kicad_pro` / `.kicad_sch` / `.kicad_pcb` | **Current hardware:** KiCad project of the 4-layer board |
 | `Hardware.md` | [Full hardware reference](Hardware.md) |
-| `PiDG_Pico_BOM.csv`, `PiDG_Pico_CPL.csv` | Parts list and placement file (KiCad columns) |
-| `fab/` | Manufacturing: gerbers and drill files, and `fab/jlc/` JLCPCB assembly files and [order checklist](fab/jlc/JLC_ORDER.md) |
+| `fab/` | Manufacturing: master parts list `fab/PiDG_Pico_BOM.csv` (with the design-constraint notes), gerbers and drill files, and `fab/jlc/` JLCPCB assembly files and [order checklist](fab/jlc/JLC_ORDER.md) |
 | `libs/`, `fp-lib-table`, `sym-lib-table` | Project-local KiCad symbols and footprints |
 | `tools/jlc_cpl/` | Corrects the JLC placement file to JLC's own footprints (see its README) |
 
