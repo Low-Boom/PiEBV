@@ -93,7 +93,7 @@ the output mode (J18/J19) set to match their input.
   IDE's, sends nothing until you press Enter.
 - **The three gates are independent.** Each one on its own holds both outputs at 0 V. The firmware
   can only see the first one, so `ARMED=1` does not by itself mean the outputs are live. The third
-  gate (U18) checks that the board's 12 V laser-driver supply is between 11.0 and 13.1 V, which needs
+  gate (U18) checks that the board's 12 V laser-driver supply is between 10.6 and 13.3 V, which needs
   the 15 V charger.
 - **Losing the USB link does not disarm.** If the Pico's USB cable is pulled, the PC goes to sleep
   or a script is killed while ARMED, the board keeps running from J17 and the lasers keep pulsing,
@@ -244,9 +244,9 @@ trigger input of all six cameras.
 
 **J18 / J19 — laser output mode.** Labelled `LASER 1 OUT` / `LASER 2 OUT`, with `50Ω` and `HiZ`
 next to the pin pairs.
-- **1-2, 50 Ω mode:** about 4.8 V (4.61–5.08 V) into a 50 Ω input. Use it for the PicoLas LDP-V and
+- **1-2, 50 Ω mode:** about 4.8 V (4.54–5.14 V) into a 50 Ω input. Use it for the PicoLas LDP-V and
   anything else with a 50 Ω input.
-- **2-3, Hi-Z mode:** about 4.8 V (4.62–5.06 V) into a high-impedance input. The output is matched
+- **2-3, Hi-Z mode:** about 4.8 V (4.55–5.08 V) into a high-impedance input. The output is matched
   to 50 Ω coax, so even a long cable to an unterminated input gives a clean edge with no overshoot.
   Use it for TTL or 5 V CMOS inputs, scopes at 1 MΩ and other instruments that don't terminate.
 - **The wrong mode** gives the wrong voltage (see the table under [Safety](#in-detail)): an LDP-V on
@@ -347,15 +347,15 @@ list, with exact test points, is under
    or CC2 (at J17 and U14), +5V_PD and +5V must not be shorted to GND (at U16), and U17's input must
    not be shorted to its output. Also check that J17's four metal shell legs are soldered.
 2. **Supply voltages,** with the charger on J17: `VBUS_PD` at C12 about 15 V (with the charger you
-   will actually use), +12V at C17 between 11.65 and 12.17 V, and `LASER_PWR_OK` (U13 pins 1 and 8)
+   will actually use), +12V at C17 between 11.54 and 12.05 V, and `LASER_PWR_OK` (U13 pins 1 and 8)
    about 12 V.
 3. **Laser outputs,** J18/J19 on 1-2, into a 50 Ω-terminated scope with no driver connected:
-   - pulses from 0 V to 4.61–5.08 V;
+   - pulses from 0 V to 4.54–5.14 V;
    - CH2 exactly `DELAY` after CH1 (`DELAY 13` should give 13.3 ns);
    - the first pulse after `ARM` is full width;
    - 0 V after `DISARM` and after a full restart; and, while ARMED and pulsing, 0 V once J17 is
      unplugged, with no stray pulse while it is plugged back in;
-   - then J18/J19 on 2-3 with the scope at 1 MΩ: 0 V to 4.62–5.06 V, with no overshoot at the end of
+   - then J18/J19 on 2-3 with the scope at 1 MΩ: 0 V to 4.55–5.08 V, with no overshoot at the end of
      the longest cable you will use. Put the shunts back on the mode you need afterwards.
 4. **Cameras:** with **one** camera connected, measure pixel reset, trigger and sync at the camera
    end of the harness, and confirm the camera is not driving pin 5 (it must be a sync slave). Only
@@ -760,7 +760,7 @@ TX_DROPPED=0
 | `ERR … rejected: DELAY must leave >= WIDTH …` | DELAY + 2 × WIDTH is longer than 1/FREQ | Shorten DELAY or WIDTH, or lower FREQ; the message gives the longest allowed DELAY |
 | `ERR … MARKERWIDTH must fit in the period …` at high FREQ | The marker (2 µs by default) is longer than the period allows | Shorten MARKERWIDTH first; the message gives the limit |
 | `ERR ARM …`, or `HW=ERR …` in STATUS | The pulse hardware did not start | Load the firmware again; if it keeps happening, report the `STATUS` output |
-| `ARMED=1` but no laser pulses | J11 not on 1-2; J16 pin 1 pulled low; J17 unplugged or the charger isn't giving 15 V; or still in the hold-off (`START_PENDING_US` > 0) | Check each gate. Measure `VBUS_PD` at C12 (about 15 V) and +12V at C17 (about 11.9 V; the outputs stay off outside 11.0–13.1 V). |
+| `ARMED=1` but no laser pulses | J11 not on 1-2; J16 pin 1 pulled low; J17 unplugged or the charger isn't giving 15 V; or still in the hold-off (`START_PENDING_US` > 0) | Check each gate. Measure `VBUS_PD` at C12 (about 15 V) and +12V at C17 (about 11.8 V; the outputs stay off outside 10.6–13.3 V). |
 | Outputs dead after a restart | The board always restarts DISARMED | Send `ARM` |
 | About 12 V pulses on the scope | J18/J19 on 1-2 (50 Ω mode) into a 1 MΩ scope input | Set the scope to 50 Ω (the laser driver has its own 50 Ω), or move the shunt to 2-3 for a high-impedance load |
 | About 2.5 V pulses at the laser driver | J18/J19 on 2-3 (Hi-Z mode) into the driver's 50 Ω input | Move the shunt to 1-2 |

@@ -54,7 +54,7 @@ Two parts were out of stock at JLC. Either have JLC buy them from another distri
 
 | Ref | Part | LCSC | Stock on 2026-09-25 | Action |
 |---|---|---|---|---|
-| U9 | onsemi NCP718ASN180T1G | C513024 | **0** | Global Sourcing (Digi-Key/Mouser stock it) or consign. The TECH PUBLIC copy (C18212639) is not the specified part. |
+| U9 | onsemi NCP718ASN180T1G | C513024 | **0** (also 0 on 2026-10-05) | **Replaced on 2026-10-05** by NCP718BSN180T1G (C892792): same datasheet, same ±2 % 1.8 V output, same TSOT-23-5 pinout, only without the active output discharge (unused here). Only 162 in stock on 2026-10-05 — pre-order 6 pcs in the Parts Manager now. The TECH PUBLIC copy (C18212639) is not the specified part. |
 
 **U14 changed on 2026-10-02:** the CH224K (C970725) is discontinued (LCSC: "Discontinued"; JLC stock 4,
 pre-order closed). The board now uses the pin-compatible **WCH CH224A** (C42459160, JLC stock 18,122 on
@@ -63,8 +63,9 @@ connect directly to VBUS_PD: R11 (1 kΩ) and R15 (10 kΩ) were removed from the 
 replaced by copper. R10 stays 56 kΩ: the CH224A table also gives 15 V. Same U14 footprint and pads.
 Check U14's rotation in the placement preview — JLC's CH224A library model may differ from its CH224K one.
 
-Everything else was in stock in quantity on 2026-09-25 (U17 LT3065: 799, enough for 5 boards). Ten
-lines are JLC basic parts; the rest are extended (about $3 loading fee each in Economic).
+Everything else was in stock in quantity on 2026-09-25 (U17 LT3065: 799, enough for 5 boards). On
+2026-10-05 twelve lines are JLC basic parts and two are preferred extended (no loading fee); the
+other 28 are extended (about $3 loading fee each in Economic).
 
 ## Placement preview — check before approving
 

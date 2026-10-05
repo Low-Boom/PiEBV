@@ -10828,7 +10828,7 @@
 			(embedded_fonts no)
 		)
 	)
-	(text "USB-C PD input. U14 requests 15 V. U15 buck + U16 ideal diode feed the +5V plane (Pico VSYS).\nU17 makes the 11.9 V +12V rail for U13; U18 gates U13's enables (see the note by U17).\nPico VBUS is NOT on +5V: USB reaches VSYS only through the Pico's own Schottky."
+	(text "USB-C PD input. U14 requests 15 V. U15 buck + U16 ideal diode feed the +5V plane (Pico VSYS).\nU17 makes the 11.8 V +12V rail for U13; U18 gates U13's enables (see the note by U17).\nPico VBUS is NOT on +5V: USB reaches VSYS only through the Pico's own Schottky."
 		(exclude_from_sim no)
 		(at 308.356 232.918 0)
 		(effects
@@ -11801,7 +11801,7 @@
 		)
 		(uuid "6fd7dca9-868f-4a6c-9d14-b27312a3bcbb")
 	)
-	(text "Output mode, one shunt per channel (J18 = Laser 1, J19 = Laser 2):\n  1-2  50 ohm: series 47R bypassed. 4.61-5.08 V into a 50 ohm load (PicoLas LDP-V); ~12 V open circuit.\n  2-3  Hi-Z: 68R + 47R in series, 82R shunt -> 4.62-5.06 V open circuit from a 48-50 ohm source\n       (back-terminated, no overshoot on long cables); 2.3-2.6 V into 50 ohm: an LDP-V will not trigger.\n  No shunt: ~12 V open circuit, ~3.5 V into 50 ohm. Ship with both shunts on 1-2."
+	(text "Output mode, one shunt per channel (J18 = Laser 1, J19 = Laser 2):\n  1-2  50 ohm: series 47R bypassed. 4.54-5.14 V into a 50 ohm load (PicoLas LDP-V); ~12 V open circuit.\n  2-3  Hi-Z: 68R + 47R in series, 82R shunt -> 4.55-5.08 V open circuit from a 47-50 ohm source\n       (back-terminated, no overshoot on long cables); 2.3-2.6 V into 50 ohm: an LDP-V will not trigger.\n  No shunt: ~12 V open circuit, ~3.5 V into 50 ohm. Ship with both shunts on 1-2."
 		(exclude_from_sim no)
 		(at 122 217.17 0)
 		(effects
@@ -12371,7 +12371,7 @@
 		)
 		(uuid "2c9fd61f-c16f-4ea3-8ec9-85005c19e883")
 	)
-	(text "U17: 11.9 V laser rail, 400 mA limit (R20).\nU18 (sheet bottom left) holds U13 disabled\n(LASER_PWR_OK low) unless +12V is inside\n11.0-13.1 V (TPS3700 window)."
+	(text "U17: 11.8 V laser rail, 400 mA limit (R20).\nU18 (sheet bottom left) holds U13 disabled\n(LASER_PWR_OK low) unless +12V is inside\n10.6-13.3 V (TPS3700 window)."
 		(exclude_from_sim no)
 		(at 240.03 252.73 0)
 		(effects
@@ -16931,7 +16931,7 @@
 				)
 			)
 		)
-		(property "Description" "Series resistor, 2 W 2512. 50 ohm mode (J19 on 1-2): 11.9 V x 50/(50+68+ROH) = 4.61-5.08 V into the 50 ohm LDP-V trigger input"
+		(property "Description" "Series resistor, 2 W 2512. 50 ohm mode (J19 on 1-2): 11.8 V x 50/(50+68+ROH) = 4.54-5.14 V into the 50 ohm LDP-V trigger input (ROH 0-8.5 ohm)"
 			(at 400.05 39.37 0)
 			(hide yes)
 			(show_name no)
@@ -17925,7 +17925,7 @@
 				)
 			)
 		)
-		(property "Description" "12 V laser rail: 45 V / 500 mA LDO. VOUT = 0.6 V x (1 + R12/R13) = 11.9 V. R20 sets a 400 mA current limit."
+		(property "Description" "12 V laser rail: 45 V / 500 mA LDO. VOUT = 0.6 V x (1 + R12/R13) = 11.8 V. R20 sets a 400 mA current limit."
 			(at 266.7 220.98 0)
 			(hide yes)
 			(show_name no)
@@ -20423,7 +20423,7 @@
 				)
 			)
 		)
-		(property "Description" "Series resistor, 2 W 2512. 50 ohm mode (J18 on 1-2): 11.9 V x 50/(50+68+ROH) = 4.61-5.08 V into the 50 ohm LDP-V trigger input"
+		(property "Description" "Series resistor, 2 W 2512. 50 ohm mode (J18 on 1-2): 11.8 V x 50/(50+68+ROH) = 4.54-5.14 V into the 50 ohm LDP-V trigger input (ROH 0-8.5 ohm)"
 			(at 400.05 44.45 0)
 			(hide yes)
 			(show_name no)
@@ -23558,7 +23558,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "101k"
+		(property "Value" "100k"
 			(at 286.004 217.17 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -23591,7 +23591,7 @@
 				)
 			)
 		)
-		(property "Description" "LT3065 feedback top, 0.1 % thin film: 11.906 V = 0.6 V x (1 + 101k/5.36k)"
+		(property "Description" "LT3065 feedback top, 0.1 % thin film: 11.794 V = 0.6 V x (1 + 100k/5.36k)"
 			(at 284.48 215.9 0)
 			(hide yes)
 			(show_name no)
@@ -27690,7 +27690,7 @@
 				)
 			)
 		)
-		(property "Description" "Laser power-good: OUTA low if +12V < 11.0 V (UV), OUTB low if +12V > 13.1 V (OV). Drives U13 ENA/ENB."
+		(property "Description" "Laser power-good: OUTA low if +12V < 10.6 V (UV), OUTB low if +12V > 13.3 V (OV). Drives U13 ENA/ENB."
 			(at 60.96 269.24 0)
 			(hide yes)
 			(show_name no)
@@ -27827,7 +27827,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "1M"
+		(property "Value" "150k"
 			(at 41.656 262.89 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -27860,7 +27860,7 @@
 				)
 			)
 		)
-		(property "Description" "TPS3700 window divider top (1 %)"
+		(property "Description" "TPS3700 window divider top (1 %): 150k"
 			(at 43.18 261.62 0)
 			(hide yes)
 			(show_name no)
@@ -27908,7 +27908,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "6.04k"
+		(property "Value" "1.2k"
 			(at 41.656 270.51 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -27941,7 +27941,7 @@
 				)
 			)
 		)
-		(property "Description" "TPS3700 window divider middle (1 %): UV 11.0 V rising / 10.9 V falling"
+		(property "Description" "TPS3700 window divider middle (1 %): UV 10.6 V rising / 10.4 V falling"
 			(at 43.18 269.24 0)
 			(hide yes)
 			(show_name no)
@@ -27989,7 +27989,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "31.6k"
+		(property "Value" "4.7k"
 			(at 41.656 275.59 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -28022,7 +28022,7 @@
 				)
 			)
 		)
-		(property "Description" "TPS3700 window divider bottom (1 %): OV 13.1 V rising"
+		(property "Description" "TPS3700 window divider bottom (1 %): OV 13.3 V rising"
 			(at 43.18 274.32 0)
 			(hide yes)
 			(show_name no)

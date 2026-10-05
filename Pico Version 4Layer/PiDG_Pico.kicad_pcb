@@ -5372,7 +5372,7 @@
 				)
 			)
 		)
-		(property "Value" "1M"
+		(property "Value" "150k"
 			(at 0 1.65 90)
 			(layer "F.Fab")
 			(uuid "c118e37b-ed87-4475-a257-43b5ca5382ca")
@@ -5394,7 +5394,7 @@
 				)
 			)
 		)
-		(property "Description" "TPS3700 window divider top (1 %)"
+		(property "Description" "TPS3700 window divider top (1 %): 150k"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
@@ -7379,7 +7379,7 @@
 				)
 			)
 		)
-		(property "Value" "101k"
+		(property "Value" "100k"
 			(at 0 1.65 0)
 			(layer "F.Fab")
 			(uuid "f38767c8-e3d7-4025-a2b2-3a22a784050a")
@@ -7401,7 +7401,7 @@
 				)
 			)
 		)
-		(property "Description" "LT3065 feedback top, 0.1 % thin film: 11.906 V = 0.6 V x (1 + 101k/5.36k)"
+		(property "Description" "LT3065 feedback top, 0.1 % thin film: 11.794 V = 0.6 V x (1 + 100k/5.36k)"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -8885,7 +8885,7 @@
 				)
 			)
 		)
-		(property "Value" "6.04k"
+		(property "Value" "1.2k"
 			(at 0 1.65 90)
 			(layer "F.Fab")
 			(uuid "a1aed0dc-905b-4bba-ab37-e7e6af88b17a")
@@ -8907,7 +8907,7 @@
 				)
 			)
 		)
-		(property "Description" "TPS3700 window divider middle (1 %): UV 11.0 V rising / 10.9 V falling"
+		(property "Description" "TPS3700 window divider middle (1 %): UV 10.6 V rising / 10.4 V falling"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
@@ -9053,7 +9053,7 @@
 				)
 			)
 		)
-		(property "Description" "Series resistor, 2 W 2512. 50 ohm mode (J18 on 1-2): 11.9 V x 50/(50+68+ROH) = 4.61-5.08 V into the 50 ohm LDP-V trigger input"
+		(property "Description" "Series resistor, 2 W 2512. 50 ohm mode (J18 on 1-2): 11.8 V x 50/(50+68+ROH) = 4.54-5.14 V into the 50 ohm LDP-V trigger input (ROH 0-8.5 ohm)"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -10187,7 +10187,7 @@
 				)
 			)
 		)
-		(property "Description" "Laser power-good: OUTA low if +12V < 11.0 V (UV), OUTB low if +12V > 13.1 V (OV). Drives U13 ENA/ENB."
+		(property "Description" "Laser power-good: OUTA low if +12V < 10.6 V (UV), OUTB low if +12V > 13.3 V (OV). Drives U13 ENA/ENB."
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
@@ -12052,7 +12052,7 @@
 				)
 			)
 		)
-		(property "Description" "12 V laser rail: 45 V / 500 mA LDO. VOUT = 0.6 V x (1 + R12/R13) = 11.9 V. R20 sets a 400 mA current limit."
+		(property "Description" "12 V laser rail: 45 V / 500 mA LDO. VOUT = 0.6 V x (1 + R12/R13) = 11.8 V. R20 sets a 400 mA current limit."
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
@@ -13031,7 +13031,7 @@
 				)
 			)
 		)
-		(property "Description" "Series resistor, 2 W 2512. 50 ohm mode (J19 on 1-2): 11.9 V x 50/(50+68+ROH) = 4.61-5.08 V into the 50 ohm LDP-V trigger input"
+		(property "Description" "Series resistor, 2 W 2512. 50 ohm mode (J19 on 1-2): 11.8 V x 50/(50+68+ROH) = 4.54-5.14 V into the 50 ohm LDP-V trigger input (ROH 0-8.5 ohm)"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -14988,7 +14988,7 @@
 				)
 			)
 		)
-		(property "Value" "31.6k"
+		(property "Value" "4.7k"
 			(at 0 1.65 90)
 			(layer "F.Fab")
 			(uuid "9be6f2e2-c0c2-4c27-8682-bc333e9ec37e")
@@ -15010,7 +15010,7 @@
 				)
 			)
 		)
-		(property "Description" "TPS3700 window divider bottom (1 %): OV 13.1 V rising"
+		(property "Description" "TPS3700 window divider bottom (1 %): OV 13.3 V rising"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
