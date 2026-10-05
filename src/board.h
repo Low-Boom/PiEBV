@@ -1,6 +1,6 @@
 #pragma once
 // GPIO assignments of the PiDG 4-layer board. These MUST match
-// "Pico Version 4Layer/PiDG_Pico.kicad_sch". The Pico plugs into sockets
+// "PiDG_Pico.kicad_sch" (repo root). The Pico plugs into sockets
 // J14/J15; J14 pad n = Pico physical pin n.
 //
 //   constant     GPIO   Pico pin   J14 pad   board net         drives

@@ -1,8 +1,0 @@
-Putty settings for Teensy4.1
-
-
-Search for COM -Port first via System-Settings (devmgmt.msc)
-
-Baud rate: 115200
-Setup: 8-1-None-XON/XOFF
-Terminal: Implicit CR in every LF

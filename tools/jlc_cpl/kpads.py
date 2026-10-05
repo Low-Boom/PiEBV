@@ -2,7 +2,7 @@
 # its pads and its body centre at orientation 0, relative to the footprint origin (mm, y down).
 import pcbnew, json, sys, os
 HERE = os.path.dirname(os.path.abspath(__file__))
-b = pcbnew.LoadBoard(os.path.join(HERE, "..", "..", "Pico Version 4Layer", "PiDG_Pico.kicad_pcb"))
+b = pcbnew.LoadBoard(os.path.join(HERE, "..", "..", "PiDG_Pico.kicad_pcb"))
 out = {}
 for fp in b.GetFootprints():
     c = pcbnew.FOOTPRINT(fp)

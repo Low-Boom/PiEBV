@@ -4,8 +4,8 @@
 // support; the wireless radio of a Pico 2 W is unused by this firmware.
 //
 // Reimplements the Teensy 4.1 "IDS EVS Event-camera Synchronizer" firmware
-// (see "Chris Teensy Version/IDS_EVS_Sync_v2.ino", kept as the reference
-// baseline) using PIO state machines instead of CPU busy-waits. Outputs (the
+// (IDS_EVS_Sync_v2.ino, the reference baseline; removed from the repo on
+// 2026-10-05, still in git history up to commit 8e10bc9) using PIO state machines instead of CPU busy-waits. Outputs (the
 // GPIO map is in board.h):
 //   - CH1 / CH2 (GP13 / GP12): the two laser trigger pulses. Shared width; CH2's
 //     rising edge follows CH1's by exactly DELAY (to the nearest PIO cycle).

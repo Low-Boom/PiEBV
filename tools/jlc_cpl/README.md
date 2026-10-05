@@ -22,7 +22,7 @@ node jlc_rot.js
 3. Read `rot_report.txt`. Each line gives the correction, the new rotation, the centroid shift and the
    pad fit (worst pad-centre error). `<< CHECK` means a fit above 0.2 mm; on the `_HandSolder`
    footprints that is expected, because their pads are longer than JLC's.
-4. Copy `cpl_new.csv` over `../../Pico Version 4Layer/fab/jlc/PiDG_Pico_JLC_CPL.csv`.
+4. Copy `cpl_new.csv` over `../../fab/jlc/PiDG_Pico_JLC_CPL.csv`.
 5. Still look at JLC's placement preview before you approve the order.
 
 Downloads are cached in `eda/` (git-ignored); delete it to fetch again. Some LCSC footprints are stored

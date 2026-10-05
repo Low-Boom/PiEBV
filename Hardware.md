@@ -2,10 +2,11 @@
 
 This is the design reference for the PiDG board: what each part of the circuit does, why it was
 built that way, and what to check on the first boards. It is for anyone building, checking or
-changing the hardware. To *use* the board, see the [top-level README](../README.md).
+changing the hardware. To *use* the board, see the [README](README.md).
 
-The board is a Raspberry Pi Pico 2 W redesign of the original Teensy 4.1 design in
-`../Chris Teensy Version/`. This document covers **only** the 4-layer Pico version.
+The board is a Raspberry Pi Pico 2 W redesign of the original Teensy 4.1 design (the `Chris Teensy Version/` folder, removed from the repo on
+2026-10-05; it is still in git history up to commit 8e10bc9). This document covers **only** the
+4-layer Pico version.
 
 **Status:** passes KiCad's design-rule check (DRC) and electrical-rule check (ERC) with 0
 violations. Not yet built: work through the [first-board checks](#first-board-checks) on the first
@@ -178,7 +179,7 @@ an enclosure wall). Nothing may be placed there. The silkscreen labels the two t
 
 ## Firmware pin map
 
-The firmware (`../src/`) drives all five signals from PIO state machines (pio0: SM0 CH1, SM1 CH2,
+The firmware (`src/`) drives all five signals from PIO state machines (pio0: SM0 CH1, SM1 CH2,
 SM2 MARKER, SM3 PIXGATE; pio1: SM0 SYNC), so any GPIO can be used. CH1, CH2, MARKER and PIXGATE are
 started on the same clock cycle, so they stay exactly in step. CH1/CH2 reach their pins only while
 ARMED; otherwise `src/laser_gate.cpp` holds them LOW.
@@ -264,7 +265,7 @@ before it. SYNC runs on pio1 so the gate can have SM3; SYNC is independent of th
   1000.000 ns, 150 cyc)`, and `STATUS` lists them all. The user never has to correct a setting for
   rounding or for fixed instruction overheads.
 - **CH2 rises exactly DELAY after CH1,** to the nearest 6.667 ns cycle. This is exact in a
-  cycle-accurate model of the PIO; see `../tools/timing_check/`.
+  cycle-accurate model of the PIO; see `tools/timing_check/`.
 - **MARKER fires with every pulse pair** and is locked to CH1: it runs the same program at exactly
   the laser period in cycles, started on the same cycle, so it rises with every CH1 pulse and can't
   drift. Each camera timestamps the marker into its event stream, which gives every PIV pair its own
@@ -887,9 +888,9 @@ order-number placeholder.
 | `libs/PiDG_Local.kicad_sym` | Pico 2 W, UCC27524, LT3065 and TPS3700 symbols |
 | `libs/PiDG_Local.pretty/` | `*_EdgeTrim` footprint variants (see below) and the J7/J8/J12 BNC footprint (see [BNCs](#bncs-50-ω)) |
 | `libs/RPi_Pico.pretty/` | official RPi castellated-module footprint (unused: the board uses sockets) |
-| `../src/` | firmware: `board.h` (pin map), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `laser_gate.*` (CH1/CH2 gate, start-up hook), `protocol.*` (serial commands), `main.cpp` (arming, hold-off, watchdog) |
-| `../platformio.ini` | build configuration: platform pinned to an exact commit; `pico2w` (default) and `pico2` builds |
-| `../tools/timing_check/` | checks `pulse_timing.h` against a cycle-level PIO model (see its README) |
+| `src/` | firmware: `board.h` (pin map), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `laser_gate.*` (CH1/CH2 gate, start-up hook), `protocol.*` (serial commands), `main.cpp` (arming, hold-off, watchdog) |
+| `platformio.ini` | build configuration: platform pinned to an exact commit; `pico2w` (default) and `pico2` builds |
+| `tools/timing_check/` | checks `pulse_timing.h` against a cycle-level PIO model (see its README) |
 
 **The `*_EdgeTrim` footprints.** J16 and TP3 overhang the board edge, and J17's face is flush with
 it, so their stock silkscreen outlines run off the board and trip `silk_edge_clearance`. The variants

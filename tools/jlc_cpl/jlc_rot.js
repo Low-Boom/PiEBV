@@ -7,7 +7,7 @@
 // Footprint downloads are cached in ./eda (git-ignored). Review rot_report.txt, then copy cpl_new.csv over the JLC CPL.
 const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process');
 const S = __dirname;
-const DIR = path.join(S, '..', '..', 'Pico Version 4Layer') + '/';
+const DIR = path.join(S, '..', '..') + '/'; // repo root (KiCad project)
 const kp = JSON.parse(fs.readFileSync(path.join(S, 'kpads.json'), 'utf8'));
 
 // ref -> LCSC from the JLC BOM

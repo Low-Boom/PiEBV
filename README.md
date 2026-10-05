@@ -13,7 +13,7 @@ signals for that:
 - You **control it by typing short text commands** over USB: from a terminal, a Python script or
   the included web page.
 
-> **Status.** The current board (`Pico Version 4Layer/`) has not been built yet. The firmware
+> **Status.** The current board (KiCad project `PiDG_Pico`) has not been built yet. The firmware
 > compiles and its timing has been checked step by step in simulation, but nothing has run on real
 > hardware. Do the [first-board checks](#first-board-checks) before connecting a laser driver or a
 > camera.
@@ -129,7 +129,7 @@ the output mode (J18/J19) set to match their input.
   then carries both pulses, still one driver per output.
 - **The board itself can't be overloaded by any setting.** The outputs survive every setting the
   firmware accepts, even into a short-circuited cable. (The numbers are in
-  [Hardware.md](Pico%20Version%204Layer/Hardware.md#board-output-rating).)
+  [Hardware.md](Hardware.md#board-output-rating).)
 
 **Cameras and jumpers**
 
@@ -141,7 +141,7 @@ the output mode (J18/J19) set to match their input.
   fight it.
 - **Never fit a shunt on J16**, and never fit one across all three pins of J10.
 
-More detail: [Hardware.md](Pico%20Version%204Layer/Hardware.md), sections Boot and arming, Laser
+More detail: [Hardware.md](Hardware.md), sections Boot and arming, Laser
 interlock and Connectors.
 
 ---
@@ -340,7 +340,7 @@ DELAY 10000, MARKERWIDTH 2000, SYNC 1000000) with the lasers DISARMED.
 
 The design hasn't been proven on real hardware yet, so check every newly assembled board. The full
 list, with exact test points, is under
-[First-board checks in Hardware.md](Pico%20Version%204Layer/Hardware.md#first-board-checks).
+[First-board checks in Hardware.md](Hardware.md#first-board-checks).
 
 1. **Before the first power-up on J17,** with nothing plugged in, check with a multimeter for solder
    bridges on the fine-pitch parts (J17, U16, U17): `VBUS_PD` must not be shorted to GND, CC1
@@ -830,8 +830,12 @@ replace a scope check on the board.
 | `tools/pidg_gui/` | Web GUI: settings, timing chart and console in the browser |
 | `tools/pidg_sim/` | Simulator: the firmware's command code built for a computer, for trying the GUI and scripts without a board |
 | `tools/timing_check/` | Timing checks run on a computer |
-| `Pico Version 4Layer/` | **Current hardware:** KiCad project, [Hardware.md](Pico%20Version%204Layer/Hardware.md) (full hardware reference), parts list, placement file, and `fab/` manufacturing and JLCPCB assembly files |
-| `Chris Teensy Version/` | The original Teensy 4.1 design this project grew from |
+| `PiDG_Pico.kicad_pro` / `.kicad_sch` / `.kicad_pcb` | **Current hardware:** KiCad project of the 4-layer board |
+| `Hardware.md` | [Full hardware reference](Hardware.md) |
+| `PiDG_Pico_BOM.csv`, `PiDG_Pico_CPL.csv` | Parts list and placement file (KiCad columns) |
+| `fab/` | Manufacturing: gerbers and drill files, and `fab/jlc/` JLCPCB assembly files and [order checklist](fab/jlc/JLC_ORDER.md) |
+| `libs/`, `fp-lib-table`, `sym-lib-table` | Project-local KiCad symbols and footprints |
+| `tools/jlc_cpl/` | Corrects the JLC placement file to JLC's own footprints (see its README) |
 
 ## License
 
