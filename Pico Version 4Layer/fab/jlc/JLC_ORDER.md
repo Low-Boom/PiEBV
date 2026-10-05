@@ -11,7 +11,7 @@ order.
 |---|---|
 | PCB | `../PiDG_Pico_Gerbers.zip` |
 | BOM (parts list) | `PiDG_Pico_JLC_BOM.csv`: 42 lines, every one with an LCSC part number |
-| CPL (placement file) | `PiDG_Pico_JLC_CPL.csv`: all 80 placed parts (through-hole parts at their pad centre) |
+| CPL (placement file) | `PiDG_Pico_JLC_CPL.csv`: all 80 placed parts; rotations and centres corrected to JLC's own footprints by `tools/jlc_cpl` |
 
 ## PCB options
 
@@ -31,7 +31,7 @@ order.
 
 | Option | Setting |
 |---|---|
-| PCBA type | Economic (the cheaper service; a 4-layer, one-sided board with 0.5 mm finest pitch qualifies). Accept Standard if JLC asks for it because of the through-hole parts. |
+| PCBA type | Economic (the cheaper service; a 4-layer, one-sided board with 0.5 mm finest pitch qualifies). Economic covers the through-hole parts (hand-soldered); decline Standard if JLC suggests it (it costs more and needs edge rails, which J17, J16/TP3 and the BNCs block). Every BOM line is "economic-and-standard" (checked 2026-10-05). |
 | Side | Top |
 | Assembled quantity | 5 (or fewer) |
 | Edge rails | None requested (see the remarks below) |
@@ -50,18 +50,20 @@ order.
 
 **J7/J8/J12 BNC (changed on 2026-10-05):** Kinghelm KH-BNC50-3511 (C2837587, 5,636 in stock,
 ~$0.93) replaces the Amphenol B6252HB-NPP3G-50 (C22457552, ~$3.61) on the same pad pattern. Before
-releasing the order, buy two loose parts from LCSC and (1) test-fit them in a 0.82–0.90 mm hole (the board's pin
-holes are 0.90 mm, Kinghelm's recommended size; the drawing does not dimension the pin tails),
-(2) check continuity from the shell to the ground lead (pad 2): the shell bond is one iron lead,
+releasing the order, buy two loose parts from LCSC and (1) test-fit them: the board's holes are 1.0 mm
+(centre and ground pins) and 2.2 mm (posts), the sizes of JLC's own KH-BNC50-3511 footprint, which
+gives clearance over Kinghelm's 0.90 / 2.00 mm drawing values after plating tolerance; (2) check continuity from the shell to the ground lead (pad 2): the shell bond is one iron lead,
 and the mounting posts sit in a PBT (plastic) housing.
 
-Two parts were out of stock at JLC. Either have JLC buy them from another distributor first
-(**Global Sourcing**, in the Parts Manager), or buy them yourself and send them to JLC
-(**consigned parts**).
+**Pre-order these thin-stock parts** in the Parts Manager (Order Parts → JLC stock) before placing the
+PCBA order; the order then uses them from your parts inventory. Stock on 2026-10-05:
 
-| Ref | Part | LCSC | Stock on 2026-09-25 | Action |
+| Ref | Part | LCSC | Stock | Pre-order |
 |---|---|---|---|---|
-| U9 | onsemi NCP718ASN180T1G | C513024 | **0** (also 0 on 2026-10-05) | **Replaced on 2026-10-05** by NCP718BSN180T1G (C892792): same datasheet, same ±2 % 1.8 V output, same TSOT-23-5 pinout, only without the active output discharge (unused here). Only 162 in stock on 2026-10-05 — pre-order 6 pcs in the Parts Manager now. The TECH PUBLIC copy (C18212639) is not the specified part. |
+| U9 | onsemi NCP718BSN180T1G | C892792 | 162 | 6 pcs. Replaces NCP718ASN180T1G (C513024, 0 in stock): same datasheet, ±2 % 1.8 V output and TSOT-23-5 pinout, without the active output discharge (unused here). The TECH PUBLIC copy (C18212639) is not the specified part. |
+| U17 | Analog Devices LT3065EDD#TRPBF | C670143 | 684, falling | 6 pcs. No drop-in alternative. |
+| J7/J8/J12 | Kinghelm KH-BNC50-3511 | C2837587 | 5,636 | 18 pcs (single listing). |
+| U2/U4/U6 | TI SN74LVC04ADR | C485074 | 3,115 | 18 pcs, optional (no in-stock substitute with Ioff). |
 
 **U14 changed on 2026-10-02:** the CH224K (C970725) is discontinued (LCSC: "Discontinued"; JLC stock 4,
 pre-order closed). The board now uses the pin-compatible **WCH CH224A** (C42459160, JLC stock 18,122 on
@@ -76,23 +78,23 @@ other 28 are extended (about $3 loading fee each in Economic).
 
 ## Placement preview — check before approving
 
-Pin 1 is top-left in every KiCad footprint, but JLC's library orientation varies, so JLC's preview
-can show a part rotated. Check each of these against the board's pin-1 marks and correct the
-rotation in the preview if needed:
+The CPL rotations and centres are already corrected to JLC's own LCSC footprints (`tools/jlc_cpl`,
+see its README; re-run it after any layout change). Still check these in the preview against the
+board's pin-1 marks before approving:
 
 - SOT-23-5: U1, U3, U5, U7, U8, U9, U10, U12 · TSOT-23-6: U15 · SOT-23-6: U18 · SC-70-6: U16
 - SOIC-8: U13 · SOIC-14: U2, U4, U6 · ESSOP-10 with exposed pad: U14 · DFN-10 with exposed pad: U17
 - J17 USB-C (opening toward the top edge) · J1–J6 IDC headers (key notch as on the silkscreen)
 - J7/J8/J12 BNCs (barrels past the right edge) · J16/TP3 (pins pointing off the board edge)
 
-## Cost estimate (2026-09-25, before shipping and Japanese consumption tax)
+## Cost estimate (5 boards, before shipping and Japanese consumption tax)
 
 | Item | Estimate |
 |---|---|
-| 5 bare boards | ≈ $25–45 (JLC's calculator needs a login: confirm there) |
-| Assembly fees, 5 boards | ≈ $121 (setup + stencil ≈ $10, ≈ 31 extended-part loading fees ≈ $95, joints and hand soldering ≈ $19) |
-| Components, 5 boards | ≈ $120–140 (SMD ≈ $12 per board, through-hole ≈ $12 per board, plus spares) |
-| **Total** | **≈ $265–305**, plus shipping (≈ $10–35 to Tokyo, 2–7 days) and Global Sourcing premiums |
+| 5 bare boards | ≈ $26 (estimate; JLC's calculator needs a login: confirm there) |
+| Assembly fees | ≈ $90 (setup + stencil ≈ $10, 21 extended SMT loading fees × $3.07 ≈ $64, joints and through-hole hand soldering ≈ $17) |
+| Components | ≈ $85 (with JLC attrition; the 0.1 % resistors, LT3065 and BNCs are the largest lines) |
+| **Total** | **≈ $200** (cost-down review model, 2026-10-05), plus shipping (≈ $10–35 to Tokyo, 2–7 days) |
 
 ## On delivery (no soldering)
 

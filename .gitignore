@@ -24,3 +24,7 @@ __pycache__/
 _autosave-*
 *-bak
 *.bak
+# JLC CPL rotation tool (tools/jlc_cpl): downloaded footprints and intermediate files
+tools/jlc_cpl/eda/
+tools/jlc_cpl/kpads.json
+tools/jlc_cpl/cpl_new.csv
