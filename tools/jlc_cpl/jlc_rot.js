@@ -60,7 +60,25 @@ function edaPads(j) {
   const L = ds.split(/\r?\n/).filter(Boolean).map(l => JSON.parse(l));
   const pads = L.filter(l => l[0] === 'PAD').map(l => ({ n: String(l[5]), x: l[6] * 0.0254, y: -l[7] * 0.0254 }));
   const name = (L.find(l => l[0] === 'ATTR' && l[7] === 'Footprint') || [])[8] || '?';
-  return { title: name, pads };
+  // body centre from the component-shape (48) and pin (51) layers
+  const pts = [];
+  for (const l of L) if (l[0] === 'POLY' && [48, 51].includes(l[4])) pathPts(l[6], pts);
+    else if (l[0] === 'FILL' && [48, 51].includes(l[4])) pathPts(l[7], pts);
+  const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]);
+  const body = pts.length ? { x: (Math.min(...xs) + Math.max(...xs)) / 2 * 0.0254, y: -(Math.min(...ys) + Math.max(...ys)) / 2 * 0.0254 } : null;
+  return { title: name, pads, body };
+}
+
+// Points of an EasyEDA Pro path: [x, y, "L", x, y, ..., "ARC", angle, x, y, ...] (nested arrays allowed)
+function pathPts(arr, out) {
+  const n = v => typeof v === 'number'; let i = 0;
+  if (n(arr[0]) && n(arr[1])) { out.push([arr[0], arr[1]]); i = 2; }
+  while (i < arr.length) {
+    if (arr[i] === 'L') { i++; while (n(arr[i]) && n(arr[i + 1])) { out.push([arr[i], arr[i + 1]]); i += 2; } }
+    else if (arr[i] === 'ARC') { out.push([arr[i + 2], arr[i + 3]]); i += 4; }
+    else if (Array.isArray(arr[i])) { pathPts(arr[i], out); i++; }
+    else i++;
+  }
 }
 
 const rot = (p, deg) => { // counter-clockwise on screen, y-down frame
@@ -114,13 +132,29 @@ for (const [ref, mx, my, layer, r0] of rows) {
     continue;
   }
   if (!e || !e.pads.length) { keep('no JLC footprint found'); continue; }
-  const res = fit(k.pads.filter(p => p.n !== ''), e.pads), best = res[0];
+  const res = fit(k.pads.filter(p => p.n !== ''), e.pads);
+  let best = res[0], bodyNote = '';
+  if (k.body && e.body) {
+    const bodyErr = r => { const b = rot(e.body, r.R); return Math.hypot(b.x + r.tx - k.body.x, b.y + r.ty - k.body.y); };
+    if (bodyErr(best) > 2) {
+      // all-pins-identical parts: pick the rotation whose pads fit (numbers ignored) and whose body lands on KiCad's
+      const geo = [0, 90, 180, 270].map(R => {
+        const ep = e.pads.map(q => rot(q, R)), m = a => a.reduce((s, v) => s + v, 0) / a.length;
+        const tx = m(k.pads.map(q => q.x)) - m(ep.map(q => q.x)), ty = m(k.pads.map(q => q.y)) - m(ep.map(q => q.y));
+        const worst = Math.max(...k.pads.map(q => Math.min(...ep.map(r => Math.hypot(q.x - r.x - tx, q.y - r.y - ty)))));
+        return { R, tx, ty, worst, geometric: true };
+      }).filter(r => r.worst < 0.3).sort((a, b) => bodyErr(a) - bodyErr(b));
+      if (/^(PinHeader|PinSocket)/.test(k.fp) && geo.length && bodyErr(geo[0]) < 2) {
+        bodyNote = ` | body-matched (JLC pin numbering mirrored vs body; header pins are identical)`; best = geo[0];
+      } else bodyNote = `  << CHECK: JLC body ${bodyErr(best).toFixed(1)} mm from KiCad body`;
+    }
+  }
   const alt = res.filter(r => r.R !== best.R && r.worst - best.worst < 0.05).map(r => r.R);
   const off = rot({ x: best.tx, y: best.ty }, k.rot);
   const X = k.x + off.x, Y = k.y + off.y, ROT = (k.rot + best.R) % 360;
   lines.push(`"${ref}","${X.toFixed(4)}","${(-Y).toFixed(4)}","${layer}","${+ROT.toFixed(2)}"`);
   rep.push(`${ref.padEnd(4)} ${code.padEnd(10)} ${k.fp.slice(0, 36).padEnd(36)} JLC "${e.title.slice(0, 34)}" | corr ${String(best.R).padStart(3)} | rot ${r0} -> ${+ROT.toFixed(2)} | shift ${Math.hypot(off.x, off.y).toFixed(3)} mm | fit ${best.worst.toFixed(3)} mm` +
-    (alt.length ? ` | symmetric, also fits ${alt.join('/')}` : '') + (best.geometric ? ' | matched by geometry (pad numbers differ)' : '') + (best.worst > 0.2 ? '  << CHECK' : ''));
+    (alt.length ? ` | symmetric, also fits ${alt.join('/')}` : '') + (best.geometric ? ' | matched by geometry (pad numbers differ)' : '') + (best.worst > 0.2 ? '  << CHECK' : '') + bodyNote);
 }
 fs.writeFileSync(path.join(S, 'cpl_new.csv'), lines.join('\r\n') + '\r\n');
 fs.writeFileSync(path.join(S, 'rot_report.txt'), rep.join('\n') + '\n');

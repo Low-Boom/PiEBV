@@ -31,6 +31,13 @@ Parts with no LCSC footprint stay unchanged, except two-pad chip resistors and c
 no correction. When pad numbers differ (for example the BNC posts), the match uses pad 1 and the pad
 geometry.
 
+**Body direction.** The script also compares where JLC's part body lies (its component-shape and pin
+layers) with the KiCad body (courtyard). For pin headers and sockets, whose pins are all identical, JLC
+sometimes numbers the pins in mirror order relative to the body (J16 and TP3 here); the pin-number match
+then puts the body on the wrong side. For those parts the script uses the rotation that puts the body on
+the KiCad body. For any other part with a body mismatch it reports `<< CHECK: JLC body ... from KiCad body`
+and changes nothing.
+
 ## Conventions
 
 - Rotation is counter-clockwise seen from the top, the same as KiCad. CPL rotation = KiCad rotation +
