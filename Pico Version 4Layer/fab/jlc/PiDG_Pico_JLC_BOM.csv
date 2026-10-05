@@ -35,7 +35,7 @@
 "LT3065EDD#TRPBF (Analog Devices, adjustable)","U17","DFN-10-EP(3x3)","C670143"
 "TPS3700DDCR","U18","SOT-23-6","C33002"
 "IDC box header 2x5 2.54 mm vertical","J1,J2,J3,J4,J5,J6","IDC-2x5-P2.54","C5665"
-"BNC 50R right-angle Amphenol B6252HB-NPP3G-50","J7,J8,J12","BNC-TH","C22457552"
+"BNC 50R right-angle Kinghelm KH-BNC50-3511 (50 ohm only)","J7,J8,J12","BNC-TH","C2837587"
 "Pin header 1x3 2.54 mm vertical","J10,J11,J18,J19","HDR-1x3-P2.54","C49257"
 "Female socket 1x20 2.54 mm, 8.5 mm","J14,J15","HDR-F-1x20-P2.54","C2905423"
 "Pin header 1x3 2.54 mm right-angle","J16","HDR-1x3-P2.54-RA","C32713262"

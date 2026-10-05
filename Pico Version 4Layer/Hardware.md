@@ -734,6 +734,11 @@ doesn't publish the camera's own thresholds or input pull, so confirm on the ben
 
 J7 Laser 1 (out), J8 Laser 2 (out), J12 Pixel reset (**in**, active low, 3.3 V/5 V/open-drain
 compatible; see [Pixel reset](#pixel-reset-j12-optionally-gated-by-the-pico)). Shells on GND.
+Part: Kinghelm KH-BNC50-3511 (50 Ω, right angle; LCSC C2837587), footprint
+`PiDG_Local:BNC_Kinghelm_KH-BNC50-3511_Horizontal`: the Amphenol B6252HB-NPP3G-50 pad pattern,
+which the Kinghelm drawing matches within 0.04 mm (its 3D model is the Amphenol body). Never fit the
+75 Ω KH-BNC75-3511. Its posts sit in
+a plastic housing and the shell reaches GND through one lead, so use the panel nuts in an enclosure.
 J7/J8 drive a 50 Ω or a high-impedance load, set per channel by J18/J19 (see
 [Output mode](#output-mode)).
 
@@ -880,7 +885,7 @@ order-number placeholder.
 | `fab/jlc/PiDG_Pico_JLC_BOM.csv`, `fab/jlc/PiDG_Pico_JLC_CPL.csv`, `fab/jlc/JLC_ORDER.md` | JLCPCB full-assembly upload files (all 82 parts, LCSC numbers) and the order checklist |
 | `fab/gerbers/`, `fab/PiDG_Pico_Gerbers.zip` | gerbers, Excellon drill files (plated and unplated) and job file, from the board's stored plot settings |
 | `libs/PiDG_Local.kicad_sym` | Pico 2 W, UCC27524, LT3065 and TPS3700 symbols |
-| `libs/PiDG_Local.pretty/` | `*_EdgeTrim` footprint variants (see below) |
+| `libs/PiDG_Local.pretty/` | `*_EdgeTrim` footprint variants (see below) and the J7/J8/J12 BNC footprint (see [BNCs](#bncs-50-ω)) |
 | `libs/RPi_Pico.pretty/` | official RPi castellated-module footprint (unused: the board uses sockets) |
 | `../src/` | firmware: `board.h` (pin map), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `laser_gate.*` (CH1/CH2 gate, start-up hook), `protocol.*` (serial commands), `main.cpp` (arming, hold-off, watchdog) |
 | `../platformio.ini` | build configuration: platform pinned to an exact commit; `pico2w` (default) and `pico2` builds |

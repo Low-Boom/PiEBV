@@ -19248,7 +19248,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Connector_Coaxial:BNC_Amphenol_B6252HB-NPP3G-50_Horizontal"
+		(property "Footprint" "PiDG_Local:BNC_Kinghelm_KH-BNC50-3511_Horizontal"
 			(at 358.14 124.46 0)
 			(hide yes)
 			(show_name no)
@@ -19259,7 +19259,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2211231430_Shenzhen-Kinghelm-Elec-KH-BNC50-3511_C2837587.pdf"
 			(at 358.14 124.46 0)
 			(hide yes)
 			(show_name no)
@@ -19270,7 +19270,7 @@
 				)
 			)
 		)
-		(property "Description" "coaxial connector (BNC, SMA, SMB, SMC, Cinch/RCA, LEMO, ...)"
+		(property "Description" "BNC 50 ohm right-angle jack, Kinghelm KH-BNC50-3511 (LCSC C2837587). Never the 75 ohm KH-BNC75-3511."
 			(at 358.14 124.46 0)
 			(hide yes)
 			(show_name no)
@@ -22454,7 +22454,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Connector_Coaxial:BNC_Amphenol_B6252HB-NPP3G-50_Horizontal"
+		(property "Footprint" "PiDG_Local:BNC_Kinghelm_KH-BNC50-3511_Horizontal"
 			(at 157.48 180.34 0)
 			(hide yes)
 			(show_name no)
@@ -22465,7 +22465,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2211231430_Shenzhen-Kinghelm-Elec-KH-BNC50-3511_C2837587.pdf"
 			(at 157.48 180.34 0)
 			(hide yes)
 			(show_name no)
@@ -22476,7 +22476,7 @@
 				)
 			)
 		)
-		(property "Description" "coaxial connector (BNC, SMA, SMB, SMC, Cinch/RCA, LEMO, ...)"
+		(property "Description" "BNC 50 ohm right-angle jack, Kinghelm KH-BNC50-3511 (LCSC C2837587). Never the 75 ohm KH-BNC75-3511."
 			(at 157.48 180.34 0)
 			(hide yes)
 			(show_name no)
@@ -24527,7 +24527,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Connector_Coaxial:BNC_Amphenol_B6252HB-NPP3G-50_Horizontal"
+		(property "Footprint" "PiDG_Local:BNC_Kinghelm_KH-BNC50-3511_Horizontal"
 			(at 213.36 180.34 0)
 			(hide yes)
 			(show_name no)
@@ -24538,7 +24538,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2211231430_Shenzhen-Kinghelm-Elec-KH-BNC50-3511_C2837587.pdf"
 			(at 213.36 180.34 0)
 			(hide yes)
 			(show_name no)
@@ -24549,7 +24549,7 @@
 				)
 			)
 		)
-		(property "Description" "coaxial connector (BNC, SMA, SMB, SMC, Cinch/RCA, LEMO, ...)"
+		(property "Description" "BNC 50 ohm right-angle jack, Kinghelm KH-BNC50-3511 (LCSC C2837587). Never the 75 ohm KH-BNC75-3511."
 			(at 213.36 180.34 0)
 			(hide yes)
 			(show_name no)

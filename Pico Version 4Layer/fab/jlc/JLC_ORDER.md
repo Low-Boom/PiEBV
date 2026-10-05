@@ -39,14 +39,21 @@ order.
 
 **Paste into the order remarks:**
 
-> J17 (USB-C) is flush with the top board edge by design. J7, J8, J12 (BNC) overhang the right edge
-> by about 21 mm, and J16 / TP3 (right-angle headers) overhang their edges, all by design — please
+> J17 (USB-C) is flush with the top board edge by design. J7, J8, J12 (BNC, KH-BNC50-3511 50 ohm
+> only, do not substitute KH-BNC75-3511) overhang the right edge by about 21 mm, and J16 / TP3 (right-angle headers) overhang their edges, all by design — please
 > hand-solder these, no wave fixture. J14/J15 are sockets for a plug-in module: seat them flat and
 > perpendicular. Do not substitute U3 (NAND 74LVC1G00, not a 1G04), U9, U12, U13,
 > U14 (CH224A only, not CH224K), U15, U17 (adjustable LT3065 only), U18,
 > U7/U8/U10, R6/R7 (68 ohm 2 W 2512), R25-R28 (47 / 82 ohm 2 W 2512) or R12/R13 (0.1 %).
 
 ## Parts that need action before ordering
+
+**J7/J8/J12 BNC (changed on 2026-10-05):** Kinghelm KH-BNC50-3511 (C2837587, 5,636 in stock,
+~$0.93) replaces the Amphenol B6252HB-NPP3G-50 (C22457552, ~$3.61) on the same pad pattern. Before
+releasing the order, buy two loose parts from LCSC and (1) test-fit them in a 0.82–0.90 mm hole (the board's pin
+holes are 0.90 mm, Kinghelm's recommended size; the drawing does not dimension the pin tails),
+(2) check continuity from the shell to the ground lead (pad 2): the shell bond is one iron lead,
+and the mounting posts sit in a PBT (plastic) housing.
 
 Two parts were out of stock at JLC. Either have JLC buy them from another distributor first
 (**Global Sourcing**, in the Parts Manager), or buy them yourself and send them to JLC
@@ -105,8 +112,11 @@ JLC doesn't supply these:
 
 - **Mounting:** 4 × M3 holes on a 114 × 114 mm square, 6 mm in from each edge of the
   126 × 126 mm board. Copper is kept 3 mm clear of each hole.
-- **Right edge:** the three BNC barrels stand 20.8 mm past the board edge (Laser 1, Laser 2, Pixel
-  reset from top to bottom), for a panel with matching holes.
+- **Right edge:** the three BNC barrels stand about 20.6 mm past the board edge (20.58 mm from the
+  Kinghelm KH-BNC50-3511 drawing; the earlier Amphenol part was 20.8 mm), with the axis about 6.6 mm
+  above the board (Amphenol: about 7.1 mm). Laser 1, Laser 2, Pixel reset from top to bottom, for a
+  panel with matching holes (1/2-28UNEF thread, D-hole). Measure both on the first board before
+  cutting a panel. The housing is plastic, so fit the panel nuts to take the bayonet torque.
 - **Top edge: two USB ports, labelled on the silkscreen:**
   - **J17 USB-C, `POWER ONLY`:** centred 82 mm from the board's left edge, flush with the top edge,
     sitting on the board surface. Needs a cut-out.

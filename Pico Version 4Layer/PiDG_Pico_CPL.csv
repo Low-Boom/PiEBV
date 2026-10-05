@@ -25,11 +25,11 @@ Ref,Val,Package,PosX,PosY,Rot,Side
 "J4","Conn_02x05_Odd_Even","IDC-Header_2x05_P2.54mm_Vertical",175.895000,-126.682500,0.000000,top
 "J5","Conn_02x05_Odd_Even","IDC-Header_2x05_P2.54mm_Vertical",187.880000,-126.682500,0.000000,top
 "J6","Conn_02x05_Odd_Even","IDC-Header_2x05_P2.54mm_Vertical",199.865000,-126.682500,0.000000,top
-"J7","Laser 1","BNC_Amphenol_B6252HB-NPP3G-50_Horizontal",245.000000,-80.645000,-90.000000,top
-"J8","Laser 2","BNC_Amphenol_B6252HB-NPP3G-50_Horizontal",245.000000,-100.330000,-90.000000,top
+"J7","Laser 1","BNC_Kinghelm_KH-BNC50-3511_Horizontal",245.000000,-80.645000,-90.000000,top
+"J8","Laser 2","BNC_Kinghelm_KH-BNC50-3511_Horizontal",245.000000,-100.330000,-90.000000,top
 "J10","Trig","PinHeader_1x03_P2.54mm_Vertical",217.000000,-101.000000,90.000000,top
 "J11","Laser Enable","PinHeader_1x03_P2.54mm_Vertical",191.000000,-73.500000,90.000000,top
-"J12","Pixel Reset","BNC_Amphenol_B6252HB-NPP3G-50_Horizontal",245.000000,-120.650000,-90.000000,top
+"J12","Pixel Reset","BNC_Kinghelm_KH-BNC50-3511_Horizontal",245.000000,-120.650000,-90.000000,top
 "J14","Pico Socket A","PinSocket_1x20_P2.54mm_Vertical",160.015000,-32.385000,0.000000,top
 "J15","Pico Socket B","PinSocket_1x20_P2.54mm_Vertical",177.795000,-32.385000,0.000000,top
 "J16","Laser En/PWM Trig/GND","PinHeader_1x03_P2.54mm_Horizontal",187.800000,-38.000000,90.000000,top
