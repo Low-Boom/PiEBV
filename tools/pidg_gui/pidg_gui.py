@@ -25,24 +25,6 @@ import pidg_device
 
 STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
-# Settings the GUI keeps at one value: the page shows them read-only, and the server refuses
-# any other value, from the settings form or typed in the console.
-FIXED = {"SYNC": 1000000}
-
-
-def fixed_violation(line):
-    """Why a console line may not be sent, or None. Lines holding DISARM always go through."""
-    words = line.split()
-    if not words or "DISARM" in line.upper():
-        return None
-    name = words[0].upper()
-    if name in FIXED and len(words) > 1:
-        if len(words) == 2 and words[1].isdigit() and int(words[1]) == FIXED[name]:
-            return None
-        return "%s is fixed at %d in the GUI; not sent" % (name, FIXED[name])
-    return None
-
-
 class State:
     def __init__(self):
         self.lock = threading.Lock()
@@ -169,9 +151,6 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({"ok": ok, "reply": reply, "state": snapshot()})
             if url.path == "/api/apply":
                 settings = {str(k).upper(): int(v) for k, v in (body.get("settings") or {}).items()}
-                bad = [n for n, v in settings.items() if n in FIXED and v != FIXED[n]]
-                if bad:
-                    return self._json({"error": "%s is fixed at %d in the GUI" % (bad[0], FIXED[bad[0]])}, 400)
                 results = dev.apply(settings)
                 return self._json({"results": [{"name": n, "ok": ok, "reply": r} for n, ok, r in results],
                                    "state": snapshot()})
@@ -179,9 +158,6 @@ class Handler(BaseHTTPRequestHandler):
                 line = str(body.get("line", "")).strip()
                 if not line or len(line) > 120 or any(ord(c) < 32 for c in line):
                     return self._json({"error": "one printable command line, up to 120 characters"}, 400)
-                why = fixed_violation(line)
-                if why:
-                    return self._json({"error": why}, 400)
                 return self._json({"lines": dev.raw(line), "state": snapshot()})
         except pidg_device.LinkError as exc:
             return self._json({"error": str(exc), "state": snapshot()}, 409)

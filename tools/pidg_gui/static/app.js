@@ -20,9 +20,6 @@ const META = {
   PIXLAG: { group: "pix", label: "Reset after last pulse", kind: "ns" },
 };
 const GROUP_BOX = { timing: "timingFields", pix: "pixFields", other: "otherFields" };
-// Shown read-only, never set from the page (the server refuses other values too).
-const FIXED = { SYNC: 1000000 };
-
 let snap = null;        // last /api/state reply
 let dirty = {};         // NAME -> text typed by the user, not yet applied
 let fitMode = "pulses";
@@ -310,9 +307,8 @@ function render() {
     return;
   }
   const clk = parseInt(sys.CLK || "150000000", 10);
-  const names = Object.keys(META).filter((n) => n in st.fields).concat(st.order.filter((n) => !(n in META)));
+  const names = Object.keys(META).filter((n) => n in st.fields).concat(st.order.filter((n) => !(n in META) && n !== "SYNC"));
   for (const name of names) {  // META order (laser settings, then the marker), then unknown keys
-    if (name in FIXED) continue;
     const row = fieldRow(name);
     const f = st.fields[name];
     const input = row.querySelector("input, select");
@@ -335,22 +331,18 @@ function render() {
     ["Start hold-off", pending > 0 ? fmtTime(pending * 1e-6, 0) : "none"],
     ["Hardware", sys.HW || "?"],
   ]);
-  renderSysline(sys, clk, st.fields.SYNC);
+  renderSysline(sys, clk);
   renderCharts(st, clk);
 }
 
-// The board's system keys, compact, under the identity in the header. A watchdog reset,
-// dropped replies or a sync clock other than 1 MHz (set outside this page; the cameras'
-// timestamps would be scaled) are flagged.
-function renderSysline(sys, clk, sync) {
+// The board's system keys, compact, under the identity in the header. A watchdog reset
+// or dropped replies are flagged.
+function renderSysline(sys, clk) {
   const box = $("sysline");
   box.replaceChildren();
   if (!sys) return;
   const wdtResets = parseInt(sys.WDT_RESETS || "0", 10), dropped = parseInt(sys.TX_DROPPED || "0", 10);
   const items = [];
-  if (sync && sync.value !== FIXED.SYNC) {
-    items.push(["sync " + fmtHz(sync.actual) + ", not 1 MHz: send SYNC 1000000 in the console, or reset the board", true]);
-  }
   items.push(
     [fmtHz(clk) + " clock (" + (1e9 / clk).toFixed(3) + " ns steps)", false],
     ["last reset " + (sys.RESET || "?"), sys.RESET === "WATCHDOG"],

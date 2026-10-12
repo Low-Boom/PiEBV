@@ -1,5 +1,5 @@
 // Host harness for the REAL firmware timing header (src/pulse_timing.h).
-// Reads "clk freq width delay mwidth [sync [combine [pixgate pixlead pixlag]]]" lines,
+// Reads "clk freq width delay mwidth [combine [pixgate pixlead pixlag]]" lines,
 // prints the realized cycles, formatted values and FIFO words in the format
 // check_random.py, check_marker_lock.py, check_sync.py, check_combined.py and
 // check_pixgate.py expect. The pixel-reset gate fields are appended at the end:
@@ -13,13 +13,12 @@
 int main() {
     char line[256];
     while (fgets(line, sizeof line, stdin)) {
-        unsigned long clk, f, w, d, mw, sy = 1000000, cb = 0, pg = 0, pl = 10000, pa = 100000;
-        int n = sscanf(line, "%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu", &clk, &f, &w, &d, &mw, &sy, &cb, &pg, &pl,
-                       &pa);
+        unsigned long clk, f, w, d, mw, cb = 0, pg = 0, pl = 10000, pa = 100000;
+        int n = sscanf(line, "%lu %lu %lu %lu %lu %lu %lu %lu %lu", &clk, &f, &w, &d, &mw, &cb, &pg, &pl, &pa);
         if (n < 5) continue;
         PulseParams p;
         p.freqHz = (uint32_t)f; p.widthNs = (uint32_t)w; p.delayNs = (uint32_t)d;
-        p.markerWidthNs = (uint32_t)mw; p.syncHz = (uint32_t)sy;
+        p.markerWidthNs = (uint32_t)mw;
         p.combine = (uint32_t)cb;
         p.pixGate = (uint32_t)pg; p.pixLeadNs = (uint32_t)pl; p.pixLagNs = (uint32_t)pa;
         RealizedTiming rt;

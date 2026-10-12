@@ -43,14 +43,14 @@ never uses 1200 baud, which would reboot the Pico into its bootloader.
 
 | Part | What it does |
 |---|---|
-| Header | Device list, with PiDG boards marked; **↻** rescans. **Connect**/**Disconnect**. The board's identity and, under it, a system line: clock, why it last restarted, crash restarts (watchdog), the watchdog timeout and reply bytes dropped. A crash restart, dropped replies or a sync clock other than 1 MHz are flagged ⚠. Then the theme button, the **ARMED** indicator and **DISARM**. |
+| Header | Device list, with PiDG boards marked; **↻** rescans. **Connect**/**Disconnect**. The board's identity and, under it, a system line: clock, why it last restarted, crash restarts (watchdog), the watchdog timeout and reply bytes dropped. A crash restart or dropped replies is flagged ⚠. Then the theme button, the **ARMED** indicator and **DISARM**. |
 | Arming | A short strip above the charts: **ARM** and **DISARM**, with the firmware's arming state, start hold-off and `HW` status. |
 | Timing chart | One pulse pair, with Laser 1, Laser 2, marker and pixel reset on a common time axis. (The sync clock runs continuously, so it is not drawn.) Time 0 is the CH1 rising edge. **Pulses** zooms to the two laser pulses. **Pulses + reset window** also shows the `PIXLEAD`/`PIXLAG` window. Hover for the level of every signal at that instant. |
 | Sequence chart | Three consecutive pairs, with the marker and the pixel-reset gate between pairs. |
 | Edge table | Every edge's realized time after CH1, in ns and in PIO cycles (6.667 ns at 150 MHz). |
-| Timing settings | `FREQ`, `WIDTH`, `DELAY` (Δt), `COMBINE`, and the camera marker's `MARKERWIDTH`, with one **Apply**. The sync clock is not shown: `SYNC` is fixed at 1 MHz in the GUI, because the cameras count their 1 µs event timestamps on it (Prophesee requires a 1 MHz Sync In). If the board ever reports another value, the header's system line warns. |
+| Timing settings | `FREQ`, `WIDTH`, `DELAY` (Δt), `COMBINE`, and the camera marker's `MARKERWIDTH`, with one **Apply**. The 1 MHz camera sync clock is fixed by the firmware and is not an adjustable setting; `STATUS` reports its realized value. |
 | Pixel-reset gate | `PIXGATE`, `PIXLEAD`, `PIXLAG`. Hidden if the firmware predates the gate. |
-| Console | Full width at the bottom, and resizable by dragging its bottom edge. Shows every command and reply on the link. You can type any command here, exactly as in a serial terminal, except `SYNC` with a value other than 1000000. The page's own once-a-second `STATUS` poll is kept out of the console. |
+| Console | Full width at the bottom, and resizable by dragging its bottom edge. Shows every command and reply on the link. You can type any firmware command here, exactly as in a serial terminal. The camera sync clock is fixed at 1 MHz, not a command. The page's own once-a-second `STATUS` poll is kept out of the console. |
 
 **Entering values**
 - Type into a field and press **Enter** (that field only) or **Apply** (the whole card).
@@ -129,6 +129,6 @@ JSON API (same origin, used by the page):
 | `GET /api/log?since=N` | Console entries after sequence number `N` |
 | `POST /api/connect` `{"target": "COM7"}` | Connect (`sim`, a port or a URL) |
 | `POST /api/disconnect` | Close the link (does not disarm) |
-| `POST /api/apply` `{"settings": {"FREQ": 15, "DELAY": 10000}}` | Set values; returns each reply |
+| `POST /api/apply` `{"settings": {"FREQ": 15, "DELAY": 10000}}` | Set adjustable values; returns each reply |
 | `POST /api/arm`, `POST /api/disarm` | Arm / disarm |
 | `POST /api/command` `{"line": "HELP"}` | Any one command; returns every reply line |

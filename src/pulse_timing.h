@@ -33,7 +33,7 @@
 // depend on the attached driver, and the unit is used with more than one. The
 // firmware only enforces what the PIO programs physically need: widths of >= 3
 // cycles (20 ns at 150 MHz), DELAY + WIDTH and MARKERWIDTH fitting in the period,
-// the SYNC divider range, and with COMBINE 1 (both pulses on both outputs, sharing
+// the fixed 1 MHz SYNC divider range, and with COMBINE 1 (both pulses on both outputs, sharing
 // the pins) DELAY >= WIDTH + 1 cycle so the two pulses never touch.
 //
 // Pixel-reset gate (PIXGATE 1/2): a fourth state machine runs the same pulse
@@ -43,6 +43,7 @@
 // before the next CH1 rise; the pixels are free for the whole pulse pair. The
 // program needs PIXLEAD >= 5 cycles and a reset of >= 3 cycles per period.
 constexpr uint32_t kPixGateMinLeadCycles = 5;
+constexpr uint32_t kSyncHz = 1000000;
 
 // ---------------------------------------------------------------- parameters
 struct PulseParams {
@@ -50,7 +51,6 @@ struct PulseParams {
     uint32_t widthNs = 100;         // CH1/CH2 pulse width (inside every attached laser driver's range)
     uint32_t delayNs = 10000;       // CH2-after-CH1 delay (rising edge to rising edge)
     uint32_t markerWidthNs = 2000;  // marker pulse width
-    uint32_t syncHz = 1000000;      // camera sync clock frequency
     uint32_t combine = 0;           // 0: CH1 -> LASER 1, CH2 -> LASER 2. 1: both pulses on BOTH outputs
     uint32_t pixGate = 0;           // camera pixel reset between pulse pairs: 0 off, 1 while ARMED, 2 always
     uint32_t pixLeadNs = 10000;     // pixels released this long before CH1 rises
@@ -142,8 +142,8 @@ inline int64_t pulseMaxDelayCycles(uint32_t period, uint32_t width) {
 constexpr uint32_t kSyncMinDiv256 = 1u << 8;              // INT 1, FRAC 0
 constexpr uint32_t kSyncMaxDiv256 = (65535u << 8) | 0xFF;  // INT 65535, FRAC 255
 
-inline uint64_t syncDiv256For(uint32_t freq_hz, uint32_t clk_hz) {
-    return freq_hz ? ((uint64_t)clk_hz * 128u + freq_hz / 2) / freq_hz : 0;
+inline uint64_t syncDiv256For(uint32_t clk_hz) {
+    return ((uint64_t)clk_hz * 128u + kSyncHz / 2) / kSyncHz;
 }
 
 // ---------------------------------------------------------------- formatting
@@ -207,7 +207,7 @@ inline void syncFormatHz(uint32_t div256, uint32_t clk_hz, char *buf, size_t len
 inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTiming *rt) {
     static char why[160];
     char a[32];
-    if (p.freqHz == 0 || p.syncHz == 0) {
+    if (p.freqHz == 0) {
         return "value must be > 0";
     }
     if (p.combine > 1) {
@@ -312,12 +312,9 @@ inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTim
         }
     }
 
-    const uint64_t div256 = syncDiv256For(p.syncHz, clk);
+    const uint64_t div256 = syncDiv256For(clk);
     if (div256 < kSyncMinDiv256 || div256 > kSyncMaxDiv256) {
-        snprintf(why, sizeof(why), "SYNC out of range (%lu..%lu Hz)",
-                 (unsigned long)(((uint64_t)clk * 128u) / (kSyncMaxDiv256 + 1) + 1),
-                 (unsigned long)(clk / 2));
-        return why;
+        return "fixed 1 MHz SYNC is out of range for the system clock";
     }
 
     rt->clkHz = clk;
