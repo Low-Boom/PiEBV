@@ -22,7 +22,7 @@ pio run
    cable, then copy the UF2 to the `RP2350` drive. Flash with the Pico out of the board or J17
    unplugged.
 3. Seat the Pico components-up, USB toward the board's top edge. Set J10 to **2-3** and J18/J19 to
-   match the connected inputs; leave J11 empty until the output checks.
+   **1-2** for the 50 Ω scope checks; leave J11 empty until instructed to check the outputs.
 4. Connect the 15 V charger to J17 and the Pico's micro-USB to the computer. Open the Pico's serial
    port, enable local echo, and send `STATUS`.
 5. Follow [Hardware setup](#hardware-setup) to check the laser outputs with a scope before
