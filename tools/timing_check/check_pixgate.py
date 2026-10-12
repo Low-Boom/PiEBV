@@ -43,7 +43,7 @@ for clk in clks:
         lag = random.choice([0, 1, 1000, 100000, per_ns - lead - d - w - 25 + random.randint(-12, 12),
                              random.randint(0, max(1, per_ns))])
         cases.append((clk, f, w, max(0, d), 2000, cb, pg, max(0, lead), max(0, lag)))
-inp = "".join("%d %d %d %d %d %d %d %d %d %d\n" % c for c in cases)
+inp = "".join("%d %d %d %d %d %d %d %d %d\n" % c for c in cases)
 out = subprocess.run([HARNESS], input=inp, capture_output=True, text=True).stdout.splitlines()
 assert len(out) == len(cases), (len(out), len(cases))
 
