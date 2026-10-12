@@ -110,21 +110,9 @@ the output mode (J18/J19) set to match their input.
   | **2-3** | Hi-Z | TTL or 5 V CMOS inputs, a scope at 1 MΩ | about 2.5 V (too low to fire an LDP-V) | **about 4.8 V** (correct) |
   | none | — | nothing: always fit a shunt | about 3.5 V | about 12 V |
 
-  Hi-Z mode is still too much for an input rated for 3.3 V only.
-- **One laser driver per output — never use a BNC tee.** Each output is built to drive exactly one
-  input. Simulated in 50 Ω mode, with 1–2 m of coax:
-  - J7 and J8 joined into one driver: each pulse reaches only **3.4 V**, below the LDP-V's 4.5 V
-    minimum, so it fires unreliably. Where the two pulses overlap (`DELAY` shorter than `WIDTH`, e.g.
-    `DELAY 0`) the input sees **6.9 V**, above the LDP-V's 5.2 V damage limit.
-  - One output split to two drivers: each sees **3.0 V**, too low for either.
-  - The PiDG itself survives both.
-
   To fire **one light source with both pulses**, or **two light sources together with the same
   double pulse**, use `COMBINE 1` instead ([Combined mode](#combined-mode-combine)): each output
   then carries both pulses, still one driver per output.
-- **The board itself can't be overloaded by any setting.** The outputs survive every setting the
-  firmware accepts, even into a short-circuited cable. (The numbers are in
-  [Hardware.md](Hardware.md#board-output-rating).)
 
 **Cameras and jumpers**
 
@@ -186,8 +174,6 @@ unplugged reset cable is harmless.
 - It accepts 3.3 V or 5 V logic, an open-drain (open-collector) output, or a switch to ground.
 - Whatever drives it must be able to sink 1 mA.
 - A 1.8 V logic high is **not** guaranteed to release the reset.
-- **Don't fit a 50 Ω terminator** on J12: it would hold the cameras in reset unless your source
-  actively drives J12 high.
 - The Pico's optional gate ([`PIXGATE`](#pixel-reset-gate-pixgate)) works alongside it: the cameras
   are in reset whenever J12 is low **or** the gate is.
 
@@ -270,11 +256,10 @@ undefined.
 | J17 only | The board runs, DISARMED, with the fixed 1 MHz sync clock and marker running. There is no serial link, so it can't be armed. |
 
 **Charger:** a USB-C PD charger that offers **15 V**. In practice that means any PD charger rated
-30 W or more (the USB-PD rules require chargers above 27 W to offer 15 V). With a 5 V or 9 V-only
-charger the board still runs, but the laser outputs stay off.
+30 W or more. With a 5 V or 9 V-only charger the board still runs, but the laser outputs stay off.
 
 **To restart the board,** unplug both J17 and the Pico's USB cable. Unplugging just one doesn't
-restart it, and neither does closing the serial port. There is no reset button.
+restart it, and neither does closing the serial port.
 
 ---
 
@@ -305,7 +290,6 @@ with 50 Ω inputs (or 50 Ω feed-through terminators).
    WIDTH=100 (actual 100.000 ns, 15 cyc)
    DELAY=10000 (actual 10000.000 ns, 1500 cyc)
    MARKERWIDTH=2000 (actual 2000.000 ns, 300 cyc)
-   SYNC=1000000 (fixed, actual 1000000.000 Hz, divider 75+0/256)
    COMBINE=0 (CH1 on LASER 1, CH2 on LASER 2)
    ARMED=0
    HW=OK
@@ -704,7 +688,6 @@ FREQ=15 (actual 15.000 Hz, period 10000000 cyc)
 WIDTH=100 (actual 100.000 ns, 15 cyc)
 DELAY=10000 (actual 10000.000 ns, 1500 cyc)
 MARKERWIDTH=2000 (actual 2000.000 ns, 300 cyc)
-SYNC=1000000 (fixed, actual 1000000.000 Hz, divider 75+0/256)
 COMBINE=0 (CH1 on LASER 1, CH2 on LASER 2)
 PIXGATE=0 (off: pixel reset from J12 only)
 PIXLEAD=10000 (actual 10000.000 ns, 1500 cyc)
@@ -724,7 +707,6 @@ TX_DROPPED=0
 | Key | Meaning |
 |---|---|
 | `FREQ` … `MARKERWIDTH` | Each setting as you asked for it, with the value actually produced |
-| `SYNC` | Fixed 1 MHz camera sync clock, with its realized frequency and divider |
 | `COMBINE` | 0 = CH1 on Laser 1, CH2 on Laser 2; 1 = both pulses on both outputs |
 | `PIXGATE`, `PIXLEAD`, `PIXLAG` | The pixel-reset gate settings |
 | `PIXRESET` | `off`, or the gate as produced: reset time per period, its start after CH1, and how long the pixels are free around each pair |
