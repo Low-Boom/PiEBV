@@ -1,10 +1,7 @@
 # PiDG
 
-A pulse-timing box for particle image velocimetry (PIV), built around a Raspberry Pi Pico 2 W.
-
-PIV measures how a fluid moves. Tiny particles in the flow are lit by two short flashes of light a
-known time apart, and cameras record how far the particles moved in between. PiDG makes the timing
-signals for that:
+A USB-controlled pulse-timing box for particle image velocimetry (PIV), built around a Raspberry
+Pi Pico 2 W.
 
 - It **fires two laser (or LED) drivers**, the second exactly a set delay after the first, at a set
   repetition rate.
@@ -13,13 +10,32 @@ signals for that:
 - You **control it by typing short text commands** over USB: from a terminal, a Python script or
   the included web page.
 
-> **Status.** The current board (KiCad project `PiDG_Pico`) has not been built yet. The firmware
-> compiles and its timing has been checked step by step in simulation, but nothing has run on real
-> hardware. Do the [first-board checks](#first-board-checks) before connecting a laser driver or a
-> camera.
+> **Hardware status:** The current board has not been built or tested. Start with the simulator
+> below. The firmware compiles and its timing has been checked in simulation, but nothing has run on
+> real hardware. Complete the [first-board checks](Hardware.md#first-board-checks) before connecting
+> a laser driver or camera.
 
-**Contents:** [What it does](#what-it-does) · [Words used here](#words-used-here) ·
-[Safety](#safety) · [The board](#the-board) · [Quick start](#quick-start) ·
+## Quick start
+
+Try the firmware protocol and web GUI without hardware. You need Python 3.8+ and a C++17 compiler.
+From the repository root, build the simulator and start the GUI:
+
+```
+g++ -std=c++17 -O2 -I tools/pidg_sim/fake -I src \
+  -o tools/pidg_sim/pidg_sim tools/pidg_sim/pidg_sim.cpp src/protocol.cpp
+python tools/pidg_gui/pidg_gui.py --connect sim
+```
+
+The GUI opens at <http://127.0.0.1:8765>. Try commands such as `STATUS`, `WIDTH 100`, and `ARM`
+in its console. The simulator runs the firmware's command code, but does not simulate PIO timing,
+pulses, or hardware interlocks. See the [simulator guide](tools/pidg_sim/README.md) and
+[GUI guide](tools/pidg_gui/README.md) for details and Windows build instructions.
+
+For a real board, follow [Hardware setup](#hardware-setup) only after the board has been assembled
+and passed the first-board checks.
+
+**Contents:** [What it does](#what-it-does) ·
+[Safety](#safety) · [The board](#the-board) · [Hardware setup](#hardware-setup) ·
 [Connecting](#connecting) · [Command reference](#command-reference) ·
 [Troubleshooting](#troubleshooting) · [Building from source](#building-from-source) ·
 [Repository layout](#repository-layout)
@@ -47,21 +63,6 @@ signals for that:
 PiDG was designed for two **PicoLas LDP-V** laser-diode drivers (models 10-70 and 240-100) and six
 **IDS uEye UE-39B0XCP-E** event cameras. Other drivers with a 5 V trigger input should work too, with
 the output mode (J18/J19) set to match their input.
-
-### Words used here
-
-| Term | Meaning |
-|---|---|
-| **BNC** | The round, twist-lock connector used for coaxial cable on lab equipment. |
-| **50 Ω input** | An input with a 50 Ω resistor to ground built in ("terminated"). Many laser drivers have one, including the LDP-V, and scopes can be switched to 50 Ω. |
-| **High-impedance (Hi-Z) input** | An input that draws almost no current: logic inputs (TTL, 5 V CMOS) and a scope set to 1 MΩ. |
-| **Output mode** | Whether a laser output is set up for a 50 Ω input or a high-impedance one (jumpers J18/J19). The wrong mode gives the wrong voltage. |
-| **Jumper, shunt** | A jumper is a row of pins on the board. A shunt is the small plastic cap that connects two neighbouring pins. "J11 on 1-2" means a shunt joining pins 1 and 2 of J11. Pin 1 has a square pad. |
-| **ARM / DISARM** | Commands that allow or stop the laser pulses. Cameras keep running either way. |
-| **Sync slave** | A camera setting: the camera takes its clock from outside (from PiDG) instead of making its own. |
-| **E-stop** | An emergency-stop switch. Here it must be *normally closed*: pressing it opens the circuit. |
-| **USB-C PD charger** | A USB-C charger that can supply more than 5 V on request (laptop chargers, most phone chargers rated 30 W or more). PiDG asks it for 15 V. |
-| **IDC header** | The 2×5-pin connector for a flat ribbon cable (the camera ports). |
 
 ---
 
@@ -283,7 +284,7 @@ restart it, and neither does closing the serial port. There is no reset button.
 
 ---
 
-## Quick start
+## Hardware setup
 
 You need: the assembled board, a Pico 2 W, a micro-USB **data** cable (some cables only charge), a
 USB-C PD charger that offers 15 V (30 W or more) with a USB-C cable, jumper shunts, and a scope
