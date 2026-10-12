@@ -1,36 +1,32 @@
 # PiDG
 
 A USB-controlled pulse-timing box for particle image velocimetry (PIV), built around a Raspberry
-Pi Pico 2 W.
+Pi Pico 2 W. It triggers two laser drivers and synchronizes up to six event cameras.
 
-- It **fires two laser (or LED) drivers**, the second exactly a set delay after the first, at a set
-  repetition rate.
-- It **keeps up to six event cameras on one shared clock**, and marks every flash pair in each
-  camera's data so the recordings line up with the flashes.
-
-> **Hardware status:** The current board has not been built or tested. Start with the simulator
-> below. The firmware compiles and its timing has been checked in simulation, but nothing has run on
-> real hardware. Complete the [first-board checks](Hardware.md#first-board-checks) before connecting
-> a laser driver or camera.
+> **Hardware status:** Firmware timing has not yet been verified on a physical board. Complete the
+> [first-board checks](Hardware.md#first-board-checks) before connecting a laser driver or camera.
 
 ## Quick start
 
-Try the firmware protocol and web GUI without hardware. You need Python 3.8+ and a C++17 compiler.
-From the repository root, build the simulator and start the GUI:
+With the assembled board, a Pico 2 W, a USB-C PD charger that supplies 15 V, and a micro-USB data
+cable:
 
 ```
-g++ -std=c++17 -O2 -I tools/pidg_sim/fake -I src \
-  -o tools/pidg_sim/pidg_sim tools/pidg_sim/pidg_sim.cpp src/protocol.cpp
-python tools/pidg_gui/pidg_gui.py --connect sim
+python -m pip install platformio
+pio run
 ```
 
-The GUI opens at <http://127.0.0.1:8765>. Try commands such as `STATUS`, `WIDTH 100`, and `ARM`
-in its console. The simulator runs the firmware's command code, but does not simulate PIO timing,
-pulses, or hardware interlocks. See the [simulator guide](tools/pidg_sim/README.md) and
-[GUI guide](tools/pidg_gui/README.md) for details and Windows build instructions.
-
-For a real board, follow [Hardware setup](#hardware-setup) only after the board has been assembled
-and passed the first-board checks.
+1. Follow the [first-board checks](Hardware.md#first-board-checks) before applying power or
+   connecting equipment.
+2. Flash `.pio/build/pico2w/firmware.uf2`: hold **BOOTSEL** while connecting the Pico's micro-USB
+   cable, then copy the UF2 to the `RP2350` drive. Flash with the Pico out of the board or J17
+   unplugged.
+3. Seat the Pico components-up, USB toward the board's top edge. Set J10 to **2-3** and J18/J19 to
+   match the connected inputs; leave J11 empty until the output checks.
+4. Connect the 15 V charger to J17 and the Pico's micro-USB to the computer. Open the Pico's serial
+   port, enable local echo, and send `STATUS`.
+5. Follow [Hardware setup](#hardware-setup) to check the laser outputs with a scope before
+   connecting laser drivers or cameras.
 
 **Contents:** [Quick start](#quick-start) · [What it does](#what-it-does) ·
 [Safety](#safety) · [The board](#the-board) · [Hardware setup](#hardware-setup) ·
