@@ -7,8 +7,6 @@ Pi Pico 2 W.
   repetition rate.
 - It **keeps up to six event cameras on one shared clock**, and marks every flash pair in each
   camera's data so the recordings line up with the flashes.
-- You **control it by typing short text commands** over USB: from a terminal, a Python script or
-  the included web page.
 
 > **Hardware status:** The current board has not been built or tested. Start with the simulator
 > below. The firmware compiles and its timing has been checked in simulation, but nothing has run on
@@ -34,7 +32,7 @@ pulses, or hardware interlocks. See the [simulator guide](tools/pidg_sim/README.
 For a real board, follow [Hardware setup](#hardware-setup) only after the board has been assembled
 and passed the first-board checks.
 
-**Contents:** [What it does](#what-it-does) ·
+**Contents:** [Quick start](#quick-start) · [What it does](#what-it-does) ·
 [Safety](#safety) · [The board](#the-board) · [Hardware setup](#hardware-setup) ·
 [Connecting](#connecting) · [Command reference](#command-reference) ·
 [Troubleshooting](#troubleshooting) · [Building from source](#building-from-source) ·
