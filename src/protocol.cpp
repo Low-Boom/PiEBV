@@ -84,13 +84,13 @@ ReplyOut g_out;
 
 // ---------------------------------------------------------------- fields
 // How a field's realized value is shown.
-enum class Unit : uint8_t { Ns, Hz, Sync, Mode, PixMode };
+enum class Unit : uint8_t { Ns, Hz, Mode, PixMode };
 
 struct FieldCommand {
     const char *name;
     uint32_t PulseParams::*field;
     Unit unit;
-    uint32_t RealizedTiming::*realized;  // cycle count (the period, for Hz; the divider, for Sync)
+    uint32_t RealizedTiming::*realized;  // cycle count (the period, for Hz)
 };
 
 const FieldCommand kFields[] = {
@@ -98,7 +98,6 @@ const FieldCommand kFields[] = {
     {"WIDTH", &PulseParams::widthNs, Unit::Ns, &RealizedTiming::widthCycles},
     {"DELAY", &PulseParams::delayNs, Unit::Ns, &RealizedTiming::delayCycles},
     {"MARKERWIDTH", &PulseParams::markerWidthNs, Unit::Ns, &RealizedTiming::markerWidthCycles},
-    {"SYNC", &PulseParams::syncHz, Unit::Sync, &RealizedTiming::syncDiv256},
     {"COMBINE", &PulseParams::combine, Unit::Mode, &RealizedTiming::combine},
     {"PIXGATE", &PulseParams::pixGate, Unit::PixMode, &RealizedTiming::pixGate},
     {"PIXLEAD", &PulseParams::pixLeadNs, Unit::Ns, &RealizedTiming::pixLeadCycles},
@@ -137,25 +136,28 @@ void printField(const FieldCommand &f, uint32_t value, const RealizedTiming &r) 
                 g_out.print(n);
                 g_out.print(F(" cyc)"));
                 break;
-            case Unit::Sync:
-                syncFormatHz(n, r.clkHz, num, sizeof(num));
-                g_out.print(num);
-                g_out.print(F(" Hz, divider "));
-                g_out.print(n >> 8);
-                g_out.print('+');
-                g_out.print(n & 0xFFu);
-                g_out.print(F("/256"));
-                if ((n & 0xFFu) != 0) {
-                    g_out.print(F(", 1-cycle jitter"));
-                }
-                g_out.print(')');
-                break;
             case Unit::Mode:
             case Unit::PixMode:
                 break;
         }
     }
     g_out.println();
+}
+
+void printSync(const RealizedTiming &r) {
+    g_out.print(F("SYNC=1000000 (fixed"));
+    if (r.clkHz != 0) {
+        char num[32];
+        syncFormatHz(r.syncDiv256, r.clkHz, num, sizeof(num));
+        g_out.print(F(", actual "));
+        g_out.print(num);
+        g_out.print(F(" Hz, divider "));
+        g_out.print(r.syncDiv256 >> 8);
+        g_out.print('+');
+        g_out.print(r.syncDiv256 & 0xFFu);
+        g_out.print(F("/256"));
+    }
+    g_out.println(')');
 }
 
 // The pixel-reset window the gate realizes each period (STATUS only).
@@ -195,7 +197,6 @@ void printHelp(uint32_t clkHz) {
         "WIDTH <ns>         CH1/CH2 pulse width\n"
         "DELAY <ns>         CH2 rising edge after CH1 rising edge\n"
         "MARKERWIDTH <ns>   marker pulse width\n"
-        "SYNC <Hz>          camera sync clock frequency\n"
         "COMBINE <0|1>      1 = both pulses on BOTH laser outputs (two sources, one\n"
         "                   double pulse); 0 = CH1 on LASER 1, CH2 on LASER 2\n"
         "PIXGATE <0|1|2>    camera pixel reset between pulse pairs, ANDed with the J12\n"
@@ -209,6 +210,7 @@ void printHelp(uint32_t clkHz) {
         "STATUS             all settings with realized values, arm state, reset cause\n"
         "ID?                firmware identity\n"
         "HELP               this text\n"
+        "SYNC is fixed at 1 MHz; STATUS reports its realized frequency.\n"
         "A bare name (e.g. DELAY) queries it; NAME VALUE sets it. Replies show the\n"
         "realized value, e.g. OK DELAY=1003 (actual 1000.000 ns, 150 cyc)."));
     char buf[32];
@@ -402,6 +404,7 @@ void Protocol::dispatch(char *line) {
         for (const auto &f : kFields) {
             printField(f, params_->*(f.field), realized_);
         }
+        printSync(realized_);
         printPixReset(realized_);
         printArmed(hooks_.isArmed());
         if (hooks_.printSystemStatus) {

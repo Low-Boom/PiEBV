@@ -42,7 +42,7 @@ pio run
 |---|---|---|
 | **Laser 1** (CH1) | BNC J7 | Trigger for the first laser driver: a 5 V pulse (with J18 set to match the input), `WIDTH` long, `FREQ` times per second |
 | **Laser 2** (CH2) | BNC J8 | Trigger for the second laser driver: the same pulse, starting exactly `DELAY` after Laser 1 |
-| **Sync** | Camera ports J1–J6 | A steady clock that all six cameras keep time by (1 MHz by default, and the cameras need 1 MHz) |
+| **Sync** | Camera ports J1–J6 | A steady 1 MHz clock that all six cameras keep time by |
 | **Trigger** (the marker) | Camera ports J1–J6 | A pulse at the same instant as every Laser 1 pulse. Each camera records it as a timestamp in its data. (Jumper J10 can switch the cameras to the Laser 1 pulse itself instead.) |
 | **Pixel reset** | Camera ports J1–J6 | Holds the camera sensors blank. Controlled by the J12 BNC input, and optionally by PiDG between flash pairs (`PIXGATE`) |
 
@@ -267,7 +267,7 @@ undefined.
 |---|---|
 | **J17 (15 V charger) + Pico USB** | Everything. This is the normal set-up. |
 | Pico USB only | Commands, and sync, trigger and pixel reset to the cameras. **The laser outputs stay off** (no 12 V supply for the board's output driver). |
-| J17 only | The board runs, DISARMED, with sync and marker at their defaults. There is no serial link, so it can't be armed. |
+| J17 only | The board runs, DISARMED, with the fixed 1 MHz sync clock and marker running. There is no serial link, so it can't be armed. |
 
 **Charger:** a USB-C PD charger that offers **15 V**. In practice that means any PD charger rated
 30 W or more (the USB-PD rules require chargers above 27 W to offer 15 V). With a 5 V or 9 V-only
@@ -305,7 +305,7 @@ with 50 Ω inputs (or 50 Ω feed-through terminators).
    WIDTH=100 (actual 100.000 ns, 15 cyc)
    DELAY=10000 (actual 10000.000 ns, 1500 cyc)
    MARKERWIDTH=2000 (actual 2000.000 ns, 300 cyc)
-   SYNC=1000000 (actual 1000000.000 Hz, divider 75+0/256)
+   SYNC=1000000 (fixed, actual 1000000.000 Hz, divider 75+0/256)
    COMBINE=0 (CH1 on LASER 1, CH2 on LASER 2)
    ARMED=0
    HW=OK
@@ -329,7 +329,7 @@ with 50 Ω inputs (or 50 Ω feed-through terminators).
    you're done.
 
 Settings are **not saved**. Every restart brings back the defaults (FREQ 1000, WIDTH 100,
-DELAY 10000, MARKERWIDTH 2000, SYNC 1000000) with the lasers DISARMED.
+DELAY 10000 and MARKERWIDTH 2000); the 1 MHz sync clock is fixed. The lasers start DISARMED.
 
 ### First-board checks
 
@@ -514,7 +514,6 @@ fine for the intended short range (a few metres, like Bluetooth), so no board ch
 | `WIDTH [n]` | ns | 100 | ≥ 17 (becomes ≥ 20.000 ns), and 2 × WIDTH + DELAY ≤ 1/FREQ. No upper limit. | Length of both laser pulses |
 | `DELAY [n]` | ns | 10000 | 0 up to 1/FREQ − 2 × WIDTH, so pulse pairs stay apart (with `COMBINE 1`, also more than WIDTH); the error message gives the exact limit | Time from the start of the Laser 1 pulse to the start of the Laser 2 pulse. `0` makes them start together. |
 | `MARKERWIDTH [n]` | ns | 2000 | 17 up to 1/FREQ − 5 steps | Length of the camera marker pulse (it starts with every Laser 1 pulse) |
-| `SYNC [n]` | Hz | 1000000 | 1145 … 75 000 000 | Camera sync clock. **Leave it at 1 MHz for the IDS/Prophesee cameras** ([why](#timing)); the web GUI keeps it fixed. |
 | `COMBINE [n]` | 0 / 1 | 0 | 0 or 1; change only while DISARMED | 0: Laser 1 gets the CH1 pulse, Laser 2 the CH2 pulse. 1: **both** outputs get **both** pulses ([details](#combined-mode-combine)) |
 | `PIXGATE [n]` | 0 / 1 / 2 | 0 | 0, 1 or 2 | Hold the camera pixels in reset between pulse pairs: 0 off (J12 only), 1 while ARMED, 2 always ([details](#pixel-reset-gate-pixgate)) |
 | `PIXLEAD [n]` | ns | 10000 | ≥ 30 (becomes ≥ 5 steps); the window must fit in 1/FREQ | Pixels released this long before each Laser 1 pulse |
@@ -526,6 +525,8 @@ fine for the intended short range (a few metres, like Bluetooth), so no board ch
 | `ID?` | – | – | – | Firmware name and build date |
 | `HELP` | – | – | – | Command summary |
 
+The camera sync clock is fixed at **1 MHz** and cannot be changed. `STATUS` reports it as `SYNC`; `SYNC` is not a command.
+
 A "step" is one 6.667 ns tick of the 150 MHz clock.
 
 ### Examples
@@ -534,7 +535,6 @@ A "step" is one 6.667 ns tick of the 150 MHz clock.
 DELAY 1003     ->  OK DELAY=1003 (actual 1000.000 ns, 150 cyc)
 DELAY          ->  DELAY=1003 (actual 1000.000 ns, 150 cyc)
 WIDTH 101      ->  OK WIDTH=101 (actual 100.000 ns, 15 cyc)
-SYNC 2000000   ->  OK SYNC=2000000 (actual 2000000.000 Hz, divider 37+128/256, 1-cycle jitter)
 ARM            ->  OK ARMED=1 (laser pulses start after a 498 us hold-off)
 DISARM         ->  OK ARMED=0
 ID?            ->  PiDG delay generator (Pico 2 W), firmware built Sep 24 2026 22:24:21
@@ -544,10 +544,7 @@ ID?            ->  PiDG delay generator (Pico 2 W), firmware built Sep 24 2026 2
   same in 6.667 ns steps ("cycles").
 - The `(laser pulses start after …)` part appears only while a start delay (the hold-off, below) is
   pending; otherwise `ARM` replies just `OK ARMED=1`.
-- `1-cycle jitter` on `SYNC` means the clock can't be divided down exactly: the average frequency is
-  the `actual` value shown (e.g. `SYNC 1234567` → `actual 1234567.901 Hz`), and single edges can be
-  up to 6.667 ns early or late. Frequencies that divide 75 MHz exactly (1 MHz, 2.5 MHz, 5 MHz, …)
-  have no jitter.
+- `SYNC` in `STATUS` is read-only: it is fixed at 1 MHz (divider 75 at the 150 MHz system clock).
 
 ### ARM and DISARM in detail
 
@@ -665,7 +662,7 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
   this clock, and Prophesee requires Sync In to be "a 1MHz pulse train to correspond to the
   internally generated 1µs timestamp resolution". Any other frequency stretches or squeezes every
   camera's timestamps, and an IMX636 slave sends no data at all until the clock arrives. Other
-  `SYNC` values are only for other equipment.
+  The sync output is fixed at 1 MHz.
 - **No laser-driver limits.** The firmware does not limit pulse width, duty or spacing: they depend
   on the driver you connect, so stay within its ratings. It only enforces what keeps the waveform
   correct:
@@ -682,12 +679,12 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
 
 | Reply | Meaning |
 |---|---|
-| `ERR <word> unknown command` | Not a command. Note that `FREQ?` is not valid; use `FREQ`. |
+| `ERR <word> unknown command` | Not a command. `FREQ?` is not valid; use `FREQ`. `SYNC` is a read-only `STATUS` key, not a command. |
 | `ERR <NAME> invalid value` | Not a plain whole number (e.g. `1.5`, `10k`, `-5`), or too large |
 | `ERR <NAME> takes one value` | More than one number |
 | `ERR ARM takes no argument` | Something after `ARM` |
 | `ERR line too long` | More than 95 characters; the whole line is ignored |
-| `ERR <NAME> rejected: value must be > 0` | FREQ or SYNC set to 0 |
+| `ERR <NAME> rejected: value must be > 0` | FREQ set to 0 |
 | `ERR <NAME> rejected: WIDTH realizes below the 3-cycle minimum (20.000 ns)` | WIDTH ≤ 16 ns (the same for MARKERWIDTH) |
 | `ERR <NAME> rejected: DELAY must leave >= WIDTH before the next pulse pair (DELAY <= 1/FREQ - 2 x WIDTH); max DELAY … ns` | DELAY too long for the period at this WIDTH |
 | `ERR <NAME> rejected: WIDTH too long for the period: 2 x WIDTH must fit in 1/FREQ` | WIDTH longer than half the period |
@@ -695,7 +692,6 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
 | `ERR <NAME> rejected: MARKERWIDTH must fit in the period (MARKERWIDTH <= 1/FREQ - 5 cycles); max MARKERWIDTH … ns` | MARKERWIDTH too long for the period, e.g. after raising FREQ |
 | `ERR MARKERDIV removed: the marker fires with every pulse pair` | `MARKERDIV` is no longer a setting |
 | `ERR <NAME> rejected: FREQ out of range` | FREQ above 300 MHz |
-| `ERR <NAME> rejected: SYNC out of range (1145..75000000 Hz)` | SYNC outside its range |
 | `ERR ARM …` / `ERR <NAME> rejected: pio0 unavailable` | The pulse hardware failed to start (`HW=` in STATUS) |
 
 `<NAME>` is the setting you were changing, which is not always the one named in the reason. For
@@ -708,7 +704,7 @@ FREQ=15 (actual 15.000 Hz, period 10000000 cyc)
 WIDTH=100 (actual 100.000 ns, 15 cyc)
 DELAY=10000 (actual 10000.000 ns, 1500 cyc)
 MARKERWIDTH=2000 (actual 2000.000 ns, 300 cyc)
-SYNC=1000000 (actual 1000000.000 Hz, divider 75+0/256)
+SYNC=1000000 (fixed, actual 1000000.000 Hz, divider 75+0/256)
 COMBINE=0 (CH1 on LASER 1, CH2 on LASER 2)
 PIXGATE=0 (off: pixel reset from J12 only)
 PIXLEAD=10000 (actual 10000.000 ns, 1500 cyc)
@@ -727,7 +723,8 @@ TX_DROPPED=0
 
 | Key | Meaning |
 |---|---|
-| `FREQ` … `SYNC` | Each setting as you asked for it, with the value actually produced |
+| `FREQ` … `MARKERWIDTH` | Each setting as you asked for it, with the value actually produced |
+| `SYNC` | Fixed 1 MHz camera sync clock, with its realized frequency and divider |
 | `COMBINE` | 0 = CH1 on Laser 1, CH2 on Laser 2; 1 = both pulses on both outputs |
 | `PIXGATE`, `PIXLEAD`, `PIXLAG` | The pixel-reset gate settings |
 | `PIXRESET` | `off`, or the gate as produced: reset time per period, its start after CH1, and how long the pixels are free around each pair |
@@ -762,7 +759,7 @@ TX_DROPPED=0
 | One output gives ~3.5 V into 50 Ω, or ~12 V open | No shunt on that output's J18/J19 | Fit the shunt: 1-2 for 50 Ω, 2-3 for Hi-Z |
 | About 3 V pulses at the laser driver | Two 50 Ω loads on one output (e.g. a tee into both a 50 Ω scope input and the driver) | Watch with a high-impedance scope probe instead, or on TP4 (CH2) / J10 pin 1 (CH1, through 100 Ω) |
 | Cameras get no trigger | J10 on 1-2 while DISARMED, or no shunt on J10 | J10 on 2-3 |
-| Cameras don't synchronise | A camera set as sync master, or SYNC changed | Set every camera to sync slave; `SYNC 1000000` |
+| Cameras don't synchronise | A camera set as sync master | Set every camera to sync slave |
 | All cameras stuck in pixel reset | A 50 Ω terminator on J12; the source holding it low; a 1.8 V source that can't release it | Remove the terminator; drive J12 with 3.3 V or 5 V logic, or leave it open |
 | Cameras see no events around the laser pulses with `PIXGATE` on | PIXLEAD too short for the sensor to settle, or PIXLAG shorter than the sensor's event delay | Increase PIXLEAD and PIXLAG, or set `PIXGATE 0` to compare |
 | `RESET=WATCHDOG` in STATUS | The firmware hung and restarted itself, DISARMED | Note what you were doing and report it; arm again deliberately |

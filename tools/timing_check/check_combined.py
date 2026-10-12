@@ -38,7 +38,7 @@ for clk in clks:
         d = random.choice([0, 100, w, w + 1, w + 3, w + 7, w + 10, wn + random.randint(-8, 12), 10000, per_ns // 2,
                            per_ns - w - 40 + random.randint(-15, 15), random.randint(0, max(1, per_ns))])
         cases.append((clk, f, w, max(0, d), 2000))
-inp = "".join("%d %d %d %d %d 1000000 1\n" % c for c in cases)
+inp = "".join("%d %d %d %d %d 1\n" % c for c in cases)
 out = subprocess.run([HARNESS], input=inp, capture_output=True, text=True).stdout.splitlines()
 assert len(out) == len(cases), (len(out), len(cases))
 

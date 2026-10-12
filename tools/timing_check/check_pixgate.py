@@ -42,15 +42,15 @@ for clk in clks:
         lead = random.choice([0, 20, 33, 34, 40, 1000, 10000, random.randint(0, max(1, per_ns // 4))])
         lag = random.choice([0, 1, 1000, 100000, per_ns - lead - d - w - 25 + random.randint(-12, 12),
                              random.randint(0, max(1, per_ns))])
-        cases.append((clk, f, w, max(0, d), 2000, 1000000, cb, pg, max(0, lead), max(0, lag)))
-inp = "".join("%d %d %d %d %d %d %d %d %d %d\n" % c for c in cases)
+        cases.append((clk, f, w, max(0, d), 2000, cb, pg, max(0, lead), max(0, lag)))
+inp = "".join("%d %d %d %d %d %d %d %d %d\n" % c for c in cases)
 out = subprocess.run([HARNESS], input=inp, capture_output=True, text=True).stdout.splitlines()
 assert len(out) == len(cases), (len(out), len(cases))
 
 nacc = nrej = nsim = ngate = 0
 mism = []
 for c, line in zip(cases, out):
-    clk, f, w, d, mw, sy, cb, pg, lead_ns, lag_ns = c
+    clk, f, w, d, mw, cb, pg, lead_ns, lag_ns = c
     P = rnd(F(clk, f))
     W = rnd(F(w * clk, 10**9)); D = rnd(F(d * clk, 10**9)); MW = rnd(F(mw * clk, 10**9))
     L = rnd(F(lead_ns * clk, 10**9)); G = rnd(F(lag_ns * clk, 10**9))

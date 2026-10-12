@@ -317,8 +317,8 @@ bool isArmed() {
 
 // Protocol hook: applies a candidate parameter set. The whole set is realized and
 // checked first (realizeTiming), so a rejected change never touches the hardware.
-// Only what actually changes on the pins is restarted: SYNC on its own; CH1/CH2/
-// MARKER together, and only if a realized cycle count changed (WIDTH 100 -> 101 ns
+// SYNC starts at its fixed 1 MHz when the defaults are applied. Only the pulse group
+// restarts on settings changes, and only if a realized cycle count changed (WIDTH 100 -> 101 ns
 // is the same 15 cycles and does not restart anything). While armed, a pulse change
 // goes through the same safe restart as ARM, lasers staying armed.
 const char *applyPulseParams(const PulseParams &p, RealizedTiming *realized) {
