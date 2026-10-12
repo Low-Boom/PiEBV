@@ -1,25 +1,35 @@
 # PiDG
 
-A pulse-timing box for particle image velocimetry (PIV), built around a Raspberry Pi Pico 2 W.
+A USB-controlled pulse-timing box for particle image velocimetry (PIV), built around a Raspberry
+Pi Pico 2 W. It triggers two laser drivers and synchronizes up to six event cameras.
 
-PIV measures how a fluid moves. Tiny particles in the flow are lit by two short flashes of light a
-known time apart, and cameras record how far the particles moved in between. PiDG makes the timing
-signals for that:
+> **Hardware status:** Firmware timing has not yet been verified on a physical board. Complete the
+> [first-board checks](Hardware.md#first-board-checks) before connecting a laser driver or camera.
 
-- It **fires two laser (or LED) drivers**, the second exactly a set delay after the first, at a set
-  repetition rate.
-- It **keeps up to six event cameras on one shared clock**, and marks every flash pair in each
-  camera's data so the recordings line up with the flashes.
-- You **control it by typing short text commands** over USB: from a terminal, a Python script or
-  the included web page.
+## Quick start
 
-> **Status.** The current board (KiCad project `PiDG_Pico`) has not been built yet. The firmware
-> compiles and its timing has been checked step by step in simulation, but nothing has run on real
-> hardware. Do the [first-board checks](#first-board-checks) before connecting a laser driver or a
-> camera.
+With the assembled board, a Pico 2 W, a USB-C PD charger that supplies 15 V, and a micro-USB data
+cable:
 
-**Contents:** [What it does](#what-it-does) · [Words used here](#words-used-here) ·
-[Safety](#safety) · [The board](#the-board) · [Quick start](#quick-start) ·
+```
+python -m pip install platformio
+pio run
+```
+
+1. Follow the [first-board checks](Hardware.md#first-board-checks) before applying power or
+   connecting equipment.
+2. Flash `.pio/build/pico2w/firmware.uf2`: hold **BOOTSEL** while connecting the Pico's micro-USB
+   cable, then copy the UF2 to the `RP2350` drive. Flash with the Pico out of the board or J17
+   unplugged.
+3. Seat the Pico components-up, USB toward the board's top edge. Set J10 to **2-3** and J18/J19 to
+   **1-2** for the 50 Ω scope checks; leave J11 empty until instructed to check the outputs.
+4. Connect the 15 V charger to J17 and the Pico's micro-USB to the computer. Open the Pico's serial
+   port, enable local echo, and send `STATUS`.
+5. Follow [Hardware setup](#hardware-setup) to check the laser outputs with a scope before
+   connecting laser drivers or cameras.
+
+**Contents:** [Quick start](#quick-start) · [What it does](#what-it-does) ·
+[Safety](#safety) · [The board](#the-board) · [Hardware setup](#hardware-setup) ·
 [Connecting](#connecting) · [Command reference](#command-reference) ·
 [Troubleshooting](#troubleshooting) · [Building from source](#building-from-source) ·
 [Repository layout](#repository-layout)
@@ -47,21 +57,6 @@ signals for that:
 PiDG was designed for two **PicoLas LDP-V** laser-diode drivers (models 10-70 and 240-100) and six
 **IDS uEye UE-39B0XCP-E** event cameras. Other drivers with a 5 V trigger input should work too, with
 the output mode (J18/J19) set to match their input.
-
-### Words used here
-
-| Term | Meaning |
-|---|---|
-| **BNC** | The round, twist-lock connector used for coaxial cable on lab equipment. |
-| **50 Ω input** | An input with a 50 Ω resistor to ground built in ("terminated"). Many laser drivers have one, including the LDP-V, and scopes can be switched to 50 Ω. |
-| **High-impedance (Hi-Z) input** | An input that draws almost no current: logic inputs (TTL, 5 V CMOS) and a scope set to 1 MΩ. |
-| **Output mode** | Whether a laser output is set up for a 50 Ω input or a high-impedance one (jumpers J18/J19). The wrong mode gives the wrong voltage. |
-| **Jumper, shunt** | A jumper is a row of pins on the board. A shunt is the small plastic cap that connects two neighbouring pins. "J11 on 1-2" means a shunt joining pins 1 and 2 of J11. Pin 1 has a square pad. |
-| **ARM / DISARM** | Commands that allow or stop the laser pulses. Cameras keep running either way. |
-| **Sync slave** | A camera setting: the camera takes its clock from outside (from PiDG) instead of making its own. |
-| **E-stop** | An emergency-stop switch. Here it must be *normally closed*: pressing it opens the circuit. |
-| **USB-C PD charger** | A USB-C charger that can supply more than 5 V on request (laptop chargers, most phone chargers rated 30 W or more). PiDG asks it for 15 V. |
-| **IDC header** | The 2×5-pin connector for a flat ribbon cable (the camera ports). |
 
 ---
 
@@ -283,7 +278,7 @@ restart it, and neither does closing the serial port. There is no reset button.
 
 ---
 
-## Quick start
+## Hardware setup
 
 You need: the assembled board, a Pico 2 W, a micro-USB **data** cable (some cables only charge), a
 USB-C PD charger that offers 15 V (30 W or more) with a USB-C cable, jumper shunts, and a scope
