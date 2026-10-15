@@ -189,8 +189,8 @@ def parse_value(key, rest):
         d.update(unit="ns", actual=float(mm.group(1)), cycles=int(mm.group(2)))
     elif (mm := re.match(r"actual (%s) Hz, period (\d+) cyc" % _NUM, detail)):
         d.update(unit="Hz", actual=float(mm.group(1)), cycles=int(mm.group(2)))
-    elif (mm := re.match(r"actual (%s) Hz, divider (\d+)\+(\d+)/256" % _NUM, detail)):
-        d.update(unit="Hz", actual=float(mm.group(1)), divider=int(mm.group(2)) + int(mm.group(3)) / 256.0,
+    elif (mm := re.match(r"actual (%s) Hz, divider (\d+)\+(\d+)/(\d+)" % _NUM, detail)):  # I+F/65536 (I+F/256 before)
+        d.update(unit="Hz", actual=float(mm.group(1)), divider=int(mm.group(2)) + int(mm.group(3)) / int(mm.group(4)),
                  jitter="jitter" in detail)
     elif detail:
         d["mode"] = detail

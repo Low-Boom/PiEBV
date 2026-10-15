@@ -29,7 +29,7 @@ int main() {
         pulseFormatNs(rt.widthCycles, rt.clkHz, b, sizeof b);
         pulseFormatNs(rt.delayCycles, rt.clkHz, c, sizeof c);
         pulseFormatNs(rt.markerWidthCycles, rt.clkHz, e, sizeof e);
-        syncFormatHz(rt.syncDiv256, rt.clkHz, s, sizeof s);
+        syncFormatHz(rt.syncDiv, rt.clkHz, s, sizeof s);
         PulseWords w1, w2, w3, wg{0, 0, 0};
         computePulseCounts(PulseCycles{rt.periodCycles, 0, rt.widthCycles}, &w1);
         computePulseCounts(PulseCycles{rt.periodCycles, rt.delayCycles, rt.widthCycles}, &w2);
@@ -39,7 +39,7 @@ int main() {
         }
         printf("OK %u %u %u %u %u %s %s %s %s %u %u %u %u %u %u %u %u %u %u %s %u %u %u %u %u\n", rt.periodCycles,
                rt.widthCycles, rt.delayCycles, rt.periodCycles, rt.markerWidthCycles, a, b, c, e, w1.delay,
-               w1.width, w1.tail, w2.delay, w2.width, w2.tail, w3.delay, w3.width, w3.tail, rt.syncDiv256, s,
+               w1.width, w1.tail, w2.delay, w2.width, w2.tail, w3.delay, w3.width, w3.tail, rt.syncDiv, s,
                rt.pixResetStartCycles, rt.pixResetCycles, wg.delay, wg.width, wg.tail);
     }
 }

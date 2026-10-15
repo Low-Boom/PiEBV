@@ -1,16 +1,16 @@
 #pragma once
-// PIO-based precision pulse/clock generation for the PiDG delay generator.
+// PIO-based precision pulse generation for the PiDG delay generator.
 //
-// Two PIO program shapes cover everything this board needs:
+// One PIO program shape covers every timed output:
 //  - PulseChannel: free-running "delay, then pulse-high, then idle-low" loop.
 //    Used for the two laser outputs (CH1/CH2), the camera trigger marker and
 //    the pixel-reset gate. Channels started together stay phase-locked forever,
 //    because their periods are exact integer cycle counts on a common clock
 //    (all of them run at the laser period, so the marker rises with every CH1).
-//  - SyncChannel: a bare 2-instruction toggle loop for the continuous camera
-//    sync clock; frequency is set purely via the state machine clock divider.
+// The continuous camera SYNC clock is not here: the RP2350 clock generator makes it
+// (sync_clock.h).
 //
-// Both program bodies are hand-encoded with pico-sdk's pio_encode_*()
+// The program bodies are hand-encoded with pico-sdk's pio_encode_*()
 // functions. (The pinned PlatformIO fork can assemble .pio files too; the
 // hand encoding is kept because the cycle model in pulse_timing.h is written
 // against these exact instructions.)
@@ -21,7 +21,7 @@
 //
 // Pin ownership: the laser pins (CH1/CH2) are routed to PIO only by
 // laser_gate's gateOpen(), so PulseChannel::begin() leaves them alone; the
-// marker and sync pins are routed to PIO at begin().
+// marker pin is routed to PIO at begin().
 
 #include <cstddef>
 #include <cstdint>
@@ -71,24 +71,6 @@ private:
 // Loads the dual-pin pulse program into `pio` now, so COMBINE mode can never fail
 // later for lack of instruction memory. Returns false if it does not fit.
 bool pulseReserveDualProgram(PIO pio);
-
-class SyncChannel {
-public:
-    // Loads the toggle program and routes `gpio` to PIO. The caller must
-    // already have claimed `sm`. Returns false if the program cannot be loaded.
-    bool begin(PIO pio, uint sm, uint gpio);
-
-    // (Re)starts the toggle loop with a clock divider of div256/256 (see
-    // syncDiv256For() in pulse_timing.h). div256 must already be in range.
-    void start(uint32_t div256);
-
-private:
-    PIO pio_ = nullptr;
-    uint sm_ = 0;
-    uint gpio_ = 0;
-    uint offset_ = 0;
-    pio_sm_config config_{};
-};
 
 // Halts every listed channel's state machine with a single CTRL write, then
 // forces each pin's PIO output latch LOW through its own state machine. Runs from

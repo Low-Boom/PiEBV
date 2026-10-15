@@ -3,8 +3,8 @@
 // PlatformIO's official "raspberrypi" platform/Mbed core has no RP2350
 // support; the wireless radio of a Pico 2 W is unused by this firmware.
 //
-// IDS EVS event-camera synchronizer, implemented with PIO state machines (no
-// CPU busy-waits). Outputs (the GPIO map is in board.h):
+// IDS EVS event-camera synchronizer, implemented with PIO state machines and the
+// RP2350 clock generator (no CPU busy-waits). Outputs (the GPIO map is in board.h):
 //   - CH1 / CH2 (GP13 / GP12): the two laser trigger pulses. Shared width; CH2's
 //     rising edge follows CH1's by exactly DELAY (to the nearest PIO cycle).
 //     COMBINE 1 puts BOTH pulses on BOTH outputs (two light sources fired in sync
@@ -14,8 +14,8 @@
 //     CH1, that the board's jumper (J10) selects as the camera Trigger line
 //     instead of the raw laser pulse. Each camera timestamps it into its event
 //     stream.
-//   - SYNC (GP10): the continuous 1 MHz camera sync clock. Runs on pio1: it is independent of the
-//     laser timing, and pio0's fourth state machine is the pixel-reset gate.
+//   - SYNC (GP15): the continuous 1 MHz camera sync clock, clk_gpout1 dividing clk_sys
+//     by exactly 150 (sync_clock.cpp). No PIO: it is independent of the laser timing.
 //   - PIXGATE (GP16): optional camera pixel reset between pulse pairs. pio0 SM3
 //     runs the pulse program with the pin's output inverted, so its pulse holds
 //     every camera's TDRSTN low from PIXLAG after the last laser pulse until
@@ -51,6 +51,7 @@
 #include "pio_pulse.h"
 #include "protocol.h"
 #include "pulse_timing.h"
+#include "sync_clock.h"
 
 namespace {
 
@@ -59,8 +60,6 @@ constexpr uint kSmCh1 = 0;
 constexpr uint kSmCh2 = 1;
 constexpr uint kSmMarker = 2;
 constexpr uint kSmPixGate = 3;
-PIO kSyncPio = pio1;  // SYNC is independent of the laser timing
-constexpr uint kSmSync = 0;
 
 #if defined(ARDUINO_RASPBERRY_PI_PICO_2W)
 constexpr const char *kBoardName = "Pico 2 W";
@@ -94,7 +93,7 @@ PulseChannel g_ch1;
 PulseChannel g_ch2;
 PulseChannel g_marker;
 PulseChannel g_pixGate;  // pixel-reset gate: output INVERTED, latch high = pixels in reset
-SyncChannel g_sync;
+SyncClock g_sync;  // clk_gpout, not PIO
 // Started and stopped together. The first three always run; the gate (last) runs only
 // while PIXGATE asks for it (pulseGroupCount()).
 PulseChannel *const g_group[] = {&g_ch1, &g_ch2, &g_marker, &g_pixGate};
@@ -164,8 +163,7 @@ void feedWatchdog() {
     }
 }
 
-// Claims all four pio0 state machines and pio1's SYNC state machine before anything
-// else can. If any is already taken, nothing is claimed and ARM is refused. (On a Pico
+// Claims all four pio0 state machines before anything else can. If any is already taken, nothing is claimed and ARM is refused. (On a Pico
 // 2 W the core's CYW43 init in initVariant() has already claimed a state machine, but
 // the SDK allocates from the highest PIO down, so it lands on pio2.)
 bool claimPioStateMachines() {
@@ -174,11 +172,7 @@ bool claimPioStateMachines() {
             return false;
         }
     }
-    if (pio_sm_is_claimed(kSyncPio, kSmSync)) {
-        return false;
-    }
     pio_claim_sm_mask(kPio, 0xFu);
-    pio_sm_claim(kSyncPio, kSmSync);
     return true;
 }
 
@@ -323,7 +317,7 @@ bool isArmed() {
 // goes through the same safe restart as ARM, lasers staying armed.
 const char *applyPulseParams(const PulseParams &p, RealizedTiming *realized) {
     if (!g_pioReady) {
-        return "pio0/pio1 unavailable";
+        return "pio0 unavailable";
     }
     RealizedTiming rt;
     if (const char *why = realizeTiming(p, clkHz(), &rt)) {
@@ -337,10 +331,10 @@ const char *applyPulseParams(const PulseParams &p, RealizedTiming *realized) {
                               rt.markerWidthCycles != g_rt.markerWidthCycles || rt.pixGate != g_rt.pixGate ||
                               rt.pixResetStartCycles != g_rt.pixResetStartCycles ||
                               rt.pixResetCycles != g_rt.pixResetCycles;
-    const bool syncChanged = !g_configured || rt.syncDiv256 != g_rt.syncDiv256;
+    const bool syncChanged = !g_configured || rt.syncDiv != g_rt.syncDiv;
 
     if (syncChanged) {
-        g_sync.start(rt.syncDiv256);
+        g_sync.start(rt.syncDiv);
     }
     if (pulseChanged) {
         restartPulses(rt, g_armed);
@@ -396,7 +390,7 @@ void setup() {
                  pulseReserveDualProgram(kPio) &&  // COMBINE mode: never fails later
                  g_marker.begin(kPio, kSmMarker, kPinMarker, true) &&
                  g_pixGate.begin(kPio, kSmPixGate, kPinPixGate, false) &&  // pin: initPixGatePin()
-                 g_sync.begin(kSyncPio, kSmSync, kPinSync);
+                 g_sync.begin(kPinSync);
     if (g_pioReady) {
         initPixGatePin();
     }
@@ -408,7 +402,7 @@ void setup() {
         &g_params, ProtocolHooks{applyPulseParams, setArmed, isArmed, startPendingUs, printSystemStatus,
                                  printIdentity});
     if (!g_pioReady) {
-        why = "pio0/pio1 unavailable (state machine already claimed or instruction memory full)";
+        why = "pio0 unavailable (state machine already claimed or instruction memory full)";
     }
     if (why) {
         snprintf(g_hwWhy, sizeof(g_hwWhy), "outputs not started: %s", why);  // copy: `why` may be a reused buffer

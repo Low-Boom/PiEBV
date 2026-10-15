@@ -1,5 +1,5 @@
 #pragma once
-// Pure integer timing math for the PiDG pulse and sync programs. No hardware
+// Pure integer timing math for the PiDG pulse programs and the SYNC clock. No hardware
 // access and no Arduino dependency, so it also compiles on a host:
 // tools/timing_check/ builds this exact header into a small harness and checks
 // it cycle-for-cycle against a Python model of the RP2350 PIO (see its README).
@@ -33,7 +33,7 @@
 // depend on the attached driver, and the unit is used with more than one. The
 // firmware only enforces what the PIO programs physically need: widths of >= 3
 // cycles (20 ns at 150 MHz), DELAY + WIDTH and MARKERWIDTH fitting in the period,
-// the fixed 1 MHz SYNC divider range, and with COMBINE 1 (both pulses on both outputs, sharing
+// the 1 MHz SYNC clock-divider range, and with COMBINE 1 (both pulses on both outputs, sharing
 // the pins) DELAY >= WIDTH + 1 cycle so the two pulses never touch.
 //
 // Pixel-reset gate (PIXGATE 1/2): a fourth state machine runs the same pulse
@@ -64,7 +64,7 @@ struct RealizedTiming {
     uint32_t widthCycles = 0;         // CH1/CH2 high time
     uint32_t delayCycles = 0;         // CH2 rising edge minus CH1 rising edge, exactly
     uint32_t markerWidthCycles = 0;   // the marker runs at periodCycles, rising with CH1
-    uint32_t syncDiv256 = 0;          // SYNC state-machine clock divider in 1/256 steps
+    uint32_t syncDiv = 0;             // SYNC clock-generator divider, 16.16 fixed point (clk_gpout)
     uint32_t combine = 0;             // 1: CH1 and CH2 pulses both drive both laser outputs
     uint32_t pixGate = 0;             // 0 off, 1 while ARMED, 2 always
     uint32_t pixLeadCycles = 0;       // PIXLEAD, realized (shown even while the gate is off)
@@ -134,16 +134,18 @@ inline int64_t pulseMaxDelayCycles(uint32_t period, uint32_t width) {
     return (int64_t)period - (int64_t)(width - kPulseMinWidthCycles) - (int64_t)kPulseFixedOverheadCycles;
 }
 
-// ---------------------------------------------------------------- sync program
-// The SYNC program toggles its pin every state-machine clock (2 cycles per output
-// period), so the divider is clk / (2 * f). The PIO divider has an 8-bit fraction:
-// div256 = round(clk * 128 / f), INT = div256 >> 8, FRAC = div256 & 0xFF. A nonzero
-// FRAC gives the right average frequency with 1-cycle (6.667 ns) edge jitter.
-constexpr uint32_t kSyncMinDiv256 = 1u << 8;              // INT 1, FRAC 0
-constexpr uint32_t kSyncMaxDiv256 = (65535u << 8) | 0xFF;  // INT 65535, FRAC 255
+// ---------------------------------------------------------------- sync clock
+// SYNC is not a PIO program: the RP2350 clock generator (clk_gpout, sync_clock.cpp)
+// divides clk_sys straight onto the pin. Its divider is 16.16 fixed point:
+// div = round(clk * 65536 / f), INT = div >> 16 (1..65535), FRAC = div & 0xFFFF.
+// At 150 MHz div = 150 exactly (FRAC 0): an exact, jitter-free 1 MHz square wave,
+// 50 % duty (DC50 also squares up odd divisors). A nonzero FRAC gives the right
+// average frequency with one clk_sys period of edge jitter.
+constexpr uint32_t kSyncMinDiv = 1u << 16;                 // INT 1, FRAC 0
+constexpr uint32_t kSyncMaxDiv = (65535u << 16) | 0xFFFFu;  // INT 65535, FRAC 65535
 
-inline uint64_t syncDiv256For(uint32_t clk_hz) {
-    return ((uint64_t)clk_hz * 128u + kSyncHz / 2) / kSyncHz;
+inline uint64_t syncDivFor(uint32_t clk_hz) {
+    return ((uint64_t)clk_hz * 65536u + kSyncHz / 2) / kSyncHz;
 }
 
 // ---------------------------------------------------------------- formatting
@@ -192,9 +194,9 @@ inline void pulseFormatHz(uint64_t periodCycles, uint32_t clk_hz, char *buf, siz
     pulseFormatFixed3(clk_hz, periodCycles, buf, len);
 }
 
-// Realized SYNC frequency for a divider of div256/256, in Hz, 3 decimals.
-inline void syncFormatHz(uint32_t div256, uint32_t clk_hz, char *buf, size_t len) {
-    pulseFormatFixed3((uint64_t)clk_hz * 128u, div256, buf, len);
+// Realized SYNC frequency for a 16.16 divider `div`, in Hz, 3 decimals.
+inline void syncFormatHz(uint32_t div, uint32_t clk_hz, char *buf, size_t len) {
+    pulseFormatFixed3((uint64_t)clk_hz * 65536u, div, buf, len);
 }
 
 // ---------------------------------------------------------------- validation
@@ -312,8 +314,8 @@ inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTim
         }
     }
 
-    const uint64_t div256 = syncDiv256For(clk);
-    if (div256 < kSyncMinDiv256 || div256 > kSyncMaxDiv256) {
+    const uint64_t syncDiv = syncDivFor(clk);
+    if (syncDiv < kSyncMinDiv || syncDiv > kSyncMaxDiv) {
         return "fixed 1 MHz SYNC is out of range for the system clock";
     }
 
@@ -322,7 +324,7 @@ inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTim
     rt->widthCycles = width;
     rt->delayCycles = delay;
     rt->markerWidthCycles = markerWidth;
-    rt->syncDiv256 = (uint32_t)div256;
+    rt->syncDiv = (uint32_t)syncDiv;
     rt->combine = p.combine;
     rt->pixGate = p.pixGate;
     rt->pixLeadCycles = (uint32_t)std::min<uint64_t>(pixLead, 0xFFFFFFFFULL);

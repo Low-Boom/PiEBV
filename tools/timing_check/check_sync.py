@@ -1,4 +1,6 @@
-"""The camera sync output is fixed at 1 MHz, independent of pulse settings."""
+"""The camera sync output is fixed at 1 MHz, independent of pulse settings.
+
+SYNC comes from the RP2350 clock generator (clk_gpout) with a 16.16 divider of clk_sys."""
 import os
 import subprocess
 from fractions import Fraction as F
@@ -24,17 +26,17 @@ out = subprocess.run([HARNESS], input=inp, capture_output=True, text=True).stdou
 assert len(out) == len(cases)
 bad = 0
 for clk, line in zip(clks, out):
-    div = rnd(F(clk * 128, 1000000))
+    div = rnd(F(clk * 65536, 1000000))
     if line.startswith("ERR"):
         bad += 1
         print("unexpected rejection", clk, line)
         continue
     fields = line.split()
-    actual = fmt3(F(clk * 128, div))
+    actual = fmt3(F(clk * 65536, div))
     if int(fields[19]) != div or fields[20] != actual:
         bad += 1
         print("mismatch", clk, fields[19:21], div, actual)
-    if clk == 150000000 and (div != 75 << 8 or actual != "1000000.000"):
+    if clk == 150000000 and (div != 150 << 16 or actual != "1000000.000"):
         bad += 1
         print("board clock is not an exact 1 MHz divider", div, actual)
 print("fixed 1 MHz sync clock rates", len(cases), "bad", bad)

@@ -105,7 +105,7 @@ const FieldCommand kFields[] = {
 };
 
 // Prints "NAME=value" plus the realized value -- " (actual X ns, N cyc)",
-// " (actual X Hz, period N cyc)" or " (actual X Hz, divider I+F/256)" -- then a
+// " (actual X Hz, period N cyc)" or " (actual X Hz, divider I+F/65536)" -- then a
 // newline.
 void printField(const FieldCommand &f, uint32_t value, const RealizedTiming &r) {
     g_out.print(f.name);
@@ -148,14 +148,14 @@ void printSync(const RealizedTiming &r) {
     g_out.print(F("SYNC=1000000 (fixed"));
     if (r.clkHz != 0) {
         char num[32];
-        syncFormatHz(r.syncDiv256, r.clkHz, num, sizeof(num));
+        syncFormatHz(r.syncDiv, r.clkHz, num, sizeof(num));
         g_out.print(F(", actual "));
         g_out.print(num);
         g_out.print(F(" Hz, divider "));
-        g_out.print(r.syncDiv256 >> 8);
+        g_out.print(r.syncDiv >> 16);
         g_out.print('+');
-        g_out.print(r.syncDiv256 & 0xFFu);
-        g_out.print(F("/256"));
+        g_out.print(r.syncDiv & 0xFFFFu);
+        g_out.print(F("/65536"));
     }
     g_out.println(')');
 }

@@ -75,21 +75,6 @@ const pio_program_t kPulseDualProgram = {
 #endif
 };
 
-const uint16_t kToggleInstructions[] = {
-    (uint16_t)pio_encode_set(pio_pins, 1),  // 0: <-- wrap_target
-    (uint16_t)pio_encode_set(pio_pins, 0),  // 1: <-- wrap
-};
-
-const pio_program_t kToggleProgram = {
-    kToggleInstructions,
-    2,
-    -1,
-    0,  // pio_version: runs on any PIO
-#if PICO_PIO_VERSION > 0
-    0,  // used_gpio_ranges: no constraint (pins are chosen at run time)
-#endif
-};
-
 // The pulse program is shared by every PulseChannel on a given PIO block
 // (each state machine gets its own PC/registers, so several SMs can run the
 // same physical instruction memory concurrently) -- it must only be loaded
@@ -179,33 +164,6 @@ bool PulseChannel::configure(const PulseCycles &t) {
     pio_sm_put_blocking(pio_, sm_, w.width);
     pio_sm_put_blocking(pio_, sm_, w.tail);
     return true;
-}
-
-bool SyncChannel::begin(PIO pio, uint sm, uint gpio) {
-    pio_ = pio;
-    sm_ = sm;
-    gpio_ = gpio;
-
-    const int off = pio_add_program(pio_, &kToggleProgram);
-    if (off < 0) {
-        return false;
-    }
-    offset_ = (uint)off;
-
-    pio_gpio_init(pio_, gpio_);  // the PIO output latch is LOW after the boot-time PIO reset
-    pio_sm_set_consecutive_pindirs(pio_, sm_, gpio_, 1, true);
-
-    config_ = pio_get_default_sm_config();
-    sm_config_set_set_pins(&config_, gpio_, 1);
-    sm_config_set_wrap(&config_, offset_ + 0, offset_ + 1);
-    return true;
-}
-
-void SyncChannel::start(uint32_t div256) {
-    pio_sm_set_enabled(pio_, sm_, false);
-    sm_config_set_clkdiv_int_frac8(&config_, div256 >> 8, (uint8_t)(div256 & 0xFFu));
-    pio_sm_init(pio_, sm_, offset_, &config_);
-    pio_sm_set_enabled(pio_, sm_, true);
 }
 
 // In RAM, so no flash (XIP) cache miss can sit between the halt and the forced LOWs.

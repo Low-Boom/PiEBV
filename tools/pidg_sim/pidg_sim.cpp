@@ -109,7 +109,7 @@ bool isArmed() { return g_armed; }
 
 // main.cpp applyPulseParams(), without the PIO calls.
 const char *applyPulseParams(const PulseParams &p, RealizedTiming *realized) {
-    if (!g_pioReady) return "pio0/pio1 unavailable";
+    if (!g_pioReady) return "pio0 unavailable";
     RealizedTiming rt;
     if (const char *why = realizeTiming(p, clkHz(), &rt)) return why;
     if (g_armed && g_configured && rt.combine != g_rt.combine) {

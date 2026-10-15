@@ -528,7 +528,7 @@ ID?            ->  PiDG delay generator (Pico 2 W), firmware built Sep 24 2026 2
   same in 6.667 ns steps ("cycles").
 - The `(laser pulses start after …)` part appears only while a start delay (the hold-off, below) is
   pending; otherwise `ARM` replies just `OK ARMED=1`.
-- `SYNC` in `STATUS` is read-only: it is fixed at 1 MHz (divider 75 at the 150 MHz system clock).
+- `SYNC` in `STATUS` is read-only: it is fixed at 1 MHz (the RP2350 clock generator divides the 150 MHz system clock by exactly 150).
 
 ### ARM and DISARM in detail
 
@@ -769,9 +769,9 @@ the image that matches the fitted module. The first build takes longer because P
 the platform and compiler.
 
 **Pin map** (`src/board.h`): GP13 = CH1 → J7, GP12 = CH2 → J8, GP11 = marker → J10 pin 3,
-GP10 = sync → cameras and TP3, GP16 = pixel-reset gate. All of them are driven by the RP2350's PIO
-(a small block of timing hardware beside the processor), so the timing doesn't depend on the
-software.
+GP15 = sync → cameras and TP3, GP16 = pixel-reset gate. The laser, marker and gate outputs are
+driven by the RP2350's PIO (a small block of timing hardware beside the processor), and the sync
+clock by its clock generator, so none of the timing depends on the software.
 
 ### Timing checks
 
