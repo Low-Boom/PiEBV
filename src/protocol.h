@@ -4,10 +4,11 @@
 // One command per line, terminated by '\n', '\r' or "\r\n". Backspace (0x08)
 // and DEL (0x7F) erase the previous character, so raw terminals work. A bare
 // command name queries the current value; a command followed by one value sets
-// it. See HELP output in protocol.cpp for the full command list.
+// it. ARM, ARM?, STATUS, ID?/ID and HELP take no argument. See HELP output in
+// protocol.cpp for the full command list. Every reply line ends in "\r\n".
 //
 // Time/frequency values are what the user asked for; every reply also shows
-// the REALIZED value the PIO actually produces, e.g.
+// the REALIZED value the PIO actually produces, e.g. at 150 MHz
 //   DELAY 1003  ->  OK DELAY=1003 (actual 1000.000 ns, 150 cyc)
 // so nobody has to correct for the 6.667 ns quantization by hand.
 //
@@ -30,7 +31,9 @@
 struct ProtocolHooks {
     // Applies a candidate parameter set to the hardware. Returns nullptr on
     // success and fills *realized; otherwise returns a short reason, and the
-    // previous configuration must be left running untouched.
+    // previous configuration must be left running untouched. (Sole exception: the
+    // hardware fails to load counts that passed every check; then the outputs stop,
+    // the lasers are disarmed, and STATUS reports it as HW=ERR.)
     const char *(*apply)(const PulseParams &params, RealizedTiming *realized);
     // ARM (true) or DISARM (false). Returns nullptr on success, or a reason.
     // DISARM must always succeed.
@@ -43,6 +46,8 @@ struct ProtocolHooks {
     void (*printSystemStatus)(Print &out);
     // One-line firmware identity for ID?.
     void (*printIdentity)(Print &out);
+    // The PIO clock in Hz (clk_sys), for HELP's cycle length.
+    uint32_t (*clkHz)();
 };
 
 class Protocol {
@@ -55,22 +60,24 @@ public:
     // dispatched as soon as a complete line has been accumulated.
     void feed(char c);
 
-    // Replies dropped because the host did not read them in time (see protocol.h top).
-    uint32_t droppedReplyBytes() const;
-
 private:
+    // Line buffer size: a line holds up to kLineMax - 1 characters (+ NUL).
+    static constexpr size_t kLineMax = 96;
+
     void dispatch(char *line);
     void disarmNow();
 
     PulseParams *params_ = nullptr;
     ProtocolHooks hooks_{};
     RealizedTiming realized_{};
-    char buf_[96];
+    char buf_[kLineMax];
     size_t len_ = 0;
     bool discarding_ = false;  // rest of the current line is dropped, never dispatched
     // Edit-aware history of the current line for the streaming DISARM match (kept
-    // separately from buf_ because it must keep working in discard mode). As deep
-    // as a line, so backspacing over a slid-out character still restores it.
-    char recent_[96] = {};
-    size_t recentLen_ = 0;
+    // separately from buf_ because it must keep working in discard mode): a ring of
+    // the last kLineMax characters, so backspacing over an old character still
+    // restores it, with no copying per character.
+    char recent_[kLineMax] = {};
+    size_t recentEnd_ = 0;  // ring index of the next character
+    size_t recentLen_ = 0;  // characters held, <= kLineMax
 };

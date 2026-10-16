@@ -66,14 +66,12 @@ void closeLaserGate() {
     if (wasOpen) g_quietSinceUs = time_us_64();
 }
 
-// main.cpp restartPulses(), without the PIO calls.
+// main.cpp restartPulses(), without the PIO calls (so no load can fail here).
 void restartPulses(const RealizedTiming &rt, bool lasersLive) {
     g_startPending = false;
     closeLaserGate();
     if (!lasersLive) return;
-    const uint64_t holdCycles = std::max(g_lastLaserPeriodCycles, rt.periodCycles);
-    const uint64_t holdUs = (holdCycles * 1000000ULL + rt.clkHz - 1) / rt.clkHz + 1;
-    g_startDueUs = g_quietSinceUs + holdUs;
+    g_startDueUs = g_quietSinceUs + restartHoldUs(g_lastLaserPeriodCycles, rt.periodCycles, rt.clkHz);
     g_pendingPeriodCycles = rt.periodCycles;
     g_startPending = true;
 }
@@ -107,20 +105,15 @@ const char *setArmed(bool arm) {
 
 bool isArmed() { return g_armed; }
 
-// main.cpp applyPulseParams(), without the PIO calls.
+// main.cpp applyPulseParams(), without the PIO and SYNC calls.
 const char *applyPulseParams(const PulseParams &p, RealizedTiming *realized) {
-    if (!g_pioReady) return "pio0 unavailable";
     RealizedTiming rt;
     if (const char *why = realizeTiming(p, clkHz(), &rt)) return why;
     if (g_armed && g_configured && rt.combine != g_rt.combine) {
         return "DISARM first: COMBINE changes what both laser outputs carry";
     }
-    const bool pulseChanged = !g_configured || rt.combine != g_rt.combine || rt.periodCycles != g_rt.periodCycles ||
-                              rt.widthCycles != g_rt.widthCycles || rt.delayCycles != g_rt.delayCycles ||
-                              rt.markerWidthCycles != g_rt.markerWidthCycles || rt.pixGate != g_rt.pixGate ||
-                              rt.pixResetStartCycles != g_rt.pixResetStartCycles ||
-                              rt.pixResetCycles != g_rt.pixResetCycles;
-    if (pulseChanged) restartPulses(rt, g_armed);
+    if (!g_pioReady) return "pio0 unavailable";
+    if (!g_configured || pulseLoadDiffers(g_rt, rt)) restartPulses(rt, g_armed);
     g_rt = rt;
     g_configured = true;
     *realized = rt;
@@ -154,7 +147,7 @@ void setup() {
     g_lastLaserPeriodCycles = clkHz();  // worst case (1 s), as on the board
     const char *why = g_protocol.begin(
         &g_params, ProtocolHooks{applyPulseParams, setArmed, isArmed, startPendingUs, printSystemStatus,
-                                 printIdentity});
+                                 printIdentity, clkHz});
     if (why) snprintf(g_hwWhy, sizeof(g_hwWhy), "outputs not started: %s", why);
     Serial.println(F("PiDG delay generator ready, lasers DISARMED (reset: POWER_ON). Type HELP for commands."));
     if (g_hwWhy[0]) {

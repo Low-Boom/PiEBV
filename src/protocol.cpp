@@ -37,10 +37,12 @@ public:
         deadlineUs_ = stalled_ ? 0 : time_us_64() + kReplyBudgetUs;
     }
     size_t write(uint8_t c) override {
-        line_[lineLen_++] = c;
-        if (c == '\n' || lineLen_ == sizeof(line_)) {
-            flushLine();
+        // Every line ends in "\r\n", as println() writes it: a bare '\n' (inside a
+        // multi-line F() text) gets its '\r' here.
+        if (c == '\n' && prev_ != '\r') {
+            put('\r');
         }
+        put(c);
         return 1;
     }
     size_t write(const uint8_t *buf, size_t n) override {
@@ -52,6 +54,14 @@ public:
     uint32_t dropped() const { return dropped_; }
 
 private:
+    void put(uint8_t c) {
+        prev_ = c;
+        line_[lineLen_++] = c;
+        if (c == '\n' || lineLen_ == sizeof(line_)) {
+            flushLine();
+        }
+    }
+
     void flushLine() {
         if (lineLen_ == 0) {
             return;
@@ -75,6 +85,7 @@ private:
 
     uint8_t line_[256];  // = the USB CDC TX FIFO size, so any line fits once it has drained
     size_t lineLen_ = 0;
+    uint8_t prev_ = 0;  // last byte put, also across a flush
     uint64_t deadlineUs_ = 0;
     bool stalled_ = false;
     uint32_t dropped_ = 0;
@@ -145,7 +156,9 @@ void printField(const FieldCommand &f, uint32_t value, const RealizedTiming &r) 
 }
 
 void printSync(const RealizedTiming &r) {
-    g_out.print(F("SYNC=1000000 (fixed"));
+    g_out.print(F("SYNC="));
+    g_out.print(kSyncHz);
+    g_out.print(F(" (fixed"));
     if (r.clkHz != 0) {
         char num[32];
         syncFormatHz(r.syncDiv, r.clkHz, num, sizeof(num));
@@ -191,8 +204,20 @@ void reportErr(const char *name, const char *reason) {
     g_out.println(reason);
 }
 
+// For a command that takes no argument: reports an error and returns true if one was
+// given, so that e.g. "ARM? 1" cannot pass for a setting.
+bool rejectArgument(const char *name, const char *valueStr) {
+    if (!valueStr) {
+        return false;
+    }
+    reportErr(name, "takes no argument");
+    return true;
+}
+
+// Every number that depends on the clock or on a timing constant is computed, not
+// written into the text. clkHz 0 (unknown) leaves out the lines that need it.
 void printHelp(uint32_t clkHz) {
-    g_out.println(F(
+    g_out.print(F(
         "FREQ <Hz>          pulse-pair repetition frequency\n"
         "WIDTH <ns>         CH1/CH2 pulse width\n"
         "DELAY <ns>         CH2 rising edge after CH1 rising edge\n"
@@ -201,34 +226,52 @@ void printHelp(uint32_t clkHz) {
         "                   double pulse); 0 = CH1 on LASER 1, CH2 on LASER 2\n"
         "PIXGATE <0|1|2>    camera pixel reset between pulse pairs, ANDed with the J12\n"
         "                   input: 0 = off (J12 only), 1 = while ARMED, 2 = always\n"
-        "PIXLEAD <ns>       pixels released this long before each CH1 (>= 5 cycles)\n"
+        "PIXLEAD <ns>       pixels released this long before each CH1 (>= "));
+    g_out.print(kPixGateMinLeadCycles);
+    g_out.println(F(" cycles)\n"
         "PIXLAG <ns>        pixels reset again this long after the last laser pulse\n"
         "ARM                enable the laser outputs (the board boots DISARMED)\n"
         "DISARM             disable the laser outputs: always accepted, immediate, and\n"
         "                   recognised anywhere in the input, even mid-line\n"
         "ARM?               query the arm state\n"
         "STATUS             all settings with realized values, arm state, reset cause\n"
-        "ID?                firmware identity\n"
-        "HELP               this text\n"
-        "SYNC is fixed at 1 MHz; STATUS reports its realized frequency.\n"
-        "A bare name (e.g. DELAY) queries it; NAME VALUE sets it. Replies show the\n"
-        "realized value, e.g. OK DELAY=1003 (actual 1000.000 ns, 150 cyc)."));
+        "ID?                firmware identity and version\n"
+        "HELP               this text"));
+    g_out.print(F("SYNC is fixed at "));
+    g_out.print(kSyncHz);
+    g_out.println(F(" Hz; STATUS reports its realized frequency.\n"
+                    "A bare name (e.g. DELAY) queries it; NAME VALUE sets it. ARM, ARM?,\n"
+                    "STATUS, ID? and HELP take no argument."));
     char buf[32];
-    pulseFormatNs(1, clkHz, buf, sizeof(buf));
-    g_out.print(F("Times realize to whole PIO cycles of "));
-    g_out.print(buf);
-    pulseFormatNs(kPulseMinWidthCycles, clkHz, buf, sizeof(buf));
-    g_out.print(F(" ns; WIDTH and MARKERWIDTH must realize to >= "));
+    if (clkHz != 0) {
+        constexpr uint32_t kExampleNs = 1003;
+        const uint64_t exampleCycles = pulseNsToCycles(kExampleNs, clkHz);
+        pulseFormatNs(exampleCycles, clkHz, buf, sizeof(buf));
+        g_out.print(F("Replies show the realized value, e.g. OK DELAY="));
+        g_out.print(kExampleNs);
+        g_out.print(F(" (actual "));
+        g_out.print(buf);
+        g_out.print(F(" ns, "));
+        g_out.print((uint32_t)exampleCycles);
+        g_out.println(F(" cyc)."));
+        pulseFormatNs(1, clkHz, buf, sizeof(buf));
+        g_out.print(F("Times realize to whole PIO cycles of "));
+        g_out.print(buf);
+        pulseFormatNs(kPulseMinWidthCycles, clkHz, buf, sizeof(buf));
+        g_out.print(F(" ns; WIDTH and MARKERWIDTH must realize to >= "));
+        g_out.print(kPulseMinWidthCycles);
+        g_out.print(F(" cycles ("));
+        g_out.print(buf);
+        g_out.println(F(" ns)."));
+    }
+    g_out.print(F("No laser-driver limits are imposed (pulse width, duty): check your driver's\n"
+                  "ratings. Pulse pairs stay separated: DELAY <= 1/FREQ - 2 x WIDTH.\n"
+                  "With COMBINE 1 each output carries both pulses, so DELAY must also exceed\n"
+                  "WIDTH (by >= 1 cycle). Change COMBINE only while DISARMED.\n"
+                  "With PIXGATE on, PIXLEAD + DELAY + WIDTH + PIXLAG must leave >= "));
     g_out.print(kPulseMinWidthCycles);
-    g_out.print(F(" cycles ("));
-    g_out.print(buf);
-    g_out.println(F(" ns)."));
-    g_out.println(F("No laser-driver limits are imposed (pulse width, duty, spacing): check your\n"
-                    "driver's ratings. DELAY <= 1/FREQ - 2 x WIDTH, so pulse pairs stay separated.\n"
-                    "With COMBINE 1 each output carries both pulses, so DELAY must also exceed\n"
-                    "WIDTH (by >= 1 cycle). Change COMBINE only while DISARMED.\n"
-                    "With PIXGATE on, PIXLEAD + DELAY + WIDTH + PIXLAG must leave >= 3 cycles of\n"
-                    "pixel reset per period. The first pulse pair after a start has no reset\n"
+    g_out.println(F(" cycles\n"
+                    "of pixel reset per period. The first pulse pair after a start has no reset\n"
                     "before it; every later pair does."));
     g_out.println(F(
         "MARKER and SYNC run while DISARMED; CH1/CH2 are held LOW. ARM, and pulse\n"
@@ -244,15 +287,12 @@ const char *Protocol::begin(PulseParams *params, const ProtocolHooks &hooks) {
     hooks_ = hooks;
     len_ = 0;
     discarding_ = false;
+    recentEnd_ = 0;
     recentLen_ = 0;
     if (!hooks_.apply) {
         return "no hardware";
     }
     return hooks_.apply(*params_, &realized_);
-}
-
-uint32_t Protocol::droppedReplyBytes() const {
-    return g_out.dropped();
 }
 
 void Protocol::disarmNow() {
@@ -284,18 +324,26 @@ void Protocol::feed(char c) {
         }
         if (recentLen_ > 0) {
             --recentLen_;
+            recentEnd_ = (recentEnd_ == 0 ? kLineMax : recentEnd_) - 1;
         }
         return;
     }
 
     // Streaming DISARM match, independent of the line buffer and of discard mode:
-    // the last six characters of the edited history.
-    if (recentLen_ == sizeof(recent_)) {
-        memmove(recent_, recent_ + 1, sizeof(recent_) - 1);
-        --recentLen_;
+    // the last six characters of the edited history. When the ring is full, the new
+    // character replaces the oldest.
+    recent_[recentEnd_] = (char)toupper((unsigned char)c);
+    recentEnd_ = (recentEnd_ + 1 == kLineMax) ? 0 : recentEnd_ + 1;
+    if (recentLen_ < kLineMax) {
+        ++recentLen_;
     }
-    recent_[recentLen_++] = (char)toupper((unsigned char)c);
-    if (recentLen_ >= 6 && memcmp(recent_ + recentLen_ - 6, "DISARM", 6) == 0) {
+    static constexpr char kDisarm[] = "DISARM";
+    constexpr size_t kDisarmLen = sizeof(kDisarm) - 1;
+    bool disarm = recentLen_ >= kDisarmLen;
+    for (size_t i = 0; disarm && i < kDisarmLen; ++i) {
+        disarm = recent_[(recentEnd_ + kLineMax - kDisarmLen + i) % kLineMax] == kDisarm[i];
+    }
+    if (disarm) {
         disarmNow();
         len_ = 0;
         discarding_ = true;  // nothing else on this line runs
@@ -335,14 +383,15 @@ void Protocol::dispatch(char *line) {
     const bool extraArgs = valueStr && strtok(nullptr, " \t") != nullptr;
 
     if (strcasecmp(cmd, "ARM?") == 0) {
-        printArmed(hooks_.isArmed());
+        if (!rejectArgument("ARM?", valueStr)) {
+            printArmed(hooks_.isArmed());
+        }
         return;
     }
 
     if (strcasecmp(cmd, "ARM") == 0) {
         // Arming is strict: only a bare "ARM" arms.
-        if (valueStr) {
-            reportErr("ARM", "takes no argument");
+        if (rejectArgument("ARM", valueStr)) {
             return;
         }
         if (const char *why = hooks_.setArmed(true)) {
@@ -401,6 +450,9 @@ void Protocol::dispatch(char *line) {
     }
 
     if (strcasecmp(cmd, "STATUS") == 0) {
+        if (rejectArgument("STATUS", valueStr)) {
+            return;
+        }
         for (const auto &f : kFields) {
             printField(f, params_->*(f.field), realized_);
         }
@@ -416,14 +468,16 @@ void Protocol::dispatch(char *line) {
     }
 
     if (strcasecmp(cmd, "ID?") == 0 || strcasecmp(cmd, "ID") == 0) {
-        if (hooks_.printIdentity) {
+        if (!rejectArgument("ID?", valueStr) && hooks_.printIdentity) {
             hooks_.printIdentity(g_out);
         }
         return;
     }
 
     if (strcasecmp(cmd, "HELP") == 0) {
-        printHelp(realized_.clkHz ? realized_.clkHz : 150000000u);
+        if (!rejectArgument("HELP", valueStr)) {
+            printHelp(hooks_.clkHz ? hooks_.clkHz() : realized_.clkHz);
+        }
         return;
     }
 

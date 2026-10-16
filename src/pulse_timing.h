@@ -29,20 +29,22 @@
 #include <cstdio>
 
 // ---------------------------------------------------------------- limits
-// No laser-driver ratings are imposed: pulse width, duty and pulse spacing all
-// depend on the attached driver, and the unit is used with more than one. The
-// firmware only enforces what the PIO programs physically need: widths of >= 3
-// cycles (20 ns at 150 MHz), DELAY + WIDTH and MARKERWIDTH fitting in the period,
-// the 1 MHz SYNC clock-divider range, and with COMBINE 1 (both pulses on both outputs, sharing
-// the pins) DELAY >= WIDTH + 1 cycle so the two pulses never touch.
+// No laser-driver ratings are imposed: pulse width and duty depend on the attached
+// driver, and the unit is used with more than one. The firmware enforces what the
+// PIO programs physically need: widths of >= kPulseMinWidthCycles (20 ns at 150 MHz),
+// DELAY + WIDTH and MARKERWIDTH fitting in the period, the SYNC clock-divider range,
+// and with COMBINE 1 (both pulses on both outputs, sharing the pins) DELAY >= WIDTH +
+// 1 cycle so the two pulses never touch. It adds ONE rule that the PIO does not need:
+// pulse pairs stay apart, DELAY <= 1/FREQ - 2 x WIDTH, so CH2 ends at least one WIDTH
+// before the next CH1 rises.
 //
 // Pixel-reset gate (PIXGATE 1/2): a fourth state machine runs the same pulse
 // program on GP16, whose output is INVERTED in the GPIO block, so its "pulse" is the
 // camera pixel reset (TDRSTN low). Every period it asserts reset PIXLAG after the
 // last laser pulse falls (CH1 rise + DELAY + WIDTH + PIXLAG) and releases it PIXLEAD
 // before the next CH1 rise; the pixels are free for the whole pulse pair. The
-// program needs PIXLEAD >= 5 cycles and a reset of >= 3 cycles per period.
-constexpr uint32_t kPixGateMinLeadCycles = 5;
+// program needs PIXLEAD >= kPixGateMinLeadCycles (5) and a reset of >=
+// kPulseMinWidthCycles (3) per period.
 constexpr uint32_t kSyncHz = 1000000;
 
 // ---------------------------------------------------------------- parameters
@@ -76,6 +78,13 @@ struct RealizedTiming {
 // ---------------------------------------------------------------- pulse program
 constexpr uint32_t kPulseMinWidthCycles = 3;       // SET 1; MOV X,Y; JMP X-- (X=0)
 constexpr uint32_t kPulseFixedOverheadCycles = 8;  // non-loop instructions per period
+// Shortest low time per period: the fixed instructions outside the high time, with
+// the delay and tail loops at 0. So every channel needs period >= width + this.
+constexpr uint32_t kPulseMinLowCycles = kPulseFixedOverheadCycles - kPulseMinWidthCycles;  // 5
+// The gate's low time from releasing the pixels to the end of the period is PIXLEAD,
+// and it holds those fixed low-time instructions (its tail word is PIXLEAD - this), so
+// PIXLEAD needs the same minimum.
+constexpr uint32_t kPixGateMinLeadCycles = kPulseMinLowCycles;
 
 // One channel's timing in state-machine clock cycles.
 struct PulseCycles {
@@ -234,47 +243,54 @@ inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTim
     // COMBINE: both state machines write the same two pins, and a pin keeps the last
     // level written. If CH2 rose before CH1 fell, CH1's fall would cut CH2's pulse
     // off (DELAY == WIDTH merges them into one). So CH2 may rise no earlier than one
-    // cycle after CH1 falls: DELAY >= WIDTH + 1 cycle, i.e. any low gap > 0. (The
-    // gap from CH2's fall to the next CH1 rise is >= 5 cycles by the fit check.)
+    // cycle after CH1 falls: DELAY >= WIDTH + 1 cycle, i.e. any low gap > 0. (The gap
+    // from CH2's fall to the next CH1 rise is >= kPulseMinLowCycles by the check below.)
     if (p.combine && delay < width + 1) {
         pulseFormatNs(width + 1, clk, a, sizeof(a));
         snprintf(why, sizeof(why), "COMBINE needs DELAY > WIDTH so the two pulses stay separate (min DELAY %s ns)", a);
         return why;
     }
-    // Pulse pairs stay separated: CH2 must end at least one WIDTH before the next
-    // pair's CH1 rises, i.e. DELAY <= period - 2 x WIDTH. (The program itself also
-    // needs DELAY <= period - WIDTH - 5 cycles, which only binds at WIDTH < 5 cycles.)
+    // Two upper limits on DELAY; the reply names the one that applies:
+    //  - pulse pairs stay separated: CH2 ends at least one WIDTH before the next pair's
+    //    CH1 rises, DELAY <= period - 2 x WIDTH (the firmware's own rule, see "limits");
+    //  - the program itself: DELAY <= period - WIDTH - kPulseMinLowCycles, the tighter
+    //    one only while WIDTH < kPulseMinLowCycles.
+    // Passing them also makes CH1 (DELAY 0) and CH2 fit the pulse program, so neither
+    // needs a computePulseCounts() check here.
     {
-        const int64_t maxDelay = std::min<int64_t>((int64_t)period - 2 * (int64_t)width,
-                                                   pulseMaxDelayCycles((uint32_t)period, width));
+        const int64_t pairLimit = (int64_t)period - 2 * (int64_t)width;
+        const int64_t pioLimit = pulseMaxDelayCycles((uint32_t)period, width);
+        const bool pioBinds = pioLimit < pairLimit;
+        const int64_t maxDelay = pioBinds ? pioLimit : pairLimit;
         if (maxDelay < 0) {
+            if (pioBinds) {
+                snprintf(why, sizeof(why), "WIDTH does not fit in the period (WIDTH <= 1/FREQ - %lu cycles)",
+                         (unsigned long)kPulseMinLowCycles);
+                return why;
+            }
             return "WIDTH too long for the period: 2 x WIDTH must fit in 1/FREQ";
         }
         if ((int64_t)delay > maxDelay) {
             pulseFormatNs((uint64_t)maxDelay, clk, a, sizeof(a));
-            snprintf(why, sizeof(why),
-                     "DELAY must leave >= WIDTH before the next pulse pair (DELAY <= 1/FREQ - 2 x WIDTH); max DELAY %s ns", a);
+            if (pioBinds) {
+                snprintf(why, sizeof(why),
+                         "DELAY + WIDTH must fit in the period (DELAY <= 1/FREQ - WIDTH - %lu cycles); max DELAY %s ns",
+                         (unsigned long)kPulseMinLowCycles, a);
+            } else {
+                snprintf(why, sizeof(why),
+                         "DELAY must leave >= WIDTH before the next pulse pair (DELAY <= 1/FREQ - 2 x WIDTH); max DELAY %s ns",
+                         a);
+            }
             return why;
         }
     }
 
-    const PulseCycles ch1{(uint32_t)period, 0, width};
-    const PulseCycles ch2{(uint32_t)period, delay, width};
-    const PulseCycles marker{(uint32_t)period, 0, markerWidth};
-    if (computePulseCounts(ch1, nullptr) != PulseFit::Ok) {
-        return "WIDTH does not fit in the period";
-    }
-    if (computePulseCounts(ch2, nullptr) != PulseFit::Ok) {
-        const int64_t maxDelay = pulseMaxDelayCycles((uint32_t)period, width);
-        pulseFormatNs(maxDelay > 0 ? (uint64_t)maxDelay : 0, clk, a, sizeof(a));
-        snprintf(why, sizeof(why), "DELAY + WIDTH does not fit in the period; max DELAY %s ns", a);
-        return why;
-    }
-    if (computePulseCounts(marker, nullptr) != PulseFit::Ok) {
-        const int64_t maxWidth = (int64_t)period - (int64_t)(kPulseFixedOverheadCycles - kPulseMinWidthCycles);
+    if (computePulseCounts(PulseCycles{(uint32_t)period, 0, markerWidth}, nullptr) != PulseFit::Ok) {
+        const int64_t maxWidth = (int64_t)period - (int64_t)kPulseMinLowCycles;
         pulseFormatNs(maxWidth > 0 ? (uint64_t)maxWidth : 0, clk, a, sizeof(a));
         snprintf(why, sizeof(why),
-                 "MARKERWIDTH must fit in the period (MARKERWIDTH <= 1/FREQ - 5 cycles); max MARKERWIDTH %s ns", a);
+                 "MARKERWIDTH must fit in the period (MARKERWIDTH <= 1/FREQ - %lu cycles); max MARKERWIDTH %s ns",
+                 (unsigned long)kPulseMinLowCycles, a);
         return why;
     }
 
@@ -307,16 +323,15 @@ inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTim
                      "max PIXLAG %s ns", (unsigned long)kPulseMinWidthCycles, a);
             return why;
         }
+        // Fits the pulse program: reset >= kPulseMinWidthCycles (checked just above) and
+        // PIXLEAD >= kPixGateMinLeadCycles leave the gate's tail word >= 0.
         pixReset = period - pixLead - pixStart;
-        if (computePulseCounts(PulseCycles{(uint32_t)period, (uint32_t)pixStart, (uint32_t)pixReset}, nullptr) !=
-            PulseFit::Ok) {
-            return "pixel-reset gate does not fit in the period";  // unreachable: covered above
-        }
     }
 
     const uint64_t syncDiv = syncDivFor(clk);
     if (syncDiv < kSyncMinDiv || syncDiv > kSyncMaxDiv) {
-        return "fixed 1 MHz SYNC is out of range for the system clock";
+        snprintf(why, sizeof(why), "fixed %lu Hz SYNC is out of range for the system clock", (unsigned long)kSyncHz);
+        return why;
     }
 
     rt->clkHz = clk;
@@ -332,4 +347,25 @@ inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTim
     rt->pixResetStartCycles = (uint32_t)pixStart;
     rt->pixResetCycles = (uint32_t)pixReset;
     return nullptr;
+}
+
+// ---------------------------------------------------------------- restart decisions
+// Used by src/main.cpp and by the host simulator (tools/pidg_sim), so the two cannot drift.
+
+// True if `b` loads different cycle counts or a different pin mode into the pulse state
+// machines than `a`, i.e. applying `b` over `a` needs a restart. SYNC (syncDiv) is not
+// part of it. PIXLEAD/PIXLAG act only through pixResetStart/pixReset, which are 0 while
+// the gate is off, so they then restart nothing.
+inline bool pulseLoadDiffers(const RealizedTiming &a, const RealizedTiming &b) {
+    return a.combine != b.combine || a.periodCycles != b.periodCycles || a.widthCycles != b.widthCycles ||
+           a.delayCycles != b.delayCycles || a.markerWidthCycles != b.markerWidthCycles || a.pixGate != b.pixGate ||
+           a.pixResetStartCycles != b.pixResetStartCycles || a.pixResetCycles != b.pixResetCycles;
+}
+
+// Restart hold-off in us: the longer of the last and the new laser period, rounded up
+// to whole us, + 1 us for the 1 us resolution of the two timestamps it is measured
+// between. So the real elapsed time is always >= the full period.
+inline uint64_t restartHoldUs(uint32_t lastPeriodCycles, uint32_t newPeriodCycles, uint32_t clk_hz) {
+    const uint64_t holdCycles = std::max(lastPeriodCycles, newPeriodCycles);
+    return (holdCycles * 1000000ULL + clk_hz - 1) / clk_hz + 1;
 }

@@ -8,7 +8,7 @@ Transports (all carry the same line protocol, src/protocol.cpp):
     this computer  (no pyserial needed)
 
 Protocol rules the client relies on (see tools/pidg_example.py for the same notes):
-  * one command per line; replies end in CRLF (HELP's inner lines in LF only);
+  * one command per line; replies end in CRLF (older firmware: HELP's inner lines in LF only);
   * a DTR-asserted host is required, and the port must never be opened at 1200 baud
     (that reboots the Pico into BOOTSEL mode);
   * DISARM acts as soon as its six letters arrive, anywhere in the input, and answers
