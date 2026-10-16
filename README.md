@@ -453,9 +453,9 @@ Rules for host scripts:
 - **Read `STATUS` by key, not by line position.** New keys may be added. `TX_DROPPED` is always the
   last line.
 - **Closing the port does not disarm.** Always send `DISARM` yourself.
-- Every reply line ends in CR+LF, `HELP` included. (Firmware before this change sent `HELP`'s inner
-  lines with LF only, so a host that also talks to older boards should split on LF and strip any
-  trailing CR.)
+- Every reply line ends in CR+LF, `HELP` included. (Firmware up to commit `5dfedd5` sent `HELP`'s
+  inner lines with LF only, so a host that also talks to older boards should split on LF and strip
+  any trailing CR.)
 
 ### Wireless (Wi-Fi / Bluetooth)
 
@@ -528,8 +528,9 @@ DISARM         ->  OK ARMED=0
 ID?            ->  PiDG delay generator (Pico 2 W), firmware 5dfedd5
 ```
 
-- The `ID?` version is `git describe --always --dirty` of the source the firmware was built from.
-  `-dirty` means it was built with uncommitted changes; `unknown` means it was built without git.
+- The `ID?` version is `git describe --always --dirty` of the git checkout the firmware was built
+  in. `-dirty` means tracked files had uncommitted changes (new files that were never `git add`-ed
+  do not count); `unknown` means it was built without git.
 
 - The number after `=` is what you asked for; `actual` is what the hardware produces; `cyc` is the
   same in 6.667 ns steps ("cycles").

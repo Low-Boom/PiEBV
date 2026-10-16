@@ -444,6 +444,10 @@ void setup() {
         why = "pio0 unavailable (state machine already claimed or instruction memory full)";
     } else if (!syncReady) {  // not reachable with the static_assert on kPinSync; reported, not ignored
         why = "SYNC pin has no clock output";
+    } else if (g_loadFailWhy) {
+        // A failed load is not a boot-time hardware problem: it stays in g_loadFailWhy
+        // ("outputs stopped"), which the next clean load clears.
+        why = nullptr;
     }
     if (why) {
         snprintf(g_hwWhy, sizeof(g_hwWhy), "outputs not started: %s", why);  // copy: `why` may be a reused buffer
@@ -461,6 +465,9 @@ void setup() {
     if (g_hwWhy[0]) {
         Serial.print(F("ERR "));
         Serial.println(g_hwWhy);
+    } else if (g_loadFailWhy) {
+        Serial.print(F("ERR outputs stopped: "));
+        Serial.println(g_loadFailWhy);
     }
 
     rp2040.wdt_begin(kWatchdogMs);  // last: every boot-time wait above is finished
