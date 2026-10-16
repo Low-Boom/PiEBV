@@ -6,7 +6,8 @@
 //    = first half of a cycle, SEL_N = second half) and compares both pins with an
 //    independent model of the ideal waveform, step by step. Long repeated stretches are
 //    checked run by run (no edge may fall inside one), so 1 Hz periods are covered.
-//    Also checks the FIFO load: any 8 consecutive entries must cover >= 32 cycles.
+//    Also checks the FIFO load: one pass of the looping list must last >= 16 words, and
+//    any 8 consecutive entries, also across the wrap, must cover >= 32 cycles.
 // 2. Coupled mode: rebuilds each pin from its P and N lines (first and second half of
 //    each clk_sys cycle) and compares it with the ideal waveform, step by step; checks
 //    every accept/reject decision against an independent model of the rules.
@@ -87,10 +88,11 @@ bool decode(const uint32_t *list, size_t n, std::vector<Segment> *segs, uint64_t
             return false;
         }
     }
+    // The DMA loops the list, so a window may wrap (more than once in a short list).
     uint64_t minWin = UINT64_MAX;
-    for (size_t a = 0; a + 8 <= n; ++a) {
+    for (size_t a = 0; a < n; ++a) {
         uint64_t c = 0;
-        for (size_t b = a; b < a + 8; ++b) c += cyclesOfEntry[b];
+        for (size_t b = a; b < a + 8; ++b) c += cyclesOfEntry[b % n];
         if (c < minWin) minWin = c;
     }
     *minCyclesPer8 = minWin;
@@ -101,9 +103,11 @@ bool decode(const uint32_t *list, size_t n, std::vector<Segment> *segs, uint64_t
 bool wordCh2(uint32_t w, uint32_t k) { return (w >> (4 * (k / 2) + (k % 2 ? kDmaBitCh2N : kDmaBitCh2P))) & 1u; }
 bool wordCh1(uint32_t w, uint32_t k) { return (w >> (4 * (k / 2) + (k % 2 ? kDmaBitCh1N : kDmaBitCh1P))) & 1u; }
 
+// `start` counts from the list start; the waveform repeats every period.
 bool wordMatches(const BenchPulses &p, uint32_t w, uint64_t start) {
     for (uint32_t k = 0; k < 16; ++k) {
-        if (wordCh1(w, k) != idealCh1(p, start + k) || wordCh2(w, k) != idealCh2(p, start + k)) return false;
+        const uint64_t s = (start + k) % p.periodSteps;
+        if (wordCh1(w, k) != idealCh1(p, s) || wordCh2(w, k) != idealCh2(p, s)) return false;
     }
     return true;
 }
@@ -135,8 +139,8 @@ void checkDma(const BenchPulses &p, std::vector<uint32_t> &buf) {
         fail("malformed list", p);
         return;
     }
-    if (n >= 8 && per8 < g_worstPer8) g_worstPer8 = per8;
-    if (n >= 8 && per8 < 32) fail("8 FIFO entries cover < 32 cycles", p);
+    if (per8 < g_worstPer8) g_worstPer8 = per8;
+    if (per8 < 32) fail("8 FIFO entries cover < 32 cycles", p);
     uint64_t total = 0;
     for (const Segment &s : segs) {
         total += 16ull * s.repeats;
@@ -145,8 +149,13 @@ void checkDma(const BenchPulses &p, std::vector<uint32_t> &buf) {
             return;
         }
         if (s.repeats > 1) {
-            // A repeated word is only right if no level changes inside the stretch.
-            const uint64_t lo = s.start, hi = s.start + 16ull * s.repeats;
+            // A repeated word is only right if no level changes inside the stretch. The
+            // check below works inside one period, so a stretch must not cross a period end.
+            const uint64_t lo = s.start % p.periodSteps, hi = lo + 16ull * s.repeats;
+            if (hi > p.periodSteps) {
+                fail("a repeated stretch crosses a period end", p);
+                return;
+            }
             const uint64_t edges[] = {p.widthSteps, p.delaySteps, (uint64_t)p.delaySteps + p.widthSteps};
             for (uint64_t e : edges) {
                 if (e > lo && e < hi && idealCh1(p, e) == idealCh1(p, e - 1) && idealCh2(p, e) == idealCh2(p, e - 1)) {
@@ -163,7 +172,10 @@ void checkDma(const BenchPulses &p, std::vector<uint32_t> &buf) {
             }
         }
     }
-    if (total != p.periodSteps) fail("list length differs from the period", p);
+    // One pass: the fewest whole periods that last >= 16 words (256 steps).
+    uint64_t periods = 1;
+    while (periods * p.periodSteps < 256) ++periods;
+    if (total != periods * p.periodSteps) fail("list length is not the expected number of periods", p);
 }
 
 // ---------------------------------------------------------------- coupled mode

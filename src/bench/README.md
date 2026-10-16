@@ -66,15 +66,23 @@ Times are in **steps**: 1 step = half a clk_hstx cycle (3.333 ns at 150 MHz, 1.6
 | `COMBINE 0`, `COMBINE 1` | 1: both pulses on both pins. Needs a gap: `DELAY` ≥ `WIDTH` + 2 (`COUPLED`) or `WIDTH` + 1 (`DMA`). |
 | `REFWIDTH <cycles>` | REF width in clk_sys cycles (default 15 = 100 ns). |
 | `KEEPALIVE 0`, `KEEPALIVE 1` | `COUPLED` mode: 1 (default) feeds filler words to the HSTX FIFO with DMA. |
-| `SWEEP <from> <to> <ms>`, `SWEEP OFF` | While running, add 1 to `DELAY` every `<ms>`, from `<from>` to `<to>`, then start again. Each step prints the new `DELAY`. |
+| `SWEEP <from> <to> <ms>`, `SWEEP OFF` | While running, add 1 to `DELAY` every `<ms>` (10 to 3600000), from `<from>` to `<to>`, then start again. Each step prints the new `DELAY`. |
 | `STATUS`, `HELP` | Show the settings, the actual period, the per-line plan (`COUPLED`) or the list size (`DMA`), and the FIFO counters. |
 
 A command that changes a setting while the outputs run restarts them. A rejected value changes
-nothing and shows the reason.
+nothing and shows the reason. (If the restart itself fails, the outputs stop and the old value
+stays.)
+
+In `DMA` mode a period shorter than 16 words (256 steps) goes into the list several times, so that
+one pass of the list lasts at least 16 words. `STATUS` shows the number of periods per pass.
 
 `FIFO_EMPTY_SEEN` counts the times the main loop found the HSTX FIFO empty while DMA should keep it
 full. `FIFO_WOF` counts writes into a full FIFO. Both must stay 0. The main loop only takes samples:
 0 does not prove that the FIFO never ran empty, but a nonzero value proves that it did.
+
+`FIFO_KEPT_BY_RESET` counts the HSTX resets that left entries in the FIFO. The bench then drains the
+FIFO before it starts, so the outputs are still correct. Write the value down: it tells whether the
+production firmware needs that drain step.
 
 ## Procedure
 
@@ -119,6 +127,10 @@ path against a plain PIO pin. The production firmware needs this number to keep 
 1. Send `STOP`, `MODE DMA`, `RUN`.
 2. Repeat step 2 (`DELAY` 300 to 331, then `WIDTH` from 1). In this mode `WIDTH` can be 1 step.
 3. Send `STATUS`. `FIFO_EMPTY_SEEN` and `FIFO_WOF` must be 0.
+4. Send `FREQ 10000000`, `WIDTH 4`, `DELAY 15`, then `STATUS`. The period rounds to 2 words
+   (32 steps = 106.667 ns, `actual 9375000.000 Hz`) and the list holds 8 periods per pass. Make
+   sure that both pins pulse at that rate with the right width and delay, and that the FIFO
+   counters stay 0. Then send `FREQ 1000`, `WIDTH 30`, `DELAY 300`.
 
 ### 6. Step size, `DMA` at 300 MHz
 
@@ -152,6 +164,7 @@ The code follows the SDK register descriptions and the pico-examples HSTX code. 
 source that settles them; the bench measures them:
 
 - Whether coupled mode updates the pins while the HSTX FIFO is empty (step 4).
+- Whether the HSTX block reset also empties the HSTX FIFO (`FIFO_KEPT_BY_RESET`).
 - The exact output timing of the `RAW` and `RAW_REPEAT` commands and the nibble order (steps 5–6;
   a wrong order shows as wrong widths or delays at once).
 - HSTX operation at 300 MHz (above the 150 MHz rating).

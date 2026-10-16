@@ -13,9 +13,9 @@
 //   KEEPALIVE 1 (default) feeds the HSTX FIFO with filler words, in case the coupled
 //   output only updates while the shifter runs; KEEPALIVE 0 tests whether it must.
 // MODE DMA: DMA plays a command list for the HSTX command expander that holds one
-//   period (dmaRender()); no PIO. HSTXCLK 300 runs pll_sys at 300 MHz with clk_sys =
-//   pll_sys / 2 = 150 MHz (CPU, flash, buses and PIO unchanged) and clk_hstx = pll_sys,
-//   so only the HSTX runs above its 150 MHz rating.
+//   period, or several if the period is short (dmaRender()); no PIO. HSTXCLK 300 runs
+//   pll_sys at 300 MHz with clk_sys = pll_sys / 2 = 150 MHz (CPU, flash, buses and PIO
+//   unchanged) and clk_hstx = pll_sys, so only the HSTX runs above its 150 MHz rating.
 //
 // Bench only: no arming, no restart hold-off, no watchdog. Do not connect laser drivers.
 // The laser pins boot LOW (laser_gate.cpp pre-init hook) and stay LOW until RUN.
@@ -114,6 +114,7 @@ Settings g_set;
 bool g_running = false;
 uint32_t g_emptySeen = 0;  // loop() saw the HSTX FIFO empty while it should be fed
 uint32_t g_wofSeen = 0;    // the FIFO was written while full (WOF)
+uint32_t g_fifoKeptByReset = 0;  // HSTX resets that left entries in the FIFO
 
 struct Sweep {
     bool on = false;
@@ -200,19 +201,40 @@ void dmaStop() {
 }
 
 // ---------------------------------------------------------------- HSTX
-// A block reset clears the FIFO, the command expander and the shifter, so every start
-// begins at the first word of the list.
+// A block reset clears the command expander and the shifter.
 void hstxReset() {
     reset_unreset_block_num_wait_blocking(RESET_HSTX);
+}
+
+// Resets the HSTX and makes sure its FIFO is empty, so a start begins at the first
+// entry of the list. The SDK does not say whether RESET_HSTX also clears the FIFO (a
+// separate AHB block, hstx_fifo). If entries remain, the HSTX drains them in raw mode
+// (EXPAND_EN 0, so a stale data word cannot act as a command), 1 cycle per entry, and
+// is reset again. Call only with the DMA stopped and the laser pins off FUNCSEL HSTX.
+const char *hstxResetEmpty() {
+    hstxReset();
+    if (hstx_fifo_hw->stat & HSTX_FIFO_STAT_EMPTY_BITS) {
+        return nullptr;
+    }
+    ++g_fifoKeptByReset;  // STATUS shows it: a hardware fact the bench records
+    hstx_ctrl_hw->csr = HSTX_CTRL_CSR_EN_BITS | 1u << HSTX_CTRL_CSR_N_SHIFTS_LSB;
+    for (uint32_t i = 0; i < 10000 && !(hstx_fifo_hw->stat & HSTX_FIFO_STAT_EMPTY_BITS); ++i) {
+        tight_loop_contents();
+    }
+    hstxReset();
+    return (hstx_fifo_hw->stat & HSTX_FIFO_STAT_EMPTY_BITS) ? nullptr : "the HSTX FIFO does not empty";
 }
 
 uint32_t hstxBitSel(uint firstHalf, uint secondHalf) {
     return firstHalf << HSTX_CTRL_BIT0_SEL_P_LSB | secondHalf << HSTX_CTRL_BIT0_SEL_N_LSB;
 }
 
-// Configures the HSTX and leaves it halted (CSR EN = 0); hstxEnable() starts it.
-void hstxConfigure(bool coupled) {
-    hstxReset();
+// Configures the HSTX and leaves it halted (CSR EN = 0) with an empty FIFO;
+// hstxEnable() starts it. Returns nullptr or the reason it failed.
+const char *hstxConfigure(bool coupled) {
+    if (const char *why = hstxResetEmpty()) {
+        return why;
+    }
     // Each raw data word goes to the output shifter whole (as in the pico-examples DVI code).
     hstx_ctrl_hw->expand_shift = 1u << HSTX_CTRL_EXPAND_SHIFT_RAW_N_SHIFTS_LSB | 0u << HSTX_CTRL_EXPAND_SHIFT_RAW_SHIFT_LSB;
     if (coupled) {
@@ -230,6 +252,7 @@ void hstxConfigure(bool coupled) {
         hstx_ctrl_hw->csr = HSTX_CTRL_CSR_EXPAND_EN_BITS | kDmaCyclesPerWord << HSTX_CTRL_CSR_N_SHIFTS_LSB |
                             4u << HSTX_CTRL_CSR_SHIFT_LSB;
     }
+    return nullptr;
 }
 
 void hstxEnable() {
@@ -290,7 +313,9 @@ const char *makePlan(const Settings &s, Plan *pl) {
 }
 
 const char *startCoupled(const Plan &pl) {
-    hstxConfigure(true);
+    if (const char *why = hstxConfigure(true)) {
+        return why;
+    }
     if (g_set.keepAlive) {
         dmaPlay(g_keepAlive, 2);
     }
@@ -320,7 +345,9 @@ const char *startDma(const Plan &pl) {
     if (n == 0) {
         return "DMA list render failed";
     }
-    hstxConfigure(false);
+    if (const char *why = hstxConfigure(false)) {
+        return why;
+    }
     dmaPlay(g_list, (uint32_t)n);  // fills the FIFO while the HSTX is halted
     gpio_set_function(kPinCh2, GPIO_FUNC_HSTX);  // the halted shifter outputs LOW
     gpio_set_function(kPinCh1, GPIO_FUNC_HSTX);
@@ -347,17 +374,28 @@ const char *start() {
         return why;
     }
     g_running = true;
+    if (g_sweep.on) {
+        g_sweep.nextMs = millis() + g_sweep.everyMs;  // each DELAY value runs a full interval
+    }
     return nullptr;
 }
 
-// Takes a new setting: checked first, then applied (with a restart if running).
+// Takes a new setting: checked first, then applied (with a restart if running). If the
+// restart fails, the outputs stay stopped and the old setting is kept.
 const char *apply(const Settings &s) {
     Plan pl;
     if (const char *why = makePlan(s, &pl)) {
         return why;
     }
+    const Settings old = g_set;
     g_set = s;
-    return g_running ? start() : nullptr;
+    if (g_running) {
+        if (const char *why = start()) {
+            g_set = old;
+            return why;
+        }
+    }
+    return nullptr;
 }
 
 // ---------------------------------------------------------------- status
@@ -395,7 +433,8 @@ void printStatus() {
                 (unsigned long)l.ch2n.delay, (unsigned long)l.ch2n.width);
         }
     } else if (!planWhy) {
-        out("LIST=%lu entries of %lu", (unsigned long)pl.listLen, (unsigned long)kDmaListCap);
+        out("LIST=%lu entries of %lu (%lu period%s per pass)", (unsigned long)pl.listLen, (unsigned long)kDmaListCap,
+            (unsigned long)dmaPasses(pl.dma), dmaPasses(pl.dma) == 1 ? "" : "s");
     }
     if (g_sweep.on) {
         out("SWEEP=DELAY %lu..%lu every %lu ms", (unsigned long)g_sweep.from, (unsigned long)g_sweep.to,
@@ -405,6 +444,7 @@ void printStatus() {
     }
     out("FIFO_EMPTY_SEEN=%lu", (unsigned long)g_emptySeen);
     out("FIFO_WOF=%lu", (unsigned long)g_wofSeen);
+    out("FIFO_KEPT_BY_RESET=%lu", (unsigned long)g_fifoKeptByReset);
 }
 
 void printHelp() {
@@ -503,8 +543,10 @@ void dispatch(char *line) {
         out("OK SWEEP OFF");
     } else if (!strcasecmp(cmd, "SWEEP")) {
         uint32_t from = 0, to = 0, ms = 0;
-        if (!parseU32(arg, &from) || !parseU32(arg2, &to) || !parseU32(arg3, &ms) || from > to || ms < 10) {
-            out("ERR SWEEP: SWEEP <from> <to> <ms>, from <= to, ms >= 10");
+        // ms <= 1 h keeps the millis() compare in serviceSweep() inside its 2^31 range.
+        if (!parseU32(arg, &from) || !parseU32(arg2, &to) || !parseU32(arg3, &ms) || from > to || ms < 10 ||
+            ms > 3600000) {
+            out("ERR SWEEP: SWEEP <from> <to> <ms>, from <= to, 10 <= ms <= 3600000");
             return;
         }
         // The rules on DELAY are intervals, so both ends valid means every step is.
@@ -517,7 +559,7 @@ void dispatch(char *line) {
             out("ERR SWEEP: %s", whyTo ? whyTo : "the start value is not realizable");
             return;
         }
-        g_sweep = Sweep{true, from, to, ms, millis() + ms};
+        g_sweep = Sweep{true, from, to, ms, millis() + ms};  // start() resets nextMs at RUN
         replyApply("SWEEP", cand);
         if (!g_running) {
             out("(SWEEP steps while running: send RUN)");
@@ -606,9 +648,9 @@ void setup() {
              g_ref.begin(kRefPio, kSmRef, kPinRef, true);
     // DMA reads and writes win bus arbitration, so the HSTX FIFO is refilled promptly.
     busctrl_hw->priority = BUSCTRL_BUS_PRIORITY_DMA_W_BITS | BUSCTRL_BUS_PRIORITY_DMA_R_BITS;
-    if (g_hwOk) {
-        hstxReset();
-    }
+    // The laser pins are on SIO (pre-init hook) and no DMA runs yet.
+    const char *hstxWhy = g_hwOk ? hstxResetEmpty() : nullptr;
+    g_hwOk = g_hwOk && !hstxWhy;
 
     Serial.begin(115200);
     const unsigned long t0 = millis();
@@ -616,7 +658,9 @@ void setup() {
     }
     out("PiDG HSTX bench, firmware " PIDG_FIRMWARE_VERSION ". Bench test only: no arming, no hold-off, no watchdog;");
     out("do not connect laser drivers. Outputs stopped. Type HELP.");
-    if (!g_hwOk) {
+    if (hstxWhy) {
+        out("ERR hardware setup failed: %s", hstxWhy);
+    } else if (!g_hwOk) {
         out("ERR hardware setup failed (PIO state machine or DMA channel not available)");
     }
 }

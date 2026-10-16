@@ -13,7 +13,7 @@
 //
 // Two ways to feed the pins:
 //  - DMA mode: DMA streams a command list for the HSTX command expander that holds one
-//    period of both waveforms (dmaRender()). clk_hstx may come from pll_sys, so the
+//    or more whole periods of both waveforms (dmaRender()). clk_hstx may come from pll_sys, so the
 //    HSTX can run faster than clk_sys.
 //  - Coupled mode: four PIO state machines run the PiDG pulse program in whole
 //    clk_sys cycles, one "line" per pin and half cycle (coupledPlan()). HSTX coupled
@@ -45,6 +45,12 @@ constexpr uint32_t kDmaStepsPerWord = 2 * kDmaCyclesPerWord;  // 16
 // Command-list buffer of the bench (80 KB). One period at 1 Hz needs about 9,200
 // entries at clk_hstx 150 MHz and 18,400 at 300 MHz (tools/hstx_check prints them).
 constexpr size_t kDmaListCap = 20480;
+
+// One pass of the list lasts >= 16 words (128 clk_hstx cycles; 64 clk_sys cycles at
+// HSTXCLK 300). Each wrap costs a control-channel transfer and two chain hops while
+// the FIFO keeps the output going, so a period shorter than this is put in the list
+// several times (dmaPasses()).
+constexpr uint32_t kDmaMinListWords = 16;
 
 struct BenchPulses {
     uint32_t periodSteps;  // DMA mode: a whole number of words
@@ -133,13 +139,21 @@ inline uint32_t dmaRunEnd(const BenchPulses &p, uint32_t idx, uint32_t nWords) {
     return end;
 }
 
-// Renders one period as a command list. A constant stretch of >= 2 words becomes
-// RAW_REPEAT commands (2 FIFO entries for up to 4095 words); words that hold an edge,
-// and constant stretches of 1 word, go out as RAW data (1 entry per word, plus 1 per
-// RAW command). So every 2 entries cover >= 1 word (8 clk_hstx cycles), which keeps
-// the DMA far ahead of the HSTX. Returns the number of entries, or 0 if `p` is invalid
-// or the list needs more than `cap` entries. With out == nullptr nothing is written
-// and `cap` is ignored: the result is the number of entries the list needs.
+// Periods in one pass of the list: the fewest that last >= kDmaMinListWords words.
+// Needs a valid `p` (dmaCheck()).
+inline uint32_t dmaPasses(const BenchPulses &p) {
+    const uint32_t nWords = p.periodSteps / kDmaStepsPerWord;
+    return (kDmaMinListWords + nWords - 1) / nWords;
+}
+
+// Renders dmaPasses() periods as one command list. A constant stretch of >= 2 words
+// becomes RAW_REPEAT commands (2 FIFO entries for up to 4095 words); words that hold
+// an edge, and constant stretches of 1 word, go out as RAW data (1 entry per word,
+// plus 1 per RAW command; a RAW command runs on across a period boundary). So every
+// 2 entries cover >= 1 word (8 clk_hstx cycles), which keeps the DMA far ahead of the
+// HSTX. Returns the number of entries, or 0 if `p` is invalid or the list needs more
+// than `cap` entries. With out == nullptr nothing is written and `cap` is ignored:
+// the result is the number of entries the list needs.
 inline size_t dmaRender(const BenchPulses &p, uint32_t *out, size_t cap) {
     if (dmaCheck(p)) {
         return 0;
@@ -157,31 +171,33 @@ inline size_t dmaRender(const BenchPulses &p, uint32_t *out, size_t cap) {
     };
     size_t rawAt = 0;       // entry index of the open RAW command
     uint32_t rawCount = 0;  // data words after it so far; 0 = no RAW command open
-    uint32_t w = 0;
-    while (w < nWords) {
-        uint32_t run = dmaWordUniform(p, w) ? dmaRunEnd(p, w, nWords) - w : 1;
-        if (run >= 2) {
-            rawCount = 0;
-            const uint32_t v = dmaWord(p, w);
-            while (run > 0) {
-                const uint32_t k = run < kHstxCmdMaxCount ? run : kHstxCmdMaxCount;
-                put(kHstxCmdRawRepeat | k);
-                put(v);
-                run -= k;
-                w += k;
-            }
-        } else {
-            if (rawCount == 0 || rawCount == kHstxCmdMaxCount) {
-                rawAt = n;
+    for (uint32_t pass = dmaPasses(p); pass > 0; --pass) {
+        uint32_t w = 0;
+        while (w < nWords) {
+            uint32_t run = dmaWordUniform(p, w) ? dmaRunEnd(p, w, nWords) - w : 1;
+            if (run >= 2) {
                 rawCount = 0;
-                put(kHstxCmdRaw);
+                const uint32_t v = dmaWord(p, w);
+                while (run > 0) {
+                    const uint32_t k = run < kHstxCmdMaxCount ? run : kHstxCmdMaxCount;
+                    put(kHstxCmdRawRepeat | k);
+                    put(v);
+                    run -= k;
+                    w += k;
+                }
+            } else {
+                if (rawCount == 0 || rawCount == kHstxCmdMaxCount) {
+                    rawAt = n;
+                    rawCount = 0;
+                    put(kHstxCmdRaw);
+                }
+                put(dmaWord(p, w));
+                ++rawCount;
+                if (rawAt < cap) {
+                    out[rawAt] = kHstxCmdRaw | rawCount;
+                }
+                ++w;
             }
-            put(dmaWord(p, w));
-            ++rawCount;
-            if (rawAt < cap) {
-                out[rawAt] = kHstxCmdRaw | rawCount;
-            }
-            ++w;
         }
     }
     return (!out || n <= cap) ? n : 0;
