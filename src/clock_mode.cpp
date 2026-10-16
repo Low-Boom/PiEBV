@@ -23,13 +23,15 @@ namespace {
 // regulator limit (vreg.h, VREG_VOLTAGE_MAX); the default is 1.10 V. The soak test may
 // show that a lower value is stable on a given chip.
 constexpr vreg_voltage kOverclockVreg = VREG_VOLTAGE_1_30;
-// VSEL 0..15 = 0.55 V + 50 mV per step (vreg.h).
-static_assert(kOverclockVreg <= VREG_VOLTAGE_1_30 && 550u + 50u * (uint32_t)kOverclockVreg == kOverclockVregMv,
-              "kOverclockVregMv must match kOverclockVreg");
+static_assert(kOverclockVreg > VREG_VOLTAGE_DEFAULT && kOverclockVreg <= VREG_VOLTAGE_MAX,
+              "kOverclockVreg: above the default, at most the SDK's unlocked maximum");
 // Wait after a VREG change, as the SDK's runtime_init_clocks() does.
 constexpr uint32_t kVregSettleUs = SYS_CLK_VREG_VOLTAGE_AUTO_ADJUST_DELAY_US;
 // The pull-up charges the jumper trace well within this.
 constexpr uint32_t kJumperSettleUs = 100;
+// Wait after the QMI's BUSY clears, for its chip-select cooldown to end: COOLDOWN is at
+// most 3 x 64 clk_sys cycles, plus half an SCK period (at most 128 cycles).
+constexpr uint32_t kQmiCooldownCycles = 512;
 
 ClockModeInfo g_info;  // .bss: zeroed by crt0 before the pre-init hook; no dynamic initializer
 
@@ -97,10 +99,12 @@ bool qmiTimingForDoubleClock(uint32_t t, uint32_t *out) {
     return ok;
 }
 
-// The QMI allows only CLKDIV to change during a transfer. As the SDK's PSRAM setup
-// does: direct mode blocks new memory-mapped (XIP) transfers, and BUSY = 0 means the
-// last one has finished. Runs from RAM with interrupts off, so no flash access can
-// start in between; calls nothing (every helper used here is inline).
+// The QMI allows only CLKDIV to change while it is busy. As the SDK's PSRAM setup does:
+// direct mode blocks new memory-mapped (XIP) transfers, and BUSY = 0 means the last one
+// has finished; then wait out the chip-select cooldown. Runs from RAM with interrupts
+// off, so no flash access can start in between; calls nothing (every helper used here
+// is inline). The read-back and barriers make sure direct mode is off again before the
+// return fetches from flash.
 void __no_inline_not_in_flash_func(qmiSetM0Timing)(uint32_t timing) {
     const uint32_t irq = save_and_disable_interrupts();
     const uint32_t csr = qmi_hw->direct_csr;
@@ -108,9 +112,12 @@ void __no_inline_not_in_flash_func(qmiSetM0Timing)(uint32_t timing) {
     while (qmi_hw->direct_csr & QMI_DIRECT_CSR_BUSY_BITS) {
         tight_loop_contents();
     }
+    busy_wait_at_least_cycles(kQmiCooldownCycles);
     qmi_hw->m[0].timing = timing;
     qmi_hw->direct_csr = csr;  // direct mode off again
-    __compiler_memory_barrier();
+    (void)qmi_hw->direct_csr;
+    __dsb();
+    __isb();
     restore_interrupts(irq);
 }
 
@@ -130,26 +137,39 @@ const char *raiseClock() {
     vreg_set_voltage(kOverclockVreg);
     waitUs(kVregSettleUs);
     qmiSetM0Timing(timing);
-    set_sys_clock_pll(vco, postDiv1, postDiv2);
-    // The firmware does not use the HSTX. Its clock follows clk_sys (runtime_init_clocks)
-    // and would otherwise run at 300 MHz, above its 150 MHz rating.
+    // The firmware does not use the HSTX. Its clock follows clk_sys (runtime_init_clocks):
+    // stop it first, so it never runs above its 150 MHz rating.
     clock_stop(clk_hstx);
+    set_sys_clock_pll(vco, postDiv1, postDiv2);
     return clock_get_hz(clk_sys) == kOverclockHz ? nullptr : "clk_sys did not reach 300 MHz";
+}
+
+// mV of the VREG setting: VSEL 0..15 = 0.55 V + 50 mV per step (vreg.h); 0 = above that.
+uint32_t vregMv() {
+    const uint32_t vsel = (uint32_t)vreg_get_voltage();
+    return vsel <= (uint32_t)VREG_VOLTAGE_1_30 ? 550u + 50u * vsel : 0u;
 }
 
 void clockModeBoot() {
     g_info.jumperFitted = readJumper();
-    if (!g_info.jumperFitted) {
-        return;
+    if (g_info.jumperFitted) {
+        if (watchdogTimeoutSincePowerUp()) {
+            g_info.why = "watchdog reset since power-up; power-cycle to retry";
+        } else if (clock_get_hz(clk_sys) != kStandardClockHz) {
+            g_info.why = "boot clock is not 150 MHz";
+        } else {
+            g_info.why = raiseClock();
+            g_info.overclocked = g_info.why == nullptr;
+        }
     }
-    if (watchdogTimeoutSincePowerUp()) {
-        g_info.why = "watchdog reset since power-up; power-cycle to retry";
-    } else if (clock_get_hz(clk_sys) != kStandardClockHz) {
-        g_info.why = "boot clock is not 150 MHz";
-    } else {
-        g_info.why = raiseClock();
-        g_info.overclocked = g_info.why == nullptr;
+    // The regulator is in POWMAN, which a watchdog or soft reset does not reset, so the
+    // raised voltage of an earlier 300 MHz run would stay. At 150 MHz (or less), back to
+    // the default; lowering it is safe at that clock.
+    if (!g_info.overclocked && clock_get_hz(clk_sys) <= kStandardClockHz &&
+        vreg_get_voltage() > VREG_VOLTAGE_DEFAULT) {
+        vreg_set_voltage(VREG_VOLTAGE_DEFAULT);
     }
+    g_info.vregMv = vregMv();
 }
 
 }  // namespace

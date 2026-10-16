@@ -360,17 +360,22 @@ list is in `notes/kicad-clock-jumper.md`). Until they do, GP10 is open and the f
   USB, the timer and the watchdog run from their own clocks and do not change.
 - **Everything timed follows the clock.** All settings realize in 3.333 ns steps, the SYNC divider is
   exactly 300 (SYNC stays an exact 1 MHz), and every reply shows the realized values. `STATUS` shows
-  `CLK=300000000` and `CLKMODE=OVERCLOCK (jumper fitted, VREG 1.30 V)`, and the start-up line says
-  `clock 300 MHz overclock`. `tools/timing_check` runs every clock-dependent check at 300 MHz too.
+  `CLK=300000000`, `CLKMODE=OVERCLOCK (jumper fitted)` and `VREG_MV=1300`, and the start-up line
+  says `clock 300 MHz overclock`. `tools/timing_check` runs every clock-dependent check at 300 MHz too.
 - **No overclock after a watchdog restart.** If the watchdog has fired since the last power-up or
   RUN reset (`WDT_RESETS` > 0), the hook keeps 150 MHz with the shunt fitted, and `STATUS` shows
   `CLKMODE=STANDARD (jumper fitted, overclock off: watchdog reset since power-up; power-cycle to
   retry)`. An unstable chip therefore can't crash in a loop at 300 MHz. To try 300 MHz again,
   power-cycle both J17 and the Pico's USB.
+- **Back to 1.10 V at 150 MHz.** The voltage regulator keeps its setting through a watchdog or soft
+  reset, so on every start that stays at 150 MHz the hook sets the default 1.10 V again
+  (`VREG_MV=1100`).
 - **300 MHz is outside the RP2350's specification.** Each chip is different, and the higher voltage
-  makes the chip hotter. The watchdog catches a hang (the chip restarts DISARMED), but nothing
-  detects a chip that keeps running and makes wrong timing. J11 and the 12 V power-good gate stay the
-  hardware stops.
+  makes the chip hotter. Once running, the watchdog catches a hang (the chip restarts DISARMED, then
+  at 150 MHz). It starts only at the end of `setup()`, about 1.5 s after a reset: a chip that hangs
+  before then shows no serial port and stays hung. Then remove the shunt and power-cycle. The laser
+  pins are LOW from the first start-up hook on, so they stay LOW. Nothing detects a chip that keeps
+  running and makes wrong timing. J11 and the 12 V power-good gate stay the hardware stops.
 
 **Before you rely on 300 MHz with a given Pico** (again for every replacement Pico):
 
@@ -384,7 +389,7 @@ list is in `notes/kicad-clock-jumper.md`). Until they do, GP10 is open and the f
    pulse-width trigger to catch any pulse of the wrong width. Then `STATUS` must show
    `WDT_RESETS=0` and `HW=OK`.
 4. Optional: to make less heat, lower the voltage (`kOverclockVreg` in `src/clock_mode.cpp`) to the
-   lowest value that still passes step 3 with margin.
+   lowest value that still passes step 3 with margin. `VREG_MV` in `STATUS` shows the setting.
 
 ---
 

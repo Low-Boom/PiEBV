@@ -239,9 +239,9 @@ next to the pin pairs.
   firmware can't see them, and the pulse timing is the same in both modes.
 
 **Planned: clock jumper (300 MHz overclock).** Not on the board yet: the firmware supports it, the
-KiCad files do not have it yet. A shunt from GP10 to GND, read once at power-up, runs the Pico at
-300 MHz instead of 150 MHz, so every time setting has 3.333 ns steps instead of 6.667 ns. That is
-twice the chip's rated speed: soak-test each Pico first, as described in
+KiCad files do not have it yet. A shunt from GP10 to GND, read at every start (power-up or reset),
+runs the Pico at 300 MHz instead of 150 MHz, so every time setting has 3.333 ns steps instead of
+6.667 ns. That is twice the chip's rated speed: soak-test each Pico first, as described in
 [Hardware.md](Hardware.md#clock-jumper-planned-300-mhz-overclock). No shunt (the default) is the
 rated 150 MHz. After any watchdog restart the Pico stays at 150 MHz until it is power-cycled.
 `STATUS` shows the clock in `CLK` and `CLKMODE`.
@@ -725,6 +725,7 @@ HW=OK
 START_PENDING_US=0
 CLK=150000000
 CLKMODE=STANDARD
+VREG_MV=1100
 RESET=POWER_ON
 RESET_RAW=WD:0x0 CHIP:0x0
 WDT_RESETS=0
@@ -742,7 +743,8 @@ TX_DROPPED=0
 | `HW` | `OK`; `ERR outputs not started: …` if the pulse hardware failed to start; or `ERR outputs stopped: …` if it later failed to load a setting (cleared by the next setting that loads) |
 | `START_PENDING_US` | Microseconds until the pulses start after an `ARM` (0 = none pending) |
 | `CLK` | Processor clock in Hz: 150000000, or 300000000 with the clock jumper |
-| `CLKMODE` | `STANDARD` (150 MHz); `OVERCLOCK (jumper fitted, VREG 1.30 V)`; or `STANDARD (jumper fitted, overclock off: …)` with the reason, e.g. a watchdog restart since power-up |
+| `CLKMODE` | `STANDARD` (150 MHz); `OVERCLOCK (jumper fitted)`; or `STANDARD (jumper fitted, overclock off: …)` with the reason, e.g. a watchdog restart since power-up |
+| `VREG_MV` | Core voltage setting in mV: 1100 at 150 MHz, 1300 at 300 MHz |
 | `RESET` | Why the board last restarted: `POWER_ON`, `WATCHDOG` (the firmware crashed and restarted itself), `SOFT`, `DEBUG`, `BROWNOUT`, `GLITCH`, `RUN_PIN` or `UNKNOWN` |
 | `RESET_RAW` | Raw restart registers (for bug reports) |
 | `WDT_RESETS` | Crash restarts since power-on |

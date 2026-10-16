@@ -33,8 +33,8 @@ the firmware reads it as "no shunt", and the board runs at the rated 150 MHz.
   So J20 must sit **outside** that area.
 - J14 origin (pad 1) is at (160.015, 32.385), pitch 2.54 mm downward: **pad 13 (GND) at
   (160.015, 62.865), pad 14 (GP10) at (160.015, 65.405).**
-- There is room to the left of J14: the board edge is at x = 132, and R17/R18 are at (155.3, 70.485)
-  and (155.3, 73.025). A candidate spot for J20 is about (153, 64). Check copper, zones and the
+- There is room to the left of J14: the board edge is at x = 132, R18 is at (155.3, 70.485) and R17
+  at (155.3, 73.025). A candidate spot for J20 is about (153, 64). Check copper, zones and the
   existing traces there first.
 - Route `CLK_SEL` as a short top-layer trace from J14 pad 14 to J20 pin 1. Connect J20 pin 2 to GND
   with a via to the ground plane.
@@ -65,7 +65,7 @@ the firmware reads it as "no shunt", and the board runs at the rated 150 MHz.
      "Clock jumper (J20): 300 MHz overclock", and remove its "Not on the board yet" paragraph.
      **Update every link to its anchor** `#clock-jumper-planned-300-mhz-overclock`: they are in
      `README.md` and `Hardware.md` (`grep -rn clock-jumper-planned`).
-   - The connector list (`### Connectors`), the silkscreen note in "Manufacturing notes" (add J20 to
+   - The connector list (`## Connectors`), the silkscreen note in "Manufacturing notes" (add J20 to
      "J10, J11, J16, J18 and J19 are labelled"), and first-board check 6.
 9. `README.md`: add J20 to the jumper table ("Shunt fitted: 300 MHz overclock", "No shunt: 150 MHz"),
    turn the "Planned: clock jumper" paragraph into J20's description, and update the "What it does"
@@ -81,7 +81,7 @@ the firmware reads it as "no shunt", and the board runs at the rated 150 MHz.
 - Continuity: J20 pin 1 to Pico pin 14 (GP10), J20 pin 2 to GND, and no short between them with the
   shunt off.
 - No shunt: `STATUS` shows `CLK=150000000` and `CLKMODE=STANDARD`. Shunt fitted, power-cycled:
-  `CLK=300000000` and `CLKMODE=OVERCLOCK (jumper fitted, VREG 1.30 V)`.
+  `CLK=300000000`, `CLKMODE=OVERCLOCK (jumper fitted)` and `VREG_MV=1300`.
 - Then the soak test in `Hardware.md`, "Clock jumper".
 
 ## Design notes

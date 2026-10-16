@@ -46,7 +46,7 @@ void fake_advance_us(uint64_t us) { g_offsetUs += us; }
 
 namespace {
 uint32_t g_clk = kStandardClockHz;  // platformio.ini board_build.f_cpu; kOverclockHz with --overclock
-ClockModeInfo g_clockMode{};        // what the board's pre-init hook would leave (clock_mode.cpp)
+ClockModeInfo g_clockMode{false, false, nullptr, 1100};  // as the board's pre-init hook leaves it (clock_mode.cpp)
 constexpr uint32_t kWatchdogMs = 3000;
 
 bool g_gateOpen = false;  // laser::gateIsOpen()
@@ -139,6 +139,8 @@ void printSystemStatus(Print &out) {
     out.println(clkHz());
     out.print(F("CLKMODE="));
     printClockMode(out, g_clockMode);
+    out.print(F("VREG_MV="));
+    out.println(g_clockMode.vregMv);
     out.println(F("RESET=POWER_ON"));
     out.println(F("RESET_RAW=WD:0x0 CHIP:0x0"));
     out.println(F("WDT_RESETS=0"));
@@ -170,7 +172,7 @@ int main(int argc, char **argv) {
     for (int i = 1; i < argc; ++i) {
         if (!strcmp(argv[i], "--overclock")) {
             g_clk = kOverclockHz;
-            g_clockMode = ClockModeInfo{true, true, nullptr};
+            g_clockMode = ClockModeInfo{true, true, nullptr, 1300};
         } else {
             fprintf(stderr, "usage: pidg_sim [--overclock]\n");
             return 2;

@@ -397,6 +397,8 @@ void printSystemStatus(Print &out) {
     out.println(clkHz());
     out.print(F("CLKMODE="));
     printClockMode(out, clockModeInfo());
+    out.print(F("VREG_MV="));
+    out.println(clockModeInfo().vregMv);
     out.print(F("RESET="));
     out.println(resetReasonName(g_reset.reason));
     out.print(F("RESET_RAW=WD:0x"));

@@ -22,12 +22,12 @@
 
 constexpr uint32_t kStandardClockHz = 150000000;
 constexpr uint32_t kOverclockHz = 300000000;
-constexpr uint32_t kOverclockVregMv = 1300;  // clock_mode.cpp kOverclockVreg
 
 struct ClockModeInfo {
     bool jumperFitted;  // the jumper read LOW at boot
     bool overclocked;   // clk_sys was raised to kOverclockHz
     const char *why;    // jumper fitted but not overclocked: the reason; else nullptr
+    uint32_t vregMv;    // core voltage setting as the hook left it, mV (STATUS VREG_MV)
 };
 
 // The state the pre-init hook left (all false / nullptr before it runs).
@@ -35,14 +35,13 @@ const ClockModeInfo &clockModeInfo();
 
 // STATUS value after "CLKMODE=":
 //   STANDARD
-//   OVERCLOCK (jumper fitted, VREG 1.30 V)
+//   OVERCLOCK (jumper fitted)
 //   STANDARD (jumper fitted, overclock off: <why>)
 // `Out` is anything with print(const char *) / println(const char *) (Arduino Print).
 template <class Out>
 void printClockMode(Out &out, const ClockModeInfo &m) {
     if (m.overclocked) {
-        static_assert(kOverclockVregMv == 1300, "update the VREG text below");
-        out.println("OVERCLOCK (jumper fitted, VREG 1.30 V)");
+        out.println("OVERCLOCK (jumper fitted)");
     } else if (m.jumperFitted) {
         out.print("STANDARD (jumper fitted, overclock off: ");
         out.print(m.why ? m.why : "unknown reason");
