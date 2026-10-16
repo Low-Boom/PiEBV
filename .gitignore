@@ -33,3 +33,6 @@ erc.json
 *_drc_violations.json
 # KiCad per-user view settings (layer visibility, open files)
 *.kicad_prl
+# HSTX bench host check (tools/hstx_check) build artifacts
+tools/hstx_check/hstx_check
+tools/hstx_check/hstx_check.exe

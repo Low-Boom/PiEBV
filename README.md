@@ -812,12 +812,14 @@ replace a scope check on the board.
 
 | Path | Contents |
 |---|---|
-| `src/` | Firmware: `main.cpp` (start-up, arming, crash watchdog), `protocol.*` (serial commands), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `laser_gate.*` (laser output gate), `board.h` (pin map) |
-| `platformio.ini` | Build configuration (`pico2w` and `pico2` builds) |
+| `src/` | Firmware: `main.cpp` (start-up, arming, crash watchdog), `protocol.*` (serial commands), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `sync_clock.*` (1 MHz SYNC clock), `laser_gate.*` (laser output gate), `board.h` (pin map) |
+| `src/bench/` | [HSTX bench test](src/bench/README.md): a separate image (not the delay generator) that measures a 3.333 ns / 1.667 ns laser-pin step on a bare Pico |
+| `platformio.ini` | Build configuration (`pico2w` and `pico2` builds; `hstx_bench` and `hstx_bench_pico2` for the bench test) |
 | `tools/pidg_example.py` | Python example script |
 | `tools/pidg_gui/` | Web GUI: settings, timing chart and console in the browser |
 | `tools/pidg_sim/` | Simulator: the firmware's command code built for a computer, for trying the GUI and scripts without a board |
 | `tools/timing_check/` | Timing checks run on a computer |
+| `tools/hstx_check/` | Checks of the HSTX bench test's pattern maths, run on a computer |
 | `PiDG_Pico.kicad_pro` / `.kicad_sch` / `.kicad_pcb` | **Current hardware:** KiCad project of the 4-layer board |
 | `Hardware.md` | [Full hardware reference](Hardware.md) |
 | `fab/` | Manufacturing: master parts list `fab/PiDG_Pico_BOM.csv` (with the design-constraint notes), gerbers and drill files, and `fab/jlc/` JLCPCB assembly files and [order checklist](fab/jlc/JLC_ORDER.md) |
