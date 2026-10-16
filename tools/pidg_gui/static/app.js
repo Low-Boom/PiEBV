@@ -343,10 +343,14 @@ function renderSysline(sys, clk) {
   if (!sys) return;
   const wdtResets = parseInt(sys.WDT_RESETS || "0", 10), dropped = parseInt(sys.TX_DROPPED || "0", 10);
   const items = [];
+  // CLKMODE: STANDARD | OVERCLOCK (...) | STANDARD (jumper fitted, overclock off: why)
+  const clkMode = sys.CLKMODE || "", overclockOff = clkMode.match(/^STANDARD \((jumper fitted, overclock off.*)\)$/);
   items.push(
-    [fmtHz(clk) + " clock (" + (1e9 / clk).toFixed(3) + " ns steps)", false],
-    ["last reset " + (sys.RESET || "?"), sys.RESET === "WATCHDOG"],
+    [fmtHz(clk) + " clock" + (clkMode.startsWith("OVERCLOCK") ? " (overclock jumper)" : "") +
+      " (" + (1e9 / clk).toFixed(3) + " ns steps)", false],
   );
+  if (overclockOff) items.push([overclockOff[1], true]);
+  items.push(["last reset " + (sys.RESET || "?"), sys.RESET === "WATCHDOG"]);
   if (wdtResets > 0) items.push([wdtResets + " watchdog reset" + (wdtResets > 1 ? "s" : "") + " since power-on", true]);
   items.push(["watchdog " + (parseInt(sys.WDT_MS || "0", 10) / 1000) + " s", false]);
   items.push([dropped > 0 ? dropped.toLocaleString("en-US") + " reply bytes dropped" : "no replies dropped", dropped > 0]);

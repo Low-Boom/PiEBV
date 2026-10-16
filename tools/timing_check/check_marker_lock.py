@@ -12,7 +12,7 @@ HARNESS = os.environ.get("PIDG_HARNESS") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "harness.exe" if os.name == "nt" else "harness")
 
 cases = []
-for clk in (150000000, 133000000, 125000000, 200000000, 150000001):
+for clk in (150000000, 133000000, 125000000, 200000000, 150000001, 300000000):  # 300 MHz: clock jumper
     for f in (3000, 7000, 999, 1234, 1001, 50000, 1):
         for mw in (20, 500, 2000, 9000):
             cases.append((clk, f, 100, 10000 if f < 50000 else 1000, mw))

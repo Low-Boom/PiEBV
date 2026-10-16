@@ -48,8 +48,10 @@ pio run
 
 - Every signal to the cameras is **1.8 V**, the level they are built for. The laser outputs are
   **5 V**.
-- Times are set in steps of **6.667 ns** (one tick of the Pico's 150 MHz clock). Every reply shows
-  the exact value the hardware will produce, so you never have to correct for the step size.
+- Times are set in steps of **6.667 ns** (one tick of the Pico's 150 MHz clock), or **3.333 ns**
+  with the optional clock jumper (a 300 MHz overclock; [planned](#jumpers), not on the board yet).
+  Every reply shows the exact value the hardware will produce, so you never have to correct for the
+  step size.
 - Both laser pulses share one `WIDTH` and one `FREQ`.
 - The firmware sets **no laser-driver limits** (pulse width, duty, spacing). Set what your driver is
   rated for. It only stops the pulses from running into each other.
@@ -235,6 +237,14 @@ next to the pin pairs.
   damage it. Don't use Hi-Z mode as a way to keep a laser off: J11 is the interlock.
 - The two jumpers are independent, so one output can drive an LDP-V and the other a logic input. The
   firmware can't see them, and the pulse timing is the same in both modes.
+
+**Planned: clock jumper (300 MHz overclock).** Not on the board yet: the firmware supports it, the
+KiCad files do not have it yet. A shunt from GP10 to GND, read once at power-up, runs the Pico at
+300 MHz instead of 150 MHz, so every time setting has 3.333 ns steps instead of 6.667 ns. That is
+twice the chip's rated speed: soak-test each Pico first, as described in
+[Hardware.md](Hardware.md#clock-jumper-planned-300-mhz-overclock). No shunt (the default) is the
+rated 150 MHz. After any watchdog restart the Pico stays at 150 MHz until it is power-cycled.
+`STATUS` shows the clock in `CLK` and `CLKMODE`.
 
 ### Seating the Pico
 
@@ -514,9 +524,12 @@ fine for the intended short range (a few metres, like Bluetooth), so no board ch
 | `HELP` | – | – | – | Command summary |
 
 The camera sync clock is fixed at **1 MHz** and cannot be changed: the RP2350 clock generator divides
-the 150 MHz system clock by exactly 150. `SYNC` is not a command, and `STATUS` does not list it.
+the 150 MHz system clock by exactly 150 (300 MHz: by exactly 300). `SYNC` is not a command, and
+`STATUS` does not list it.
 
-A "step" is one 6.667 ns tick of the 150 MHz clock.
+A "step" is one 6.667 ns tick of the 150 MHz clock. With the clock jumper fitted (300 MHz) a step
+is 3.333 ns, and every limit given in steps is half as long in ns. The examples in this README are
+for 150 MHz.
 
 ### Examples
 
@@ -653,8 +666,8 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
   sensor) need it at **1 MHz**: a camera running as sync slave counts its 1 µs event timestamps on
   this clock, and Prophesee requires Sync In to be "a 1MHz pulse train to correspond to the
   internally generated 1µs timestamp resolution". Any other frequency stretches or squeezes every
-  camera's timestamps, and an IMX636 slave sends no data at all until the clock arrives. Other
-  The sync output is fixed at 1 MHz.
+  camera's timestamps, and an IMX636 slave sends no data at all until the clock arrives. The sync
+  output is fixed at 1 MHz.
 - **No laser-driver limits.** The firmware does not limit pulse width or duty: they depend on the
   driver you connect, so stay within its ratings. It enforces what the pulse hardware needs, plus one
   spacing rule of its own:
@@ -711,6 +724,7 @@ ARMED=1
 HW=OK
 START_PENDING_US=0
 CLK=150000000
+CLKMODE=STANDARD
 RESET=POWER_ON
 RESET_RAW=WD:0x0 CHIP:0x0
 WDT_RESETS=0
@@ -727,7 +741,8 @@ TX_DROPPED=0
 | `ARMED` | The firmware's arm state (1/0). J11 and the 12 V supply are separate gates it can't see. |
 | `HW` | `OK`; `ERR outputs not started: …` if the pulse hardware failed to start; or `ERR outputs stopped: …` if it later failed to load a setting (cleared by the next setting that loads) |
 | `START_PENDING_US` | Microseconds until the pulses start after an `ARM` (0 = none pending) |
-| `CLK` | Processor clock in Hz |
+| `CLK` | Processor clock in Hz: 150000000, or 300000000 with the clock jumper |
+| `CLKMODE` | `STANDARD` (150 MHz); `OVERCLOCK (jumper fitted, VREG 1.30 V)`; or `STANDARD (jumper fitted, overclock off: …)` with the reason, e.g. a watchdog restart since power-up |
 | `RESET` | Why the board last restarted: `POWER_ON`, `WATCHDOG` (the firmware crashed and restarted itself), `SOFT`, `DEBUG`, `BROWNOUT`, `GLITCH`, `RUN_PIN` or `UNKNOWN` |
 | `RESET_RAW` | Raw restart registers (for bug reports) |
 | `WDT_RESETS` | Crash restarts since power-on |
@@ -812,7 +827,7 @@ replace a scope check on the board.
 
 | Path | Contents |
 |---|---|
-| `src/` | Firmware: `main.cpp` (start-up, arming, crash watchdog), `protocol.*` (serial commands), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `sync_clock.*` (1 MHz SYNC clock), `laser_gate.*` (laser output gate), `board.h` (pin map) |
+| `src/` | Firmware: `main.cpp` (start-up, arming, crash watchdog), `protocol.*` (serial commands), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `sync_clock.*` (1 MHz SYNC clock), `clock_mode.*` (clock jumper: 150 or 300 MHz at boot), `laser_gate.*` (laser output gate), `board.h` (pin map) |
 | `platformio.ini` | Build configuration (`pico2w` and `pico2` builds) |
 | `tools/pidg_example.py` | Python example script |
 | `tools/pidg_gui/` | Web GUI: settings, timing chart and console in the browser |
@@ -822,6 +837,7 @@ replace a scope check on the board.
 | `Hardware.md` | [Full hardware reference](Hardware.md) |
 | `fab/` | Manufacturing: master parts list `fab/PiDG_Pico_BOM.csv` (with the design-constraint notes), gerbers and drill files, and `fab/jlc/` JLCPCB assembly files and [order checklist](fab/jlc/JLC_ORDER.md) |
 | `libs/`, `fp-lib-table`, `sym-lib-table` | Project-local KiCad symbols and footprints |
+| `notes/` | Open work items, e.g. the KiCad changes for the clock jumper |
 | `tools/jlc_cpl/` | Corrects the JLC placement file to JLC's own footprints (see its README) |
 
 ## License

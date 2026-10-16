@@ -15,8 +15,8 @@
 //     instead of the raw laser pulse. Each camera timestamps it into its event
 //     stream.
 //   - SYNC (GP15): the continuous 1 MHz camera sync clock, clk_gpout1 dividing clk_sys
-//     by exactly 150 (sync_clock.cpp). No PIO: it is independent of the laser timing,
-//     and it runs even if pio0 cannot be claimed.
+//     by exactly 150, or 300 with the clock jumper (sync_clock.cpp). No PIO: it is
+//     independent of the laser timing, and it runs even if pio0 cannot be claimed.
 //   - PIXGATE (GP16): optional camera pixel reset between pulse pairs. pio0 SM3
 //     runs the pulse program with the pin's output inverted, so its pulse holds
 //     every camera's TDRSTN low from PIXLAG after the last laser pulse until
@@ -35,6 +35,9 @@
 // running. The chip then comes back up DISARMED, and STATUS reports
 // RESET=WATCHDOG.
 //
+// Clock. clk_sys is 150 MHz (6.667 ns per PIO cycle), or 300 MHz (3.333 ns) when the
+// clock jumper is fitted at boot (clock_mode.h). All timing follows clock_get_hz().
+//
 // See src/pio_pulse.h for the PIO program design, src/pulse_timing.h for the
 // cycle math and timing checks, and src/protocol.h for the serial command set.
 
@@ -42,6 +45,7 @@
 #include <cstdio>
 #include <iterator>
 #include "board.h"
+#include "clock_mode.h"
 #include "hardware/clocks.h"
 #include "hardware/gpio.h"
 #include "hardware/pio.h"
@@ -52,6 +56,7 @@
 #include "pio_pulse.h"
 #include "protocol.h"
 #include "pulse_timing.h"
+#include "reset_scratch.h"
 #include "sync_clock.h"
 
 namespace {
@@ -100,10 +105,6 @@ constexpr uint32_t kWatchdogMs = 3000;
 // picotool's reboot request. 0 = not read yet, or unusable because a plain reboot also
 // writes 0: then feedWatchdog() always feeds.
 uint32_t g_wdtRunMagic = 0;
-
-// SCRATCH0/1 hold a watchdog-timeout counter. They survive the watchdog's PSM reset
-// and are cleared by POR/BOR/RUN. The SDK uses SCRATCH4-7 and the bootrom SCRATCH2-3.
-constexpr uint32_t kWdtCountMagic = 0x50494447;  // 'PIDG'
 
 PulseChannel g_ch1;
 PulseChannel g_ch2;
@@ -164,14 +165,15 @@ void captureResetInfo() {
     g_reset.reason = rp2040.getResetReason();
     g_reset.wdReason = watchdog_hw->reason;
     g_reset.chipReset = powman_hw->chip_reset;
-    if (watchdog_hw->scratch[1] != kWdtCountMagic) {
-        watchdog_hw->scratch[0] = 0;
-        watchdog_hw->scratch[1] = kWdtCountMagic;
+    // The watchdog-timeout counter (reset_scratch.h).
+    if (watchdog_hw->scratch[kWdtCountMagicScratch] != kWdtCountMagic) {
+        watchdog_hw->scratch[kWdtCountScratch] = 0;
+        watchdog_hw->scratch[kWdtCountMagicScratch] = kWdtCountMagic;
     }
     if (g_reset.reason == RP2040::WDT_RESET) {
-        watchdog_hw->scratch[0] = watchdog_hw->scratch[0] + 1;
+        watchdog_hw->scratch[kWdtCountScratch] = watchdog_hw->scratch[kWdtCountScratch] + 1;
     }
-    g_reset.wdtCount = watchdog_hw->scratch[0];
+    g_reset.wdtCount = watchdog_hw->scratch[kWdtCountScratch];
 }
 
 void feedWatchdog() {
@@ -393,6 +395,8 @@ void printSystemStatus(Print &out) {
     out.println(startPendingUs());
     out.print(F("CLK="));
     out.println(clkHz());
+    out.print(F("CLKMODE="));
+    printClockMode(out, clockModeInfo());
     out.print(F("RESET="));
     out.println(resetReasonName(g_reset.reason));
     out.print(F("RESET_RAW=WD:0x"));
@@ -459,8 +463,10 @@ void setup() {
         // give the USB CDC connection a moment, but don't hang forever
     }
 
+    // One line: hosts recognize a reboot by its start (tools/pidg_gui/pidg_device.py).
     Serial.print(F("PiDG delay generator ready, lasers DISARMED (reset: "));
     Serial.print(resetReasonName(g_reset.reason));
+    Serial.print(clockModeBannerNote(clockModeInfo()));
     Serial.println(F("). Type HELP for commands."));
     if (g_hwWhy[0]) {
         Serial.print(F("ERR "));
