@@ -55,7 +55,6 @@ public:
 
     PIO pio() const { return pio_; }
     uint sm() const { return sm_; }
-    uint gpio() const { return gpio_; }
 
 private:
     void loadConfig();
@@ -77,8 +76,8 @@ bool pulseReserveDualProgram(PIO pio);
 // RAM with interrupts masked, so a pulse in flight is stretched by at most the
 // few instructions between the halt and its SET (a few tens of ns) -- which is
 // why callers gate the laser pads closed (laser_gate) BEFORE calling this; only
-// the MARKER output sees that tiny stretch. All channels must be on the same
-// PIO block.
+// the MARKER output and the pixel-reset gate see that tiny stretch. All channels
+// must be on the same PIO block.
 void stopPulseChannelsLow(PulseChannel *const *channels, size_t count);
 
 // Enables every listed channel's state machine on the same clock cycle, so

@@ -8,8 +8,9 @@
 // duty. SYNC is independent of the laser timing and uses no PIO state machine.
 //
 // Only some GPIOs have a clk_gpout function: on the RP2350, GP13 and GP21 (gpout0),
-// GP15 and GP23 (gpout1), GP24 (gpout2) and GP25 (gpout3). On a Pico 2 W, GP23-25
-// belong to the wireless module and GP13 is the CH1 laser output.
+// GP15 and GP23 (gpout1), GP24 (gpout2) and GP25 (gpout3); the SDK's
+// GPIO_TO_GPOUT_CLOCK_HANDLE() holds that table. On a Pico 2 W, GP23-25 belong to the
+// wireless module and GP13 is the CH1 laser output.
 
 #include <cstdint>
 
@@ -21,9 +22,12 @@ public:
 
     // (Re)programs the generator with a 16.16 divider of clk_sys, enables 50 % duty
     // correction and hands the pin to it. div must already be in range (1.0 .. 65535.99998).
+    // Does nothing before a successful begin(), or while the generator already runs at `div`.
     void start(uint32_t div);
 
 private:
     unsigned gpio_ = 0;
-    unsigned gpout_ = 0;  // clk_gpout index 0..3
+    unsigned gpout_ = 0;     // clock handle (clk_gpout0..3), valid once ready_
+    bool ready_ = false;     // begin() succeeded
+    uint32_t runningDiv_ = 0;  // divider start() last programmed; 0 = not started
 };

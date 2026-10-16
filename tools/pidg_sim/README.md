@@ -43,5 +43,7 @@ DELAY 12000
 - applying a parameter set;
 - `STATUS` and `ID?`.
 
-**When you change those hooks in `main.cpp`, mirror the change here.** The cycle-exact behaviour
+**When you change those hooks in `main.cpp`, mirror the change here.** The restart decision
+(`pulseLoadDiffers()`) and the hold-off time (`restartHoldUs()`) come from `pulse_timing.h`, which
+both use, so those two cannot drift apart. The cycle-exact behaviour
 of the pulse program is covered separately by [`tools/timing_check`](../timing_check).

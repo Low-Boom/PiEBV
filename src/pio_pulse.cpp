@@ -1,4 +1,5 @@
 #include "pio_pulse.h"
+#include <iterator>
 #include "hardware/pio_instructions.h"
 #include "hardware/sync.h"
 
@@ -16,64 +17,51 @@ namespace {
 constexpr uint kPulseWrapTarget = 5;
 constexpr uint kPulseWrap = 12;
 
-const uint16_t kPulseInstructions[] = {
-    (uint16_t)pio_encode_pull(false, true),      // 0: delay word -> OSR
-    (uint16_t)pio_encode_mov(pio_isr, pio_osr),  // 1: ISR = delay
-    (uint16_t)pio_encode_pull(false, true),      // 2: width word -> OSR
-    (uint16_t)pio_encode_mov(pio_y, pio_osr),    // 3: Y = width
-    (uint16_t)pio_encode_pull(false, true),      // 4: tail word -> OSR (kept)
-    (uint16_t)pio_encode_mov(pio_x, pio_isr),    // 5: <-- wrap_target; X = delay
-    (uint16_t)pio_encode_jmp_x_dec(6),           // 6: delay loop
-    (uint16_t)pio_encode_set(pio_pins, 1),       // 7: rising edge
-    (uint16_t)pio_encode_mov(pio_x, pio_y),      // 8: X = width
-    (uint16_t)pio_encode_jmp_x_dec(9),           // 9: width loop
-    (uint16_t)pio_encode_set(pio_pins, 0),       // 10: falling edge
-    (uint16_t)pio_encode_mov(pio_x, pio_osr),    // 11: X = tail
-    (uint16_t)pio_encode_jmp_x_dec(12),          // 12: <-- wrap; tail loop
-};
+// The program, with `SET PINS, <rise>` as its rising edge. rise = 1 drives one pin.
+// rise = 3 drives TWO consecutive pins (COMBINE mode); every instruction and every
+// cycle is otherwise identical, so the cycle model and FIFO words are shared. In
+// COMBINE mode CH1 and CH2 both run it on the two laser pins; the PIO output level of
+// a pin is the last value any state machine wrote (RP2350 datasheet 11.5.6), and the
+// laser timing check requires DELAY >= WIDTH + 1 cycle so the pulses never touch, so
+// each laser pin carries CH1's pulse and then CH2's pulse, exactly DELAY later.
+// One definition for both, so the two programs cannot drift apart. (The host model in
+// tools/timing_check/pio_model.py carries its own copy: change it there too.)
+#define PIDG_PULSE_INSTRUCTIONS(rise)                                                \
+    {                                                                                \
+        (uint16_t)pio_encode_pull(false, true),     /* 0: delay word -> OSR */       \
+        (uint16_t)pio_encode_mov(pio_isr, pio_osr), /* 1: ISR = delay */             \
+        (uint16_t)pio_encode_pull(false, true),     /* 2: width word -> OSR */       \
+        (uint16_t)pio_encode_mov(pio_y, pio_osr),   /* 3: Y = width */               \
+        (uint16_t)pio_encode_pull(false, true),     /* 4: tail word -> OSR (kept) */ \
+        (uint16_t)pio_encode_mov(pio_x, pio_isr),   /* 5: <-- wrap_target; X = delay */ \
+        (uint16_t)pio_encode_jmp_x_dec(6),          /* 6: delay loop */              \
+        (uint16_t)pio_encode_set(pio_pins, (rise)), /* 7: rising edge */             \
+        (uint16_t)pio_encode_mov(pio_x, pio_y),     /* 8: X = width */               \
+        (uint16_t)pio_encode_jmp_x_dec(9),          /* 9: width loop */              \
+        (uint16_t)pio_encode_set(pio_pins, 0),      /* 10: falling edge */           \
+        (uint16_t)pio_encode_mov(pio_x, pio_osr),   /* 11: X = tail */               \
+        (uint16_t)pio_encode_jmp_x_dec(12),         /* 12: <-- wrap; tail loop */    \
+    }
 
-const pio_program_t kPulseProgram = {
-    kPulseInstructions,
-    13,
-    -1,
-    0,  // pio_version: runs on any PIO
+const uint16_t kPulseInstructions[] = PIDG_PULSE_INSTRUCTIONS(1);
+const uint16_t kPulseDualInstructions[] = PIDG_PULSE_INSTRUCTIONS(3);
+#undef PIDG_PULSE_INSTRUCTIONS
+static_assert(std::size(kPulseInstructions) == kPulseWrap + 1, "the tail loop must be the last instruction");
+
+constexpr pio_program_t pulseProgram(const uint16_t *instructions) {
+    return {
+        instructions,
+        (uint8_t)std::size(kPulseInstructions),
+        -1,
+        0,  // pio_version: runs on any PIO
 #if PICO_PIO_VERSION > 0
-    0,  // used_gpio_ranges: no constraint (pins are chosen at run time)
+        0,  // used_gpio_ranges: no constraint (pins are chosen at run time)
 #endif
-};
+    };
+}
 
-// The same program for COMBINE mode, driving TWO consecutive pins: the rising edge
-// is `SET PINS, 3` (both pins high) instead of `SET PINS, 1`. Every instruction and
-// every cycle is otherwise identical, so the cycle model and FIFO words are shared.
-// CH1 and CH2 both run it on the two laser pins; the PIO output level of a pin is
-// the last value any state machine wrote (RP2350 datasheet 11.5.6), and the laser
-// timing check requires DELAY >= WIDTH + 1 cycle so the pulses never touch, so each laser
-// pin carries CH1's pulse and then CH2's pulse, exactly DELAY later.
-const uint16_t kPulseDualInstructions[] = {
-    (uint16_t)pio_encode_pull(false, true),      // 0: delay word -> OSR
-    (uint16_t)pio_encode_mov(pio_isr, pio_osr),  // 1: ISR = delay
-    (uint16_t)pio_encode_pull(false, true),      // 2: width word -> OSR
-    (uint16_t)pio_encode_mov(pio_y, pio_osr),    // 3: Y = width
-    (uint16_t)pio_encode_pull(false, true),      // 4: tail word -> OSR (kept)
-    (uint16_t)pio_encode_mov(pio_x, pio_isr),    // 5: <-- wrap_target; X = delay
-    (uint16_t)pio_encode_jmp_x_dec(6),           // 6: delay loop
-    (uint16_t)pio_encode_set(pio_pins, 3),       // 7: rising edge on both pins
-    (uint16_t)pio_encode_mov(pio_x, pio_y),      // 8: X = width
-    (uint16_t)pio_encode_jmp_x_dec(9),           // 9: width loop
-    (uint16_t)pio_encode_set(pio_pins, 0),       // 10: falling edge on both pins
-    (uint16_t)pio_encode_mov(pio_x, pio_osr),    // 11: X = tail
-    (uint16_t)pio_encode_jmp_x_dec(12),          // 12: <-- wrap; tail loop
-};
-
-const pio_program_t kPulseDualProgram = {
-    kPulseDualInstructions,
-    13,
-    -1,
-    0,  // pio_version: runs on any PIO
-#if PICO_PIO_VERSION > 0
-    0,  // used_gpio_ranges: no constraint (pins are chosen at run time)
-#endif
-};
+const pio_program_t kPulseProgram = pulseProgram(kPulseInstructions);
+const pio_program_t kPulseDualProgram = pulseProgram(kPulseDualInstructions);
 
 // The pulse program is shared by every PulseChannel on a given PIO block
 // (each state machine gets its own PC/registers, so several SMs can run the
@@ -144,7 +132,6 @@ bool PulseChannel::setOutputs(uint gpio, uint count) {
     if (off < 0) {
         return false;
     }
-    pio_sm_set_enabled(pio_, sm_, false);  // already stopped; harmless
     offset_ = (uint)off;
     gpio_ = gpio;
     pinCount_ = count;
@@ -157,7 +144,6 @@ bool PulseChannel::configure(const PulseCycles &t) {
     if (computePulseCounts(t, &w) != PulseFit::Ok) {
         return false;
     }
-    pio_sm_set_enabled(pio_, sm_, false);  // already stopped; harmless
     pio_sm_set_consecutive_pindirs(pio_, sm_, gpio_, pinCount_, true);
     pio_sm_init(pio_, sm_, offset_, &config_);  // stays disabled; FIFOs cleared; PC = offset_
     pio_sm_put_blocking(pio_, sm_, w.delay);    // 3 words into a 4-deep TX FIFO: never blocks

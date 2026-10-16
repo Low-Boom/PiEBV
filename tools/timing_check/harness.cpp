@@ -29,8 +29,9 @@ int main() {
         pulseFormatNs(rt.widthCycles, rt.clkHz, b, sizeof b);
         pulseFormatNs(rt.delayCycles, rt.clkHz, c, sizeof c);
         pulseFormatNs(rt.markerWidthCycles, rt.clkHz, e, sizeof e);
-        syncFormatHz(rt.syncDiv, rt.clkHz, s, sizeof s);
-        PulseWords w1, w2, w3, wg{0, 0, 0};
+        // Realized SYNC frequency, clk * 65536 / div (the firmware no longer prints it).
+        pulseFormatFixed3((uint64_t)rt.clkHz * 65536u, rt.syncDiv, s, sizeof s);
+        PulseWords w1{0, 0, 0}, w2{0, 0, 0}, w3{0, 0, 0}, wg{0, 0, 0};
         computePulseCounts(PulseCycles{rt.periodCycles, 0, rt.widthCycles}, &w1);
         computePulseCounts(PulseCycles{rt.periodCycles, rt.delayCycles, rt.widthCycles}, &w2);
         computePulseCounts(PulseCycles{rt.periodCycles, 0, rt.markerWidthCycles}, &w3);  // as main.cpp

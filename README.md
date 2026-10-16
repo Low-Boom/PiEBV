@@ -453,7 +453,9 @@ Rules for host scripts:
 - **Read `STATUS` by key, not by line position.** New keys may be added. `TX_DROPPED` is always the
   last line.
 - **Closing the port does not disarm.** Always send `DISARM` yourself.
-- `HELP` output mixes LF and CR+LF line endings, so split on LF and strip any trailing CR.
+- Every reply line ends in CR+LF, `HELP` included. (Firmware up to commit `5dfedd5` sent `HELP`'s
+  inner lines with LF only, so a host that also talks to older boards should split on LF and strip
+  any trailing CR.)
 
 ### Wireless (Wi-Fi / Bluetooth)
 
@@ -481,6 +483,8 @@ fine for the intended short range (a few metres, like Bluetooth), so no board ch
 - One command per line. Upper or lower case both work; separate words with spaces or tabs.
 - A name on its own **asks** for a value (`DELAY`); a name followed by a number **sets** it
   (`DELAY 5000`). There is no `NAME?` form, except `ARM?` and `ID?`.
+- `ARM`, `ARM?`, `STATUS`, `ID?` and `HELP` take nothing after them: `STATUS 1` gives
+  `ERR STATUS takes no argument`.
 - Numbers are plain whole numbers (0 … 4294967295): no units, decimal points, signs or hex. Times
   are in **ns** and frequencies in **Hz**.
 - Backspace and DEL edit the line. Lines can be up to 95 characters.
@@ -506,10 +510,11 @@ fine for the intended short range (a few metres, like Bluetooth), so no board ch
 | `DISARM` | – | – | – | Stop the laser pulses at once; recognised anywhere in what you type |
 | `ARM?` | – | – | – | Report the arm state: `ARMED=0` or `ARMED=1` |
 | `STATUS` | – | – | – | All settings, the arm state and system information |
-| `ID?` | – | – | – | Firmware name and build date |
+| `ID?` | – | – | – | Board and firmware version (the git commit it was built from) |
 | `HELP` | – | – | – | Command summary |
 
-The camera sync clock is fixed at **1 MHz** and cannot be changed. `STATUS` reports it as `SYNC`; `SYNC` is not a command.
+The camera sync clock is fixed at **1 MHz** and cannot be changed: the RP2350 clock generator divides
+the 150 MHz system clock by exactly 150. `SYNC` is not a command, and `STATUS` does not list it.
 
 A "step" is one 6.667 ns tick of the 150 MHz clock.
 
@@ -521,14 +526,17 @@ DELAY          ->  DELAY=1003 (actual 1000.000 ns, 150 cyc)
 WIDTH 101      ->  OK WIDTH=101 (actual 100.000 ns, 15 cyc)
 ARM            ->  OK ARMED=1 (laser pulses start after a 498 us hold-off)
 DISARM         ->  OK ARMED=0
-ID?            ->  PiDG delay generator (Pico 2 W), firmware built Sep 24 2026 22:24:21
+ID?            ->  PiDG delay generator (Pico 2 W), firmware 5dfedd5
 ```
+
+- The `ID?` version is `git describe --always --dirty` of the git checkout the firmware was built
+  in. `-dirty` means tracked files had uncommitted changes (new files that were never `git add`-ed
+  do not count); `unknown` means it was built without git.
 
 - The number after `=` is what you asked for; `actual` is what the hardware produces; `cyc` is the
   same in 6.667 ns steps ("cycles").
 - The `(laser pulses start after …)` part appears only while a start delay (the hold-off, below) is
   pending; otherwise `ARM` replies just `OK ARMED=1`.
-- `SYNC` in `STATUS` is read-only: it is fixed at 1 MHz (the RP2350 clock generator divides the 150 MHz system clock by exactly 150).
 
 ### ARM and DISARM in detail
 
@@ -647,11 +655,14 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
   internally generated 1µs timestamp resolution". Any other frequency stretches or squeezes every
   camera's timestamps, and an IMX636 slave sends no data at all until the clock arrives. Other
   The sync output is fixed at 1 MHz.
-- **No laser-driver limits.** The firmware does not limit pulse width, duty or spacing: they depend
-  on the driver you connect, so stay within its ratings. It only enforces what keeps the waveform
-  correct:
-  - **pulse pairs stay apart:** `DELAY` ≤ 1/FREQ − 2 × `WIDTH`, so the Laser 2 pulse ends at least
-    one `WIDTH` before the next Laser 1 pulse (this also limits `WIDTH` to half the period);
+- **No laser-driver limits.** The firmware does not limit pulse width or duty: they depend on the
+  driver you connect, so stay within its ratings. It enforces what the pulse hardware needs, plus one
+  spacing rule of its own:
+  - **pulse pairs stay apart** (the firmware's own rule): `DELAY` ≤ 1/FREQ − 2 × `WIDTH`, so the
+    Laser 2 pulse ends at least one `WIDTH` before the next Laser 1 pulse (this also limits `WIDTH`
+    to half the period);
+  - **the pulse program:** `DELAY` ≤ 1/FREQ − `WIDTH` − 5 steps. This is the tighter limit only for
+    a `WIDTH` of 3 or 4 steps (20.000 or 26.667 ns); the error message names the limit that applies;
   - **shortest pulse:** 3 steps (20.000 ns) for `WIDTH` and `MARKERWIDTH`;
   - with `COMBINE 1`, `DELAY` > `WIDTH` ([Combined mode](#combined-mode-combine)).
 - **Slowest rate:** `FREQ` goes down to 1 Hz.
@@ -663,20 +674,23 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
 
 | Reply | Meaning |
 |---|---|
-| `ERR <word> unknown command` | Not a command. `FREQ?` is not valid; use `FREQ`. `SYNC` is a read-only `STATUS` key, not a command. |
+| `ERR <word> unknown command` | Not a command. `FREQ?` is not valid; use `FREQ`. `SYNC` is not a command: the sync clock is fixed at 1 MHz. |
 | `ERR <NAME> invalid value` | Not a plain whole number (e.g. `1.5`, `10k`, `-5`), or too large |
 | `ERR <NAME> takes one value` | More than one number |
-| `ERR ARM takes no argument` | Something after `ARM` |
+| `ERR ARM takes no argument` | Something after `ARM` (the same for `ARM?`, `STATUS`, `ID?` and `HELP`) |
 | `ERR line too long` | More than 95 characters; the whole line is ignored |
 | `ERR <NAME> rejected: value must be > 0` | FREQ set to 0 |
 | `ERR <NAME> rejected: WIDTH realizes below the 3-cycle minimum (20.000 ns)` | WIDTH ≤ 16 ns (the same for MARKERWIDTH) |
 | `ERR <NAME> rejected: DELAY must leave >= WIDTH before the next pulse pair (DELAY <= 1/FREQ - 2 x WIDTH); max DELAY … ns` | DELAY too long for the period at this WIDTH |
 | `ERR <NAME> rejected: WIDTH too long for the period: 2 x WIDTH must fit in 1/FREQ` | WIDTH longer than half the period |
+| `ERR <NAME> rejected: DELAY + WIDTH must fit in the period (DELAY <= 1/FREQ - WIDTH - 5 cycles); max DELAY … ns` | The same as the `DELAY must leave` error, for a WIDTH of 3 or 4 steps, where the pulse program's own limit is the tighter one |
+| `ERR <NAME> rejected: WIDTH does not fit in the period (WIDTH <= 1/FREQ - 5 cycles)` | The period is too short for a WIDTH of 3 or 4 steps |
 | `ERR <NAME> rejected: COMBINE needs DELAY > WIDTH so the two pulses stay separate (min DELAY … ns)` | With `COMBINE 1`, DELAY not longer than WIDTH |
 | `ERR <NAME> rejected: MARKERWIDTH must fit in the period (MARKERWIDTH <= 1/FREQ - 5 cycles); max MARKERWIDTH … ns` | MARKERWIDTH too long for the period, e.g. after raising FREQ |
 | `ERR MARKERDIV removed: the marker fires with every pulse pair` | `MARKERDIV` is no longer a setting |
 | `ERR <NAME> rejected: FREQ out of range` | FREQ above 300 MHz |
 | `ERR ARM …` / `ERR <NAME> rejected: pio0 unavailable` | The pulse hardware failed to start (`HW=` in STATUS) |
+| `ERR <NAME> rejected: pulse state machines could not be loaded` | The pulse hardware did not take settings that passed every check. Should never happen: the pulse outputs stop, the lasers are DISARMED, and `ARM` is refused until a later setting loads (`HW=` in STATUS) |
 
 `<NAME>` is the setting you were changing, which is not always the one named in the reason. For
 example, `FREQ 600000` with the default 2 µs `MARKERWIDTH` gives a `MARKERWIDTH` error.
@@ -711,7 +725,7 @@ TX_DROPPED=0
 | `PIXGATE`, `PIXLEAD`, `PIXLAG` | The pixel-reset gate settings |
 | `PIXRESET` | `off`, or the gate as produced: reset time per period, its start after CH1, and how long the pixels are free around each pair |
 | `ARMED` | The firmware's arm state (1/0). J11 and the 12 V supply are separate gates it can't see. |
-| `HW` | `OK`, or `ERR outputs not started: …` if the pulse hardware failed to start |
+| `HW` | `OK`; `ERR outputs not started: …` if the pulse hardware failed to start; or `ERR outputs stopped: …` if it later failed to load a setting (cleared by the next setting that loads) |
 | `START_PENDING_US` | Microseconds until the pulses start after an `ARM` (0 = none pending) |
 | `CLK` | Processor clock in Hz |
 | `RESET` | Why the board last restarted: `POWER_ON`, `WATCHDOG` (the firmware crashed and restarted itself), `SOFT`, `DEBUG`, `BROWNOUT`, `GLITCH`, `RUN_PIN` or `UNKNOWN` |
