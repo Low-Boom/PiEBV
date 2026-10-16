@@ -203,11 +203,6 @@ inline void pulseFormatHz(uint64_t periodCycles, uint32_t clk_hz, char *buf, siz
     pulseFormatFixed3(clk_hz, periodCycles, buf, len);
 }
 
-// Realized SYNC frequency for a 16.16 divider `div`, in Hz, 3 decimals.
-inline void syncFormatHz(uint32_t div, uint32_t clk_hz, char *buf, size_t len) {
-    pulseFormatFixed3((uint64_t)clk_hz * 65536u, div, buf, len);
-}
-
 // ---------------------------------------------------------------- validation
 // Turns a parameter set into exact cycle counts and runs every check on the
 // REALIZED values, without touching hardware. The marker marks every pulse pair:

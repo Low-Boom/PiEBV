@@ -115,9 +115,8 @@ const FieldCommand kFields[] = {
     {"PIXLAG", &PulseParams::pixLagNs, Unit::Ns, &RealizedTiming::pixLagCycles},
 };
 
-// Prints "NAME=value" plus the realized value -- " (actual X ns, N cyc)",
-// " (actual X Hz, period N cyc)" or " (actual X Hz, divider I+F/65536)" -- then a
-// newline.
+// Prints "NAME=value" plus the realized value -- " (actual X ns, N cyc)" or
+// " (actual X Hz, period N cyc)" -- then a newline.
 void printField(const FieldCommand &f, uint32_t value, const RealizedTiming &r) {
     g_out.print(f.name);
     g_out.print('=');
@@ -153,24 +152,6 @@ void printField(const FieldCommand &f, uint32_t value, const RealizedTiming &r) 
         }
     }
     g_out.println();
-}
-
-void printSync(const RealizedTiming &r) {
-    g_out.print(F("SYNC="));
-    g_out.print(kSyncHz);
-    g_out.print(F(" (fixed"));
-    if (r.clkHz != 0) {
-        char num[32];
-        syncFormatHz(r.syncDiv, r.clkHz, num, sizeof(num));
-        g_out.print(F(", actual "));
-        g_out.print(num);
-        g_out.print(F(" Hz, divider "));
-        g_out.print(r.syncDiv >> 16);
-        g_out.print('+');
-        g_out.print(r.syncDiv & 0xFFFFu);
-        g_out.print(F("/65536"));
-    }
-    g_out.println(')');
 }
 
 // The pixel-reset window the gate realizes each period (STATUS only).
@@ -237,9 +218,9 @@ void printHelp(uint32_t clkHz) {
         "STATUS             all settings with realized values, arm state, reset cause\n"
         "ID?                firmware identity and version\n"
         "HELP               this text"));
-    g_out.print(F("SYNC is fixed at "));
+    g_out.print(F("SYNC (the camera sync clock) is fixed at "));
     g_out.print(kSyncHz);
-    g_out.println(F(" Hz; STATUS reports its realized frequency.\n"
+    g_out.println(F(" Hz: not a setting, and not in STATUS.\n"
                     "A bare name (e.g. DELAY) queries it; NAME VALUE sets it. ARM, ARM?,\n"
                     "STATUS, ID? and HELP take no argument."));
     char buf[32];
@@ -456,7 +437,6 @@ void Protocol::dispatch(char *line) {
         for (const auto &f : kFields) {
             printField(f, params_->*(f.field), realized_);
         }
-        printSync(realized_);
         printPixReset(realized_);
         printArmed(hooks_.isArmed());
         if (hooks_.printSystemStatus) {

@@ -513,7 +513,8 @@ fine for the intended short range (a few metres, like Bluetooth), so no board ch
 | `ID?` | – | – | – | Board and firmware version (the git commit it was built from) |
 | `HELP` | – | – | – | Command summary |
 
-The camera sync clock is fixed at **1 MHz** and cannot be changed. `STATUS` reports it as `SYNC`; `SYNC` is not a command.
+The camera sync clock is fixed at **1 MHz** and cannot be changed: the RP2350 clock generator divides
+the 150 MHz system clock by exactly 150. `SYNC` is not a command, and `STATUS` does not list it.
 
 A "step" is one 6.667 ns tick of the 150 MHz clock.
 
@@ -536,7 +537,6 @@ ID?            ->  PiDG delay generator (Pico 2 W), firmware 5dfedd5
   same in 6.667 ns steps ("cycles").
 - The `(laser pulses start after …)` part appears only while a start delay (the hold-off, below) is
   pending; otherwise `ARM` replies just `OK ARMED=1`.
-- `SYNC` in `STATUS` is read-only: it is fixed at 1 MHz (the RP2350 clock generator divides the 150 MHz system clock by exactly 150).
 
 ### ARM and DISARM in detail
 
@@ -674,7 +674,7 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
 
 | Reply | Meaning |
 |---|---|
-| `ERR <word> unknown command` | Not a command. `FREQ?` is not valid; use `FREQ`. `SYNC` is a read-only `STATUS` key, not a command. |
+| `ERR <word> unknown command` | Not a command. `FREQ?` is not valid; use `FREQ`. `SYNC` is not a command: the sync clock is fixed at 1 MHz. |
 | `ERR <NAME> invalid value` | Not a plain whole number (e.g. `1.5`, `10k`, `-5`), or too large |
 | `ERR <NAME> takes one value` | More than one number |
 | `ERR ARM takes no argument` | Something after `ARM` (the same for `ARM?`, `STATUS`, `ID?` and `HELP`) |
