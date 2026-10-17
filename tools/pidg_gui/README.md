@@ -47,7 +47,7 @@ never uses 1200 baud, which would reboot the Pico into its bootloader.
 | Arming | A short strip above the charts: **ARM** and **DISARM**, with the firmware's arming state, start hold-off and `HW` status. |
 | Timing chart | One pulse pair, with Laser 1, Laser 2, marker and pixel reset on a common time axis. (The sync clock runs continuously, so it is not drawn.) Time 0 is the CH1 rising edge. **Pulses** zooms to the two laser pulses. **Pulses + reset window** also shows the `PIXLEAD`/`PIXLAG` window. Hover for the level of every signal at that instant. |
 | Sequence chart | Three consecutive pairs, with the marker and the pixel-reset gate between pairs. |
-| Edge table | Every edge's realized time after CH1, in ns and in PIO cycles (6.667 ns at 150 MHz). |
+| Edge table | Every edge's realized time after CH1, in ns and in PIO cycles (6.667 ns at 150 MHz, 3.333 ns at 300 MHz with the clock jumper). |
 | Timing settings | `FREQ`, `WIDTH`, `DELAY` (Δt), `COMBINE`, and the camera marker's `MARKERWIDTH`, with one **Apply**. The 1 MHz camera sync clock is fixed by the firmware and is not an adjustable setting; `STATUS` reports its realized value. |
 | Pixel-reset gate | `PIXGATE`, `PIXLEAD`, `PIXLAG`. Hidden if the firmware predates the gate. |
 | Console | Full width at the bottom, and resizable by dragging its bottom edge. Shows every command and reply on the link. You can type any firmware command here, exactly as in a serial terminal. The camera sync clock is fixed at 1 MHz, not a command. The page's own once-a-second `STATUS` poll is kept out of the console. |

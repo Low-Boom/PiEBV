@@ -19,7 +19,7 @@ def fmt3(x):
     return "%d.%03d" % (v // 1000, v % 1000)
 
 
-clks = [150000000, 125000000, 133000000, 200000000, 48000000]
+clks = [150000000, 125000000, 133000000, 200000000, 48000000, 300000000]  # 300 MHz: clock jumper
 cases = [(clk, 1000, 100, 10000, 2000) for clk in clks]
 inp = "\n".join(" ".join(map(str, c)) for c in cases) + "\n"
 out = subprocess.run([HARNESS], input=inp, capture_output=True, text=True).stdout.splitlines()
@@ -36,7 +36,7 @@ for clk, line in zip(clks, out):
     if int(fields[19]) != div or fields[20] != actual:
         bad += 1
         print("mismatch", clk, fields[19:21], div, actual)
-    if clk == 150000000 and (div != 150 << 16 or actual != "1000000.000"):
+    if clk in (150000000, 300000000) and (div != (clk // 1000000) << 16 or actual != "1000000.000"):
         bad += 1
-        print("board clock is not an exact 1 MHz divider", div, actual)
+        print("board clock is not an exact 1 MHz divider", clk, div, actual)
 print("fixed 1 MHz sync clock rates", len(cases), "bad", bad)

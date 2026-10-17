@@ -10,16 +10,20 @@
 // It is a protocol simulator only: nothing is timed, and the reset registers in
 // STATUS are placeholders. Keep the hook emulation in step with src/main.cpp.
 //
+// Option: --overclock simulates the clock jumper fitted (clk_sys 300 MHz, clock_mode.h).
+//
 // Build (any C++17 compiler), from this directory:
 //   g++ -std=c++17 -O2 -I fake -I ../../src -o pidg_sim pidg_sim.cpp ../../src/protocol.cpp
 //   (Windows: -o pidg_sim.exe; MSVC: cl /std:c++17 /EHsc /I fake /I ..\..\src pidg_sim.cpp ..\..\src\protocol.cpp)
 #include "Arduino.h"
+#include "clock_mode.h"
 #include "protocol.h"
 #include "pulse_timing.h"
 
 #include <algorithm>
 #include <chrono>
 #include <cstdio>
+#include <cstring>
 #include <thread>
 
 #ifdef _WIN32
@@ -41,7 +45,8 @@ uint64_t time_us_64() {
 void fake_advance_us(uint64_t us) { g_offsetUs += us; }
 
 namespace {
-constexpr uint32_t kClk = 150000000u;  // platformio.ini board_build.f_cpu
+uint32_t g_clk = kStandardClockHz;  // platformio.ini board_build.f_cpu; kOverclockHz with --overclock
+ClockModeInfo g_clockMode{false, false, nullptr, 1100};  // as the board's pre-init hook leaves it (clock_mode.cpp)
 constexpr uint32_t kWatchdogMs = 3000;
 
 bool g_gateOpen = false;  // laser::gateIsOpen()
@@ -58,7 +63,7 @@ bool g_startPending = false;
 uint64_t g_startDueUs = 0;
 uint32_t g_pendingPeriodCycles = 0;
 
-uint32_t clkHz() { return kClk; }
+uint32_t clkHz() { return g_clk; }
 
 void closeLaserGate() {
     const bool wasOpen = g_gateOpen;
@@ -132,6 +137,10 @@ void printSystemStatus(Print &out) {
     out.println(startPendingUs());
     out.print(F("CLK="));
     out.println(clkHz());
+    out.print(F("CLKMODE="));
+    printClockMode(out, g_clockMode);
+    out.print(F("VREG_MV="));
+    out.println(g_clockMode.vregMv);
     out.println(F("RESET=POWER_ON"));
     out.println(F("RESET_RAW=WD:0x0 CHIP:0x0"));
     out.println(F("WDT_RESETS=0"));
@@ -149,7 +158,9 @@ void setup() {
         &g_params, ProtocolHooks{applyPulseParams, setArmed, isArmed, startPendingUs, printSystemStatus,
                                  printIdentity, clkHz});
     if (why) snprintf(g_hwWhy, sizeof(g_hwWhy), "outputs not started: %s", why);
-    Serial.println(F("PiDG delay generator ready, lasers DISARMED (reset: POWER_ON). Type HELP for commands."));
+    Serial.print(F("PiDG delay generator ready, lasers DISARMED (reset: POWER_ON"));
+    Serial.print(clockModeBannerNote(g_clockMode));
+    Serial.println(F("). Type HELP for commands."));
     if (g_hwWhy[0]) {
         Serial.print(F("ERR "));
         Serial.println(g_hwWhy);
@@ -157,7 +168,16 @@ void setup() {
 }
 }  // namespace
 
-int main() {
+int main(int argc, char **argv) {
+    for (int i = 1; i < argc; ++i) {
+        if (!strcmp(argv[i], "--overclock")) {
+            g_clk = kOverclockHz;
+            g_clockMode = ClockModeInfo{true, true, nullptr, 1300};
+        } else {
+            fprintf(stderr, "usage: pidg_sim [--overclock]\n");
+            return 2;
+        }
+    }
 #ifdef _WIN32
     _setmode(_fileno(stdin), _O_BINARY);
     _setmode(_fileno(stdout), _O_BINARY);

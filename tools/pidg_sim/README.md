@@ -29,6 +29,9 @@ STATUS
 DELAY 12000
 ```
 
+`./pidg_sim --overclock` simulates a board with the clock jumper fitted: clk_sys 300 MHz (3.333 ns
+steps), and `STATUS` shows `CLKMODE=OVERCLOCK`.
+
 ## What it does and does not do
 
 | Simulated | Not simulated |

@@ -147,7 +147,7 @@ inline int64_t pulseMaxDelayCycles(uint32_t period, uint32_t width) {
 // SYNC is not a PIO program: the RP2350 clock generator (clk_gpout, sync_clock.cpp)
 // divides clk_sys straight onto the pin. Its divider is 16.16 fixed point:
 // div = round(clk * 65536 / f), INT = div >> 16 (1..65535), FRAC = div & 0xFFFF.
-// At 150 MHz div = 150 exactly (FRAC 0): an exact, jitter-free 1 MHz square wave,
+// At 150 MHz div = 150 exactly, at 300 MHz 300 (FRAC 0): an exact, jitter-free 1 MHz square wave,
 // 50 % duty (DC50 also squares up odd divisors). A nonzero FRAC gives the right
 // average frequency with one clk_sys period of edge jitter.
 constexpr uint32_t kSyncMinDiv = 1u << 16;                 // INT 1, FRAC 0

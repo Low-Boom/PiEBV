@@ -29,7 +29,7 @@ def rnd(x):
     return floor(x + F(1, 2))
 
 
-clks = [150000000, 125000000, 133000000, 200000000]
+clks = [150000000, 125000000, 133000000, 200000000, 300000000]  # 300 MHz: clock jumper
 cases = []
 for clk in clks:
     for _ in range(400):
