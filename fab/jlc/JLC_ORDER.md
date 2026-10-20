@@ -10,8 +10,8 @@ order.
 | Step | File |
 |---|---|
 | PCB | `../PiDG_Pico_Gerbers.zip` |
-| BOM (parts list) | `PiDG_Pico_JLC_BOM.csv`: 42 lines, every one with an LCSC part number |
-| CPL (placement file) | `PiDG_Pico_JLC_CPL.csv`: all 80 placed parts; rotations and centres corrected to JLC's own footprints by `tools/jlc_cpl` |
+| BOM (parts list) | `PiDG_Pico_JLC_BOM.csv`: 43 lines, every one with an LCSC part number |
+| CPL (placement file) | `PiDG_Pico_JLC_CPL.csv`: all 82 placed parts; rotations and centres corrected to JLC's own footprints by `tools/jlc_cpl` |
 
 ## PCB options
 
@@ -73,8 +73,9 @@ replaced by copper. R10 stays 56 kΩ: the CH224A table also gives 15 V. Same U14
 Check U14's rotation in the placement preview — JLC's CH224A library model may differ from its CH224K one.
 
 Everything else was in stock in quantity on 2026-09-25 (U17 LT3065: 799, enough for 5 boards). On
-2026-10-05 twelve lines are JLC basic parts and two are preferred extended (no loading fee); the
-other 28 are extended (about $3 loading fee each in Economic).
+2026-10-05 twelve lines were JLC basic parts and two preferred extended (no loading fee); the
+other 28 are extended (about $3 loading fee each in Economic). R29 (1 kΩ, C17513), added on
+2026-10-20, is a basic part, so there are now thirteen basic lines.
 
 ## Placement preview — check before approving
 
@@ -106,7 +107,9 @@ JLC doesn't supply these:
 2. **Load the firmware** (see the top-level README, Quick start).
 3. **Jumpers:** fit a shunt on **J10 2-3** (LCSC C100114, or any 2.54 mm shunt), and on **J18** and
    **J19 1-2** (50 Ω laser outputs, for the LDP-V; 2-3 for a high-impedance load). On **J11**, wire
-   the normally-closed E-stop switch across pins 1-2, or fit a shunt on 1-2 for bench work.
+   the normally-closed E-stop switch across pins 1-2, or fit a shunt on 1-2 for bench work. Leave
+   **J20** (clock jumper, left of the Pico) **open** (150 MHz) unless that Pico has passed the soak
+   test in `Hardware.md` ("Clock jumper (J20)"); keep the fifth shunt loose for it.
 4. **Before the first power-up on J17:** the solder-bridge checks in the README (First-board
    checks).
 
@@ -136,3 +139,5 @@ JLC doesn't supply these:
     the ribbons leave upward.
   - J10, J11 (the E-stop wiring), and the laser output-mode jumpers J18/J19 (between the 2512
     resistors and the BNCs).
+  - J20 (clock jumper): vertical 2-pin header 7.6 mm left of the Pico socket J14, level with Pico
+    pins 13-14. Its shunt is reached beside the seated Pico (pin centres 6 mm from the module edge).

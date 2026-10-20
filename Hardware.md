@@ -37,8 +37,8 @@ boards.
 
 - **The Pico makes all the timing.** Its PIO blocks (small timing engines beside the processor)
   produce the two laser pulses, the camera marker, the 1 MHz sync clock and the pixel-reset gate,
-  all from one 150 MHz clock (300 MHz with the planned
-  [clock jumper](#clock-jumper-planned-300-mhz-overclock)).
+  all from one 150 MHz clock (300 MHz with a shunt on the
+  [clock jumper](#clock-jumper-j20-300-mhz-overclock) J20).
 - **The laser path** has three gates in series: the firmware's ARM state, the hardware interlock
   (J11, with J16 pin 1 as an extra off input) and a 12 V power-good check (U18) that switches the
   driver chip on. The driver chip (U13) swings its output to 12 V; resistors after it bring that
@@ -77,8 +77,8 @@ boards.
 | Processor | Raspberry Pi Pico 2 W, in sockets (not soldered) |
 | Power | **USB-C PD input (J17, 15 V)** for the laser driver and the whole board; the Pico's own USB still powers the logic when J17 is unplugged |
 | Rails | **1.8 V** (camera signals) · 3.3 V (Pico, pixel-reset input) · 5 V (logic, Pico VSYS) · **12 V** (11.8 V, laser driver U13, from J17 only) |
-| Design rules | 0.2 mm clearance, 0.2 mm track, 0.6/0.3 mm via, 0.25 mm copper-to-edge |
-| Parts | 80 placed parts, plus 4 unplated mounting holes |
+| Design rules | 0.2 mm clearance, 0.2 mm track, 0.6/0.3 mm via, 0.5 mm copper-to-edge |
+| Parts | 82 placed parts, plus 4 unplated mounting holes |
 
 **Layers**
 
@@ -160,7 +160,7 @@ wrong.
 | GP13 | 17 | J14.17 | `_PULSE_OUT_CH1` |
 | GP15 | 20 | J14.20 | `PWM_1MHz` |
 | GP16 | 21 | J15.20 | `PIXRST_GATE` |
-| GP10 | 14 | J14.14 | `CLK_SEL`: **planned, not yet in the KiCad files** ([clock jumper](#clock-jumper-planned-300-mhz-overclock)) |
+| GP10 | 14 | J14.14 | `CLK_SEL` → R29 (1 kΩ) → J20.1 ([clock jumper](#clock-jumper-j20-300-mhz-overclock)) |
 | GND | 3, 8, 13, 18 | J14.3, .8, .13, .18 | `GND` |
 | GND | 38, 33 (AGND), 28, 23 | J15.3, .8, .13, .18 | `GND` |
 | 3V3_OUT | 36 | J15.5 | `+3V3` |
@@ -193,7 +193,7 @@ ARMED; otherwise `src/laser_gate.cpp` holds them LOW.
 | `kPinCh1` | 13 | `_PULSE_OUT_CH1` | U7 → U13 → J7 (Laser 1); R17 10 k to GND; R19 100 Ω → J10.1 |
 | `kPinSync` | 15 (J14 pad 20) | `PWM_1MHz` | U1 → U2 → Sync1–6, and TP3. Clock generator, not PIO. |
 | `kPinPixGate` | 16 (J15 pad 20) | `PIXRST_GATE` | U3.1 (NAND with the J12 input) → U4 → TDRSTN1–6; R24 10 k to +3V3. Output inverted in the GPIO block. |
-| `kPinClockSel` | 10 (J14 pad 14) | `CLK_SEL` (planned) | Clock jumper to GND, read once at boot ([clock jumper](#clock-jumper-planned-300-mhz-overclock)). Input with the internal pull-up; not yet in the KiCad files, so the pad is open (150 MHz). |
+| `kPinClockSel` | 10 (J14 pad 14) | `CLK_SEL` | R29 (1 kΩ) → J20.1; a shunt to J20.2 (GND) selects 300 MHz, read once at boot ([clock jumper](#clock-jumper-j20-300-mhz-overclock)). Input with the internal pull-up; no shunt reads as 150 MHz. |
 
 **CH1 is the higher GPIO (GP13) and CH2 the lower (GP12).** The order is deliberate; don't "tidy"
 them into ascending order.
@@ -205,7 +205,7 @@ schematic once drifted apart, the whole board looked dead.
 
 The firmware (`realizeTiming()` in `src/pulse_timing.h`) re-checks the whole set of settings on
 every command, using the **realized** values (after rounding to whole PIO cycles: 6.667 ns, or
-3.333 ns with the [clock jumper](#clock-jumper-planned-300-mhz-overclock)). It sets
+3.333 ns with the [clock jumper](#clock-jumper-j20-300-mhz-overclock)). It sets
 **no laser-driver ratings**: pulse width, duty and spacing depend on the attached driver (the
 PicoLas LDP-V datasheets were used only for the electrical interface), so set values within your
 driver's ratings. The checks only keep the waveform correct:
@@ -286,7 +286,7 @@ laser timing.
   USB, the Pico 2 W's radio-chip initialisation and `setup()`. They stay LOW until the host sends
   `ARM` over USB. SYNC and MARKER start as soon as `setup()` applies the defaults, and keep running
   while DISARMED. A second hook (`src/clock_mode.cpp`, priority 00700, after the clock setup) reads
-  the [clock jumper](#clock-jumper-planned-300-mhz-overclock); the laser pins are already LOW then.
+  the [clock jumper](#clock-jumper-j20-300-mhz-overclock); the laser pins are already LOW then.
 - **`ARM`** (exactly that word, no argument) restarts CH1, CH2 and MARKER together, so the first
   laser pulse is full width and in step. It replies at once; the pulses begin after a **restart
   hold-off** of one pulse period (the longer of the old and new periods, ≤ 1 s), counted from when
@@ -330,11 +330,21 @@ the chance per reset is at most the duty.
   the watchdog test in [first-board check 1](#first-board-checks), done into a 50 Ω scope input with
   no laser driver connected.
 
-### Clock jumper (planned): 300 MHz overclock
+### Clock jumper (J20): 300 MHz overclock
 
-**Not on the board yet.** The firmware supports it; the KiCad files do not have it yet (the task
-list is in `notes/kicad-clock-jumper.md`). Until they do, GP10 is open and the firmware runs at
-150 MHz. On a bare Pico, a wire from GP10 (pin 14) to GND (pin 13) acts as a fitted shunt.
+**J20** is a vertical 2-pin header 7.6 mm left of the Pico socket J14, level with Pico pins 13–14
+(silkscreen `CLOCK JUMPER`, `OPEN = 150 MHz`, `FIT = 300 MHz (OVERCLOCK)`). Pin 1 (square pad,
+the lower pin, level with Pico pin 14) is `CLK_SEL_JMP`, which reaches `CLK_SEL` = GP10 (J14 pad 14)
+through **R29 (1 kΩ)**; pin 2 is GND.
+
+- **R29 protects GP10.** Firmware older than the clock jumper (before commit 5dfedd5) drove GP10
+  push-pull as the SYNC output, and any other program may drive it too. With the shunt fitted, R29
+  limits that current to about 3.3 mA. The internal pull-up is tens of kΩ, so a fitted shunt still
+  reads about 0.1 V, far below the 0.8 V LOW threshold.
+- **No external pull-up and no capacitor on `CLK_SEL`.** The internal pull-up is enough for the
+  short trace, and a capacitor would slow the rise so that an open jumper could read as fitted.
+- On a bare Pico, a wire from GP10 (pin 14) to GND (pin 13) acts as a fitted shunt (add a 1 kΩ
+  resistor in series for the same protection).
 
 | Clock jumper (GP10 to GND) | clk_sys | Step | Shortest `WIDTH` / `MARKERWIDTH` |
 |---|---|---|---|
@@ -830,6 +840,7 @@ USB port.
 | J16 | 1×3 right-angle, top edge between the Pico and J17 | 1 `LASER_EN_TAP` · 2 `PWM_TRIG_TAP` · 3 GND |
 | TP3 | 1×2 right-angle, top edge | 1 `PWM_1MHz` · 2 GND |
 | TP4 | 1×2 vertical | 1 `_PULSE_OUT_CH2` · 2 GND |
+| J20 | 1×2 vertical, clock jumper, left of J14 (pin 1 at the bottom) | 1 `CLK_SEL_JMP` (R29 1 kΩ to GP10) · 2 GND. Shunt = 300 MHz, open = 150 MHz ([clock jumper](#clock-jumper-j20-300-mhz-overclock)) |
 
 **J16.1 (ENABLE) doubles as an external interlock input:** pull it LOW (a switch or open-collector
 to J16.3, or 3.3 V/5 V logic) to turn off both lasers. It is *enabled when open* (R3 pulls it up),
@@ -904,8 +915,12 @@ Ordered by what would bite hardest.
    on +12V (U18 would then hold the outputs off). Also confirm that J17's four shell legs are
    soldered (they are through-hole with no paste).
 
-6. **Clock jumper (planned), only if you use 300 MHz:** do the soak test under
-   [Clock jumper](#clock-jumper-planned-300-mhz-overclock) for each Pico before you rely on it.
+6. **Clock jumper J20:** with no shunt, `STATUS` must show `CLK=150000000` and `CLKMODE=STANDARD`;
+   with a shunt, after a power-cycle, `CLK=300000000` and `CLKMODE=OVERCLOCK (jumper fitted)`.
+   Measure about 1 kΩ (R29) from J20.1 to Pico pin 14 (GP10) and continuity from J20.2 to GND,
+   with no short between J20.1 and J20.2 when the shunt is off. Only if you use 300 MHz: do the soak
+   test under
+   [Clock jumper](#clock-jumper-j20-300-mhz-overclock) for each Pico before you rely on it.
 
 **Not an open item: Wi-Fi / Bluetooth.** The firmware doesn't use the radio; the Pico 2 W is fitted
 only because it is easier to buy than the plain Pico 2. All four copper layers run solid under the
@@ -931,7 +946,7 @@ antenna keep-out is needed.
   plus local vias at the decoupling capacitors and IC ground pins.
 - **Silkscreen** shows the Pico outline, the `CONTROL / PROGRAM` and `POWER ONLY` port labels, and a
   pin-1 mark (a module fitted the other way round would put the board's +5 V on one of its GPIO
-  pins). J10, J11, J16, J18 and J19 are labelled as described above. All board text is at least
+  pins). J10, J11, J16, J18, J19 and J20 are labelled as described above. All board text is at least
   1.0 mm high.
 
 **JLCPCB order:** the board is set up for full assembly by JLCPCB, with every SMD and

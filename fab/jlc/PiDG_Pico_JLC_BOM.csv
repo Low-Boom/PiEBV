@@ -22,6 +22,7 @@
 "150k 1%","R21","0805","C17470"
 "1.2k 1%","R22","0805","C17379"
 "4.7k 1%","R23","0805","C17673"
+"1k 1%","R29","0805","C17513"
 "SN74LVC1G04DBVR","U1,U5","SOT-23-5","C7827"
 "SN74LVC1G00DBVR (pixel-reset NAND)","U3","SOT-23-5","C7826"
 "SN74LVC04ADR","U2,U4,U6","SOIC-14","C485074"
@@ -40,4 +41,4 @@
 "Female socket 1x20 2.54 mm, 8.5 mm","J14,J15","HDR-F-1x20-P2.54","C2905423"
 "Pin header 1x3 2.54 mm right-angle","J16","HDR-1x3-P2.54-RA","C32713262"
 "Pin header 1x2 2.54 mm right-angle","TP3","HDR-1x2-P2.54-RA","C32713261"
-"Pin header 1x2 2.54 mm vertical","TP4","HDR-1x2-P2.54","C32713268"
+"Pin header 1x2 2.54 mm vertical","TP4,J20","HDR-1x2-P2.54","C32713268"

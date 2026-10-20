@@ -14,15 +14,15 @@
 //   kPinPixGate  GP16      21    J15 pad 20 PIXRST_GATE       U3 pin 1 (NAND with the J12 input) -> U4 ->
 //                                                                TDRSTN1..6; R24 10k to +3V3. Driven INVERTED
 //                                                                (main.cpp): PIO latch high = pixels in reset.
-//   kPinClockSel GP10      14         14     CLK_SEL (planned)  Clock jumper to GND, read once at boot
-//                                                                (clock_mode.cpp): fitted = 300 MHz, open = 150 MHz.
-//                                                                NOT YET IN THE KICAD FILES (notes/kicad-clock-jumper.md):
-//                                                                until then the pad is open and reads 150 MHz.
+//   kPinClockSel GP10      14         14     CLK_SEL           R29 1k -> J20.1 (J20.2 = GND). Clock jumper, read once
+//                                                                at boot (clock_mode.cpp): fitted = 300 MHz, open = 150 MHz.
+//                                                                Internal pull-up only; no capacitor on the net. R29
+//                                                                limits the current if GP10 is driven with the shunt fitted.
 //
 // CH1 is the HIGHER GPIO and CH2 the lower. The order is deliberate, so do not
 // "tidy" these into ascending order.
 // GP2-GP5 are not connected on this board. GP10 (SYNC before it moved to the clock generator)
-// is the planned clock jumper.
+// is now the clock jumper input.
 
 constexpr unsigned kPinMarker = 11;
 constexpr unsigned kPinCh2 = 12;

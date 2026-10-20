@@ -5,13 +5,13 @@
       "Application": "Pcbnew",
       "Version": "10.0.6"
     },
-    "CreationDate": "2026-10-15T15:13:01+09:00"
+    "CreationDate": "2026-10-20T12:50:27+09:00"
   },
   "GeneralSpecs": {
     "ProjectId": {
       "Name": "PiDG_Pico",
       "GUID": "50694447-5f50-4696-936f-2e6b69636164",
-      "Revision": "rev?"
+      "Revision": "1"
     },
     "Size": {
       "X": 126.1,
