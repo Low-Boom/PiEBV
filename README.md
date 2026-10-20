@@ -49,7 +49,7 @@ pio run
 - Every signal to the cameras is **1.8 V**, the level they are built for. The laser outputs are
   **5 V**.
 - Times are set in steps of **6.667 ns** (one tick of the Pico's 150 MHz clock), or **3.333 ns**
-  with the optional clock jumper (a 300 MHz overclock; [planned](#jumpers), not on the board yet).
+  with a shunt on the clock jumper J20 (a 300 MHz overclock; see [Jumpers](#jumpers)).
   Every reply shows the exact value the hardware will produce, so you never have to correct for the
   step size.
 - Both laser pulses share one `WIDTH` and one `FREQ`.
@@ -164,6 +164,7 @@ labelled on the board: **`CONTROL / PROGRAM — PICO MICRO-USB`** (commands and 
 | **J10** | Camera trigger source (jumper) | A shunt | See [Jumpers](#jumpers) |
 | **J11** | Laser enable (jumper) | A shunt, or a normally-closed E-stop switch | See [Jumpers](#jumpers) |
 | **J18**, **J19** | Laser output mode (jumpers; J18 = Laser 1, J19 = Laser 2) | A shunt | See [Jumpers](#jumpers) |
+| **J20** | Clock jumper, 2-pin header left of the Pico socket J14 | Nothing (150 MHz), or a shunt (300 MHz overclock) | See [Jumpers](#jumpers). Leave it open unless that Pico passed the soak test. |
 | **J16** | 3-pin header on the top edge, between the Pico and J17 | Probes, or a secondary laser-off input | See [J16](#j16--extra-laser-off-input-and-trigger-monitor) below. **Never fit a shunt.** |
 | **TP3** | 2-pin header on the top edge | A scope | Pin 1 = the 1 MHz sync straight from the Pico (3.3 V) · pin 2 = ground |
 | **TP4** | 2-pin header left of J10, marked `CH2` / `GND` | A scope only | Pin 1 = the Laser 2 pulse straight from the Pico (3.3 V; stays low while DISARMED) · pin 2 = ground. It is taken before the interlock and the output driver, so it pulses while ARMED even when J11 or the 12 V check holds J8 off. Probe it, never drive it. The matching Laser 1 point is J10 pin 1 (through 100 Ω). |
@@ -208,6 +209,7 @@ square pad.
 | **J10** camera trigger | `CH1 TRG MKR` | Cameras triggered by every Laser 1 pulse (only while ARMED) | **Cameras triggered by the marker** (normal) | No camera triggers |
 | **J18** Laser 1 output mode | `50Ω` by pins 1-2, `HiZ` by 2-3 | **50 Ω mode** (normal, for the LDP-V) | Hi-Z mode | Wrong for everything: always fit a shunt |
 | **J19** Laser 2 output mode | as J18 | as J18 | as J18 | as J18 |
+| **J20** clock jumper (2 pins) | `CLOCK JUMPER` · `OPEN = 150 MHz` · `FIT = 300 MHz (OVERCLOCK)` | Shunt fitted: 300 MHz overclock (soak-test the Pico first) | – | **150 MHz, the rated clock** (normal) |
 
 **J11 — laser enable and E-stop.** Labelled `LASER INTERLOCK: ON = 1-2` and
 `E-STOP: NC SWITCH ACROSS 1-2`. For an emergency-stop switch, take the shunt off and wire a
@@ -238,11 +240,12 @@ next to the pin pairs.
 - The two jumpers are independent, so one output can drive an LDP-V and the other a logic input. The
   firmware can't see them, and the pulse timing is the same in both modes.
 
-**Planned: clock jumper (300 MHz overclock).** Not on the board yet: the firmware supports it, the
-KiCad files do not have it yet. A shunt from GP10 to GND, read at every start (power-up or reset),
+**J20 — clock jumper (300 MHz overclock).** A 2-pin header left of the Pico socket J14. Pin 1
+(square pad, the lower pin) goes to GP10 through R29 (1 kΩ, which protects GP10 if a program drives
+it), pin 2 is GND. A shunt on J20, read at every start (power-up or reset),
 runs the Pico at 300 MHz instead of 150 MHz, so every time setting has 3.333 ns steps instead of
 6.667 ns. That is twice the chip's rated speed: soak-test each Pico first, as described in
-[Hardware.md](Hardware.md#clock-jumper-planned-300-mhz-overclock). No shunt (the default) is the
+[Hardware.md](Hardware.md#clock-jumper-j20-300-mhz-overclock). No shunt (the default) is the
 rated 150 MHz. After any watchdog restart the Pico stays at 150 MHz until it is power-cycled.
 `STATUS` shows the clock in `CLK` and `CLKMODE`.
 
@@ -290,7 +293,8 @@ with 50 Ω inputs (or 50 Ω feed-through terminators).
    [Building from source](#building-from-source).)
 2. **Seat the Pico,** components up, USB toward the top edge ([details](#seating-the-pico)).
 3. **Set the jumpers:** J10 on **2-3** (cameras triggered by the marker), and J18 and J19 on
-   **1-2** (50 Ω outputs, for the LDP-V). Leave **J11 empty** for now, so the lasers stay off.
+   **1-2** (50 Ω outputs, for the LDP-V). Leave **J11 empty** for now, so the lasers stay off, and
+   **J20 empty** (the rated 150 MHz clock).
 4. **Power up:** the charger into J17, and the Pico's micro-USB into your computer.
 5. **Open a serial terminal** on the Pico's port ([how](#usb-serial)) and turn on local echo,
    because the firmware does not echo what you type. (Or use the [web GUI](#web-gui): its console
@@ -839,7 +843,6 @@ replace a scope check on the board.
 | `Hardware.md` | [Full hardware reference](Hardware.md) |
 | `fab/` | Manufacturing: master parts list `fab/PiDG_Pico_BOM.csv` (with the design-constraint notes), gerbers and drill files, and `fab/jlc/` JLCPCB assembly files and [order checklist](fab/jlc/JLC_ORDER.md) |
 | `libs/`, `fp-lib-table`, `sym-lib-table` | Project-local KiCad symbols and footprints |
-| `notes/` | Open work items, e.g. the KiCad changes for the clock jumper |
 | `tools/jlc_cpl/` | Corrects the JLC placement file to JLC's own footprints (see its README) |
 
 ## License

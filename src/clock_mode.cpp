@@ -40,11 +40,12 @@ void waitUs(uint32_t us) {
     busy_wait_at_least_cycles((uint32_t)((uint64_t)us * clock_get_hz(clk_sys) / 1000000u));
 }
 
-// Jumper fitted = pin held at GND. Internal pull-up (the pad default is a pull-down),
-// read twice kJumperSettleUs apart: both LOW = fitted, anything else = open. The pin
-// stays an input with the pull-up. It starts LOW (pull-down) and charges through the
-// pull-up, so the board must not put a capacitor on it: with an RC of ~100 us or more,
-// an open jumper would still read LOW here.
+// Jumper fitted = pin pulled to GND through R29 (1 kOhm: ~0.1 V against the internal
+// pull-up; R29 limits the current if GP10 is ever driven). Internal pull-up (the pad
+// default is a pull-down), read twice kJumperSettleUs apart: both LOW = fitted, anything
+// else = open. The pin stays an input with the pull-up. It starts LOW (pull-down) and
+// charges through the pull-up, so the board must not put a capacitor on it: with an RC
+// of ~100 us or more, an open jumper would still read LOW here.
 //
 // Only register writes, as in laser_gate.cpp. Not gpio_init(): its gpio_put() and
 // gpio_set_dir() use the RP2350 GPIO coprocessor, which the SDK enables only after this
