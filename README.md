@@ -183,7 +183,7 @@ lines do: with every marker (J10 on 2-3, also while DISARMED), or with every Las
 - It needs the 15 V charger on J17; on the Pico's USB alone J12 stays at 0 V.
 - J12 and the cameras' trigger are offset by a fixed delay: J12 passes a 12 V driver, the camera
   trigger lines pass 1.8 V buffers. It is typically about +10 ns (J12 later), but anywhere from
-  −8.5 to +32 ns from part to part. **Measure it once on each board** and record it, if your
+  −9 to +27 ns from part to part. **Measure it once on each board** and record it, if your
   instrument must line up with the cameras to better than ~30 ns (Hardware.md, First-board checks).
 - One device per output, no BNC tee, and don't short it (see [Safety](#safety)).
 
@@ -225,7 +225,8 @@ next to the pin pairs.
 - **1-2, 50 Ω mode:** about 4.8 V (4.54–5.14 V) into a 50 Ω input. Use it for the PicoLas LDP-V and
   anything else with a 50 Ω input.
 - **2-3, Hi-Z mode:** about 4.8 V (4.55–5.08 V) into a high-impedance input. The output is matched
-  to 50 Ω coax, so even a long cable to an unterminated input gives a clean edge with no overshoot.
+  to 50 Ω coax, so even a long cable to an unterminated input gives a clean edge (at most ~5 %
+  overshoot into a scope's 1 MΩ ∥ 15 pF).
   Use it for TTL or 5 V CMOS inputs, scopes at 1 MΩ and other instruments that don't terminate.
 - **The wrong mode** gives the wrong voltage (see the table under [Safety](#in-detail)): an LDP-V on
   Hi-Z mode sees 2.3–2.6 V and won't fire, and a 5 V logic input on 50 Ω mode sees ~12 V, which can
@@ -341,8 +342,8 @@ list, with exact test points, is under
    - the first pulse after `ARM` is full width;
    - 0 V after `DISARM` and after a full restart; and, while ARMED and pulsing, 0 V once J17 is
      unplugged, with no stray pulse while it is plugged back in;
-   - then J18/J19 on 2-3 with the scope at 1 MΩ: 0 V to 4.55–5.08 V, with no overshoot at the end of
-     the longest cable you will use. Put the shunts back on the mode you need afterwards.
+   - then J18/J19 on 2-3 with the scope at 1 MΩ: 0 V to 4.55–5.08 V, with at most ~5 % overshoot at
+     the end of the longest cable you will use. Put the shunts back on the mode you need afterwards.
    - **External Sync Out (J12),** J21 on 1-2, same 50 Ω scope: a 0 V to 4.54–5.14 V pulse of
      `MARKERWIDTH` with every period, also while DISARMED (J10 on 2-3); J21 on 2-3 at 1 MΩ:
      4.55–5.08 V.
@@ -825,6 +826,14 @@ python check_pixgate.py
 The expected output is listed in [its README](tools/timing_check/README.md). These checks don't
 replace a scope check on the board.
 
+### Signal simulation
+
+`tools/signal_sim/` is a transmission-line simulation of the trigger, laser and External Sync Out
+nets, built from the routed board and datasheet values, run through the ngspice in KiCad 10. It
+gives the CH1-to-CH2 skew for each J10 setting, J12's delay and its offset to the camera triggers,
+and the output levels. Run it after changing the routing or a part in these chains; see
+[its README](tools/signal_sim/README.md).
+
 ---
 
 ## Repository layout
@@ -837,6 +846,7 @@ replace a scope check on the board.
 | `tools/pidg_gui/` | Web GUI: settings, timing chart and console in the browser |
 | `tools/pidg_sim/` | Simulator: the firmware's command code built for a computer, for trying the GUI and scripts without a board |
 | `tools/timing_check/` | Timing checks run on a computer |
+| `tools/signal_sim/` | Transmission-line simulation of the timing nets (KiCad's ngspice) |
 | `PiDG_Pico.kicad_pro` / `.kicad_sch` / `.kicad_pcb` | **Current hardware:** KiCad project of the 4-layer board |
 | `Hardware.md` | [Full hardware reference](Hardware.md) |
 | `fab/` | Manufacturing: master parts list `fab/PiDG_Pico_BOM.csv` (with the design-constraint notes), gerbers and drill files, and `fab/jlc/` JLCPCB assembly files and [order checklist](fab/jlc/JLC_ORDER.md) |

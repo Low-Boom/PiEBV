@@ -604,10 +604,20 @@ J10's silkscreen reads **`CH1 / TRG / MKR`** (pins 1/2/3).
 
 J10.1 reaches `_PULSE_OUT_CH1` through **R19 (100 Ω)**; like TP4 it idles LOW while DISARMED. R19
 is there for the laser timing. Without it, the 1-2 shunt would hang the whole `PWM_TRIG_TAP` net
-(U5, R9, U19 and ~59 mm of trace) directly on the CH1 GPIO. A transmission-line simulation of the
-earlier ~120 mm version of this net put CH1 0.4–1.7 ns behind CH2 at U7/U8: a laser delay error that
-depended on the jumper. R19 cut that to under ~0.2 ns, and costs the camera trigger 1.5–2 ns of edge,
-which doesn't matter there. The shorter net has not been simulated again; keep R19.
+(U5, R9, U19 and ~59 mm of trace) directly on the CH1 GPIO. The transmission-line simulation
+in `tools/signal_sim` (the ~59 mm net, typical corner, 4 mA GPIO) puts CH1 behind CH2 at U7/U8 by:
+
+| J10 | With R19 (100 Ω) | Without R19 |
+|---|---|---|
+| 2-3 or open | 0.09 / 0.10 ns (rise / fall), up to 0.37 ns | 0.11 / 0.12 ns, up to 0.35 ns |
+| 1-2 | 0.24 / 0.27 ns, up to 1.4 ns at the GPIO and threshold corners | 0.53 / 0.68 ns, up to 1.9 ns |
+
+So with J10 on 1-2 the laser delay error depends on the jumper even with R19. R19 cuts it by about
+55–60 % at the typical corner and by about 25 % at the worst corner. With J10 on 1-2, at J7/J8 it
+is 0.22–0.37 ns with R19 and 0.49–1.43 ns without, before U13's own channel matching (1 ns typical,
+2 ns maximum), which is larger. R19 costs the camera trigger and
+J12 0.7–1.4 ns of edge, which doesn't matter there. Keep R19. (An earlier simulation of the ~120 mm
+net gave 0.4–1.7 ns without R19.)
 
 **With no shunt fitted, R9 (10 k) pulls `PWM_TRIG_TAP` low,** so all six camera triggers and J12
 idle low instead of following a floating input on ~59 mm of trace. 10 k, rather than a weaker
@@ -653,8 +663,9 @@ keeps the supply loop to roughly 1.5–2 nH, so the ~100 mA, few-ns output edges
 the top of the pulse. C10 (10 µF) is the bulk reservoir.
 
 U13 adds 17 ns typical, 27 ns maximum of delay (TI SLUSFA9, D package; no minimum is given. The
-older SLUSBP4 die gives 6 / 13 / 23 ns, and JLC's listing quotes those, so the die on the reel is not
-known). The delay is the same on both laser channels to within its channel-to-channel matching (1–2 ns), so the delay between the lasers is preserved. The laser-to-camera timing shifts
+older die gives 6 / 13 / 23 ns. JLC's listing quotes older-die input thresholds, so the die on the
+reel is not known). The delay is the same on both laser channels to within its channel-to-channel
+matching (1–2 ns), so the delay between the lasers is preserved. The laser-to-camera timing shifts
 by that fixed, calibratable amount.
 
 #### Amplitude budget
@@ -674,7 +685,13 @@ Every corner passes, with ~0.8 % margin at the low end and ~1.2 % at the high en
 (11.8 V) centres the window for this ROH range: with the earlier 101k (11.9 V) the high corner
 reached 5.19 V, only 0.3 % below the limit. The UCC27524 DSD package (ROH 2.5–7.5 Ω) would give
 ~2.5 % at both ends, but its minimum pulse width (25 ns max) and channel matching (4 ns max) break
-the 20 ns WIDTH and the 1–2 ns matching, so the D package stays. The budget assumes a 50 Ω termination at the
+the 20 ns WIDTH and the 1–2 ns matching, so the D package stays. Its current die (SLUSFA9) needs an
+input pulse of 10 ns typical, 15 ns maximum. The older D-package die needed 15 / 25 ns, and the die
+on the reel is not known (see above): check that a 20 ns WIDTH reaches J7/J8 at full height on the
+first board ([first-board check 1](#first-board-checks)); TI only guarantees an output above 1.5 V
+into 1.8 nF at the minimum pulse. With the clock jumper (300 MHz) the shortest WIDTH, 10 ns, is
+below the maximum of either die (15 / 25 ns), so it can be lost or shortened; use WIDTH ≥ 20 ns (≥ 30 ns for an older die) at the outputs. The same
+applies to MARKERWIDTH at J12, through U19. The budget assumes a 50 Ω termination at the
 driver; a load 1 % high adds ~0.6 %. The trace drop from U17 to U13 is a few mV. With 1 % divider
 resistors the corners would sit only ~0.7 % inside the window, which is why R12/R13 are 0.1 %.
 
@@ -703,13 +720,16 @@ CHn_DRIVE ──┬── R25/R26 47 Ω 2 W ──┬── CHn_OUT ── BNC c
   | Into 50 Ω (wrong mode for an LDP-V) | 2.29 V | 2.43 V | 2.59 V |
 
   **Why both resistors.** With the source 0.4–5.2 % below the coax's 50 Ω, the first edge reaching an
-  unterminated input is 1.00–1.02 × the final level (at most ~5.18 V): no overshoot, whatever the
-  cable length. A simpler version, just a 51 Ω resistor to ground with no series resistor, would be
-  a ~30 Ω source and overshoot by ~25 %, to about 6 V, on any cable longer than the edge.
+  unterminated input is 1.00–1.03 × the final level, whatever the cable length. With a scope's
+  1 MΩ ∥ 15 pF at the end of the cable, the simulation gives 1.4–4.1 % overshoot (5.28 V peak at the
+  high corner) and −0.21 V undershoot, settled within 2 % after 13 ns (1 m) or 33 ns (3 m). That is
+  the J12 circuit; J7/J8 are the same circuit. At the 47.4 Ω source corner, not simulated, the
+  overshoot could reach ~4.7 %, with the peak still ~5.25 V. A simpler version, just a 51 Ω resistor
+  to ground with no series resistor, would be a ~30 Ω source and overshoot by ~25 %, to about 6 V, on any cable longer than the edge.
 - **No shunt:** the 47 Ω in series and no resistor to ground, so ~12 V open circuit and
   3.35–3.66 V into 50 Ω. Always fit a shunt.
 - **Dissipation in Hi-Z mode** (all 2 W 2512 parts): R27/R28 at most 0.31 W while high; R25/R26 at
-  most 0.18 W while high into an open circuit, 0.32 W into 50 Ω, and 0.51 W stuck high into a
+  most 0.18 W while high into an open circuit, 0.32 W into 50 Ω, and 0.52 W stuck high into a
   short. The supply current while high is ~60 mA per output, against ~96 mA in 50 Ω mode.
 - **Layout.** The 47 Ω resistor sits in line on the BNC centre-pin row, with jumper pin 2 on the same
   trace; pin 1 loops back over the resistor to `CHn_DRIVE`, and the 82 Ω resistor and its GND via
@@ -755,20 +775,27 @@ trigger lines are high, and low while `PWM_TRIG_TAP` is low, including with no s
   J10 on 2-3, J12 keeps pulsing while the lasers are disarmed, as the camera triggers do.
 - **Timing: measure the offset to the cameras on each board.** J12 follows GP11 through U19, and
   the camera trigger lines through U5 and U6, so the two are offset by a fixed delay that the
-  datasheets don't pin down. From the GP11 edge (4 mA default drive, rising edge, J12 into 50 Ω;
-  min / typ / max, datasheet limits plus the trace and output-network simulation):
+  datasheets don't pin down. From the GP11 edge, simulated in `tools/signal_sim` (4 mA default
+  drive, J10 on 2-3, J21 on 1-2, J12 into 50 Ω; min / typ / max over the datasheet corners):
 
-  | Path | Delay |
-  |---|---|
-  | GP11 → J12 (U19 + R30/J21 + ~4 ns of GP11 edge to U19's threshold) | 10.5 / 22.4 / 35.5 ns |
-  | GP11 → Trigger1–6 at J1–J6 pin 4 (U5 + U6) | 7.2 / 11.7 / 19.6 ns |
-  | **J12 minus camera trigger, rising edge** | **−8.5 / +10.7 / +32 ns** |
-  | J12 minus camera trigger, falling edge | −9.4 / +9.7 / +25.6 ns |
+  | Path | Rising edge | Falling edge |
+  |---|---|---|
+  | GP11 → J12 (U19 + R30/J21 + ~4 ns of GP11 edge to U19's threshold) | 10.4 / 21.7 / 34.1 ns | 9.8 / 21.0 / 32.3 ns |
+  | GP11 → Trigger1–6 at J1–J6 pin 4 (U5 + U6, mean of the six) | 6.9 / 10.9 / 19.2 ns | 7.3 / 11.2 / 19.8 ns |
+  | **J12 minus camera trigger** | **−8.2 / +10.8 / +26.8 ns** | −9.2 / +9.8 / +24.2 ns |
 
-  The range is wide because U19 (6–27 ns) and U5 + U6 (4–15.5 ns) spread independently. On one
-  board the offset is fixed: measured once ([first-board check 4](#first-board-checks)), it holds to
-  about 0.5 ns, plus 1–2 ns over temperature (estimates). Record it with the board. The six trigger
-  lines differ by up to ~0.2 ns from their routing.
+  The offset limits are not the difference of the rows above: both paths share the GP11 corner, and
+  the extremes pair a fast U19 with slow U5/U6 or the reverse. The range is wide because U19
+  (6–27 ns; TI gives no minimum, 6 ns is the older die's) and U5 + U6 (4–15.5 ns) spread
+  independently. The typical value uses U19's 17 ns, which TI specifies at TJ = 125 °C; TI's 25 °C
+  curves read 16–16.5 ns rising and 18–19 ns falling, so the typical offset may be about 1 ns less
+  on the rising edge and up to 2 ns more on the falling edge. With an older-die U19 (13 ns typical)
+  the typical offset is +6.9 ns rising, +5.7 ns falling. If the GP11 pad sits at its datasheet
+  VOH/VOL limit, J12 can reach 39 ns and the offset spans −10.9 to +31 ns. On one board the offset is fixed: measured once ([first-board check 4](#first-board-checks)),
+  it holds to about 0.5 ns, plus 1–2 ns over temperature (estimates). It depends on the jumpers:
+  J10 on 1-2 adds about +0.75 ns (rising edge; −0.13 ns falling), and J21 in Hi-Z mode about
+  +0.65 ns, so measure each
+  setting you use. The six trigger lines differ by up to 0.3 ns from their routing.
 
   Ways to reduce the delay were studied on 2026-11-01 and not used, because none removes the need to
   measure. A faster 12 V driver saves 4–7 ns at best and needs a new footprint; JLC stocks no 12 V
@@ -939,8 +966,10 @@ Ordered by what would bite hardest.
      neither the board nor the Pico 2 W has a reset button, and a watchdog timeout forced over SWD
      as described under [Boot and arming](#boot-and-arming)); and, while ARMED with pulses running,
      with J17 unplugged and while it is plugged back in;
-   - Hi-Z mode: J18/J19 on 2-3 and the scope at 1 MΩ, 0 V to 4.55–5.08 V, with no overshoot at the
-     far end of a 2 m cable (the source is ~49 Ω).
+   - Hi-Z mode: J18/J19 on 2-3 and the scope at 1 MΩ, 0 V to 4.55–5.08 V, with at most ~5 %
+     overshoot (≤ ~5.3 V) at the far end of a 2 m cable (the source is ~49 Ω);
+   - the shortest pulse: `WIDTH 20` reaches full height at J7/J8 (U13's minimum input pulse is
+     15 ns maximum for the current die, 25 ns for the older one; see [Amplitude budget](#amplitude-budget));
 2. **Check the charger's PD behaviour.** The CH224A datasheet does not say what it does when the
    charger lacks the requested 15 V. The board is safe either way (U18 keeps the lasers disabled
    below ~11 V), but a small charger may leave them disabled. Measure VBUS_PD (C12) with the charger
@@ -956,9 +985,11 @@ Ordered by what would bite hardest.
    period, also while DISARMED, and rising with the camera trigger lines. **Measure the J12-to-camera
    offset** and record it with the board: J12 through the 50 Ω-terminated input, Trigger1 at J1 pin 4
    with a 10× probe and a short ground spring, both edges, at the 50 % points (J12 ~2.4 V, Trigger1
-   0.9 V). Expect −8.5 to +32 ns, typically about +10 ns (J12 later); see
-   [External Sync Out](#external-sync-out-j12). With J21 on 2-3 and the scope at 1 MΩ: 4.55–5.08 V, no overshoot at the
-   end of a 2 m cable. With the Pico's USB alone (J17 unplugged), J12 must stay at 0 V. With
+   0.9 V). Deskew the two scope channels first, and subtract the delay of J12's cable (RG-58
+   ~5.05 ns/m). Repeat for each J10/J21 setting you use. Expect −9 to +27 ns, typically about
+   +10 ns (J12 later); see [External Sync Out](#external-sync-out-j12). With J21 on 2-3 and the
+   scope at 1 MΩ: 4.55–5.08 V, peak at most ~5.3 V at the end of a 2 m cable. With the Pico's USB
+   alone (J17 unplugged), J12 must stay at 0 V. With
    `PIXGATE 0`, TDRSTN at every camera port must stay high (no other source of pixel reset).
 5. **Before the first USB-C PD power-up, check the fine-pitch parts for solder bridges.** J17's and
    U17's pads are 0.5 mm pitch and U16's 0.65 mm, on lead-free HASL. With no power applied, check
@@ -1031,6 +1062,7 @@ order-number placeholder.
 | `src/` | firmware: `board.h` (pin map), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `laser_gate.*` (CH1/CH2 gate, start-up hook), `protocol.*` (serial commands), `main.cpp` (arming, hold-off, watchdog) |
 | `platformio.ini` | build configuration: platform pinned to an exact commit; `pico2w` (default) and `pico2` builds |
 | `tools/timing_check/` | checks `pulse_timing.h` against a cycle-level PIO model (see its README) |
+| `tools/signal_sim/` | transmission-line simulation (ngspice, routed geometry) of the trigger, laser and J12 nets: R19 skew, J12 delay and offset, output levels (see its README) |
 
 **The `*_EdgeTrim` footprints.** TP3 overhangs the board edge, and J17's face is flush with
 it, so their stock silkscreen outlines run off the board and trip `silk_edge_clearance`. (The 1×3
