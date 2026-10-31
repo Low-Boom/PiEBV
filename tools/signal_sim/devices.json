@@ -1,0 +1,182 @@
+{
+  "_meta": {
+    "units": "ns, ohm, pF, nH, V, mm unless a key says otherwise",
+    "corners": "min / typ / max are datasheet columns. Keys ending in _est, and every value in a block marked \"est\": true, are engineering estimates (no datasheet value).",
+    "copied_from": "Gather phase of the 2026-10-31 J12 study (devices.json, delay.json); every datasheet value was checked again against the datasheet text.",
+    "datasheets": {
+      "RP2350": "Raspberry Pi RP2350 datasheet, build 01/10/2026 (https://datasheets.raspberrypi.com/rp2350/rp2350-datasheet.pdf)",
+      "SN74LVC1G04": "TI SCES214AF (revised October 2025)",
+      "SN74LVC04A": "TI SCAS281T (revised November 2016)",
+      "SN74AHCT1G08": "TI SCLS315S (revised February 2024)",
+      "UCC27524": "TI SLUSFA9 (June 2024), D/DGN rows",
+      "UCC27524A": "TI SLUSBP4C (revised June 2024), D-package rows (same values as the SLUSFA9 DSD rows: the older die)",
+      "2EDN7524F": "Infineon 2EDN752x/2EDN852x datasheet Rev. 2.7 (2025-03-18)",
+      "UCC27517A": "TI SLUSBQ0C (revised August 2015)"
+    }
+  },
+
+  "gpio": {
+    "part": "RP2350 GPIO (Pico 2 W), IOVDD 3.3 V",
+    "iovdd": 3.3,
+    "model": "Pad current I = Isat * tanh(Vdrop / (Rs * Isat)), switched by an internal 0-1 ramp k(t). Pull-up and pull-down sides are separate.",
+    "drive": {
+      "4":  {"rs_up": 40.0, "isat_up_mA": 30.0, "rs_dn": 30.0, "isat_dn_mA": 60.0},
+      "8":  {"rs_up": 26.0, "isat_up_mA": 70.0, "rs_dn": 19.0, "isat_dn_mA": 120.0},
+      "12": {"rs_up": 23.0, "isat_up_mA": 90.0, "rs_dn": 16.0, "isat_dn_mA": 150.0}
+    },
+    "drive_src": "Rs: slope of the typical V-I curves, RP2350 datasheet 14.9.4.1 Figure 154 (typical part, 25 C). Isat (current above the plotted range): est.",
+    "strength_scale_est": {"strong": 1.3, "typ": 1.0, "weak": 0.6},
+    "strength_note": "Scale multiplies Isat and divides Rs. est (the datasheet says other parts lie between the typical curve and the limit).",
+    "floor": {"voh_min": 2.62, "vol_max": 0.5, "src": "RP2350 Table 1683: VOH min 2.62 V, VOL max 0.5 V at the set drive current, IOVDD 3.3 V. The runner solves the scale that puts the pad exactly on these limits."},
+    "ramp_ns_est": {"slow": 3.0, "fast": 0.8},
+    "ramp_note": "Internal pre-driver ramp, 0-100 %. The datasheet gives no rise/fall time for SLEWFAST = 0 or 1. est",
+    "reset_default": {"drive_mA": 4, "slew": "slow", "src": "RP2350 PADS_BANK0 GPIOx reset values (DRIVE = 4 mA, SLEWFAST = 0); src/ never changes them"},
+    "abs_max_pin_V": 3.8,
+    "abs_max_src": "RP2350 datasheet 14.9.1 Table 1680: VPIN max IOVDD + 0.5 V",
+    "pad": {"est": true, "c_die_pF": 2.0, "l_bond_nH": 1.0, "c_pkg_pF": 0.4, "esd_diodes": "to IOVDD and GND, IS 1e-14 A, N 1.2, RS 5 ohm"}
+  },
+
+  "pico_path": {
+    "est": true,
+    "trace_mm": 15.0, "trace_z0": 65.0, "trace_ps_per_mm": 6.5,
+    "pin_pF": 0.5, "socket_nH": 5.0, "socket_pF": 0.6,
+    "note": "RP2350 pad to Pico 2 W castellated pin (trace 10-25 mm, not published), male pin and J14/J15 socket contact (5-10 nH, 0.5-1.5 pF). Same values for GP11, GP12, GP13 and GP14."
+  },
+
+  "gates": {
+    "SN74LVC1G04": {
+      "ref": "U5", "vcc": 1.8,
+      "vsw": {"min": 0.63, "typ": 0.9, "max": 1.17},
+      "vsw_src": "VIL max 0.35 x VCC and VIH min 0.65 x VCC (SCES214AF Table 5.3); typ 0.9 V = VCC/2 est. The real threshold lies in this band.",
+      "ci_pF": 3.5, "ci_src": "SCES214AF Table 5.5 (typ)",
+      "tpd": {"min": 3.0, "typ": 4.1, "max": 7.5},
+      "tpd_src": "SCES214AF Table 5.7, VCC 1.8 V +/- 0.15 V, CL 30 pF, RL 1 k (min/max). No typ is given: 4.1 ns est (from SN74LVC04A).",
+      "test": {"cl_pF": 30.0, "rl": 1000.0, "vm_in": 0.9, "vm_out": 0.9, "vin_high": 1.8, "tr_in_ns": 2.0},
+      "rout": {"min": 30.0, "typ": 50.0, "max": 112.5},
+      "rout_src": "max derived from VOH 1.2 V / VOL 0.45 V at 4 mA, VCC 1.65 V (SCES214AF Table 5.5); min/typ est",
+      "ramp_ns_est": {"min": 0.5, "typ": 1.0, "max": 2.0},
+      "clamp_to_gnd": true
+    },
+    "SN74LVC04A": {
+      "ref": "U6", "vcc": 1.8,
+      "vsw": {"min": 0.63, "typ": 0.9, "max": 1.17},
+      "vsw_src": "VIL max / VIH min 0.35 / 0.65 x VCC (SCAS281T Table 6.3); typ est",
+      "ci_pF": 5.0, "ci_src": "SCAS281T Table 6.7 (typ)",
+      "tpd": {"min": 1.0, "typ": 4.1, "max": 8.0},
+      "tpd_src": "SCAS281T Table 6.8, VCC 1.8 V +/- 0.15 V, CL 30 pF, RL 1 k: 1 / 4.1 (25 C) / 8 (-40..85 C) ns",
+      "test": {"cl_pF": 30.0, "rl": 1000.0, "vm_in": 0.9, "vm_out": 0.9, "vin_high": 1.8, "tr_in_ns": 2.0},
+      "rout": {"min": 30.0, "typ": 50.0, "max": 112.5},
+      "rout_src": "max derived from VOH 1.2 V / VOL 0.45 V at 4 mA, -40..85 C (SCAS281T Table 6.7); min/typ est",
+      "ramp_ns_est": {"min": 0.5, "typ": 1.0, "max": 2.0},
+      "clamp_to_gnd": true
+    },
+    "SN74AHCT1G08": {
+      "ref": "U7, U8", "vcc": 5.0,
+      "vsw": {"min": 0.8, "typ": 1.4, "max": 2.0},
+      "vsw_src": "VIL max 0.8 V, VIH min 2.0 V (SCLS315S Table 5.3); typ 1.4 V est",
+      "ci_pF": 4.0, "ci_src": "SCLS315S Table 5.5 (typ)",
+      "tpd": {"min": 1.0, "typ": 5.0, "max": 7.1},
+      "tpd_src": "SCLS315S Table 5.6, VCC 5 V +/- 0.5 V, CL 15 pF, -40..85 C",
+      "test": {"cl_pF": 15.0, "rl": null, "vm_in": 1.5, "vm_out": 2.5, "vin_high": 3.0, "tr_in_ns": 3.0},
+      "rout": {"min": 25.0, "typ": 40.0, "max": 87.5},
+      "rout_src": "max derived from VOH 3.8 V at 8 mA, VCC 4.5 V, -40..125 C (SCLS315S Table 5.5); min/typ est",
+      "ramp_ns_est": {"min": 0.5, "typ": 1.0, "max": 2.0},
+      "clamp_to_gnd": true
+    }
+  },
+
+  "drivers": {
+    "UCC27524_new": {
+      "label": "UCC27524DR, new die (fitted part, SLUSFA9 D row)",
+      "vin_h": {"min": 1.8, "typ": 2.0, "max": 2.3},
+      "vin_l": {"min": 0.8, "typ": 1.0, "max": 1.2},
+      "td_rise": {"min": 6.0, "typ": 17.0, "max": 27.0},
+      "td_fall": {"min": 6.0, "typ": 17.0, "max": 27.0},
+      "td_min_note": "SLUSFA9 gives no min for D/DGN; 6 ns is the older-die min (est lower bound)",
+      "roh": {"min": 0.01, "typ": 5.0, "max": 8.5},
+      "roh_min_note": "No min specified; Hardware.md amplitude budget uses 0 ohm",
+      "rol": {"min": 0.15, "typ": 0.6, "max": 1.1},
+      "rol_min_note": "No min specified; 0.15 ohm from the older-die row (est)",
+      "src": "SLUSFA9 6.5 (VINx_H, VINx_L, ROH, ROL, D/DGN) and 6.6 (tD1x, tD2x: VINx_H crossing to 10 % output rise, VINx_L crossing to 90 % output fall, CLOAD 1.8 nF)"
+    },
+    "UCC27524_legacy": {
+      "label": "UCC27524 older die / UCC27524ADR (SLUSBP4C D rows)",
+      "vin_h": {"min": 1.9, "typ": 2.1, "max": 2.3},
+      "vin_l": {"min": 1.0, "typ": 1.2, "max": 1.4},
+      "td_rise": {"min": 6.0, "typ": 13.0, "max": 23.0},
+      "td_fall": {"min": 6.0, "typ": 13.0, "max": 23.0},
+      "roh": {"min": 2.5, "typ": 5.0, "max": 7.5},
+      "rol": {"min": 0.15, "typ": 0.5, "max": 1.0},
+      "src": "SLUSBP4C 5.5/5.6 D-package rows = SLUSFA9 6.5/6.6 DSD rows. The JLC listing for C465729 quotes these values, so a reel can hold this die."
+    },
+    "2EDN7524F": {
+      "label": "Infineon 2EDN7524F (same pinout, footprint swap only)",
+      "vin_h": {"min": 1.98, "typ": 2.1, "max": 2.2},
+      "vin_l": {"min": 0.95, "typ": 1.02, "max": 1.1},
+      "td_rise": {"min": 15.0, "typ": 17.0, "max": 23.0},
+      "td_fall": {"min": 15.0, "typ": 19.0, "max": 23.0},
+      "roh": {"min": 0.35, "typ": 0.7, "max": 1.2},
+      "rol": {"min": 0.28, "typ": 0.55, "max": 1.0},
+      "src": "Rev. 2.7 Table 12 (VINH, VINL), Table 13 (RONSRC, RONSNK at 50 mA), Table 14 (tPDlh, tPDhl, CLOAD 1.8 nF, VDD 12 V)"
+    },
+    "UCC27517A": {
+      "label": "TI UCC27517A (SOT-23-5, new footprint, no enable pin)",
+      "vin_h": {"min": 2.0, "typ": 2.2, "max": 2.4},
+      "vin_l": {"min": 1.0, "typ": 1.2, "max": 1.4},
+      "td_rise": {"min": 4.0, "typ": 13.0, "max": 23.0},
+      "td_fall": {"min": 4.0, "typ": 13.0, "max": 23.0},
+      "roh": {"min": 2.5, "typ": 5.0, "max": 7.5},
+      "rol": {"min": 0.15, "typ": 0.5, "max": 1.0},
+      "src": "SLUSBQ0C 8.5 (VIN_H typ 2.2 / max 2.4 V, VIN_L min 1.0 V, hysteresis 1.0 V; ROH 5.0 / 7.5, ROL 0.5 / 1.0 at VDD 12 V) and 8.6 (tD1 4 / 13 / 23 ns, VDD 12 V, 1.8 nF). VIN_H min, VIN_L typ/max, ROH min and ROL min: est."
+    },
+    "_common": {
+      "est": true,
+      "ci_pF": 3.0,
+      "ramp_ns": {"min": 1.0, "typ": 2.0, "max": 4.0},
+      "r_boost": 1.04,
+      "test_cl_pF": 1800.0,
+      "note": "Input capacitance is not specified (SLUSFA9 7.3.2: 'very low'). The output is an internal ramp behind ROH (rise) or ROL (fall). For the delay calibration into the 1.8 nF test load the rising edge uses ROH || r_boost (SLUSFA9 7.3.4: an NMOS of about 1.04 ohm also pulls up during the edge). The ramp time is an estimate; edge rate into 1.8 nF is not matched (peak-current limit not modelled)."
+    }
+  },
+
+  "output_corners": {
+    "_note": "Same corners as Hardware.md 'Amplitude budget' and 'Output mode'. Timing corner min uses 'high', typ 'typ', max 'low'.",
+    "vdd12": {"low": 11.54, "typ": 11.79, "high": 12.05},
+    "r68":   {"low": 68.68, "typ": 68.0, "high": 67.32},
+    "r47":   {"low": 47.47, "typ": 47.0, "high": 46.53},
+    "r82":   {"low": 81.18, "typ": 82.0, "high": 82.82},
+    "src": "Hardware.md '+12 V' (11.54-12.05 V) and 1 % resistors (BOM)"
+  },
+
+  "board_parts": {
+    "r19": 100.0, "r9": 10000.0, "r17": 10000.0, "r18": 10000.0,
+    "rail_1v8": 1.8, "rail_5v": 5.0,
+    "r2512": {"est": true, "esl_nH": 1.5, "cp_pF": 0.1, "pad_pF": 0.89, "note": "ESL 1-2 nH and Cp 0.05-0.15 pF est; pad C: parallel plate over In1 (1.40 x 3.35 mm, 0.2104 mm, er 4.5)"},
+    "r0805": {"est": true, "esl_nH": 1.0, "cp_pF": 0.07},
+    "header_pin_pF_est": 0.5,
+    "shunt_nH_est": 3.0,
+    "tp4_pF_est": 0.5
+  },
+
+  "bnc": {"est": true, "z0": 50.0, "td_ns": 0.1, "launch_pF": 0.75, "note": "KH-BNC50-3511: 50 ohm (JLC listing); internal length 15-25 mm and launch C 0.5-1 pF est"},
+  "coax": {"z0": 50.0, "td_ns_per_m": 5.05, "note": "RG-58, velocity factor 0.66 (generic); loss ignored for <= 3 m (est 0.15 dB/m at 100 MHz)"},
+  "loads": {
+    "r50": 50.0,
+    "scope_hiz": {"est": true, "r": 1.0e6, "c_pF": 15.0},
+    "camera_pF_est": 5.0,
+    "camera_note": "IDS 1.8 V trigger input; IDS publishes no capacitance or thresholds. Ribbon cable not modelled.",
+    "ldpv": {"vih_min": 4.5, "vih_max": 5.2, "vil_max": 0.2, "src": "Hardware.md 'Amplitude budget' (PicoLas LDP-V)"}
+  },
+
+  "firmware_duty": {
+    "marker": 0.5, "combine": 0.6667,
+    "src": "src/pulse_timing.h: 2 x MARKERWIDTH <= 1/FREQ (marker, J10 on 2-3); with COMBINE 1 and J10 on 1-2, DELAY >= WIDTH + 1 cycle and DELAY <= 1/FREQ - 2 x WIDTH give 2 x WIDTH < 2/3 x 1/FREQ (Hardware.md 'Board output rating')"
+  },
+
+  "option_d": {
+    "est": true,
+    "gpio": "GP14 (Pico pin 19, pad J14.19, unconnected today)",
+    "trace": [{"layer": "B.Cu", "width_mm": 0.3, "len_mm": 54.0}, {"layer": "F.Cu", "width_mm": 0.3, "len_mm": 36.0}],
+    "note": "Estimated 90 mm route J14.19 -> U19.2 with one via (70-100 mm est). U19.2 is cut from PWM_TRIG_TAP."
+  }
+}
