@@ -34,9 +34,10 @@
 // PIO programs physically need: widths of >= kPulseMinWidthCycles (20 ns at 150 MHz),
 // DELAY + WIDTH and MARKERWIDTH fitting in the period, the SYNC clock-divider range,
 // and with COMBINE 1 (both pulses on both outputs, sharing the pins) DELAY >= WIDTH +
-// 1 cycle so the two pulses never touch. It adds ONE rule that the PIO does not need:
+// 1 cycle so the two pulses never touch. It adds TWO rules that the PIO does not need:
 // pulse pairs stay apart, DELAY <= 1/FREQ - 2 x WIDTH, so CH2 ends at least one WIDTH
-// before the next CH1 rises.
+// before the next CH1 rises; and the marker is at most 50 % duty, 2 x MARKERWIDTH <=
+// 1/FREQ, to protect R30 of the J12 output (External Sync Out) against a shorted BNC.
 //
 // Pixel-reset gate (PIXGATE 1/2): a fourth state machine runs the same pulse
 // program on GP16, whose output is INVERTED in the GPIO block, so its "pulse" is the
@@ -280,13 +281,31 @@ inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTim
         }
     }
 
-    if (computePulseCounts(PulseCycles{(uint32_t)period, 0, markerWidth}, nullptr) != PulseFit::Ok) {
-        const int64_t maxWidth = (int64_t)period - (int64_t)kPulseMinLowCycles;
-        pulseFormatNs(maxWidth > 0 ? (uint64_t)maxWidth : 0, clk, a, sizeof(a));
-        snprintf(why, sizeof(why),
-                 "MARKERWIDTH must fit in the period (MARKERWIDTH <= 1/FREQ - %lu cycles); max MARKERWIDTH %s ns",
-                 (unsigned long)kPulseMinLowCycles, a);
-        return why;
+    // Two upper limits on MARKERWIDTH; the reply names the one that applies:
+    //  - 50 % duty: 2 x MARKERWIDTH <= period (the firmware's own rule). The marker also
+    //    drives J12 (External Sync Out) through U19 and R30 68 ohm 2 W; held high into a
+    //    shorted BNC, R30 takes up to 2.16 W, so the duty cap keeps its average <= 1.08 W.
+    //  - the program itself: MARKERWIDTH <= period - kPulseMinLowCycles, the tighter one
+    //    only for periods under 2 x kPulseMinLowCycles.
+    {
+        const uint64_t dutyLimit = period / 2;
+        const bool pioBinds = computePulseCounts(PulseCycles{(uint32_t)period, 0, (uint32_t)dutyLimit}, nullptr) !=
+                              PulseFit::Ok;
+        if (markerWidth > dutyLimit ||
+            computePulseCounts(PulseCycles{(uint32_t)period, 0, markerWidth}, nullptr) != PulseFit::Ok) {
+            if (pioBinds) {
+                const int64_t maxWidth = (int64_t)period - (int64_t)kPulseMinLowCycles;
+                pulseFormatNs(maxWidth > 0 ? (uint64_t)maxWidth : 0, clk, a, sizeof(a));
+                snprintf(why, sizeof(why),
+                         "MARKERWIDTH must fit in the period (MARKERWIDTH <= 1/FREQ - %lu cycles); max MARKERWIDTH %s ns",
+                         (unsigned long)kPulseMinLowCycles, a);
+            } else {
+                pulseFormatNs(dutyLimit, clk, a, sizeof(a));
+                snprintf(why, sizeof(why),
+                         "MARKERWIDTH must be <= half the period (2 x MARKERWIDTH <= 1/FREQ); max MARKERWIDTH %s ns", a);
+            }
+            return why;
+        }
     }
 
     // Pixel-reset gate: reset from DELAY + WIDTH + PIXLAG after CH1 (the last laser pulse

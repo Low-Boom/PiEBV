@@ -55,7 +55,7 @@ for c, line in zip(cases, out):
     W = rnd(F(w * clk, 10**9)); D = rnd(F(d * clk, 10**9)); MW = rnd(F(mw * clk, 10**9))
     L = rnd(F(lead_ns * clk, 10**9)); G = rnd(F(lag_ns * clk, 10**9))
     ok = (1 <= P <= 0xFFFFFFFF and W >= 3 and MW >= 3 and
-          (not cb or D >= W + 1) and D + W + 5 <= P and D + 2 * W <= P and MW + 5 <= P and pg <= 2)
+          (not cb or D >= W + 1) and D + W + 5 <= P and D + 2 * W <= P and MW + 5 <= P and 2 * MW <= P and pg <= 2)
     if pg in (1, 2):
         ok = ok and L >= 5 and L + D + W + G + 3 <= P
     if line.startswith("ERR"):

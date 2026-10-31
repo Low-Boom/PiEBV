@@ -15,7 +15,7 @@ const META = {
     options: [[0, "Split"], [1, "Combined"]] },  // the realized line spells out the routing
   MARKERWIDTH: { group: "timing", label: "Marker width", kind: "ns", help: "camera trigger marker" },
   PIXGATE: { group: "pix", label: "Gate", kind: "select",
-    options: [[0, "Off (J12 only)"], [1, "While ARMED"], [2, "Always"]] },
+    options: [[0, "Off"], [1, "While ARMED"], [2, "Always"]] },
   PIXLEAD: { group: "pix", label: "Release before CH1", kind: "ns" },
   PIXLAG: { group: "pix", label: "Reset after last pulse", kind: "ns" },
 };
@@ -324,7 +324,7 @@ function render() {
   if (st.pixreset) {
     $("pixSummary").textContent = st.pixreset.on
       ? "Pixels free " + fmtTime(st.pixreset.free_ns * 1e-9) + " around each pair, in reset " + fmtTime(st.pixreset.reset_ns * 1e-9) + " per period (from CH1 + " + fmtTime(st.pixreset.start_ns * 1e-9) + ")."
-      : "Gate off: the pixel reset follows the J12 input only.";
+      : "Gate off: the pixels are never held in reset.";
   }
   kv($("armInfo"), [
     ["Firmware", sys.ARMED ? "ARMED" : "DISARMED"],
@@ -443,7 +443,7 @@ function buildRows(m, k0, k1) {
       name: "Pixel reset", sub: "TDRSTN · low = reset", color: 4, washLow: on,
       highs: on ? free : [[-1e9, 1e9]],
       inactive: on && m.gate === 1 && !m.armed,
-      note: !on ? "Pixel-reset gate off: TDRSTN follows the J12 input only." : m.gate === 1 && !m.armed ? "The pixel-reset gate (PIXGATE 1) runs only while ARMED (drawn faint)." : "",
+      note: !on ? "Pixel-reset gate off: TDRSTN stays high (no reset)." : m.gate === 1 && !m.armed ? "The pixel-reset gate (PIXGATE 1) runs only while ARMED (drawn faint)." : "",
       state: ["reset", "free"],
     });
   }

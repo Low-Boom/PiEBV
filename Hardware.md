@@ -28,11 +28,12 @@ boards.
 
  PC ──USB──► Pico 2 W ──┬─ CH1, CH2 ──► interlock ──► 12 V driver ──► output resistors ──► J7, J8
                         │             (ARM, J11)      (U13, on only    and mode jumpers      Laser 1, 2
-                        │             (J16 pin 1)      if 12 V is OK)  (R6/R7, J18/J19)
-                        ├─ marker ────► J10 selector ──► 1.8 V buffers ──► camera trigger (J1–J6)
+                        │                              if 12 V is OK)  (R6/R7, J18/J19)
+                        ├─ marker ────► J10 selector ─┬─► 1.8 V buffers ──► camera trigger (J1–J6)
+                        │                             └─► 12 V driver (U19) ──► R30, J21 ──► J12
+                        │                                                       External Sync Out
                         ├─ 1 MHz sync ───────────────► 1.8 V buffers ──► camera sync    (J1–J6)
-                        └─ pixel gate ──┐
-       J12 BNC (reset input) ───────────┴─► combine ──► 1.8 V buffers ──► camera pixel reset
+                        └─ pixel gate ───────────────► 1.8 V buffers ──► camera pixel reset
 ```
 
 - **The Pico makes all the timing.** Its PIO blocks (small timing engines beside the processor)
@@ -40,12 +41,14 @@ boards.
   all from one 150 MHz clock (300 MHz with a shunt on the
   [clock jumper](#clock-jumper-j20-300-mhz-overclock) J20).
 - **The laser path** has three gates in series: the firmware's ARM state, the hardware interlock
-  (J11, with J16 pin 1 as an extra off input) and a 12 V power-good check (U18) that switches the
-  driver chip on. The driver chip (U13) swings its output to 12 V; resistors after it bring that
-  down to about 5 V at the laser driver's input. Jumpers J18/J19 match each output to a 50 Ω or a
-  high-impedance load: the wrong setting gives the wrong voltage.
+  (J11) and a 12 V power-good check (U18) that switches the driver chip on. The driver chip (U13)
+  swings its output to 12 V; resistors after it bring that down to about 5 V at the laser driver's
+  input. Jumpers J18/J19 match each output to a 50 Ω or a high-impedance load: the wrong setting
+  gives the wrong voltage.
 - **The camera path** converts every signal to 1.8 V, the level the cameras use, and each camera
-  cable has its own driver gate.
+  cable has its own driver gate. The pixel reset comes only from the Pico (`PIXGATE`).
+- **External Sync Out (J12)** copies the camera trigger to a BNC through a third channel built like
+  the laser outputs (U19, R30, J21), with the same 50 Ω / Hi-Z choice and the same ~5 V level.
 - **Power** comes from a USB-C charger on J17, which the board asks for 15 V. The Pico's own USB can
   run everything except the laser outputs.
 
@@ -76,9 +79,9 @@ boards.
 | Board | 126 × 126 mm, 4 copper layers, 1.6 mm FR4 |
 | Processor | Raspberry Pi Pico 2 W, in sockets (not soldered) |
 | Power | **USB-C PD input (J17, 15 V)** for the laser driver and the whole board; the Pico's own USB still powers the logic when J17 is unplugged |
-| Rails | **1.8 V** (camera signals) · 3.3 V (Pico, pixel-reset input) · 5 V (logic, Pico VSYS) · **12 V** (11.8 V, laser driver U13, from J17 only) |
+| Rails | **1.8 V** (camera signals) · 3.3 V (Pico, R24 pull-up) · 5 V (logic, Pico VSYS) · **12 V** (11.8 V, output drivers U13 and U19, from J17 only) |
 | Design rules | 0.2 mm clearance, 0.2 mm track, 0.6/0.3 mm via, 0.5 mm copper-to-edge |
-| Parts | 82 placed parts, plus 4 unplated mounting holes |
+| Parts | 85 placed parts, plus 4 unplated mounting holes |
 
 **Layers**
 
@@ -90,7 +93,7 @@ boards.
 | B.Cu (bottom) | signals + ground fill |
 
 The 1.8 V camera rail has no plane: it runs as a 0.5 mm top-layer trunk. The 3.3 V rail is a single
-0.3 mm bottom-layer run from J15 to the pixel-reset input.
+top-layer run from J15 to R24.
 
 **Stackup** (symmetric 1.6 mm, matching JLCPCB's standard 4-layer `JLC04161H-7628`):
 
@@ -188,11 +191,11 @@ ARMED; otherwise `src/laser_gate.cpp` holds them LOW.
 
 | Constant | GPIO | Board net | Drives |
 |---|---|---|---|
-| `kPinMarker` | 11 | `PWM_Trig` | J10.3 → (jumper) → U5 → U6 → Trigger1–6 |
+| `kPinMarker` | 11 | `PWM_Trig` | J10.3 → (jumper) → U5 → U6 → Trigger1–6, and U19 → J12 (External Sync Out) |
 | `kPinCh2` | 12 | `_PULSE_OUT_CH2` | U8 → U13 → J8 (Laser 2); R18 10 k to GND |
 | `kPinCh1` | 13 | `_PULSE_OUT_CH1` | U7 → U13 → J7 (Laser 1); R17 10 k to GND; R19 100 Ω → J10.1 |
 | `kPinSync` | 15 (J14 pad 20) | `PWM_1MHz` | U1 → U2 → Sync1–6, and TP3. Clock generator, not PIO. |
-| `kPinPixGate` | 16 (J15 pad 20) | `PIXRST_GATE` | U3.1 (NAND with the J12 input) → U4 → TDRSTN1–6; R24 10 k to +3V3. Output inverted in the GPIO block. |
+| `kPinPixGate` | 16 (J15 pad 20) | `PIXRST_GATE` | U3.1 and U3.2 (NAND with both inputs joined: an inverter) → U4 → TDRSTN1–6; R24 10 k to +3V3. Output inverted in the GPIO block. |
 | `kPinClockSel` | 10 (J14 pad 14) | `CLK_SEL` | R29 (1 kΩ) → J20.1; a shunt to J20.2 (GND) selects 300 MHz, read once at boot ([clock jumper](#clock-jumper-j20-300-mhz-overclock)). Input with the internal pull-up; no shunt reads as 150 MHz. |
 
 **CH1 is the higher GPIO (GP13) and CH2 the lower (GP12).** The order is deliberate; don't "tidy"
@@ -215,12 +218,16 @@ driver's ratings. The checks only keep the waveform correct:
 - **Shortest pulse:** WIDTH and MARKERWIDTH must realize to ≥ 3 cycles (20.000 ns; 10.000 ns at
   300 MHz); 16 ns or less (at 150 MHz) is **rejected**, not rounded up. The PIO program itself needs `DELAY ≤ 1/FREQ − WIDTH − 5 cycles`,
   which only matters at 3–4-cycle widths.
-- **The marker fits in the period** (MARKERWIDTH ≤ 1/FREQ − 5 cycles).
+- **The marker is at most 50 % duty:** `2 × MARKERWIDTH ≤ 1/FREQ`. This is the one limit set for the
+  hardware, not the waveform: the marker also drives J12, and the limit keeps R30's average power
+  inside its rating with J12 shorted (see [Board output rating](#board-output-rating)). The PIO
+  program also needs MARKERWIDTH ≤ 1/FREQ − 5 cycles, which is the tighter limit only for periods
+  under 10 cycles.
 
 ### Board output rating
 
-**There is nothing to observe: no firmware setting can overload the outputs.** R6/R7 and R25–R28
-are **2 W 2512** resistors, and U17 is a 500 mA regulator with a 400 mA current limit. The outputs
+**No firmware setting can overload the laser outputs.** R6/R7, R30 and R25–R28, R31, R32 are
+**2 W 2512** resistors, and U17 is a 500 mA regulator with a 400 mA current limit. The laser outputs
 carry any duty the firmware accepts (up to 50 % per output, 67 % with `COMBINE 1`):
 
 | Situation (50 Ω mode) | Current | Dissipation |
@@ -230,6 +237,18 @@ carry any duty the firmware accepts (up to 50 % per output, 67 % with `COMBINE 1
 | Output **stuck** high into a short (a fault; the firmware never holds an output high) | | 1.5–2.16 W in R6/R7: at the 2 W rating, and up to 8 % over it only if ROH is near 0 Ω (D-package ROH has no specified minimum) |
 
 Hi-Z mode loads everything less (see [Output mode](#output-mode)).
+
+**External Sync Out (J12) follows the camera trigger,** so its duty is the marker's, at most 50 %
+(`2 × MARKERWIDTH ≤ 1/FREQ`), or with J10 on 1-2 the CH1 duty (50 %, 67 % with `COMBINE 1`, as
+for the laser outputs). Into 50 Ω that is the same ~96 mA (at most 103 mA) and at most 0.71 W in R30
+while high. Into a shorted BNC at those duties R30 averages at most 1.08 W (marker) or 1.45 W
+(`COMBINE 1`, J10 on 1-2), the same as the laser outputs. The firmware never holds the marker high,
+so 1.5–2.16 W (the stuck-high fault case of R6/R7) needs a firmware or GP11 fault as well as a
+short. Still, don't short J12. A 3 W 68 Ω 2512 for R6/R7/R30 (TE 352268RFT) was considered and not
+used, because JLC has no stock of it (2026-10-31). All three outputs high into 50 Ω draw
+at most ~310 mA, under U17's 360 mA minimum limit. Shorts on several outputs at once can exceed it:
+U17 then limits, +12V sags below U18's undervoltage threshold and `LASER_PWR_OK` turns all three
+drivers off, which can repeat while the short lasts.
 
 ### Combined mode (`COMBINE 1`)
 
@@ -255,7 +274,8 @@ pio0 SM3 runs the same pulse program on GP16, with the pin's output inverted in 
 `PIXLAG` after the last laser pulse ends (CH1 rise + DELAY + WIDTH + PIXLAG) and releases it
 `PIXLEAD` before the next CH1 rise, cycle-exact and locked to CH1 (checked in
 `tools/timing_check/check_pixgate.py`). `PIXGATE 1` runs it only while the laser pins carry pulses,
-`PIXGATE 2` always.
+`PIXGATE 2` always. This gate is the only source of the camera pixel reset: the board has no
+pixel-reset input, so with `PIXGATE 0` the pixels are never held in reset.
 
 A stopped gate leaves its output latch LOW, which (inverted) leaves the pin HIGH, so DISARM, a
 restart hold-off and a reset all leave the pixels free. Rules: PIXLEAD ≥ 5 cycles, and
@@ -313,8 +333,8 @@ laser timing.
   (require an operator action after `RESET=WATCHDOG`). Parse `STATUS` by key, not by line count.
 - **Losing the USB link does not disarm.** The firmware doesn't watch the USB connection, and J17
   alone keeps the board powered, so a pulled cable, a sleeping PC or a killed host script leaves an
-  ARMED board pulsing with no serial path for `DISARM`. The hardware stops are J11 (off 1-2), J16.1
-  pulled low, or unplugging J17.
+  ARMED board pulsing with no serial path for `DISARM`. The hardware stops are J11 (off 1-2) or
+  unplugging J17.
 
 **Remaining hazards the firmware can't remove.** Both need a reset to land during a laser pulse, so
 the chance per reset is at most the duty.
@@ -413,8 +433,8 @@ J17 USB-C ─ U14 CH224A (asks the charger for 15 V) ─ VBUS_PD (5 V until nego
    ├─ U15 AP63205WU buck ─ +5V_PD ─ U16 LM66100 ideal diode ─┐
    │                                                        ├─ +5V plane = Pico VSYS
    │               Pico USB VBUS ─ Pico's own Schottky D1 ───┘
-   └─ U17 LT3065 (adj., 500 mA, 400 mA limit) ─ +12V (11.8 V) ─ U13 VDD (C9, C10, C17)
-        U18 TPS3700 window on +12V (10.6–13.3 V) ─ LASER_PWR_OK ─ U13 ENA/ENB  (R16 100k pull-up)
+   └─ U17 LT3065 (adj., 500 mA, 400 mA limit) ─ +12V (11.8 V) ─ U13 VDD (C9, C10, C17), U19 VDD (C21, C22)
+        U18 TPS3700 window on +12V (10.6–13.3 V) ─ LASER_PWR_OK ─ U13 and U19 ENA/ENB  (R16 100k pull-up)
 ```
 
 **VBUS_PD.** U14 is a WCH **CH224A** PD sink, the pin-compatible successor of the CH224K (the
@@ -474,23 +494,27 @@ The ADJ reference is 588–612 mV over line, load and temperature, so with **0.1
 is **11.54–12.05 V** (see the [amplitude budget](#amplitude-budget)). R20 (750 Ω) on IMAX
 sets a **400 mA ±10 %** current limit (500 × 0.6 V / R20), and C18 (22 nF) decouples IMAX as the
 datasheet requires. C19 (10 nF) on BYP filters the reference and gives a soft start. The output
-capacitors are C17 (10 µF X7R 1206, at U17) and C9/C10 at U13; the LT3065 is stable with any
+capacitors are C17 (10 µF X7R 1206, at U17), C9/C10 at U13 and C21/C22 at U19; the LT3065 is stable with any
 ceramic of 3.3 µF or more, so no series ESR resistor is needed. The exposed pad is tied to GND pin 7
 and has two GND vias to the planes.
 
-**Load.** An output held high into 50 Ω draws ~96 mA, both outputs ~200 mA, and both outputs into
-shorted BNCs at most 358 mA, all below the 360 mA minimum limit. In Hi-Z mode an output draws less: ~60 mA
+**Load.** An output held high into 50 Ω draws ~96 mA, both laser outputs ~200 mA, all three outputs
+(with J12) at most ~310 mA, and both laser outputs into shorted BNCs at most 358 mA, all below the
+360 mA minimum limit (J12 into a short as well exceeds it; see
+[Board output rating](#board-output-rating)). In Hi-Z mode an output draws less: ~60 mA
 while high into an open circuit, ~100 mA into a short. U17 drops 15 − 11.8 = 3.2 V, so it
-dissipates ~0.3 W at the firmware's highest sustained duty into 50 Ω (50 % per output), and ~0.7 W
-with both outputs shorted at 67 % duty (`COMBINE 1`). Thermal shutdown is the last resort. C10
+dissipates ~0.3 W at the firmware's highest sustained duty into 50 Ω (50 % per laser output), ~0.45 W
+with J12 also at its 50 % limit into 50 Ω, and ~0.7 W with both laser outputs shorted at 67 %
+duty (`COMBINE 1`). Thermal shutdown is the last resort. C10
 (10 µF X7R 1206) is also U13's pulse reservoir: a 1 µs, ~200 mA pulse pair droops it by ~20 mV
 (0.2 %) before U17's regulation catches up.
 
 ### Power-good gate (U18)
 
 U18 is a TI **TPS3700** window comparator watching +12V (divider R21 150 kΩ / R22 1.2 kΩ /
-R23 4.7 kΩ, 1 %, all JLC basic parts, decoupled by C20). Its open-drain outputs drive U13's enable pins ENA/ENB as
-`LASER_PWR_OK` (R16 100 kΩ pull-up to +12V; U13's own EN pins also pull up to VDD through ~200 kΩ).
+R23 4.7 kΩ, 1 %, all JLC basic parts, decoupled by C20). Its open-drain outputs drive the enable pins ENA/ENB of
+U13 and U19 as `LASER_PWR_OK` (R16 100 kΩ pull-up to +12V; the drivers' own EN pins also pull up to
+VDD through ~200 kΩ each).
 
 - OUTA pulls low below the **undervoltage** threshold: 10.6 V rising / 10.4 V falling (worst case:
   trips at 10.03–10.78 V, releases by 10.89 V).
@@ -498,7 +522,7 @@ R23 4.7 kΩ, 1 %, all JLC basic parts, decoupled by C20). Its open-drain outputs
 
 They stay at least 0.65 V (release) and 0.82 V (overvoltage) outside the regulated 11.54–12.05 V band
 (the earlier 1 M / 6.04 k / 31.6 k divider released as late as 11.39 V, too close to the band), so the gate never trips in normal
-running. U13's outputs are held low:
+running. The outputs of U13 and U19 are held low:
 
 - with J17 unplugged: +12V = 0 V, U13 is in undervoltage lockout (and U18, below its own lockout,
   holds OUTA low);
@@ -530,7 +554,7 @@ camera-facing logic**. Output capacitor C7 (2.2 µF), input capacitor C6 (1 µF)
 >
 > No level translator is needed. The SN74LVC04A runs at 1.65–3.6 V and the 74LVC1G04 at
 > 1.65–5.5 V, and both have 5.5 V-tolerant inputs at any supply, so at 1.8 V they accept the Pico's
-> 3.3 V GPIO and U12's 3.3 V output directly. At 1.8 V the drivers' 60–113 Ω output impedance also
+> 3.3 V GPIOs directly. At 1.8 V the drivers' 60–113 Ω output impedance also
 > matches the ribbon cable, so **don't add series resistors** to the camera lines: they would slow
 > the edges.
 >
@@ -539,13 +563,12 @@ camera-facing logic**. Output capacitor C7 (2.2 µF), input capacitor C6 (1 µF)
 
 ### +3.3 V
 
-From the Pico's 3V3_OUT (pin 36). It powers only U12 (the pixel-reset Schmitt input) and its R5
-pull-up, decoupled by C8 (0.1 µF). Draw is under 1 mA.
+From the Pico's 3V3_OUT (pin 36). Its only load on the board is R24, the 10 k pull-up on
+`PIXRST_GATE` (0.33 mA while the gate is low).
 
 **Power-up order.** Because U9 runs from +5 V, the 1.8 V rail can come up a millisecond or so before
-the Pico's 3.3 V. In that moment U12 is unpowered and its output floats (LVC parts go
-high-impedance when unpowered), so `PIXRST` and TDRSTN are briefly undefined. That is harmless,
-because the cameras haven't started yet.
+the Pico's 3.3 V. In that moment R24 has no supply and GP16 is not yet driven, so U3's input and
+TDRSTN are briefly undefined. That is harmless, because the cameras haven't started yet.
 
 Nothing on this board presents 5 V or 3.3 V to J1–J6.
 
@@ -564,7 +587,8 @@ within 2 mm of the new section, and `PIXRST_GATE` (GP16) is 17 mm away.
 
 **Trigger**
 `GP11` → J10.3 → *[J10 jumper]* → `PWM_TRIG_TAP` → U5.2 → `TRIG_N` → U6 ×6 → `Trigger1..6` →
-J1–J6 pin 4
+J1–J6 pin 4. `PWM_TRIG_TAP` also drives U19.2, the [External Sync Out](#external-sync-out-j12)
+channel to J12.
 
 ### Trigger source (J10)
 
@@ -579,49 +603,29 @@ J10's silkscreen reads **`CH1 / TRG / MKR`** (pins 1/2/3).
 - **Never fit a shunt across all three pins:** that ties GP13 (through R19) to GP11.
 
 J10.1 reaches `_PULSE_OUT_CH1` through **R19 (100 Ω)**; like TP4 it idles LOW while DISARMED. R19
-is there for the laser timing. Without it, the 1-2 shunt would hang the whole ~120 mm
-`PWM_TRIG_TAP` net (U5, R9, the run to J16.2) directly on the CH1 GPIO, and a transmission-line
-simulation put CH1 0.4–1.7 ns behind CH2 at U7/U8: a laser delay error that depended on the jumper.
-R19 cuts that to under ~0.2 ns, and costs the camera trigger 1.5–2 ns of edge, which doesn't matter
-there.
+is there for the laser timing. Without it, the 1-2 shunt would hang the whole `PWM_TRIG_TAP` net
+(U5, R9, U19 and ~59 mm of trace) directly on the CH1 GPIO. A transmission-line simulation of the
+earlier ~120 mm version of this net put CH1 0.4–1.7 ns behind CH2 at U7/U8: a laser delay error that
+depended on the jumper. R19 cut that to under ~0.2 ns, and costs the camera trigger 1.5–2 ns of edge,
+which doesn't matter there. The shorter net has not been simulated again; keep R19.
 
-**With no shunt fitted, R9 (10 k) pulls `PWM_TRIG_TAP` low,** so all six camera triggers idle low
-instead of following a floating input on ~145 mm of trace (the net also runs up to J16.2). 10 k,
-rather than a weaker pull-down, holds U5's 1.8 V input at ≤ 0.05 V even at worst-case input leakage,
-and loads the selected GPIO by only 330 µA.
+**With no shunt fitted, R9 (10 k) pulls `PWM_TRIG_TAP` low,** so all six camera triggers and J12
+idle low instead of following a floating input on ~59 mm of trace. 10 k, rather than a weaker
+pull-down, holds U5's 1.8 V input at ≤ 0.05 V even at worst-case input leakage, and loads the
+selected GPIO by only 330 µA.
 
-### Pixel reset (J12, optionally gated by the Pico)
+### Pixel reset (Pico only)
 
-J12 BNC → `PIXRST_IN` (R5 3k3 pull-up to **+3V3**) → U12.2 (**74LVC1G17** Schmitt buffer, VCC
-3.3 V) → `PIXRST` → U3.2 (**74LVC1G00** NAND, 1.8 V) → `PIXRST_N` → U4 ×6 (1.8 V) → `TDRSTN1..6` →
-J1–J6 pin 3. U3.1 is `PIXRST_GATE`: Pico GP16 (J15 pad 20), with R24 10 k pull-up to +3V3.
+`GP16` → `PIXRST_GATE` → U3.1 and U3.2 (**74LVC1G00** NAND, 1.8 V, both inputs joined) →
+`PIXRST_N` → U4 ×6 (1.8 V) → `TDRSTN1..6` → J1–J6 pin 3. R24 (10 k) pulls `PIXRST_GATE` up to +3V3.
 
-**Active LOW at the BNC: pull J12 low to reset.** Through one buffer and two inversions, TDRSTN
-follows J12 directly, and TDRSTN is active low at the camera (`0 = pixels in reset`). An open BNC
-idles at 3.3 V through R5 and leaves the cameras running, so an unplugged reset cable is harmless.
-
-**The Pico gate.** U3 is a NAND, so after U4 the cameras get TDRSTN = J12 **AND** `PIXRST_GATE`:
-the pixels are held in reset whenever J12 is low **or** GP16 is low. The gate idles high (R24
-before the firmware runs, then the firmware drives it high while `PIXGATE` is 0), so with the gate
-off J12 works on its own. GP16 drives U3 directly at 3.3 V; U3's inputs are 5.5 V-tolerant at
-VCC = 1.8 V (VIH 1.17 V). The firmware side is under
-[Pixel-reset gate](#pixel-reset-gate-pixgate).
-
-**Why a Schmitt buffer at 3.3 V.** U12 must accept 3.3 V and 5 V sources on a bare BNC. At
-VCC = 3.3 V it switches low below **0.89 V** and high above **~1.92–2.1 V**, with **0.5–0.8 V of
-hysteresis**, and its input tolerates 5.5 V at any supply. (An ordinary LVC gate on 5 V would need
-0.7 × VCC = 3.5 V to read high, which a 3.3 V source can't guarantee, and would have no hysteresis.)
-
-| J12 driven by | Result |
-|---|---|
-| Nothing (open) | idles at 3.28 V → cameras **running** |
-| 3.3 V or 5 V CMOS, high | **running** (≥ 1.4 V margin) |
-| 5 V TTL, high (VOH min 2.4 V) | **running** (~0.3–0.5 V margin) |
-| any logic low ≤ 0.8 V, open-drain, relay, switch to GND | **reset** |
-| **1.8 V logic, high** | **not guaranteed**: 1.8 V sits inside the hysteresis band |
-
-A source must sink **1.0 mA** to assert reset. A 5 V source pushes 0.5 mA back into +3V3 through
-R5, which the Pico's own load absorbs.
+**The Pico is the only source.** With both inputs on `PIXRST_GATE`, U3 is an inverter, so after U4
+the cameras get TDRSTN = `PIXRST_GATE` (active low at the camera: `0 = pixels in reset`). The gate
+idles high (R24 before the firmware runs, then the firmware drives it high while `PIXGATE` is 0), so
+the cameras run unless the firmware asserts the reset. GP16 drives U3 directly at 3.3 V; U3's inputs
+are 5.5 V-tolerant at VCC = 1.8 V (VIH 1.17 V). The firmware side is under
+[Pixel-reset gate](#pixel-reset-gate-pixgate). The board has no external pixel-reset input: J12,
+which was that input, is now [External Sync Out](#external-sync-out-j12).
 
 ### Laser outputs
 
@@ -640,7 +644,7 @@ Pico's 3.3 V pulses drive them with ~1.3 V of margin. An LVC gate here would nee
 VDD (high above 1.8–2.3 V, 1 V of hysteresis), so the 5 V AHCT gates drive it directly. Output
 pull-up resistance (ROH, the PMOS side that holds a steady load high during a pulse) is **5 Ω typical,
 8.5 Ω maximum** for this SOIC-8 (D) package, with no minimum given (TI SLUSFA9; the 2.5 / 5 / 7.5 Ω
-often quoted is the DSD package's figure). The budget below takes 0–8.5 Ω; pull-down is 0.15–1 Ω, so the low level into 50 Ω is well under the LDP-V's
+often quoted is the DSD package's figure). The budget below takes 0–8.5 Ω; pull-down (ROL) is 0.6 Ω typical, 1.1 Ω maximum (D package), so the low level into 50 Ω is well under the LDP-V's
 0.2 V limit.
 
 Its local bypass capacitor **C9 (0.1 µF, 50 V)** sits right beside VDD (pin 6) with its own GND
@@ -648,8 +652,9 @@ via, and GND (pin 3) drops straight to the In1 ground plane through a via under 
 keeps the supply loop to roughly 1.5–2 nH, so the ~100 mA, few-ns output edges don't bounce VDD into
 the top of the pulse. C10 (10 µF) is the bulk reservoir.
 
-U13 adds ~13–25 ns of delay, the same on both laser channels to within its channel-to-channel
-matching (1–2 ns), so the delay between the lasers is preserved. The laser-to-camera timing shifts
+U13 adds 17 ns typical, 27 ns maximum of delay (TI SLUSFA9, D package; no minimum is given. The
+older SLUSBP4 die gives 6 / 13 / 23 ns, and JLC's listing quotes those, so the die on the reel is not
+known). The delay is the same on both laser channels to within its channel-to-channel matching (1–2 ns), so the delay between the lasers is preserved. The laser-to-camera timing shifts
 by that fixed, calibratable amount.
 
 #### Amplitude budget
@@ -675,7 +680,8 @@ resistors the corners would sit only ~0.7 % inside the window, which is why R12/
 
 #### Output mode
 
-J18 sets the mode for J7 and J19 for J8. Between R6/R7 and each BNC:
+J18 sets the mode for J7, J19 for J8 and J21 for J12 ([External Sync Out](#external-sync-out-j12),
+same circuit with R30/R31/R32). Between R6/R7 and each BNC:
 
 ```
 CHn_DRIVE ──┬── R25/R26 47 Ω 2 W ──┬── CHn_OUT ── BNC centre pin
@@ -727,6 +733,58 @@ CHn_DRIVE ──┬── R25/R26 47 Ω 2 W ──┬── CHn_OUT ── BNC c
 > ~4.9 V. The LDP-V's absolute maximum on its trigger input is 15 V, so an unterminated reflection
 > can't exceed it.
 
+### External Sync Out (J12)
+
+```
+PWM_TRIG_TAP → U19.2 (INA) → U19.7 (OUTA) → EXT_SYNC_DRIVE_RAW → R30 68 Ω 2 W → EXT_SYNC_DRIVE → output mode (J21, R31, R32) → EXT_SYNC_OUT → J12.1
+```
+
+J12 gives other equipment a copy of the camera trigger: the marker with J10 on 2-3, every CH1 laser
+pulse with J10 on 1-2 (see [Trigger source](#trigger-source-j10)). It is high while the cameras'
+trigger lines are high, and low while `PWM_TRIG_TAP` is low, including with no shunt on J10.
+
+- **Same circuit as a laser output.** U19 is a second UCC27524 on +12V; only channel A is used
+  (INB tied to GND, OUTB open). R30 (68 Ω), R31 (47 Ω), R32 (82 Ω) and J21 are the values of R6,
+  R25, R27 and J18, so the [amplitude budget](#amplitude-budget) and the
+  [output-mode table](#output-mode) apply unchanged: J21 on 1-2 gives 4.54–5.14 V into 50 Ω, J21
+  on 2-3 gives 4.55–5.08 V open circuit from a 47–50 Ω source. Ship with J21 on 1-2.
+- **Power.** U19's ENA/ENB are on `LASER_PWR_OK` and its VDD on +12V, so J12 is live only with a
+  15 V PD charger on J17; on the Pico's USB alone it stays at 0 V. C21 (0.1 µF) sits beside U19 pin 6
+  with its own GND via, and C22 (10 µF) is its reservoir, as C9/C10 are for U13.
+- **Not gated by the laser interlock.** ARM and J11 act only on the laser pulses (U7/U8). With
+  J10 on 2-3, J12 keeps pulsing while the lasers are disarmed, as the camera triggers do.
+- **Timing: measure the offset to the cameras on each board.** J12 follows GP11 through U19, and
+  the camera trigger lines through U5 and U6, so the two are offset by a fixed delay that the
+  datasheets don't pin down. From the GP11 edge (4 mA default drive, rising edge, J12 into 50 Ω;
+  min / typ / max, datasheet limits plus the trace and output-network simulation):
+
+  | Path | Delay |
+  |---|---|
+  | GP11 → J12 (U19 + R30/J21 + ~4 ns of GP11 edge to U19's threshold) | 10.5 / 22.4 / 35.5 ns |
+  | GP11 → Trigger1–6 at J1–J6 pin 4 (U5 + U6) | 7.2 / 11.7 / 19.6 ns |
+  | **J12 minus camera trigger, rising edge** | **−8.5 / +10.7 / +32 ns** |
+  | J12 minus camera trigger, falling edge | −9.4 / +9.7 / +25.6 ns |
+
+  The range is wide because U19 (6–27 ns) and U5 + U6 (4–15.5 ns) spread independently. On one
+  board the offset is fixed: measured once ([first-board check 4](#first-board-checks)), it holds to
+  about 0.5 ns, plus 1–2 ns over temperature (estimates). Record it with the board. The six trigger
+  lines differ by up to ~0.2 ns from their routing.
+
+  Ways to reduce the delay were studied on 2026-11-01 and not used, because none removes the need to
+  measure. A faster 12 V driver saves 4–7 ns at best and needs a new footprint; JLC stocks no 12 V
+  driver under 10 ns typical. The pin-compatible 2EDN7524F has the same typical delay with a
+  narrower spread (15–23 ns). Driving U19 from its own GPIO (GP14 is free) with a PIO lead of a few
+  cycles cancels the typical offset, but needs a new trace and a fifth PIO channel, and J12 would
+  no longer copy CH1 with J10 on 1-2. Faster GPIO drive or slew on GP11 moves the offset by under
+  1 ns.
+- **Duty and loads.** J12 is high at most 50 % of the time, the firmware's MARKERWIDTH limit (67 %
+  with J10 on 1-2 and `COMBINE 1`; see [Board output rating](#board-output-rating)); don't short it. One load per output, no BNC tee,
+  as for the laser outputs.
+- **Layout.** J21, R31 and R32 copy the Laser 1 block 40 mm lower, on J12's centre-pin row, and
+  U19, C21, C22 and R30 copy U13's layout. U19 takes +12V on a B.Cu run from U13's feed and
+  `LASER_PWR_OK` on a B.Cu run from U13 pin 8. The silkscreen reads `EXT SYNC OUT`, with `50Ω` and
+  `HiZ` beside J21.
+
 ---
 
 ## Laser interlock
@@ -742,19 +800,19 @@ J8 output = AND( LASER_EN , CH2 pulse )    -- U8
 | J11.1 | `LASER_EN_PU` | R2 3k3 to +5 V |
 | J11.2 | `LASER_EN_JMP` | → U10.1, **R8 10k pull-down to GND** |
 | J11.3 | `GND` | |
-| U10.2 | `LASER_EN_TAP` | R3 3k3 to +5 V, also on J16.1 |
+| U10.2 | `LASER_EN_TAP` | R3 3k3 to +5 V (held high: J11 is the only user interlock) |
 | U10.4 | `LASER_EN` | → U7.1, U8.1 |
 
 **Fails safe.** R8 holds U10 pin 1 low when J11 has no shunt, so the default is *disabled*. A shunt
 on J11 **1-2** enables the hardware interlock (the firmware must also be ARMED; see
 [Boot and arming](#boot-and-arming)); **2-3** disables it. With the 1-2 shunt fitted, R2 wins:
-5 V × 10/(3.3+10) ≈ **3.76 V**, against U10's **VIH of 2.0 V**, about **1.76 V of margin**. Because
-U10 is AHCT, an external interlock signal on J16.1 can be 3.3 V logic.
+5 V × 10/(3.3+10) ≈ **3.76 V**, against U10's **VIH of 2.0 V**, about **1.76 V of margin**. U10's
+other input (`LASER_EN_TAP`) is held high by R3; it was the external-interlock input on J16, which
+is no longer fitted.
 
 **E-stop switch: wire it across J11 1-2.** Replace the shunt with a *normally-closed* switch between
 J11.1 and J11.2. Closed, it acts like the shunt; pressing it or breaking its cable opens the circuit
-and R8 pulls U10.1 low, so the stop fails safe. J16.1 is the wrong place for an E-stop, because it
-is enabled when open. The silkscreen beside J11 reads `LASER INTERLOCK: ON = 1-2` and
+and R8 pulls U10.1 low, so the stop fails safe. The silkscreen beside J11 reads `LASER INTERLOCK: ON = 1-2` and
 `E-STOP: NC SWITCH ACROSS 1-2`, and the pins are marked **ON** (1-2, lasers enabled) and **OFF**
 (2-3).
 
@@ -762,7 +820,7 @@ Without R8 the interlock would be *enabled* with the header empty; R8 makes an e
 
 **Three gates in series.** The firmware's ARM state acts before U7/U8 (DISARMED holds their pulse
 inputs LOW), the J11/U10 interlock acts at U7/U8, and the power-good gate (`LASER_PWR_OK`, see
-[Power-good gate](#power-good-gate-u18)) acts on U13's ENA/ENB. Any one of them alone forces both
+[Power-good gate](#power-good-gate-u18)) acts on U13's ENA/ENB (and on U19's, for J12). Any one of them alone forces both
 BNC centre pins to 0 V, and none can enable a laser that another has disabled. U10 alone carries the
 user interlock; U13's enables carry only the power-good gate.
 
@@ -770,9 +828,9 @@ user interlock; U13's enables carry only the power-good gate.
 would then float, and an enabled interlock would pass whatever they picked up, so **R17/R18
 (10 kΩ)** hold `_PULSE_OUT_CH1`/`_PULSE_OUT_CH2` low at the socket (J14.17/.16) and the laser
 outputs stay at 0 V. With the Pico fitted they cost 0.33 mA per GPIO while high. The camera lines
-are not guarded the same way: with no module, `PWM_1MHz` floats and U12 is unpowered (no +3V3), so
-Sync and TDRSTN at the cameras are undefined. That is a nuisance, not a hazard: fit the Pico before
-connecting cameras.
+are not all guarded the same way: R9 holds `PWM_TRIG_TAP` low, so the camera triggers and J12 stay
+low, but `PWM_1MHz` floats and R24 has no supply (+3V3 comes from the Pico), so Sync and TDRSTN at
+the cameras are undefined. That is a nuisance, not a hazard: fit the Pico before connecting cameras.
 
 ---
 
@@ -812,14 +870,14 @@ doesn't publish the camera's own thresholds or input pull, so confirm on the ben
 
 ### BNCs (50 Ω)
 
-J7 Laser 1 (out), J8 Laser 2 (out), J12 Pixel reset (**in**, active low, 3.3 V/5 V/open-drain
-compatible; see [Pixel reset](#pixel-reset-j12-optionally-gated-by-the-pico)). Shells on GND.
+J7 Laser 1 (out), J8 Laser 2 (out), J12 External Sync Out (out, a copy of the camera trigger; see
+[External Sync Out](#external-sync-out-j12)). Shells on GND.
 Part: Kinghelm KH-BNC50-3511 (50 Ω, right angle; LCSC C2837587), footprint
 `PiDG_Local:BNC_Kinghelm_KH-BNC50-3511_Horizontal`: the Amphenol B6252HB-NPP3G-50 pad pattern,
 which the Kinghelm drawing matches within 0.04 mm (its 3D model is the Amphenol body). Never fit the
 75 Ω KH-BNC75-3511. Its posts sit in
 a plastic housing and the shell reaches GND through one lead, so use the panel nuts in an enclosure.
-J7/J8 drive a 50 Ω or a high-impedance load, set per channel by J18/J19 (see
+J7/J8/J12 drive a 50 Ω or a high-impedance load, set per channel by J18/J19/J21 (see
 [Output mode](#output-mode)).
 
 ### J17: USB-C power input
@@ -837,31 +895,23 @@ USB port.
 | J11 | 1×3 vertical | 1 pull-up · 2 → U10.1 · 3 GND |
 | J18 | 1×3 vertical, Laser 1 output mode (pin 1 at the top) | 1 `CH1_DRIVE` · 2 `CH1_OUT` (J7) · 3 `CH1_TERM` → R27 |
 | J19 | 1×3 vertical, Laser 2 output mode (mirrored: pin 1 at the bottom) | 1 `CH2_DRIVE` · 2 `CH2_OUT` (J8) · 3 `CH2_TERM` → R28 |
-| J16 | 1×3 right-angle, top edge between the Pico and J17 | 1 `LASER_EN_TAP` · 2 `PWM_TRIG_TAP` · 3 GND |
+| J21 | 1×3 vertical, External Sync Out mode (pin 1 at the top) | 1 `EXT_SYNC_DRIVE` · 2 `EXT_SYNC_OUT` (J12) · 3 `EXT_SYNC_TERM` → R32 |
 | TP3 | 1×2 right-angle, top edge | 1 `PWM_1MHz` · 2 GND |
 | TP4 | 1×2 vertical | 1 `_PULSE_OUT_CH2` · 2 GND |
 | J20 | 1×2 vertical, clock jumper, left of J14 (pin 1 at the bottom) | 1 `CLK_SEL_JMP` (R29 1 kΩ to GP10) · 2 GND. Shunt = 300 MHz, open = 150 MHz ([clock jumper](#clock-jumper-j20-300-mhz-overclock)) |
 
-**J16.1 (ENABLE) doubles as an external interlock input:** pull it LOW (a switch or open-collector
-to J16.3, or 3.3 V/5 V logic) to turn off both lasers. It is *enabled when open* (R3 pulls it up),
-so a broken cable leaves the lasers enabled; J11 remains the fail-safe interlock. **Never fit a
-shunt on J16:** on pins 2-3 it grounds `PWM_TRIG_TAP`, which through J10 shorts a GPIO to ground
-and silently kills all six camera triggers.
-
-The silkscreen spells this out: `EN` / `TRIG` / `GND` under the pins, then `J16: NEVER FIT A
-SHUNT`, `EN IN: PULL LOW = LASERS OFF`, `TRIG OUT: CAMERA TRIGGER (MONITOR)` and
-`NOT FAIL-SAFE: E-STOP ON J11`. J16 and TP3 both sit on the top edge (TP3 left of the Pico, J16
-between the Pico and J17), and their pins overhang it by the same 2.1 mm.
+J16, the former enable / trigger-monitor header on the top edge, is not fitted any more: the camera
+trigger now leaves the board on J12, and J11 is the only user interlock. TP3 sits on the top edge
+left of the Pico, with its pins 2.1 mm over the edge.
 
 **TP3 and TP4** are scope points with their own ground pin. TP4 (like J10.1) idles LOW while the
 firmware is DISARMED, and is labelled `CH2` / `GND` / `SCOPE ONLY`. J10 stands about 9 mm east of
 TP4, so the two headers can't be mistaken for one row, and carries
 `CAMERA TRIGGER: TRG-MKR = MARKER / TRG-CH1 = LASER 1` to the right of its `CH1 TRG MKR` pin labels.
 
-The TRIG and 1 MHz taps (J16.2, TP3.1) feed U5 and U1, which run from the 1.8 V rail: an external
-signal there needs **VIH ≥ 1.17 V, VIL ≤ 0.63 V**, and the inputs are 5.5 V-tolerant. But both
-taps are normally driven by a Pico GPIO, so an external source would fight it. Treat them as monitor
-points.
+The 1 MHz tap (TP3.1) feeds U1, which runs from the 1.8 V rail: an external signal there needs
+**VIH ≥ 1.17 V, VIL ≤ 0.63 V**, and the input is 5.5 V-tolerant. But the tap is normally driven by
+a Pico GPIO, so an external source would fight it. Treat it as a monitor point.
 
 ### MH1–MH4
 
@@ -901,10 +951,15 @@ Ordered by what would bite hardest.
    but publishes no VIH/VIL, input pull or absolute maximum. With one camera, measure TDRSTN,
    Trigger and Sync at the camera end of the harness, and confirm pin 5 is not being driven by the
    camera (i.e. that it is configured as a sync slave).
-4. **No 50 Ω termination on the J12 pixel-reset input** — only R5's 3k3 pull-up and U12's CMOS
-   input. U12's 0.5–0.8 V of hysteresis absorbs moderate ringing from an unterminated coax run. Do
-   *not* add a 49.9 Ω resistor to ground as-is: against R5 it would hold J12 at ~50 mV, keeping all
-   six cameras in reset unless the source actively drives high.
+4. **External Sync Out (J12).** With J17 on the charger, J10 on 2-3 and J21 on 1-2, scope J12
+   through a **50 Ω-terminated** input: 0 V to 4.54–5.14 V, one pulse of MARKERWIDTH with every CH1
+   period, also while DISARMED, and rising with the camera trigger lines. **Measure the J12-to-camera
+   offset** and record it with the board: J12 through the 50 Ω-terminated input, Trigger1 at J1 pin 4
+   with a 10× probe and a short ground spring, both edges, at the 50 % points (J12 ~2.4 V, Trigger1
+   0.9 V). Expect −8.5 to +32 ns, typically about +10 ns (J12 later); see
+   [External Sync Out](#external-sync-out-j12). With J21 on 2-3 and the scope at 1 MΩ: 4.55–5.08 V, no overshoot at the
+   end of a 2 m cable. With the Pico's USB alone (J17 unplugged), J12 must stay at 0 V. With
+   `PIXGATE 0`, TDRSTN at every camera port must stay high (no other source of pixel reset).
 5. **Before the first USB-C PD power-up, check the fine-pitch parts for solder bridges.** J17's and
    U17's pads are 0.5 mm pitch and U16's 0.65 mm, on lead-free HASL. With no power applied, check
    that VBUS_PD is not shorted to GND, CC1 or CC2 (at J17 and U14 pins), and that +5V_PD and +5V are
@@ -946,7 +1001,7 @@ antenna keep-out is needed.
   plus local vias at the decoupling capacitors and IC ground pins.
 - **Silkscreen** shows the Pico outline, the `CONTROL / PROGRAM` and `POWER ONLY` port labels, and a
   pin-1 mark (a module fitted the other way round would put the board's +5 V on one of its GPIO
-  pins). J10, J11, J16, J18, J19 and J20 are labelled as described above. All board text is at least
+  pins). J10, J11, J18, J19, J20 and J21 are labelled as described above. All board text is at least
   1.0 mm high.
 
 **JLCPCB order:** the board is set up for full assembly by JLCPCB, with every SMD and
@@ -969,7 +1024,7 @@ order-number placeholder.
 | `PiDG_Pico.kicad_sch` | schematic |
 | `PiDG_Pico.kicad_pcb` | board |
 | `fab/PiDG_Pico_BOM.csv` | master parts list with the design-constraint NOTE rows (hand-maintained; KiCad's `export_bom` ignores DNP attributes). The JLC BOM in `fab/jlc/` is derived from it. |
-| `fab/jlc/PiDG_Pico_JLC_BOM.csv`, `fab/jlc/PiDG_Pico_JLC_CPL.csv`, `fab/jlc/JLC_ORDER.md` | JLCPCB full-assembly upload files (all 82 parts, LCSC numbers) and the order checklist |
+| `fab/jlc/PiDG_Pico_JLC_BOM.csv`, `fab/jlc/PiDG_Pico_JLC_CPL.csv`, `fab/jlc/JLC_ORDER.md` | JLCPCB full-assembly upload files (all 85 parts, LCSC numbers) and the order checklist |
 | `fab/gerbers/`, `fab/PiDG_Pico_Gerbers.zip` | gerbers, Excellon drill files (plated and unplated) and job file, from the board's stored plot settings |
 | `libs/PiDG_Local.kicad_sym` | Pico 2 W, UCC27524, LT3065 and TPS3700 symbols |
 | `libs/PiDG_Local.pretty/` | `*_EdgeTrim` footprint variants (see below) and the J7/J8/J12 BNC footprint (see [BNCs](#bncs-50-ω)) |
@@ -977,8 +1032,9 @@ order-number placeholder.
 | `platformio.ini` | build configuration: platform pinned to an exact commit; `pico2w` (default) and `pico2` builds |
 | `tools/timing_check/` | checks `pulse_timing.h` against a cycle-level PIO model (see its README) |
 
-**The `*_EdgeTrim` footprints.** J16 and TP3 overhang the board edge, and J17's face is flush with
-it, so their stock silkscreen outlines run off the board and trip `silk_edge_clearance`. The variants
+**The `*_EdgeTrim` footprints.** TP3 overhangs the board edge, and J17's face is flush with
+it, so their stock silkscreen outlines run off the board and trip `silk_edge_clearance`. (The 1×3
+variant in the library was J16's and is no longer used on the board.) The variants
 in `libs/PiDG_Local.pretty/` are the stock footprints with that off-board silkscreen clipped:
 **identical part, identical pads, silkscreen only.** Order the standard parts; the placement file
 carries the stock package names for that reason. To trim the silkscreen on another overhanging
@@ -991,11 +1047,11 @@ trade a `silk_edge_clearance` warning for a `lib_footprint_mismatch` one.
 length at 1/100 of the true mm value despite declaring `"coordinate_units": "mm"`: multiply by 100.
 
 **Current state:** DRC 0 violations, 0 unconnected items; ERC 0 violations. The schematic-parity
-check also reports 199 *warnings*, none of them electrical:
-- 166 net-name mismatches: board net names lack the `/` root-sheet prefix the schematic gives local
+check also reports 204 *warnings*, none of them electrical:
+- 177 net-name mismatches: board net names lack the `/` root-sheet prefix the schematic gives local
   labels (`TDRSTN1` vs `/TDRSTN1`, same connections), and unused J14/J15 socket pads carry no net
   instead of `unconnected-(…)`;
-- 29 field mismatches: `Datasheet`/`Description` text differs between schematic and board;
+- 23 field mismatches: `Datasheet`/`Description` text differs between schematic and board;
 - 4 extra footprints: MH1–MH4 exist only on the board, by design (U11, the Pico, is marked
   not-on-board in the schematic).
 

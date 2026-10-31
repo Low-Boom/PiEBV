@@ -124,7 +124,7 @@ void printField(const FieldCommand &f, uint32_t value, const RealizedTiming &r) 
     if (f.unit == Unit::Mode) {
         g_out.print(value ? F(" (CH1 + CH2 on LASER 1 and LASER 2)") : F(" (CH1 on LASER 1, CH2 on LASER 2)"));
     } else if (f.unit == Unit::PixMode) {
-        g_out.print(value == 0   ? F(" (off: pixel reset from J12 only)")
+        g_out.print(value == 0   ? F(" (off: no pixel reset)")
                     : value == 1 ? F(" (pixels reset between pulse pairs while ARMED)")
                                  : F(" (pixels reset between pulse pairs, also while DISARMED)"));
     } else if (r.clkHz != 0) {
@@ -202,11 +202,11 @@ void printHelp(uint32_t clkHz) {
         "FREQ <Hz>          pulse-pair repetition frequency\n"
         "WIDTH <ns>         CH1/CH2 pulse width\n"
         "DELAY <ns>         CH2 rising edge after CH1 rising edge\n"
-        "MARKERWIDTH <ns>   marker pulse width\n"
+        "MARKERWIDTH <ns>   marker pulse width (camera trigger and J12), <= 1/FREQ / 2\n"
         "COMBINE <0|1>      1 = both pulses on BOTH laser outputs (two sources, one\n"
         "                   double pulse); 0 = CH1 on LASER 1, CH2 on LASER 2\n"
-        "PIXGATE <0|1|2>    camera pixel reset between pulse pairs, ANDed with the J12\n"
-        "                   input: 0 = off (J12 only), 1 = while ARMED, 2 = always\n"
+        "PIXGATE <0|1|2>    camera pixel reset between pulse pairs (the only source of\n"
+        "                   pixel reset): 0 = off, 1 = while ARMED, 2 = always\n"
         "PIXLEAD <ns>       pixels released this long before each CH1 (>= "));
     g_out.print(kPixGateMinLeadCycles);
     g_out.println(F(" cycles)\n"
@@ -247,6 +247,8 @@ void printHelp(uint32_t clkHz) {
     }
     g_out.print(F("No laser-driver limits are imposed (pulse width, duty): check your driver's\n"
                   "ratings. Pulse pairs stay separated: DELAY <= 1/FREQ - 2 x WIDTH.\n"
+                  "The marker is at most 50 % duty (2 x MARKERWIDTH <= 1/FREQ), which\n"
+                  "protects the J12 output (External Sync Out) against a shorted cable.\n"
                   "With COMBINE 1 each output carries both pulses, so DELAY must also exceed\n"
                   "WIDTH (by >= 1 cycle). Change COMBINE only while DISARMED.\n"
                   "With PIXGATE on, PIXLEAD + DELAY + WIDTH + PIXLAG must leave >= "));
