@@ -644,7 +644,7 @@ Pico's 3.3 V pulses drive them with ~1.3 V of margin. An LVC gate here would nee
 VDD (high above 1.8–2.3 V, 1 V of hysteresis), so the 5 V AHCT gates drive it directly. Output
 pull-up resistance (ROH, the PMOS side that holds a steady load high during a pulse) is **5 Ω typical,
 8.5 Ω maximum** for this SOIC-8 (D) package, with no minimum given (TI SLUSFA9; the 2.5 / 5 / 7.5 Ω
-often quoted is the DSD package's figure). The budget below takes 0–8.5 Ω; pull-down is 0.15–1 Ω, so the low level into 50 Ω is well under the LDP-V's
+often quoted is the DSD package's figure). The budget below takes 0–8.5 Ω; pull-down (ROL) is 0.6 Ω typical, 1.1 Ω maximum (D package), so the low level into 50 Ω is well under the LDP-V's
 0.2 V limit.
 
 Its local bypass capacitor **C9 (0.1 µF, 50 V)** sits right beside VDD (pin 6) with its own GND
@@ -652,8 +652,9 @@ via, and GND (pin 3) drops straight to the In1 ground plane through a via under 
 keeps the supply loop to roughly 1.5–2 nH, so the ~100 mA, few-ns output edges don't bounce VDD into
 the top of the pulse. C10 (10 µF) is the bulk reservoir.
 
-U13 adds ~13–25 ns of delay, the same on both laser channels to within its channel-to-channel
-matching (1–2 ns), so the delay between the lasers is preserved. The laser-to-camera timing shifts
+U13 adds 17 ns typical, 27 ns maximum of delay (TI SLUSFA9, D package; no minimum is given. The
+older SLUSBP4 die gives 6 / 13 / 23 ns, and JLC's listing quotes those, so the die on the reel is not
+known). The delay is the same on both laser channels to within its channel-to-channel matching (1–2 ns), so the delay between the lasers is preserved. The laser-to-camera timing shifts
 by that fixed, calibratable amount.
 
 #### Amplitude budget
@@ -752,9 +753,30 @@ trigger lines are high, and low while `PWM_TRIG_TAP` is low, including with no s
   with its own GND via, and C22 (10 µF) is its reservoir, as C9/C10 are for U13.
 - **Not gated by the laser interlock.** ARM and J11 act only on the laser pulses (U7/U8). With
   J10 on 2-3, J12 keeps pulsing while the lasers are disarmed, as the camera triggers do.
-- **Timing.** U19 adds U13's ~13–25 ns. The camera triggers pass U5 and U6 instead, so J12 and the
-  camera trigger lines are offset by a fixed delay; measure it if an external instrument must align
-  to the cameras within tens of nanoseconds.
+- **Timing: measure the offset to the cameras on each board.** J12 follows GP11 through U19, and
+  the camera trigger lines through U5 and U6, so the two are offset by a fixed delay that the
+  datasheets don't pin down. From the GP11 edge (4 mA default drive, rising edge, J12 into 50 Ω;
+  min / typ / max, datasheet limits plus the trace and output-network simulation):
+
+  | Path | Delay |
+  |---|---|
+  | GP11 → J12 (U19 + R30/J21 + ~4 ns of GP11 edge to U19's threshold) | 10.5 / 22.4 / 35.5 ns |
+  | GP11 → Trigger1–6 at J1–J6 pin 4 (U5 + U6) | 7.2 / 11.7 / 19.6 ns |
+  | **J12 minus camera trigger, rising edge** | **−8.5 / +10.7 / +32 ns** |
+  | J12 minus camera trigger, falling edge | −9.4 / +9.7 / +25.6 ns |
+
+  The range is wide because U19 (6–27 ns) and U5 + U6 (4–15.5 ns) spread independently. On one
+  board the offset is fixed: measured once ([first-board check 4](#first-board-checks)), it holds to
+  about 0.5 ns, plus 1–2 ns over temperature (estimates). Record it with the board. The six trigger
+  lines differ by up to ~0.2 ns from their routing.
+
+  Ways to reduce the delay were studied on 2026-11-01 and not used, because none removes the need to
+  measure. A faster 12 V driver saves 4–7 ns at best and needs a new footprint; JLC stocks no 12 V
+  driver under 10 ns typical. The pin-compatible 2EDN7524F has the same typical delay with a
+  narrower spread (15–23 ns). Driving U19 from its own GPIO (GP14 is free) with a PIO lead of a few
+  cycles cancels the typical offset, but needs a new trace and a fifth PIO channel, and J12 would
+  no longer copy CH1 with J10 on 1-2. Faster GPIO drive or slew on GP11 moves the offset by under
+  1 ns.
 - **Duty and loads.** J12 is high at most 50 % of the time, the firmware's MARKERWIDTH limit (67 %
   with J10 on 1-2 and `COMBINE 1`; see [Board output rating](#board-output-rating)); don't short it. One load per output, no BNC tee,
   as for the laser outputs.
@@ -931,8 +953,11 @@ Ordered by what would bite hardest.
    camera (i.e. that it is configured as a sync slave).
 4. **External Sync Out (J12).** With J17 on the charger, J10 on 2-3 and J21 on 1-2, scope J12
    through a **50 Ω-terminated** input: 0 V to 4.54–5.14 V, one pulse of MARKERWIDTH with every CH1
-   period, also while DISARMED, and rising with the camera trigger lines (measure the fixed offset
-   to Trigger1 at J1 pin 4). With J21 on 2-3 and the scope at 1 MΩ: 4.55–5.08 V, no overshoot at the
+   period, also while DISARMED, and rising with the camera trigger lines. **Measure the J12-to-camera
+   offset** and record it with the board: J12 through the 50 Ω-terminated input, Trigger1 at J1 pin 4
+   with a 10× probe and a short ground spring, both edges, at the 50 % points (J12 ~2.4 V, Trigger1
+   0.9 V). Expect −8.5 to +32 ns, typically about +10 ns (J12 later); see
+   [External Sync Out](#external-sync-out-j12). With J21 on 2-3 and the scope at 1 MΩ: 4.55–5.08 V, no overshoot at the
    end of a 2 m cable. With the Pico's USB alone (J17 unplugged), J12 must stay at 0 V. With
    `PIXGATE 0`, TDRSTN at every camera port must stay high (no other source of pixel reset).
 5. **Before the first USB-C PD power-up, check the fine-pitch parts for solder bridges.** J17's and

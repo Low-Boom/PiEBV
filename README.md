@@ -181,9 +181,10 @@ lines do: with every marker (J10 on 2-3, also while DISARMED), or with every Las
 - **J21 on 2-3 (Hi-Z mode):** about 4.8 V (4.55–5.08 V) into a high-impedance input, from a ~50 Ω
   source, so long cables don't overshoot.
 - It needs the 15 V charger on J17; on the Pico's USB alone J12 stays at 0 V.
-- J12's output driver adds ~13–25 ns, and the camera trigger lines pass different (1.8 V) buffers,
-  so J12 and the cameras' trigger are offset by a fixed delay. Measure it if your instrument must
-  line up with the cameras to tens of nanoseconds.
+- J12 and the cameras' trigger are offset by a fixed delay: J12 passes a 12 V driver, the camera
+  trigger lines pass 1.8 V buffers. It is typically about +10 ns (J12 later), but anywhere from
+  −8.5 to +32 ns from part to part. **Measure it once on each board** and record it, if your
+  instrument must line up with the cameras to better than ~30 ns (Hardware.md, First-board checks).
 - One device per output, no BNC tee, and don't short it (see [Safety](#safety)).
 
 The board has no pixel-reset input any more: PiDG alone controls the camera pixel reset
@@ -678,8 +679,8 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
   - **shortest pulse:** 3 steps (20.000 ns) for `WIDTH` and `MARKERWIDTH`;
   - with `COMBINE 1`, `DELAY` > `WIDTH` ([Combined mode](#combined-mode-combine)).
 - **Slowest rate:** `FREQ` goes down to 1 Hz.
-- **Delay through the hardware:** the board's output driver (U13) adds about 13–25 ns to both
-  channels alike, so the time between the two pulses at J7/J8 is kept to within 1–2 ns. (Your laser
+- **Delay through the hardware:** the board's output driver (U13) adds about 17 ns (up to 27 ns) to
+  both channels alike, so the time between the two pulses at J7/J8 is kept to within 1–2 ns. (Your laser
   drivers add their own delays.)
 
 ### Errors
