@@ -20,8 +20,8 @@
 //   - PIXGATE (GP16): optional camera pixel reset between pulse pairs. pio0 SM3
 //     runs the pulse program with the pin's output inverted, so its pulse holds
 //     every camera's TDRSTN low from PIXLAG after the last laser pulse until
-//     PIXLEAD before the next CH1. U3 ANDs it with the J12 BNC input, so either
-//     source resets the pixels; stopped, the gate is high and J12 alone rules.
+//     PIXLEAD before the next CH1. It is the only pixel-reset source (U3 has both
+//     inputs on GP16); stopped, the gate is high and the pixels run free.
 //
 // Laser arming. The firmware boots DISARMED: CH1/CH2 are held LOW by
 // laser_gate (from a pre-init hook, before anything else runs), while SYNC and

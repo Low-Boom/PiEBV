@@ -50,7 +50,7 @@ for c, line in zip(cases, out):
     W = rnd(F(w * clk, 10**9)); D = rnd(F(d * clk, 10**9)); MW = rnd(F(mw * clk, 10**9))
     ok = (1 <= P <= 0xFFFFFFFF and W >= 3 and MW >= 3 and
           D >= W + 1 and
-          D + W + 5 <= P and D + 2 * W <= P and MW + 5 <= P)
+          D + W + 5 <= P and D + 2 * W <= P and MW + 5 <= P and 2 * MW <= P)
     if line.startswith("ERR"):
         nrej += 1
         if ok:
