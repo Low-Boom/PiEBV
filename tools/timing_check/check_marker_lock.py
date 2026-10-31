@@ -1,7 +1,8 @@
 """The marker fires with every pulse pair: in the PIO model it rises on exactly the
 same cycle as every CH1 rise, stays high for MARKERWIDTH, and never drifts, for
-frequencies whose period is not a whole number of cycles. Also the fit boundary:
-MARKERWIDTH <= 1/FREQ - 5 cycles, and the rejection names the largest width that fits.
+frequencies whose period is not a whole number of cycles. Also the two fit boundaries:
+2 x MARKERWIDTH <= 1/FREQ (50 % duty) and MARKERWIDTH <= 1/FREQ - 5 cycles, and each
+rejection names the largest width that fits.
 """
 import os
 import subprocess
@@ -39,9 +40,19 @@ for c, line in zip(cases, out):
     nok += 1
 print("marker rises with every CH1 and CH2-CH1 = DELAY for", nok, "configs;", nrej, "rejected (MARKERWIDTH too long)")
 
-# Boundary: the marker must fit in the period, MARKERWIDTH <= period - 5 cycles.
-# 100 kHz at 150 MHz: period 1500 cycles. 9966 ns -> 1495 cycles (fits), 9973 ns -> 1496 (does not).
-lines = subprocess.run([HARNESS], input="150000000 100000 100 1000 9966\n150000000 100000 100 1000 9973\n",
+# Boundary 1: at most 50 % duty, 2 x MARKERWIDTH <= period (the firmware's own rule, R30/J12).
+# 100 kHz at 150 MHz: period 1500 cycles. 5000 ns -> 750 cycles (fits), 5004 ns -> 751 (does not).
+lines = subprocess.run([HARNESS], input="150000000 100000 100 1000 5000\n150000000 100000 100 1000 5004\n",
                        capture_output=True, text=True).stdout.splitlines()
-ok = lines[0].startswith("OK") and lines[1].startswith("ERR") and "max MARKERWIDTH 9966.667 ns" in lines[1]
+ok = lines[0].startswith("OK") and lines[1].startswith("ERR") and "half the period" in lines[1] \
+    and "max MARKERWIDTH 5000.000 ns" in lines[1]
+print("boundary 2 x MARKERWIDTH <= 1/FREQ:", "ok" if ok else lines)
+
+# Boundary 2: the marker must fit the program, MARKERWIDTH <= period - 5 cycles. Tighter than
+# the duty rule only below 10 cycles: 18.75 MHz at 150 MHz is 8 cycles, so 3 fits and 4
+# (half the period) does not.
+lines = subprocess.run([HARNESS], input="150000000 18750000 20 0 20\n150000000 18750000 20 0 27\n",
+                       capture_output=True, text=True).stdout.splitlines()
+ok = lines[0].startswith("OK") and lines[1].startswith("ERR") and "1/FREQ - 5 cycles" in lines[1] \
+    and "max MARKERWIDTH 20.000 ns" in lines[1]
 print("boundary MARKERWIDTH <= 1/FREQ - 5 cycles:", "ok" if ok else lines)
