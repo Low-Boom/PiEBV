@@ -702,7 +702,6 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
 | `ERR <NAME> rejected: COMBINE needs DELAY > WIDTH so the two pulses stay separate (min DELAY … ns)` | With `COMBINE 1`, DELAY not longer than WIDTH |
 | `ERR <NAME> rejected: MARKERWIDTH must be <= half the period (2 x MARKERWIDTH <= 1/FREQ); max MARKERWIDTH … ns` | MARKERWIDTH longer than half the period, e.g. after raising FREQ. The 50 % limit protects J12 against a shorted cable. |
 | `ERR <NAME> rejected: MARKERWIDTH must fit in the period (MARKERWIDTH <= 1/FREQ - 5 cycles); max MARKERWIDTH … ns` | The same, for periods under 10 steps, where the pulse program's own limit is the tighter one |
-| `ERR MARKERDIV removed: the marker fires with every pulse pair` | `MARKERDIV` is no longer a setting |
 | `ERR <NAME> rejected: FREQ out of range` | FREQ above 300 MHz |
 | `ERR ARM …` / `ERR <NAME> rejected: pio0 unavailable` | The pulse hardware failed to start (`HW=` in STATUS) |
 | `ERR <NAME> rejected: pulse state machines could not be loaded` | The pulse hardware did not take settings that passed every check. Should never happen: the pulse outputs stop, the lasers are DISARMED, and `ARM` is refused until a later setting loads (`HW=` in STATUS) |
@@ -763,7 +762,7 @@ TX_DROPPED=0
 | Port opens but nothing appears | The greeting is only sent in the first 1.5 s, and the firmware does not echo | Type `ID?` or `STATUS`; turn on local echo |
 | Commands work but no replies arrive | The terminal has DTR off | Turn DTR on in the terminal settings |
 | The port vanishes and an `RP2350` drive appears | The port was opened at 1200 baud, which restarts the Pico into its bootloader | Use any other baud rate. Copy `firmware.uf2` to the drive, or unplug both J17 and the Pico's USB. |
-| `ERR … unknown command` for everything | A typo, the `FREQ?` form, the old `6,cmd;` framing, or XON/XOFF flow control | Use bare names; set flow control to None |
+| `ERR … unknown command` for everything | A typo, the `FREQ?` form, or XON/XOFF flow control | Use bare names; set flow control to None |
 | `ERR … rejected: DELAY must leave >= WIDTH …` | DELAY + 2 × WIDTH is longer than 1/FREQ | Shorten DELAY or WIDTH, or lower FREQ; the message gives the longest allowed DELAY |
 | `ERR … MARKERWIDTH must be <= half the period …` at high FREQ | The marker (2 µs by default) is longer than half the period | Shorten MARKERWIDTH first; the message gives the limit |
 | `ERR ARM …`, or `HW=ERR …` in STATUS | The pulse hardware did not start | Load the firmware again; if it keeps happening, report the `STATUS` output |

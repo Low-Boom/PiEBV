@@ -11,7 +11,7 @@ mirror the change there first, or the checks will keep testing the old program.
 |---|---|
 | `harness.cpp` | Compiles the real `../../src/pulse_timing.h`. Reads `clk freq width delay markerwidth [combine [pixgate pixlead pixlag]]` lines and prints the realized cycles, formatted values and the FIFO words the firmware would load. |
 | `pio_model.py` | Independent cycle-level model of the RP2350 PIO running a copy of the pulse program (JMP X-- semantics, blocking PULL, wrap, SET timing — RP2350 datasheet ch. 11). |
-| `check_exhaustive.py` | Every small configuration (period 8–47 cycles, all widths/delays): the loaded words give CH2−CH1 = DELAY, exact widths and periods from the first period on. Also prints the error the old (pre-fix) math had. |
+| `check_exhaustive.py` | Every small configuration (period 8–47 cycles, all widths/delays): the loaded words give CH2−CH1 = DELAY, exact widths and periods from the first period on. |
 | `check_random.py` | 3,600 random parameter sets at nine clock rates through the harness: every accept/reject decision matches an exact-rational model, every accepted set is cycle-exact in the PIO model, and every formatted ns/Hz string is correctly rounded. |
 | `check_marker_lock.py` | MARKER fires with every pulse pair: it rises on the same cycle as every CH1 pulse, with its own width, for frequencies whose period is not a whole number of cycles; and the two fit boundaries, 2 × MARKERWIDTH ≤ 1/FREQ (50 % duty) and MARKERWIDTH ≤ 1/FREQ − 5 cycles. |
 | `check_sync.py` | Confirms SYNC stays fixed at 1 MHz and checks its clock-generator divider (16.16, exactly 150 at 150 MHz and 300 at 300 MHz) and the frequency it realizes across system clocks. |
@@ -37,7 +37,7 @@ Set `PIDG_HARNESS` to use a harness binary somewhere else. Expected key lines:
 
 | Script | Look for |
 |---|---|
-| `check_exhaustive.py` | `fixed exhaustive P=8..47: 11480 configs, bad = 0` (its last line shows the old math's error, for reference) |
+| `check_exhaustive.py` | `fixed exhaustive P=8..47: 11480 configs, bad = 0` |
 | `check_random.py` | `accepted 1183 rejected 2417 simulated 1183 mismatches 0` |
 | `check_marker_lock.py` | `marker rises with every CH1 and CH2-CH1 = DELAY for 168 configs; 0 rejected ...`, then `boundary 2 x MARKERWIDTH <= 1/FREQ: ok` and `boundary MARKERWIDTH <= 1/FREQ - 5 cycles: ok` |
 | `check_sync.py` | `fixed 1 MHz sync clock rates 6 bad 0` |
