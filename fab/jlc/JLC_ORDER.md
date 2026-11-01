@@ -48,8 +48,7 @@ order.
 
 ## Parts that need action before ordering
 
-**J7/J8/J12 BNC (changed on 2026-10-05):** Kinghelm KH-BNC50-3511 (C2837587, 5,636 in stock,
-~$0.93) replaces the Amphenol B6252HB-NPP3G-50 (C22457552, ~$3.61) on the same pad pattern. Before
+**J7/J8/J12 BNC:** Kinghelm KH-BNC50-3511 (C2837587, 5,636 in stock, ~$0.93). Before
 releasing the order, buy two loose parts from LCSC and (1) test-fit them: the board's holes are 1.0 mm
 (centre and ground pins) and 2.2 mm (posts), the sizes of JLC's own KH-BNC50-3511 footprint, which
 gives clearance over Kinghelm's 0.90 / 2.00 mm drawing values after plating tolerance; (2) check continuity from the shell to the ground lead (pad 2): the shell bond is one iron lead,
@@ -65,20 +64,14 @@ PCBA order; the order then uses them from your parts inventory. Stock on 2026-10
 | J7/J8/J12 | Kinghelm KH-BNC50-3511 | C2837587 | 5,636 | 18 pcs (single listing). |
 | U2/U4/U6 | TI SN74LVC04ADR | C485074 | 3,115 | 18 pcs, optional (no in-stock substitute with Ioff). |
 
-**U14 changed on 2026-10-02:** the CH224K (C970725) is discontinued (LCSC: "Discontinued"; JLC stock 4,
-pre-order closed). The board now uses the pin-compatible **WCH CH224A** (C42459160, JLC stock 18,122 on
-2026-10-02). As WCH's CH224K-to-CH224A guide (datasheet §7.2.1) requires, U14's VHV and VBUS pins now
-connect directly to VBUS_PD: R11 (1 kΩ) and R15 (10 kΩ) were removed from the board on 2026-10-05 and
-replaced by copper. R10 stays 56 kΩ: the CH224A table also gives 15 V. Same U14 footprint and pads.
-Check U14's rotation in the placement preview — JLC's CH224A library model may differ from its CH224K one.
+**U14** is the **WCH CH224A** (C42459160). As WCH's CH224K-to-CH224A guide (datasheet §7.2.1)
+requires, U14's VHV and VBUS pins connect directly to VBUS_PD, with no resistors. R10 is 56 kΩ: the
+CH224A table also gives 15 V. Check U14's rotation in the placement preview — JLC's CH224A library
+model may differ from other CH224 variants.
 
-Everything else was in stock in quantity on 2026-09-25 (U17 LT3065: 799, enough for 5 boards). On
-2026-10-05 twelve lines were JLC basic parts and two preferred extended (no loading fee); the
-other 28 are extended (about $3 loading fee each in Economic). R29 (1 kΩ, C17513), added on
-2026-10-20, is a basic part, so there are now thirteen basic lines. On 2026-10-31 the J12 pixel-reset
-input became External Sync Out: the U12 (C7836) and J16 (C32713262) lines, both extended, were
-removed (26 extended lines remain), and U19, C21, C22, R30–R32 and J21 were added to existing lines
-(stock on 2026-10-31: UCC27524DR 22,719; 68 Ω 2512 3,250; 47 Ω 2512 1,621; 82 Ω 2512 6,972).
+Everything else was in stock in quantity on 2026-09-25 (U17 LT3065: 799, enough for 5 boards).
+Thirteen lines are JLC basic parts and two preferred extended (no loading fee); the other 26 are
+extended (about $3 loading fee each in Economic).
 
 ## Placement preview — check before approving
 
@@ -122,8 +115,8 @@ JLC doesn't supply these:
 - **Mounting:** 4 × M3 holes on a 114 × 114 mm square, 6 mm in from each edge of the
   126 × 126 mm board. Copper is kept 3 mm clear of each hole.
 - **Right edge:** the three BNC barrels stand about 20.6 mm past the board edge (20.58 mm from the
-  Kinghelm KH-BNC50-3511 drawing; the earlier Amphenol part was 20.8 mm), with the axis about 6.6 mm
-  above the board (Amphenol: about 7.1 mm). Laser 1, Laser 2, External Sync Out from top to bottom, for a
+  Kinghelm KH-BNC50-3511 drawing), with the axis about 6.6 mm
+  above the board. Laser 1, Laser 2, External Sync Out from top to bottom, for a
   panel with matching holes (1/2-28UNEF thread, D-hole). Measure both on the first board before
   cutting a panel. The housing is plastic, so fit the panel nuts to take the bayonet torque.
 - **Top edge: two USB ports, labelled on the silkscreen:**
