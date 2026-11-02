@@ -119,8 +119,9 @@ solders with either leaded or lead-free solder.
 The finest pitches are U16 (SC-70-6) and U17 (LT3065, MSOP-12 with an exposed pad), both 0.65 mm.
 J17 is a 6-pin power-only USB-C receptacle: pads 0.7–0.9 mm wide with gaps of 0.3 mm or more. There
 is no BGA and no leadless part: every IC has gull-wing leads, so the board can also be assembled by
-hand. Only the exposed pads of U14 and U17 need hot air, or solder fed into their GND vias from the
-back. The HASL surface is uneven enough that J17 is worth inspecting for solder bridges
+hand. Only the exposed pads of U14 and U17 need hot air (or a hot plate): their GND vias are tented
+like all the others, so solder cannot be fed through them from the back. The HASL surface is
+uneven enough that J17 is worth inspecting for solder bridges
 (see [first-board check 5](#first-board-checks)). Most passives and SOT-23s use `_HandSolder`
 footprints (U16, U17, L1 and U14's exposed pad are the exceptions).
 
