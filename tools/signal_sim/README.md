@@ -59,7 +59,7 @@ its input capacitance, so each stage is simulated alone and the delays are added
 
 | Stage | From | To |
 |---|---|---|
-| A | GP11, GP12, GP13 pads (and GP14 for option d) | U5.2, U19.2, U7.2, U8.2 through `PWM_Trig`, J10, `PWM_TRIG_TAP`, `CH1_J10`, `_PULSE_OUT_CH1/2`, R19, R9, R17, R18 and TP4 |
+| A | GP11, GP12, GP13 pads (and GP14 for option d) | U5.2, U19.2, U7.2, U8.2 through `PWM_Trig`, J10, `PWM_TRIG_TAP`, `CH1_J10`, `_PULSE_OUT_CH1/2`, R19, R9, R17 and R18 |
 | B1, B2 | U5 output, then the U6 outputs | U6 inputs (`TRIG_N`), then J1-J6 pin 4 (`Trigger1..6`) |
 | C | U19 output (or U13 outputs) | R30 (R6/R7), J21 (J18/J19), R31, R32, the BNC, RG-58 cable and the load |
 | D1 | U7/U8 outputs | U13 inputs (`CH1_GATED`, `CH2_GATED`) |

@@ -80,7 +80,7 @@ boards.
 | Power | **USB-C PD input (J17, 15 V)** for the laser driver and the whole board; the Pico's own USB still powers the logic when J17 is unplugged |
 | Rails | **1.8 V** (camera signals) · 3.3 V (Pico, R24 pull-up) · 5 V (logic, Pico VSYS) · **12 V** (11.8 V, output drivers U13 and U19, from J17 only) |
 | Design rules | 0.2 mm clearance, 0.2 mm track, 0.6/0.3 mm via, 0.5 mm copper-to-edge |
-| Parts | 85 placed parts, plus 4 unplated mounting holes |
+| Parts | 84 placed parts, plus 4 unplated mounting holes |
 
 **Layers**
 
@@ -116,9 +116,12 @@ at most quick-turn fabs, only slightly dearer than leaded HASL and far cheaper t
 pre-tinned, tolerates rework better than OSP (whose coating degrades with repeated heating), and
 solders with either leaded or lead-free solder.
 
-The finest pitches are J17's USB-C receptacle and U17 (LT3065, DFN-10 with an exposed pad), both
-0.5 mm, and U16 (SC-70-6, 0.65 mm). There is no BGA. Fabs routinely assemble USB-C receptacles on
-lead-free HASL, but the surface is uneven enough that J17 is worth inspecting for solder bridges
+The finest pitches are U16 (SC-70-6) and U17 (LT3065, MSOP-12 with an exposed pad), both 0.65 mm.
+J17 is a 6-pin power-only USB-C receptacle: pads 0.7–0.9 mm wide with gaps of 0.3 mm or more. There
+is no BGA and no leadless part: every IC has gull-wing leads, so the board can also be assembled by
+hand. Only the exposed pads of U14 and U17 need hot air (or a hot plate): their GND vias are tented
+like all the others, so solder cannot be fed through them from the back. The HASL surface is
+uneven enough that J17 is worth inspecting for solder bridges
 (see [first-board check 5](#first-board-checks)). Most passives and SOT-23s use `_HandSolder`
 footprints (U16, U17, L1 and U14's exposed pad are the exceptions).
 
@@ -438,7 +441,7 @@ covers the CH224K-to-CH224A differences). R10 =
 210k = 28 V — never leave R10 off: an open CFG1 is outside the table). CFG2/CFG3 are grounded
 (WCH allows this in single-resistor mode; the CH224A's internal 7–15 kΩ pull-ups then draw well
 under 1 mA), DP/DM are shorted at the chip (PD-only connection; J17's
-D+/D− are open, so no QC/BC1.2 request can reach the charger), and PG is unused. The VHV supply
+J17 has no D+/D− contacts, so no QC/BC1.2 request can reach the charger), and PG is unused. The VHV supply
 pin (pin 1) and the VBUS sense pin (pin 8) connect **directly to VBUS_PD** by copper, as WCH's
 guide (§7.2.1) requires for the CH224A. Do not fit a CH224K: its pin 1 is a 3.6 V
 VDD pin and would be destroyed. VHV, VBUS, CC1 and CC2 are rated to
@@ -479,7 +482,7 @@ the R2/R3 pull-ups. Decoupling: C4, C5 (0.1 µF), C6 (1 µF, U9's input).
   trigger input; the overvoltage side switches the outputs off. It is there to catch a failed
   regulator, not to police the 5.2 V limit, which U17's own accuracy guarantees.
 
-U17 is an Analog Devices **LT3065** (adjustable linear regulator, 45 V / 500 mA, DFN-10 with an
+U17 is an Analog Devices **LT3065** (adjustable linear regulator, 45 V / 500 mA, MSOP-12 with an
 exposed pad), with SHDN tied to IN:
 
 VOUT = 0.6 V × (1 + R12/R13) = 0.6 V × (1 + 100k/5.36k) = **11.8 V** (11.79 V)
@@ -489,7 +492,7 @@ is **11.54–12.05 V** (see the [amplitude budget](#amplitude-budget)). R20 (750
 sets a **400 mA ±10 %** current limit (500 × 0.6 V / R20), and C18 (22 nF) decouples IMAX as the
 datasheet requires. C19 (10 nF) on BYP filters the reference and gives a soft start. The output
 capacitors are C17 (10 µF X7R 1206, at U17), C9/C10 at U13 and C21/C22 at U19; the LT3065 is stable with any
-ceramic of 3.3 µF or more, so no series ESR resistor is needed. The exposed pad is tied to GND pin 7
+ceramic of 3.3 µF or more, so no series ESR resistor is needed. The exposed pad (pin 13) is tied to GND pin 9
 and has two GND vias to the planes.
 
 **Load.** An output held high into 50 Ω draws ~96 mA, both laser outputs ~200 mA, all three outputs
@@ -596,19 +599,22 @@ J10's silkscreen reads **`CH1 / TRG / MKR`** (pins 1/2/3).
   with J11 on 2-3, for camera-only work).
 - **Never fit a shunt across all three pins:** that ties GP13 (through R19) to GP11.
 
-J10.1 reaches `_PULSE_OUT_CH1` through **R19 (100 Ω)**; like TP4 it idles LOW while DISARMED. R19
+J10.1 reaches `_PULSE_OUT_CH1` through **R19 (100 Ω)**; it idles LOW while DISARMED. R19
 is there for the laser timing. Without it, the 1-2 shunt would hang the whole `PWM_TRIG_TAP` net
 (U5, R9, U19 and ~59 mm of trace) directly on the CH1 GPIO. The transmission-line simulation
 in `tools/signal_sim` (the ~59 mm net, typical corner, 4 mA GPIO) puts CH1 behind CH2 at U7/U8 by:
 
 | J10 | With R19 (100 Ω) | Without R19 |
 |---|---|---|
-| 2-3 or open | 0.09 / 0.10 ns (rise / fall), up to 0.37 ns | 0.11 / 0.12 ns, up to 0.35 ns |
-| 1-2 | 0.24 / 0.27 ns, up to 1.4 ns at the GPIO and threshold corners | 0.53 / 0.68 ns, up to 1.9 ns |
+| 2-3 or open | 0.22 / 0.25 ns (rise / fall), up to 0.68 ns | 0.25 / 0.27 ns, up to 0.66 ns |
+| 1-2 | 0.38 / 0.42 ns, up to 1.7 ns at the GPIO and threshold corners | 0.67 / 0.82 ns, up to 2.2 ns |
+
+CH1 is later because the J10/R19 branch loads `_PULSE_OUT_CH1` and `_PULSE_OUT_CH2` has no matching
+load.
 
 So with J10 on 1-2 the laser delay error depends on the jumper even with R19. R19 cuts it by about
-55–60 % at the typical corner and by about 25 % at the worst corner. With J10 on 1-2, at J7/J8 it
-is 0.22–0.37 ns with R19 and 0.49–1.43 ns without, before U13's own channel matching (1 ns typical,
+45–50 % at the typical corner and by about 20 % at the worst corner. With J10 on 1-2, at J7/J8 it
+is 0.35–0.54 ns with R19 and 0.61–1.60 ns without, before U13's own channel matching (1 ns typical,
 2 ns maximum), which is larger. R19 costs the camera trigger and
 J12 0.7–1.4 ns of edge, which doesn't matter there. Keep R19.
 
@@ -794,7 +800,8 @@ trigger lines are high, and low while `PWM_TRIG_TAP` is low, including with no s
 - **Layout.** J21, R31 and R32 copy the Laser 1 block 40 mm lower, on J12's centre-pin row, and
   U19, C21, C22 and R30 copy U13's layout. U19 takes +12V on a B.Cu run from U13's feed and
   `LASER_PWR_OK` on a B.Cu run from U13 pin 8. The silkscreen reads `EXT SYNC OUT`, with `50Ω` and
-  `HiZ` beside J21.
+  `HiZ` beside J21. Below J12, the `J12-TRIG OFFSET (MEASURED)` field (boxes for RISE and FALL in ns,
+  and the J10/J21 setting) takes the hand-written result of [first-board check 4](#first-board-checks).
 
 ---
 
@@ -892,8 +899,8 @@ J7/J8/J12 drive a 50 Ω or a high-impedance load, set per channel by J18/J19/J21
 
 ### J17: USB-C power input
 
-HRO TYPE-C-31-M-12, on the top edge with its face flush with the board edge. Power only: VBUS,
-CC1/CC2 to U14, GND and shell to GND; D+/D−/SBU are not connected. Use a USB-PD charger that offers
+HRO TYPE-C-31-M-17, a 6-pin power-only receptacle, on the top edge with its face flush with the
+board edge: VBUS, CC1/CC2 to U14, GND and shell to GND. It has no D+/D−/SBU contacts. Use a USB-PD charger that offers
 15 V, in practice any PD charger rated 30 W or more. Programming and serial go through the Pico's own
 USB port.
 
@@ -907,16 +914,15 @@ USB port.
 | J19 | 1×3 vertical, Laser 2 output mode (mirrored: pin 1 at the bottom) | 1 `CH2_DRIVE` · 2 `CH2_OUT` (J8) · 3 `CH2_TERM` → R28 |
 | J21 | 1×3 vertical, External Sync Out mode (pin 1 at the top) | 1 `EXT_SYNC_DRIVE` · 2 `EXT_SYNC_OUT` (J12) · 3 `EXT_SYNC_TERM` → R32 |
 | TP3 | 1×2 right-angle, top edge | 1 `PWM_1MHz` · 2 GND |
-| TP4 | 1×2 vertical | 1 `_PULSE_OUT_CH2` · 2 GND |
 | J20 | 1×2 vertical, clock jumper, left of J14 (pin 1 at the bottom) | 1 `CLK_SEL_JMP` (R29 1 kΩ to GP10) · 2 GND. Shunt = 300 MHz, open = 150 MHz ([clock jumper](#clock-jumper-j20-300-mhz-overclock)) |
 
 The camera trigger leaves the board on J12, and J11 is the only user interlock. TP3 sits on the top edge
 left of the Pico, with its pins 2.1 mm over the edge.
 
-**TP3 and TP4** are scope points with their own ground pin. TP4 (like J10.1) idles LOW while the
-firmware is DISARMED, and is labelled `CH2` / `GND` / `SCOPE ONLY`. J10 stands about 9 mm east of
-TP4, so the two headers can't be mistaken for one row, and carries
+**TP3** is a scope point with its own ground pin. J10 carries
 `CAMERA TRIGGER: TRG-MKR = MARKER / TRG-CH1 = LASER 1` to the right of its `CH1 TRG MKR` pin labels.
+There is no CH2 monitor header: probe the Laser 2 pulse from the Pico at R18 pin 1
+(`_PULSE_OUT_CH2`; R18 is the 10 kΩ pull-down), or the output itself at J8.
 
 The 1 MHz tap (TP3.1) feeds U1, which runs from the 1.8 V rail: an external signal there needs
 **VIH ≥ 1.17 V, VIL ≤ 0.63 V**, and the input is 5.5 V-tolerant. But the tap is normally driven by
@@ -965,7 +971,8 @@ Ordered by what would bite hardest.
 4. **External Sync Out (J12).** With J17 on the charger, J10 on 2-3 and J21 on 1-2, scope J12
    through a **50 Ω-terminated** input: 0 V to 4.54–5.14 V, one pulse of MARKERWIDTH with every CH1
    period, also while DISARMED, and rising with the camera trigger lines. **Measure the J12-to-camera
-   offset** and record it with the board: J12 through the 50 Ω-terminated input, Trigger1 at J1 pin 4
+   offset** and write it in the `J12-TRIG OFFSET (MEASURED)` field on the silkscreen below J12
+   (RISE, FALL, and the J10/J21 setting it applies to): J12 through the 50 Ω-terminated input, Trigger1 at J1 pin 4
    with a 10× probe and a short ground spring, both edges, at the 50 % points (J12 ~2.4 V, Trigger1
    0.9 V). Deskew the two scope channels first, and subtract the delay of J12's cable (RG-58
    ~5.05 ns/m). Repeat for each J10/J21 setting you use. Expect −9 to +27 ns, typically about
@@ -973,14 +980,15 @@ Ordered by what would bite hardest.
    scope at 1 MΩ: 4.55–5.08 V, peak at most ~5.3 V at the end of a 2 m cable. With the Pico's USB
    alone (J17 unplugged), J12 must stay at 0 V. With
    `PIXGATE 0`, TDRSTN at every camera port must stay high (no other source of pixel reset).
-5. **Before the first USB-C PD power-up, check the fine-pitch parts for solder bridges.** J17's and
-   U17's pads are 0.5 mm pitch and U16's 0.65 mm, on lead-free HASL. With no power applied, check
+5. **Before the first USB-C PD power-up, check the fine-pitch parts for solder bridges.** J17's pads are
+   0.3 mm apart and U16's and U17's leads 0.65 mm pitch, on lead-free HASL. With no power applied, check
    that VBUS_PD is not shorted to GND, CC1 or CC2 (at J17 and U14 pins), and that +5V_PD and +5V are
    not shorted to GND (at U16). U14's CC pins are rated to 32 V, but a VBUS-to-CC bridge would put
    VBUS_PD on the cable's CC line. U14 pins 1 (VHV) and 8 (VBUS) sit directly on VBUS_PD, so also
    check U14 pin 1 against pin 2 (GND) and pin 8 against pin 9 (CFG1, rated
-   only 3.8 V). Check U17's IN (pins 1-3) against OUT (pins 9-10) too: a bridge there would put 15 V
-   on +12V (U18 would then hold the outputs off). Also confirm that J17's four shell legs are
+   only 3.8 V). U17's IN (pins 1-3) and OUT (pins 11-12) are on opposite sides of the package and cannot
+   bridge; check OUT against ADJ (pin 10): a bridge there sets +12V to about 0.6 V (U18 then
+   holds the outputs off). Also confirm that J17's four shell legs are
    soldered (they are through-hole with no paste).
 
 6. **Clock jumper J20:** with no shunt, `STATUS` must show `CLK=150000000` and `CLKMODE=STANDARD`;
@@ -1047,7 +1055,8 @@ order-number placeholder.
 **The `*_EdgeTrim` footprints.** TP3 overhangs the board edge, and J17's face is flush with
 it, so their stock silkscreen outlines run off the board and trip `silk_edge_clearance`. The variants
 in `libs/PiDG_Local.pretty/` are the stock footprints with that off-board silkscreen clipped:
-**identical part, identical pads, silkscreen only.** Order the standard parts; the placement file
+**identical part, identical pads, silkscreen only** (J17's variant also stops its side marks
+short of the front shell-leg pads). Order the standard parts; the placement file
 carries the stock package names for that reason. To trim the silkscreen on another overhanging
 connector, make a variant the same way rather than editing the footprint on the board, or you will
 trade a `silk_edge_clearance` warning for a `lib_footprint_mismatch` one.

@@ -11,7 +11,7 @@ order.
 |---|---|
 | PCB | `../PiDG_Pico_Gerbers.zip` |
 | BOM (parts list) | `PiDG_Pico_JLC_BOM.csv`: 41 lines, every one with an LCSC part number |
-| CPL (placement file) | `PiDG_Pico_JLC_CPL.csv`: all 85 placed parts; rotations and centres corrected to JLC's own footprints by `tools/jlc_cpl` |
+| CPL (placement file) | `PiDG_Pico_JLC_CPL.csv`: all 84 placed parts; rotations and centres corrected to JLC's own footprints by `tools/jlc_cpl` |
 
 ## PCB options
 
@@ -31,7 +31,7 @@ order.
 
 | Option | Setting |
 |---|---|
-| PCBA type | Economic (the cheaper service; a 4-layer, one-sided board with 0.5 mm finest pitch qualifies). Economic covers the through-hole parts (hand-soldered); decline Standard if JLC suggests it (it costs more and needs edge rails, which J17, TP3 and the BNCs block). Every BOM line is "economic-and-standard" (checked 2026-10-05). |
+| PCBA type | Economic (the cheaper service; a 4-layer, one-sided board with 0.65 mm finest pitch qualifies). Economic covers the through-hole parts (hand-soldered); decline Standard if JLC suggests it (it costs more and needs edge rails, which J17, TP3 and the BNCs block). Every BOM line is "economic-and-standard" (checked 2026-10-05). |
 | Side | Top |
 | Assembled quantity | 5 (or fewer) |
 | Edge rails | None requested (see the remarks below) |
@@ -60,7 +60,7 @@ PCBA order; the order then uses them from your parts inventory. Stock on 2026-10
 | Ref | Part | LCSC | Stock | Pre-order |
 |---|---|---|---|---|
 | U9 | onsemi NCP718BSN180T1G | C892792 | 162 | 6 pcs. Replaces NCP718ASN180T1G (C513024, 0 in stock): same datasheet, ±2 % 1.8 V output and TSOT-23-5 pinout, without the active output discharge (unused here). The TECH PUBLIC copy (C18212639) is not the specified part. |
-| U17 | Analog Devices LT3065EDD#TRPBF | C670143 | 684, falling | 6 pcs. No drop-in alternative. |
+| U17 | Analog Devices LT3065EMSE#PBF (MSOP-12-EP, adjustable) | C670156 | 36 (2026-11-02) | 6 pcs. Same part on tape: LT3065EMSE#TRPBF (C670157, 50). Not a fixed-voltage LT3065-x. |
 | J7/J8/J12 | Kinghelm KH-BNC50-3511 | C2837587 | 5,636 | 18 pcs (single listing). |
 | U2/U4/U6 | TI SN74LVC04ADR | C485074 | 3,115 | 18 pcs, optional (no in-stock substitute with Ioff). |
 
@@ -69,7 +69,7 @@ requires, U14's VHV and VBUS pins connect directly to VBUS_PD, with no resistors
 CH224A table also gives 15 V. Check U14's rotation in the placement preview — JLC's CH224A library
 model may differ from other CH224 variants.
 
-Everything else was in stock in quantity on 2026-09-25 (U17 LT3065: 799, enough for 5 boards).
+Everything else was in stock in quantity on 2026-09-25 (J17 TYPE-C-31-M-17, C283540: 11,333 on 2026-11-02).
 Thirteen lines are JLC basic parts and two preferred extended (no loading fee); the other 26 are
 extended (about $3 loading fee each in Economic).
 
@@ -80,7 +80,7 @@ see its README; re-run it after any layout change). Still check these in the pre
 board's pin-1 marks before approving:
 
 - SOT-23-5: U1, U3, U5, U7, U8, U9, U10 · TSOT-23-6: U15 · SOT-23-6: U18 · SC-70-6: U16
-- SOIC-8: U13, U19 · SOIC-14: U2, U4, U6 · ESSOP-10 with exposed pad: U14 · DFN-10 with exposed pad: U17
+- SOIC-8: U13, U19 · SOIC-14: U2, U4, U6 · ESSOP-10 with exposed pad: U14 · MSOP-12 with exposed pad: U17
 - J17 USB-C (opening toward the top edge) · J1–J6 IDC headers (key notch as on the silkscreen)
 - J7/J8/J12 BNCs (barrels past the right edge) · TP3 (pins pointing off the board edge)
 
