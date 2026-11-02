@@ -30,7 +30,7 @@ J11  C49257     PinHeader_1x03_P2.54mm_Vertical      JLC "?" | corr 270 | rot 0 
 J12  C2837587   BNC_Kinghelm_KH-BNC50-3511_Horizonta JLC "ANT-TH_KH-BNC50-3511" | corr 180 | rot 90 -> 90 | shift 2.525 mm | fit 0.042 mm | matched by geometry (pad numbers differ)
 J14  C2905423   PinSocket_1x20_P2.54mm_Vertical      JLC "HDR-TH_20P-P2.54-V-F-2" | corr 270 | rot 270 -> 270 | shift 24.130 mm | fit 0.000 mm
 J15  C2905423   PinSocket_1x20_P2.54mm_Vertical      JLC "HDR-TH_20P-P2.54-V-F-2" | corr 270 | rot 270 -> 270 | shift 24.130 mm | fit 0.000 mm
-J17  C165948    USB_C_Receptacle_HRO_TYPE-C-31-M-12_ JLC "?" | corr   0 | rot 180 -> 180 | shift 1.571 mm | fit 0.147 mm
+J17  C283540    USB_C_Receptacle_HRO_TYPE-C-31-M-17_ JLC "USB-C-SMD_10P-P1.00-L6.8-W8.9" | corr   0 | rot 180 -> 180 | shift 1.178 mm | fit 0.072 mm
 J18  C49257     PinHeader_1x03_P2.54mm_Vertical      JLC "?" | corr 270 | rot 270 -> 270 | shift 2.540 mm | fit 0.000 mm
 J19  C49257     PinHeader_1x03_P2.54mm_Vertical      JLC "?" | corr 270 | rot 90 -> 90 | shift 2.540 mm | fit 0.000 mm
 J20  C32713268  PinHeader_1x02_P2.54mm_Vertical      JLC "HDR-TH_2P-P2.54-V-M-3" | corr 270 | rot 90 -> 90 | shift 1.270 mm | fit 0.000 mm
@@ -42,7 +42,7 @@ R7   C2793964   R_2512_6332Metric_Pad1.40x3.35mm_Han JLC "R2512" | corr   0 | ro
 R8   C17414     R_0805_2012Metric_Pad1.20x1.40mm_Han JLC "R0805" | corr   0 | rot 0 -> 0 | shift 0.000 mm | fit 0.000 mm
 R9   C17414     R_0805_2012Metric_Pad1.20x1.40mm_Han JLC "R0805" | corr   0 | rot 90 -> 90 | shift 0.000 mm | fit 0.000 mm
 R10  C17756     R_0805_2012Metric_Pad1.20x1.40mm_Han JLC "R0805" | corr   0 | rot 270 -> 270 | shift 0.000 mm | fit 0.000 mm
-R12  C122537    R_0805_2012Metric_Pad1.20x1.40mm_Han JLC "R0805" | corr   0 | rot 0 -> 0 | shift 0.000 mm | fit 0.000 mm
+R12  C122537    R_0805_2012Metric_Pad1.20x1.40mm_Han JLC "R0805" | corr   0 | rot 0 -> 90 | shift 0.000 mm | fit 0.000 mm
 R13  C706247    R_0805_2012Metric_Pad1.20x1.40mm_Han JLC "R0805" | corr   0 | rot 90 -> 90 | shift 0.000 mm | fit 0.000 mm
 R16  C149504    R_0805_2012Metric_Pad1.20x1.40mm_Han JLC "R0805" | corr   0 | rot 270 -> 270 | shift 0.000 mm | fit 0.000 mm
 R17  C17414     R_0805_2012Metric_Pad1.20x1.40mm_Han JLC "R0805" | corr   0 | rot 180 -> 180 | shift 0.000 mm | fit 0.000 mm
@@ -74,7 +74,7 @@ U13  C465729    SOIC-8_3.9x4.9mm_P1.27mm             JLC "?" | corr 270 | rot 27
 U14  C42459160  SSOP-10-1EP_3.9x4.9mm_P1mm_EP2.1x3.3 JLC "ESSOP-10_L4.9-W3.9-P1.0-LS6.0-TL-E" | corr 270 | rot 180 -> 180 | shift 0.000 mm | fit 0.363 mm  << CHECK
 U15  C2071056   TSOT-23-6_HandSoldering              JLC "TSOT-23-6_L2.9-W1.6-P0.95-LS2.8-BL" | corr 270 | rot 270 -> 270 | shift 0.000 mm | fit 0.510 mm  << CHECK
 U16  C2869734   SOT-363_SC-70-6                      JLC "SC-70-6_L2.0-W1.3-P0.65-LS2.1-BL" | corr 270 | rot 270 -> 270 | shift 0.000 mm | fit 0.263 mm  << CHECK
-U17  C670143    DFN-10-1EP_3x3mm_P0.5mm_EP1.65x2.38m JLC "DFN-10_L3.0-W3.0-P0.50-BL-EP2.5" | corr 270 | rot 0 -> 0 | shift 0.000 mm | fit 0.043 mm
+U17  C670156    MSOP-12-1EP_3x4.039mm_P0.65mm_EP1.65 JLC "MSOP-12_L4.0-W3.0-P0.65-LS5.0-BL-E" | corr 270 | rot 0 -> 0 | shift 0.000 mm | fit 0.025 mm
 U18  C33002     SOT-23-6                             JLC "SOT-23-6_L2.9-W1.6-P0.95-LS2.8-BL" | corr 270 | rot 0 -> 0 | shift 0.000 mm | fit 0.012 mm
 U19  C465729    SOIC-8_3.9x4.9mm_P1.27mm             JLC "?" | corr 270 | rot 270 -> 270 | shift 0.000 mm | fit 0.125 mm
 C21  C49678     C_0805_2012Metric_Pad1.18x1.45mm_Han JLC "C0805" | corr   0 | rot 180 -> 180 | shift 0.000 mm | fit 0.038 mm

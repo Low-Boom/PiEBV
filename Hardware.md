@@ -116,9 +116,11 @@ at most quick-turn fabs, only slightly dearer than leaded HASL and far cheaper t
 pre-tinned, tolerates rework better than OSP (whose coating degrades with repeated heating), and
 solders with either leaded or lead-free solder.
 
-The finest pitches are J17's USB-C receptacle and U17 (LT3065, DFN-10 with an exposed pad), both
-0.5 mm, and U16 (SC-70-6, 0.65 mm). There is no BGA. Fabs routinely assemble USB-C receptacles on
-lead-free HASL, but the surface is uneven enough that J17 is worth inspecting for solder bridges
+The finest pitches are U16 (SC-70-6) and U17 (LT3065, MSOP-12 with an exposed pad), both 0.65 mm.
+J17 is a 6-pin power-only USB-C receptacle: pads 0.7–0.9 mm wide with gaps of 0.3 mm or more. There
+is no BGA and no leadless part: every IC has gull-wing leads, so the board can also be assembled by
+hand. Only the exposed pads of U14 and U17 need hot air, or solder fed into their GND vias from the
+back. The HASL surface is uneven enough that J17 is worth inspecting for solder bridges
 (see [first-board check 5](#first-board-checks)). Most passives and SOT-23s use `_HandSolder`
 footprints (U16, U17, L1 and U14's exposed pad are the exceptions).
 
@@ -438,7 +440,7 @@ covers the CH224K-to-CH224A differences). R10 =
 210k = 28 V — never leave R10 off: an open CFG1 is outside the table). CFG2/CFG3 are grounded
 (WCH allows this in single-resistor mode; the CH224A's internal 7–15 kΩ pull-ups then draw well
 under 1 mA), DP/DM are shorted at the chip (PD-only connection; J17's
-D+/D− are open, so no QC/BC1.2 request can reach the charger), and PG is unused. The VHV supply
+J17 has no D+/D− contacts, so no QC/BC1.2 request can reach the charger), and PG is unused. The VHV supply
 pin (pin 1) and the VBUS sense pin (pin 8) connect **directly to VBUS_PD** by copper, as WCH's
 guide (§7.2.1) requires for the CH224A. Do not fit a CH224K: its pin 1 is a 3.6 V
 VDD pin and would be destroyed. VHV, VBUS, CC1 and CC2 are rated to
@@ -479,7 +481,7 @@ the R2/R3 pull-ups. Decoupling: C4, C5 (0.1 µF), C6 (1 µF, U9's input).
   trigger input; the overvoltage side switches the outputs off. It is there to catch a failed
   regulator, not to police the 5.2 V limit, which U17's own accuracy guarantees.
 
-U17 is an Analog Devices **LT3065** (adjustable linear regulator, 45 V / 500 mA, DFN-10 with an
+U17 is an Analog Devices **LT3065** (adjustable linear regulator, 45 V / 500 mA, MSOP-12 with an
 exposed pad), with SHDN tied to IN:
 
 VOUT = 0.6 V × (1 + R12/R13) = 0.6 V × (1 + 100k/5.36k) = **11.8 V** (11.79 V)
@@ -489,7 +491,7 @@ is **11.54–12.05 V** (see the [amplitude budget](#amplitude-budget)). R20 (750
 sets a **400 mA ±10 %** current limit (500 × 0.6 V / R20), and C18 (22 nF) decouples IMAX as the
 datasheet requires. C19 (10 nF) on BYP filters the reference and gives a soft start. The output
 capacitors are C17 (10 µF X7R 1206, at U17), C9/C10 at U13 and C21/C22 at U19; the LT3065 is stable with any
-ceramic of 3.3 µF or more, so no series ESR resistor is needed. The exposed pad is tied to GND pin 7
+ceramic of 3.3 µF or more, so no series ESR resistor is needed. The exposed pad (pin 13) is tied to GND pin 9
 and has two GND vias to the planes.
 
 **Load.** An output held high into 50 Ω draws ~96 mA, both laser outputs ~200 mA, all three outputs
@@ -794,7 +796,8 @@ trigger lines are high, and low while `PWM_TRIG_TAP` is low, including with no s
 - **Layout.** J21, R31 and R32 copy the Laser 1 block 40 mm lower, on J12's centre-pin row, and
   U19, C21, C22 and R30 copy U13's layout. U19 takes +12V on a B.Cu run from U13's feed and
   `LASER_PWR_OK` on a B.Cu run from U13 pin 8. The silkscreen reads `EXT SYNC OUT`, with `50Ω` and
-  `HiZ` beside J21.
+  `HiZ` beside J21. Below J12, the `J12-TRIG OFFSET (MEASURED)` field (boxes for RISE and FALL in ns,
+  and the J10/J21 setting) takes the hand-written result of [first-board check 4](#first-board-checks).
 
 ---
 
@@ -892,8 +895,8 @@ J7/J8/J12 drive a 50 Ω or a high-impedance load, set per channel by J18/J19/J21
 
 ### J17: USB-C power input
 
-HRO TYPE-C-31-M-12, on the top edge with its face flush with the board edge. Power only: VBUS,
-CC1/CC2 to U14, GND and shell to GND; D+/D−/SBU are not connected. Use a USB-PD charger that offers
+HRO TYPE-C-31-M-17, a 6-pin power-only receptacle, on the top edge with its face flush with the
+board edge: VBUS, CC1/CC2 to U14, GND and shell to GND. It has no D+/D−/SBU contacts. Use a USB-PD charger that offers
 15 V, in practice any PD charger rated 30 W or more. Programming and serial go through the Pico's own
 USB port.
 
@@ -965,7 +968,8 @@ Ordered by what would bite hardest.
 4. **External Sync Out (J12).** With J17 on the charger, J10 on 2-3 and J21 on 1-2, scope J12
    through a **50 Ω-terminated** input: 0 V to 4.54–5.14 V, one pulse of MARKERWIDTH with every CH1
    period, also while DISARMED, and rising with the camera trigger lines. **Measure the J12-to-camera
-   offset** and record it with the board: J12 through the 50 Ω-terminated input, Trigger1 at J1 pin 4
+   offset** and write it in the `J12-TRIG OFFSET (MEASURED)` field on the silkscreen below J12
+   (RISE, FALL, and the J10/J21 setting it applies to): J12 through the 50 Ω-terminated input, Trigger1 at J1 pin 4
    with a 10× probe and a short ground spring, both edges, at the 50 % points (J12 ~2.4 V, Trigger1
    0.9 V). Deskew the two scope channels first, and subtract the delay of J12's cable (RG-58
    ~5.05 ns/m). Repeat for each J10/J21 setting you use. Expect −9 to +27 ns, typically about
@@ -973,14 +977,15 @@ Ordered by what would bite hardest.
    scope at 1 MΩ: 4.55–5.08 V, peak at most ~5.3 V at the end of a 2 m cable. With the Pico's USB
    alone (J17 unplugged), J12 must stay at 0 V. With
    `PIXGATE 0`, TDRSTN at every camera port must stay high (no other source of pixel reset).
-5. **Before the first USB-C PD power-up, check the fine-pitch parts for solder bridges.** J17's and
-   U17's pads are 0.5 mm pitch and U16's 0.65 mm, on lead-free HASL. With no power applied, check
+5. **Before the first USB-C PD power-up, check the fine-pitch parts for solder bridges.** J17's pads are
+   0.3 mm apart and U16's and U17's leads 0.65 mm pitch, on lead-free HASL. With no power applied, check
    that VBUS_PD is not shorted to GND, CC1 or CC2 (at J17 and U14 pins), and that +5V_PD and +5V are
    not shorted to GND (at U16). U14's CC pins are rated to 32 V, but a VBUS-to-CC bridge would put
    VBUS_PD on the cable's CC line. U14 pins 1 (VHV) and 8 (VBUS) sit directly on VBUS_PD, so also
    check U14 pin 1 against pin 2 (GND) and pin 8 against pin 9 (CFG1, rated
-   only 3.8 V). Check U17's IN (pins 1-3) against OUT (pins 9-10) too: a bridge there would put 15 V
-   on +12V (U18 would then hold the outputs off). Also confirm that J17's four shell legs are
+   only 3.8 V). U17's IN (pins 1-3) and OUT (pins 11-12) are on opposite sides of the package and cannot
+   bridge; check OUT against ADJ (pin 10): a bridge there sets +12V to about 0.6 V (U18 then
+   holds the outputs off). Also confirm that J17's four shell legs are
    soldered (they are through-hole with no paste).
 
 6. **Clock jumper J20:** with no shunt, `STATUS` must show `CLK=150000000` and `CLKMODE=STANDARD`;
@@ -1047,7 +1052,8 @@ order-number placeholder.
 **The `*_EdgeTrim` footprints.** TP3 overhangs the board edge, and J17's face is flush with
 it, so their stock silkscreen outlines run off the board and trip `silk_edge_clearance`. The variants
 in `libs/PiDG_Local.pretty/` are the stock footprints with that off-board silkscreen clipped:
-**identical part, identical pads, silkscreen only.** Order the standard parts; the placement file
+**identical part, identical pads, silkscreen only** (J17's variant also stops its side marks
+short of the front shell-leg pads). Order the standard parts; the placement file
 carries the stock package names for that reason. To trim the silkscreen on another overhanging
 connector, make a variant the same way rather than editing the footprint on the board, or you will
 trade a `silk_edge_clearance` warning for a `lib_footprint_mismatch` one.
