@@ -39,7 +39,6 @@
 "(loose)","Jumper shunt, 2.54 mm 2-pin","-","6","Not placed on the board - fit J10 on 2-3, J11 on 1-2 (lasers enabled), J18, J19 and J21 on 1-2 (50 ohm outputs) by hand; keep the sixth shunt loose: J20 stays open (150 MHz) unless that Pico has passed the soak test","C100114"
 "J17","USB-C receptacle 6P power only (HRO TYPE-C-31-M-17)","PiDG_Local:USB_C_Receptacle_HRO_TYPE-C-31-M-17_EdgeTrim","1","","C283540"
 "TP3","Header 1x02 right-angle (1MHz sync + GND)","PiDG_Local:PinHeader_1x02_P2.54mm_Horizontal_EdgeTrim","1","","C32713261"
-"TP4","Header 1x02 (CH2 monitor + GND)","Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical","1","","C32713268"
 "J20","Header 1x02 (clock jumper: CLK_SEL_JMP + GND)","Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical","1","","C32713268"
 "J14,J15","Pico Socket A/B","Connector_PinSocket_2.54mm:PinSocket_1x20_P2.54mm_Vertical","2","","C2905423"
 "U11","Raspberry Pi Pico 2 W","(no PCB footprint - plugs into J14/J15)","1","DNP - socket-mounted, do not place; source module separately",""

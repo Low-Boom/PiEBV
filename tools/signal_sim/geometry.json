@@ -727,17 +727,17 @@
   },
   "_PULSE_OUT_CH2": {
    "root": "J14.16",
-   "total_len_mm": 95.3952,
+   "total_len_mm": 74.1852,
    "via_count": 1,
-   "segment_count": 9,
+   "segment_count": 6,
    "components": 1,
    "independent_loops": 0,
    "unreached_pads": [],
    "edges": [
     {
-     "a": "BP0",
+     "a": "J14.16",
      "b": "U8.2",
-     "len_mm": 6.9402,
+     "len_mm": 70.4702,
      "layer": "B.Cu+F.Cu",
      "width_mm": 0.3,
      "vias": 1,
@@ -745,7 +745,7 @@
       {
        "layer": "B.Cu",
        "width_mm": 0.3,
-       "len_mm": 5.5902
+       "len_mm": 69.1202
       },
       {
        "layer": "F.Cu",
@@ -766,36 +766,6 @@
        "layer": "F.Cu",
        "width_mm": 0.3,
        "len_mm": 3.715
-      }
-     ]
-    },
-    {
-     "a": "J14.16",
-     "b": "BP0",
-     "len_mm": 63.53,
-     "layer": "B.Cu",
-     "width_mm": 0.3,
-     "vias": 0,
-     "runs": [
-      {
-       "layer": "B.Cu",
-       "width_mm": 0.3,
-       "len_mm": 63.53
-      }
-     ]
-    },
-    {
-     "a": "BP0",
-     "b": "TP4.1",
-     "len_mm": 21.21,
-     "layer": "B.Cu",
-     "width_mm": 0.3,
-     "vias": 0,
-     "runs": [
-      {
-       "layer": "B.Cu",
-       "width_mm": 0.3,
-       "len_mm": 21.21
       }
      ]
     }
@@ -828,19 +798,6 @@
      "path_vias_from_root": 0
     },
     {
-     "pad": "TP4.1",
-     "ref": "TP4",
-     "value": "CH2 monitor + GND",
-     "footprint": "PinHeader_1x02_P2.54mm_Vertical",
-     "pin": "1",
-     "function": "",
-     "smd": false,
-     "x_mm": 205.21,
-     "y_mm": 101.0,
-     "path_len_from_root_mm": 84.74,
-     "path_vias_from_root": 0
-    },
-    {
      "pad": "U8.2",
      "ref": "U8",
      "value": "74AHCT1G08",
@@ -857,13 +814,8 @@
    "pad_internal_copper": [],
    "duplicate_overlap_pieces_removed": 0,
    "pad_internal_len_mm": 0,
-   "kicad_pad_count": 4,
-   "branch_points": {
-    "BP0": [
-     191.0,
-     100.0
-    ]
-   },
+   "kicad_pad_count": 3,
+   "branch_points": {},
    "gnd_pour_edge_gap": {
     "F.Cu": {
      "len_mm": 5.06,
@@ -872,10 +824,10 @@
      "frac_gap_lt_1mm": 1.0
     },
     "B.Cu": {
-     "len_mm": 90.33,
-     "frac_gap_lt_0p35mm": 0.975,
-     "frac_gap_lt_0p6mm": 0.988,
-     "frac_gap_lt_1mm": 0.997
+     "len_mm": 69.12,
+     "frac_gap_lt_0p35mm": 0.984,
+     "frac_gap_lt_0p6mm": 0.994,
+     "frac_gap_lt_1mm": 1.0
     }
    }
   },

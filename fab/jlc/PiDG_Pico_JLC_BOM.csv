@@ -39,4 +39,4 @@
 "Pin header 1x3 2.54 mm vertical","J10,J11,J18,J19,J21","HDR-1x3-P2.54","C49257"
 "Female socket 1x20 2.54 mm, 8.5 mm","J14,J15","HDR-F-1x20-P2.54","C2905423"
 "Pin header 1x2 2.54 mm right-angle","TP3","HDR-1x2-P2.54-RA","C32713261"
-"Pin header 1x2 2.54 mm vertical","TP4,J20","HDR-1x2-P2.54","C32713268"
+"Pin header 1x2 2.54 mm vertical","J20","HDR-1x2-P2.54","C32713268"

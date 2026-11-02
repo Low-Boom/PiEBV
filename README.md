@@ -148,7 +148,7 @@ labelled on the board: **`CONTROL / PROGRAM — PICO MICRO-USB`** (commands and 
            |            |  Pico  |                                         |
            |            |  2 W   |       J11 (laser enable)                |
            |            | in J14 |                          J18 (mode) J7 =|  Laser 1  (BNC)
-           |            | / J15  |      TP4     J10 (trigger select)       |
+           |            | / J15  |              J10 (trigger select)       |
            |            +--------+                          J19 (mode) J8 =|  Laser 2  (BNC)
            |                                                              |
            |  J1   J2   J3   J4   J5   J6   (camera ports)  J21 (mode) J12 =|  External Sync Out (BNC)
@@ -169,7 +169,6 @@ labelled on the board: **`CONTROL / PROGRAM — PICO MICRO-USB`** (commands and 
 | **J18**, **J19**, **J21** | Output mode (jumpers; J18 = Laser 1, J19 = Laser 2, J21 = External Sync Out) | A shunt | See [Jumpers](#jumpers) |
 | **J20** | Clock jumper, 2-pin header left of the Pico socket J14 | Nothing (150 MHz), or a shunt (300 MHz overclock) | See [Jumpers](#jumpers). Leave it open unless that Pico passed the soak test. |
 | **TP3** | 2-pin header on the top edge | A scope | Pin 1 = the 1 MHz sync straight from the Pico (3.3 V) · pin 2 = ground |
-| **TP4** | 2-pin header left of J10, marked `CH2` / `GND` | A scope only | Pin 1 = the Laser 2 pulse straight from the Pico (3.3 V; stays low while DISARMED) · pin 2 = ground. It is taken before the interlock and the output driver, so it pulses while ARMED even when J11 or the 12 V check holds J8 off. Probe it, never drive it. The matching Laser 1 point is J10 pin 1 (through 100 Ω). |
 
 #### J12 — External Sync Out
 
@@ -595,8 +594,8 @@ COMBINE 0   ->  OK COMBINE=0 (CH1 on LASER 1, CH2 on LASER 2)
   - Each driver now gets two pulses per period: check its own spacing and duty ratings. The firmware
     does not impose any.
 - The timing is exactly as precise as in the normal mode.
-- The monitor points follow: TP4 and J10 pin 1 both show the double pulse, and with J10 on 1-2 the
-  cameras are triggered on both pulses.
+- The monitor point follows: J10 pin 1 shows the double pulse, and with J10 on 1-2 the cameras are
+  triggered on both pulses.
 
 ### Pixel-reset gate (`PIXGATE`)
 
@@ -771,7 +770,7 @@ TX_DROPPED=0
 | About 12 V pulses on the scope | J18/J19 on 1-2 (50 Ω mode) into a 1 MΩ scope input | Set the scope to 50 Ω (the laser driver has its own 50 Ω), or move the shunt to 2-3 for a high-impedance load |
 | About 2.5 V pulses at the laser driver | J18/J19 on 2-3 (Hi-Z mode) into the driver's 50 Ω input | Move the shunt to 1-2 |
 | One output gives ~3.5 V into 50 Ω, or ~12 V open | No shunt on that output's J18/J19 | Fit the shunt: 1-2 for 50 Ω, 2-3 for Hi-Z |
-| About 3 V pulses at the laser driver | Two 50 Ω loads on one output (e.g. a tee into both a 50 Ω scope input and the driver) | Watch with a high-impedance scope probe instead, or on TP4 (CH2) / J10 pin 1 (CH1, through 100 Ω) |
+| About 3 V pulses at the laser driver | Two 50 Ω loads on one output (e.g. a tee into both a 50 Ω scope input and the driver) | Watch with a high-impedance scope probe instead, or on J10 pin 1 (CH1, through 100 Ω) / R18 pin 1 (CH2) |
 | Cameras get no trigger | J10 on 1-2 while DISARMED, or no shunt on J10 | J10 on 2-3 |
 | Cameras don't synchronise | A camera set as sync master | Set every camera to sync slave |
 | All cameras stuck in pixel reset | `PIXGATE` 1 or 2 with a window that leaves little free time (`PIXRESET` in STATUS) | Check PIXLEAD/PIXLAG, or set `PIXGATE 0` |

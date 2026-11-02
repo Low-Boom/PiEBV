@@ -154,8 +154,7 @@
     "r2512": {"est": true, "esl_nH": 1.5, "cp_pF": 0.1, "pad_pF": 0.89, "note": "ESL 1-2 nH and Cp 0.05-0.15 pF est; pad C: parallel plate over In1 (1.40 x 3.35 mm, 0.2104 mm, er 4.5)"},
     "r0805": {"est": true, "esl_nH": 1.0, "cp_pF": 0.07},
     "header_pin_pF_est": 0.5,
-    "shunt_nH_est": 3.0,
-    "tp4_pF_est": 0.5
+    "shunt_nH_est": 3.0
   },
 
   "bnc": {"est": true, "z0": 50.0, "td_ns": 0.1, "launch_pF": 0.75, "note": "KH-BNC50-3511: 50 ohm (JLC listing); internal length 15-25 mm and launch C 0.5-1 pF est"},

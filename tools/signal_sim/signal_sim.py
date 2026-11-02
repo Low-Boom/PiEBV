@@ -397,7 +397,6 @@ class Model:
         add_input(c, "U19.2", DRVC["ci_pF"], False)
         add_input(c, "U7.2", GATES["SN74AHCT1G08"]["ci_pF"], True)
         add_input(c, "U8.2", GATES["SN74AHCT1G08"]["ci_pF"], True)
-        c.C(node("TP4.1"), BP["tp4_pF_est"])
         nodes = ["J14.15", "J14.16", "J14.17", "U5.2", "U19.2", "U7.2", "U8.2", "J10.2"]
         if optd:
             add_gpio(c, "gp14", "J14.19", drive, slew, strength)

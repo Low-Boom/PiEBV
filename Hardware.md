@@ -80,7 +80,7 @@ boards.
 | Power | **USB-C PD input (J17, 15 V)** for the laser driver and the whole board; the Pico's own USB still powers the logic when J17 is unplugged |
 | Rails | **1.8 V** (camera signals) · 3.3 V (Pico, R24 pull-up) · 5 V (logic, Pico VSYS) · **12 V** (11.8 V, output drivers U13 and U19, from J17 only) |
 | Design rules | 0.2 mm clearance, 0.2 mm track, 0.6/0.3 mm via, 0.5 mm copper-to-edge |
-| Parts | 85 placed parts, plus 4 unplated mounting holes |
+| Parts | 84 placed parts, plus 4 unplated mounting holes |
 
 **Layers**
 
@@ -599,19 +599,22 @@ J10's silkscreen reads **`CH1 / TRG / MKR`** (pins 1/2/3).
   with J11 on 2-3, for camera-only work).
 - **Never fit a shunt across all three pins:** that ties GP13 (through R19) to GP11.
 
-J10.1 reaches `_PULSE_OUT_CH1` through **R19 (100 Ω)**; like TP4 it idles LOW while DISARMED. R19
+J10.1 reaches `_PULSE_OUT_CH1` through **R19 (100 Ω)**; it idles LOW while DISARMED. R19
 is there for the laser timing. Without it, the 1-2 shunt would hang the whole `PWM_TRIG_TAP` net
 (U5, R9, U19 and ~59 mm of trace) directly on the CH1 GPIO. The transmission-line simulation
 in `tools/signal_sim` (the ~59 mm net, typical corner, 4 mA GPIO) puts CH1 behind CH2 at U7/U8 by:
 
 | J10 | With R19 (100 Ω) | Without R19 |
 |---|---|---|
-| 2-3 or open | 0.09 / 0.10 ns (rise / fall), up to 0.37 ns | 0.11 / 0.12 ns, up to 0.35 ns |
-| 1-2 | 0.24 / 0.27 ns, up to 1.4 ns at the GPIO and threshold corners | 0.53 / 0.68 ns, up to 1.9 ns |
+| 2-3 or open | 0.22 / 0.25 ns (rise / fall), up to 0.68 ns | 0.25 / 0.27 ns, up to 0.66 ns |
+| 1-2 | 0.38 / 0.42 ns, up to 1.7 ns at the GPIO and threshold corners | 0.67 / 0.82 ns, up to 2.2 ns |
+
+CH1 is later because the J10/R19 branch loads `_PULSE_OUT_CH1` and `_PULSE_OUT_CH2` has no matching
+load.
 
 So with J10 on 1-2 the laser delay error depends on the jumper even with R19. R19 cuts it by about
-55–60 % at the typical corner and by about 25 % at the worst corner. With J10 on 1-2, at J7/J8 it
-is 0.22–0.37 ns with R19 and 0.49–1.43 ns without, before U13's own channel matching (1 ns typical,
+45–50 % at the typical corner and by about 20 % at the worst corner. With J10 on 1-2, at J7/J8 it
+is 0.35–0.54 ns with R19 and 0.61–1.60 ns without, before U13's own channel matching (1 ns typical,
 2 ns maximum), which is larger. R19 costs the camera trigger and
 J12 0.7–1.4 ns of edge, which doesn't matter there. Keep R19.
 
@@ -911,16 +914,15 @@ USB port.
 | J19 | 1×3 vertical, Laser 2 output mode (mirrored: pin 1 at the bottom) | 1 `CH2_DRIVE` · 2 `CH2_OUT` (J8) · 3 `CH2_TERM` → R28 |
 | J21 | 1×3 vertical, External Sync Out mode (pin 1 at the top) | 1 `EXT_SYNC_DRIVE` · 2 `EXT_SYNC_OUT` (J12) · 3 `EXT_SYNC_TERM` → R32 |
 | TP3 | 1×2 right-angle, top edge | 1 `PWM_1MHz` · 2 GND |
-| TP4 | 1×2 vertical | 1 `_PULSE_OUT_CH2` · 2 GND |
 | J20 | 1×2 vertical, clock jumper, left of J14 (pin 1 at the bottom) | 1 `CLK_SEL_JMP` (R29 1 kΩ to GP10) · 2 GND. Shunt = 300 MHz, open = 150 MHz ([clock jumper](#clock-jumper-j20-300-mhz-overclock)) |
 
 The camera trigger leaves the board on J12, and J11 is the only user interlock. TP3 sits on the top edge
 left of the Pico, with its pins 2.1 mm over the edge.
 
-**TP3 and TP4** are scope points with their own ground pin. TP4 (like J10.1) idles LOW while the
-firmware is DISARMED, and is labelled `CH2` / `GND` / `SCOPE ONLY`. J10 stands about 9 mm east of
-TP4, so the two headers can't be mistaken for one row, and carries
+**TP3** is a scope point with its own ground pin. J10 carries
 `CAMERA TRIGGER: TRG-MKR = MARKER / TRG-CH1 = LASER 1` to the right of its `CH1 TRG MKR` pin labels.
+There is no CH2 monitor header: probe the Laser 2 pulse from the Pico at R18 pin 1
+(`_PULSE_OUT_CH2`; R18 is the 10 kΩ pull-down), or the output itself at J8.
 
 The 1 MHz tap (TP3.1) feeds U1, which runs from the 1.8 V rail: an external signal there needs
 **VIH ≥ 1.17 V, VIL ≤ 0.63 V**, and the input is 5.5 V-tolerant. But the tap is normally driven by

@@ -11,7 +11,7 @@ order.
 |---|---|
 | PCB | `../PiDG_Pico_Gerbers.zip` |
 | BOM (parts list) | `PiDG_Pico_JLC_BOM.csv`: 41 lines, every one with an LCSC part number |
-| CPL (placement file) | `PiDG_Pico_JLC_CPL.csv`: all 85 placed parts; rotations and centres corrected to JLC's own footprints by `tools/jlc_cpl` |
+| CPL (placement file) | `PiDG_Pico_JLC_CPL.csv`: all 84 placed parts; rotations and centres corrected to JLC's own footprints by `tools/jlc_cpl` |
 
 ## PCB options
 
