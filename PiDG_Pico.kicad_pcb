@@ -20109,10 +20109,10 @@
 			)
 		)
 	)
-	(gr_text "EXT SYNC OUT"
-		(at 230.1 123.905 0)
+	(gr_text "J12-TRIG OFFSET (MEASURED)"
+		(at 235.5 132.6 0)
 		(layer "F.SilkS")
-		(uuid "39ba7d6d-f750-456a-9125-78fc6d8ee381")
+		(uuid "1e95d75e-c5ee-456c-a9bf-0dbbb69f9cb6")
 		(effects
 			(font
 				(size 1 0.8)
@@ -20120,10 +20120,10 @@
 			)
 		)
 	)
-	(gr_text "J12-TRIG OFFSET (MEASURED)"
-		(at 235.5 132.6 0)
+	(gr_text "EXT SYNC OUT"
+		(at 247.24 111.53 0)
 		(layer "F.SilkS")
-		(uuid "1e95d75e-c5ee-456c-a9bf-0dbbb69f9cb6")
+		(uuid "39ba7d6d-f750-456a-9125-78fc6d8ee381")
 		(effects
 			(font
 				(size 1 0.8)
@@ -20252,7 +20252,7 @@
 		)
 	)
 	(gr_text "LASER 1 OUT"
-		(at 230.05 83.9 0)
+		(at 247.24 72.03 0)
 		(layer "F.SilkS")
 		(uuid "11ef2e73-7bc0-4779-905d-48f971ca8fcc")
 		(effects
@@ -20263,7 +20263,7 @@
 		)
 	)
 	(gr_text "LASER 2 OUT"
-		(at 230.05 97.074999 0)
+		(at 247.24 91.53 0)
 		(layer "F.SilkS")
 		(uuid "98ef0cac-2b6e-4a87-b96c-8fe9801ffa55")
 		(effects
