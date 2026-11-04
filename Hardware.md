@@ -75,7 +75,7 @@ boards.
 
 | | |
 |---|---|
-| Board | 126 × 126 mm, 4 copper layers, 1.6 mm FR4 |
+| Board | 160 × 100 mm (EuroCard), 4 copper layers, 1.6 mm FR4 |
 | Processor | Raspberry Pi Pico 2 W, in sockets (not soldered) |
 | Power | **USB-C PD input (J17, 15 V)** for the laser driver and the whole board; the Pico's own USB still powers the logic when J17 is unplugged |
 | Rails | **1.8 V** (camera signals) · 3.3 V (Pico, R24 pull-up) · 5 V (logic, Pico VSYS) · **12 V** (11.8 V, output drivers U13 and U19, from J17 only) |
@@ -91,8 +91,9 @@ boards.
 | In2.Cu | solid +5 V plane |
 | B.Cu (bottom) | signals + ground fill |
 
-The 1.8 V camera rail has no plane: it runs as a 0.5 mm top-layer trunk. The 3.3 V rail is a single
-top-layer run from J15 to R24.
+In1.Cu and In2.Cu carry no tracks. The 1.8 V camera rail has no plane: it runs as 0.5 mm track,
+59.7 mm on F.Cu and 65.7 mm on B.Cu, with 5 vias. The 3.3 V rail is a 0.5 mm F.Cu run of 49.3 mm
+from J15 to R24.
 
 **Stackup** (symmetric 1.6 mm, matching JLCPCB's standard 4-layer `JLC04161H-7628`):
 
@@ -119,29 +120,75 @@ solders with either leaded or lead-free solder.
 The finest pitches are U16 (SC-70-6) and U17 (LT3065, MSOP-12 with an exposed pad), both 0.65 mm.
 J17 is a 6-pin power-only USB-C receptacle: pads 0.7–0.9 mm wide with gaps of 0.3 mm or more. There
 is no BGA and no leadless part: every IC has gull-wing leads, so the board can also be assembled by
-hand. Only the exposed pads of U14 and U17 need hot air (or a hot plate): their GND vias are tented
+hand. Only the exposed pads of U14 and U17 need hot air or a hot plate (see
+[Hot-plate assembly](#hot-plate-assembly)): their GND vias are tented
 like all the others, so solder cannot be fed through them from the back. The HASL surface is
 uneven enough that J17 is worth inspecting for solder bridges
 (see [first-board check 5](#first-board-checks)). Most passives and SOT-23s use `_HandSolder`
 footprints (U16, U17, L1 and U14's exposed pad are the exceptions).
 
-**Board size:** the gerber job file reports 126.1 × 126.1 mm because the outline's extents include
-its 0.1 mm line width. The fabricated board is **126.0 × 126.0 mm**.
+**Board size:** the gerber job file reports 160.1 × 100.1 mm because the outline's extents include
+its 0.1 mm line width. The fabricated board is **160.0 × 100.0 mm**, a EuroCard. (Before the
+EuroCard re-layout it was 126 × 126 mm, with the same stackup, design rules, parts, footprints and
+netlist.)
+
+### EuroCard mechanics
+
+Positions are as seen from the top side, with the board landscape (160 mm wide, 100 mm tall).
+
+- **Long edges (160 mm):** no parts within 2.5 mm, the card-guide border of IEC 60297-3. This
+  also suits extruded enclosures whose slots take the 160 mm edges, such as the Hammond
+  1455N1601. Zone copper still goes to 0.5 mm from these edges, under solder mask.
+- **All external connectors are on the two short (100 mm) edges:**
+  - left edge: the Pico 2 W's micro-USB (`CONTROL / PROGRAM`), and TP3 (1 MHz scope header,
+    right-angle) below the Pico, with its pins out of the left edge;
+  - right edge: the BNCs J7 (Laser 1), J8 (Laser 2) and J12 (External Sync Out), top to bottom,
+    and below them J17 (USB-C PD power input), face flush with the edge.
+- **Camera headers J1–J6:** one row along the bottom of the board, 12 mm pitch, vertical 2×5 IDC
+  with the ribbons going up. They are not on an edge.
+- **MH1–MH4:** M3, unplated. MH1, MH3 and MH4 are in the corners, 4 mm in from both edges. MH2 is
+  4 mm from the top edge but 22 mm from the right edge, so an M3 washer (7 mm) clears the J7 BNC
+  body; in the corner it would touch it.
+
+### Routing
+
+- **Tracks on F.Cu and B.Cu only.** In1.Cu (GND) and In2.Cu (+5 V) are solid planes. The board was
+  autorouted with KiCadRoutingTools (github.com/drandyhaas/KiCadRoutingTools, commit 8759686,
+  v0.23.8): 0.3 mm signals, 0.5 mm power, 0.6 mm buck switch node, 0.2 mm USB-C CC lines, 0.2 mm
+  clearance.
+- **Carried copper.** The hand-routed copper of the laser and External Sync Out output block (nets
+  `CH1/2_GATED`, `CH1/2_DRIVE_RAW`, `CH1/2_DRIVE`, `CH1/2_OUT`, `CH1/2_TERM`,
+  `EXT_SYNC_DRIVE_RAW`, `EXT_SYNC_DRIVE`, `EXT_SYNC_OUT` and `EXT_SYNC_TERM`, with their GND vias) and the exposed-pad thermal vias of U14 and U17 were kept unchanged.
+- **Laser pulse lanes, equal length.** A script drew `_PULSE_OUT_CH1` and `_PULSE_OUT_CH2`
+  (0.3 mm, F.Cu) before routing and locked them. From the GPIO pin to U13's input, both channels are
+  **70.04 mm** (CH1: 59.63 mm to U7, then 10.41 mm; CH2: 60.37 mm to U8, then 9.67 mm). On the
+  126 mm board they were 86.32 and 81.74 mm, 4.6 mm apart. The two lanes are at least 2.24 mm
+  apart, at least 22.4 mm from `PWM_1MHz` and `SYNC_N`, and at least 0.52 mm from any other net
+  (5 mm of run within 1 mm).
+- **Camera lines, length-matched** (buffer pin to header pin): `Sync1..6` 100.0–102.3 mm (spread
+  2.2 mm, about 15 ps), `Trigger1..6` 56.9–58.7 mm (spread 1.8 mm), `TDRSTN1..6` 63.7–64.3 mm
+  (spread 0.6 mm). On the 126 mm board they were not matched (Sync 28–71 mm, Trigger 21–56 mm,
+  TDRSTN 20–41 mm). Sync and Trigger lines are at least 0.41 mm apart (0.7 mm of run within
+  0.5 mm).
+- **Plane taps.** Every SMD GND and +5V pad has its own short tap track to a via into In1 or In2.
+  +5V has only 12.6 mm of surface copper; the In2 plane carries it.
+- **Totals:** 1794 track segments, 2812 mm of track (F.Cu 1865 mm, B.Cu 946 mm), 171 vias.
 
 ---
 
 ## Socket pin mapping — read this first
 
-The Pico plugs into two 1×20 sockets, **J14** (left row) and **J15** (right row), 17.78 mm apart.
-The two rows do **not** number in the same direction:
+The Pico plugs into two 1×20 sockets, **J15** (top row) and **J14** (bottom row), 17.78 mm apart.
+The sockets are horizontal, top-left on the board, with the module's USB end at the left edge and
+pad 1 of both sockets at the left. The two rows do **not** number in the same direction:
 
 ```
 J14 pad n  =  Pico pin n          (pads 1..20 -> pins 1..20)
 J15 pad m  =  Pico pin (41 - m)   (pads 1..20 -> pins 40..21)
 ```
 
-The Pico numbers its pins like a chip: down the left row from 1 to 20, then back **up** the right
-row from 21 to 40, so pin 40 (VBUS) sits opposite pin 1. Both socket footprints on the board number
+The Pico numbers its pins like a chip: along one row from 1 to 20 (from the USB end), then **back**
+along the other row from 21 to 40, so pin 40 (VBUS) sits opposite pin 1. Both socket footprints on the board number
 their pads 1 → 20 in the same direction, so the reversal lands entirely on J15.
 
 **Sanity check for any change here:** the Pico's ground pins pair up to a constant sum (3↔38, 8↔33,
@@ -172,10 +219,10 @@ wrong.
 All eight module grounds are connected. Every other socket pad is unconnected and, once the module
 is seated, out of reach. There is no GPIO breakout header.
 
-**Keep-out:** the module body covers roughly x 158–180, y 31–82 in board coordinates, with its
-micro-USB at the top board edge (the sockets start at y = 32.385, so the port can be reached through
-an enclosure wall). Nothing may be placed there. The silkscreen labels the two top-edge ports
-`CONTROL / PROGRAM — PICO MICRO-USB` and `POWER ONLY — USB-C PD 15 V` (J17).
+**Keep-out:** the module body lies over the two sockets, top-left on the board, with its micro-USB
+at the left board edge, so the port can be reached through an enclosure wall. Nothing may be placed
+there. The silkscreen labels the Pico port `CONTROL / PROGRAM — PICO MICRO-USB` (above the Pico,
+near the left edge) and J17 `POWER ONLY — USB-C PD 15 V` (right edge).
 
 ---
 
@@ -350,10 +397,10 @@ the chance per reset is at most the duty.
 
 ### Clock jumper (J20): 300 MHz overclock
 
-**J20** is a vertical 2-pin header 7.6 mm left of the Pico socket J14, level with Pico pins 13–14
-(silkscreen `CLOCK JUMPER`, `OPEN = 150 MHz`, `FIT = 300 MHz (OVERCLOCK)`). Pin 1 (square pad,
-the lower pin, level with Pico pin 14) is `CLK_SEL_JMP`, which reaches `CLK_SEL` = GP10 (J14 pad 14)
-through **R29 (1 kΩ)**; pin 2 is GND.
+**J20** is a vertical 2-pin header right of the Pico's GPIO end, below the J14 row, with R29 just
+right of it (silkscreen `CLOCK JUMPER`, `OPEN = 150 MHz`, `FIT = 300 MHz (OVERCLOCK)`). Pin 1
+(square pad) is `CLK_SEL_JMP`, which reaches `CLK_SEL` = GP10 (J14 pad 14) through
+**R29 (1 kΩ)**; pin 2 is GND.
 
 - **R29 protects GP10.** Firmware older than the clock jumper (before commit 5dfedd5) drove GP10
   push-pull as the SYNC output, and any other program may drive it too. With the shunt fitted, R29
@@ -578,9 +625,9 @@ dedicated gate per camera.
 
 **Sync (1 MHz)**
 `GP15` (clk_gpout1) → U1.2 (74LVC1G04) → `SYNC_N` → U2 ×6 (SN74LVC04AD hex) → `Sync1..6` → J1–J6 pin 5
-(TP3 taps `PWM_1MHz`). On the board, `PWM_1MHz` leaves J14 pad 20 on F.Cu and drops through a via to the
-B.Cu trunk at x = 155 mm, away from the CH1/CH2 traces (B.Cu, x = 158.5 and 162 mm): no other signal runs
-within 2 mm of the new section, and `PIXRST_GATE` (GP16) is 17 mm away.
+(TP3 taps `PWM_1MHz`). On the board, `PWM_1MHz` is 86.7 mm of 0.5 mm track, nearly all on B.Cu,
+with 1 via. `PWM_1MHz` and `SYNC_N` stay at least 22.4 mm from the laser pulse lanes, and
+`PWM_1MHz` stays at least 2.16 mm from every signal that is not a 1 MHz signal.
 
 **Trigger**
 `GP11` → J10.3 → *[J10 jumper]* → `PWM_TRIG_TAP` → U5.2 → `TRIG_N` → U6 ×6 → `Trigger1..6` →
@@ -601,8 +648,10 @@ J10's silkscreen reads **`CH1 / TRG / MKR`** (pins 1/2/3).
 
 J10.1 reaches `_PULSE_OUT_CH1` through **R19 (100 Ω)**; it idles LOW while DISARMED. R19
 is there for the laser timing. Without it, the 1-2 shunt would hang the whole `PWM_TRIG_TAP` net
-(U5, R9, U19 and ~59 mm of trace) directly on the CH1 GPIO. The transmission-line simulation
-in `tools/signal_sim` (the ~59 mm net, typical corner, 4 mA GPIO) puts CH1 behind CH2 at U7/U8 by:
+(U5, R9, U19 and 62.7 mm of trace) directly on the CH1 GPIO. The transmission-line simulation
+in `tools/signal_sim` (typical corner, 4 mA GPIO) puts CH1 behind CH2 at U7/U8 by the values below.
+These values come from the 126 mm layout (a ~59 mm net, unequal laser pulse lanes); re-run
+`tools/signal_sim` on the EuroCard board before you rely on the exact ns figures.
 
 | J10 | With R19 (100 Ω) | Without R19 |
 |---|---|---|
@@ -619,7 +668,7 @@ is 0.35–0.54 ns with R19 and 0.61–1.60 ns without, before U13's own channel 
 J12 0.7–1.4 ns of edge, which doesn't matter there. Keep R19.
 
 **With no shunt fitted, R9 (10 k) pulls `PWM_TRIG_TAP` low,** so all six camera triggers and J12
-idle low instead of following a floating input on ~59 mm of trace. 10 k, rather than a weaker
+idle low instead of following a floating input on 62.7 mm of trace. 10 k, rather than a weaker
 pull-down, holds U5's 1.8 V input at ≤ 0.05 V even at worst-case input leakage, and loads the
 selected GPIO by only 330 µA.
 
@@ -689,7 +738,8 @@ first board ([first-board check 1](#first-board-checks)); TI only guarantees an 
 into 1.8 nF at the minimum pulse. With the clock jumper (300 MHz) the shortest WIDTH, 10 ns, is
 below the maximum of either die (15 / 25 ns), so it can be lost or shortened; use WIDTH ≥ 20 ns (≥ 30 ns for an older die) at the outputs. The same
 applies to MARKERWIDTH at J12, through U19. The budget assumes a 50 Ω termination at the
-driver; a load 1 % high adds ~0.6 %. The trace drop from U17 to U13 is a few mV. With 1 % divider
+driver; a load 1 % high adds ~0.6 %. The trace drop from U17 to U13 was a few mV on the 126 mm
+layout (not re-calculated for the EuroCard routing). With 1 % divider
 resistors the corners would sit only ~0.7 % inside the window, which is why R12/R13 are 0.1 %.
 
 #### Output mode
@@ -735,7 +785,11 @@ CHn_DRIVE ──┬── R25/R26 47 Ω 2 W ──┬── CHn_OUT ── BNC c
   the line between the J7 and J8 centre pins. R6 and R7 are not symmetric about that line, so CH1's
   trace from R6 takes larger 45° corners to make up the difference: U13 to the 47 Ω resistor is
   19.593 mm on both channels, and so is every path on to the BNCs, in both modes. The silkscreen
-  reads `LASER n OUT`, with `50Ω` and `HiZ` beside the pin pairs.
+  reads `LASER n OUT`, with `50Ω` and `HiZ` beside the pin pairs. In the EuroCard re-layout the
+  whole output block (U7, U8, U13, J7, J8, J12, U19, J18, J19, J21 and their resistors and
+  capacitors) moved as one rigid block (moved, not turned), with its hand-routed copper unchanged,
+  so these lengths are unchanged (U13 output to 47 Ω resistor 19.59 mm, 47 Ω resistor to BNC
+  11.90 mm, on both channels).
 
 > **Match the output mode to the load.** In 50 Ω mode an open-circuit or high-impedance load sees
 > ~12 V; use Hi-Z mode for those.
@@ -773,7 +827,9 @@ trigger lines are high, and low while `PWM_TRIG_TAP` is low, including with no s
 - **Timing: measure the offset to the cameras on each board.** J12 follows GP11 through U19, and
   the camera trigger lines through U5 and U6, so the two are offset by a fixed delay that the
   datasheets don't pin down. From the GP11 edge, simulated in `tools/signal_sim` (4 mA default
-  drive, J10 on 2-3, J21 on 1-2, J12 into 50 Ω; min / typ / max over the datasheet corners):
+  drive, J10 on 2-3, J21 on 1-2, J12 into 50 Ω; min / typ / max over the datasheet corners). These
+  values come from the 126 mm layout; re-run `tools/signal_sim` on the EuroCard board before you
+  rely on the exact ns figures:
 
   | Path | Rising edge | Falling edge |
   |---|---|---|
@@ -792,16 +848,19 @@ trigger lines are high, and low while `PWM_TRIG_TAP` is low, including with no s
   it holds to about 0.5 ns, plus 1–2 ns over temperature (estimates). It depends on the jumpers:
   J10 on 1-2 adds about +0.75 ns (rising edge; −0.13 ns falling), and J21 in Hi-Z mode about
   +0.65 ns, so measure each
-  setting you use. The six trigger lines differ by up to 0.3 ns from their routing.
+  setting you use. On the 126 mm layout the six trigger lines differed by up to 0.3 ns from their
+  routing; on the EuroCard board they are length-matched to 56.9–58.7 mm (spread 1.8 mm).
 
 - **Duty and loads.** J12 is high at most 50 % of the time, the firmware's MARKERWIDTH limit (67 %
   with J10 on 1-2 and `COMBINE 1`; see [Board output rating](#board-output-rating)); don't short it. One load per output, no BNC tee,
   as for the laser outputs.
 - **Layout.** J21, R31 and R32 copy the Laser 1 block 40 mm lower, on J12's centre-pin row, and
-  U19, C21, C22 and R30 copy U13's layout. U19 takes +12V on a B.Cu run from U13's feed and
-  `LASER_PWR_OK` on a B.Cu run from U13 pin 8. The silkscreen reads `EXT SYNC OUT`, with `50Ω` and
-  `HiZ` beside J21. Below J12, the `J12-TRIG OFFSET (MEASURED)` field (boxes for RISE and FALL in ns,
-  and the J10/J21 setting) takes the hand-written result of [first-board check 4](#first-board-checks).
+  U19, C21, C22 and R30 copy U13's layout. These parts are in the rigid output block (see the
+  laser [Output mode](#output-mode) layout). The +12V and `LASER_PWR_OK` runs to U19 are autorouted
+  (`LASER_PWR_OK` is 79.7 mm of track). The silkscreen reads `EXT SYNC OUT`, with `50Ω` and
+  `HiZ` beside J21. The `J12-TRIG OFFSET (MEASURED)` field (boxes for RISE and FALL in ns, and the
+  J10/J21 setting) is in the left area of the board, below TP3 (no longer below J12). It takes the
+  hand-written result of [first-board check 4](#first-board-checks).
 
 ---
 
@@ -899,8 +958,8 @@ J7/J8/J12 drive a 50 Ω or a high-impedance load, set per channel by J18/J19/J21
 
 ### J17: USB-C power input
 
-HRO TYPE-C-31-M-17, a 6-pin power-only receptacle, on the top edge with its face flush with the
-board edge: VBUS, CC1/CC2 to U14, GND and shell to GND. It has no D+/D−/SBU contacts. Use a USB-PD charger that offers
+HRO TYPE-C-31-M-17, a 6-pin power-only receptacle, on the right edge below the BNCs, with its face
+flush with the board edge: VBUS, CC1/CC2 to U14, GND and shell to GND. It has no D+/D−/SBU contacts. Use a USB-PD charger that offers
 15 V, in practice any PD charger rated 30 W or more. Programming and serial go through the Pico's own
 USB port.
 
@@ -913,11 +972,11 @@ USB port.
 | J18 | 1×3 vertical, Laser 1 output mode (pin 1 at the top) | 1 `CH1_DRIVE` · 2 `CH1_OUT` (J7) · 3 `CH1_TERM` → R27 |
 | J19 | 1×3 vertical, Laser 2 output mode (mirrored: pin 1 at the bottom) | 1 `CH2_DRIVE` · 2 `CH2_OUT` (J8) · 3 `CH2_TERM` → R28 |
 | J21 | 1×3 vertical, External Sync Out mode (pin 1 at the top) | 1 `EXT_SYNC_DRIVE` · 2 `EXT_SYNC_OUT` (J12) · 3 `EXT_SYNC_TERM` → R32 |
-| TP3 | 1×2 right-angle, top edge | 1 `PWM_1MHz` · 2 GND |
-| J20 | 1×2 vertical, clock jumper, left of J14 (pin 1 at the bottom) | 1 `CLK_SEL_JMP` (R29 1 kΩ to GP10) · 2 GND. Shunt = 300 MHz, open = 150 MHz ([clock jumper](#clock-jumper-j20-300-mhz-overclock)) |
+| TP3 | 1×2 right-angle, left edge below the Pico | 1 `PWM_1MHz` · 2 GND |
+| J20 | 1×2 vertical, clock jumper, right of the Pico's GPIO end, below the J14 row | 1 `CLK_SEL_JMP` (R29 1 kΩ to GP10) · 2 GND. Shunt = 300 MHz, open = 150 MHz ([clock jumper](#clock-jumper-j20-300-mhz-overclock)) |
 
-The camera trigger leaves the board on J12, and J11 is the only user interlock. TP3 sits on the top edge
-left of the Pico, with its pins 2.1 mm over the edge.
+The camera trigger leaves the board on J12, and J11 is the only user interlock. TP3 sits on the left
+edge below the Pico, with its pins over the edge.
 
 **TP3** is a scope point with its own ground pin. J10 carries
 `CAMERA TRIGGER: TRG-MKR = MARKER / TRG-CH1 = LASER 1` to the right of its `CH1 TRG MKR` pin labels.
@@ -930,7 +989,9 @@ a Pico GPIO, so an external source would fight it. Treat it as a monitor point.
 
 ### MH1–MH4
 
-M3, unplated, mechanical only.
+M3, unplated, mechanical only, each with a 3 mm-radius copper keep-out. MH1, MH3 and MH4 are in the
+corners, 4 mm in from both edges. MH2 is 4 mm from the top edge but 22 mm from the right edge, so an
+M3 washer (7 mm) clears the J7 BNC body.
 
 ---
 
@@ -971,8 +1032,8 @@ Ordered by what would bite hardest.
 4. **External Sync Out (J12).** With J17 on the charger, J10 on 2-3 and J21 on 1-2, scope J12
    through a **50 Ω-terminated** input: 0 V to 4.54–5.14 V, one pulse of MARKERWIDTH with every CH1
    period, also while DISARMED, and rising with the camera trigger lines. **Measure the J12-to-camera
-   offset** and write it in the `J12-TRIG OFFSET (MEASURED)` field on the silkscreen below J12
-   (RISE, FALL, and the J10/J21 setting it applies to): J12 through the 50 Ω-terminated input, Trigger1 at J1 pin 4
+   offset** and write it in the `J12-TRIG OFFSET (MEASURED)` field on the silkscreen in the left area,
+   below TP3 (RISE, FALL, and the J10/J21 setting it applies to): J12 through the 50 Ω-terminated input, Trigger1 at J1 pin 4
    with a 10× probe and a short ground spring, both edges, at the 50 % points (J12 ~2.4 V, Trigger1
    0.9 V). Deskew the two scope channels first, and subtract the delay of J12's cable (RG-58
    ~5.05 ns/m). Repeat for each J10/J21 setting you use. Expect −9 to +27 ns, typically about
@@ -1017,13 +1078,19 @@ antenna keep-out is needed.
   Order *Impedance control: No*.
 - **Copper keep-outs:** zone copper stays 0.5 mm from the board edge on all four layers, and a
   3 mm-radius keep-out keeps all copper (including the In2 +5 V plane) away from each M3 hole, so a
-  metal screw or standoff can't touch a plane in the hole wall.
-- **Ground stitching:** 47 stitching vias along the board edges and in the south-east quadrant,
-  plus local vias at the decoupling capacitors and IC ground pins.
+  metal screw or standoff can't touch a plane in the hole wall. No parts are within 2.5 mm of the
+  two 160 mm edges (card-guide border; see [EuroCard mechanics](#eurocard-mechanics)); zone copper
+  there still goes to 0.5 mm from the edge, under solder mask.
+- **Ground stitching:** 43 edge-fence vias at 10 mm pitch, 1.5 mm in from the outline, and 24 area
+  stitching vias on a 15 mm grid, plus a tap via at every SMD GND and +5V pad. The board has 171
+  vias in total (GND 119, +5V 12, signals and other power 40).
 - **Silkscreen** shows the Pico outline, the `CONTROL / PROGRAM` and `POWER ONLY` port labels, and a
   pin-1 mark (a module fitted the other way round would put the board's +5 V on one of its GPIO
-  pins). J10, J11, J18, J19, J20 and J21 are labelled as described above. All board text is at least
-  1.0 mm high.
+  pins). J10, J11, J18, J19, J20 and J21 are labelled as described above. The
+  `J12-TRIG OFFSET (MEASURED)` write-in field is in the left area, below TP3. The hot-plate area is
+  marked by ticks at both ends on both long edges and by the text `<- THROUGH-HOLE ONLY` /
+  `ALL SMD PARTS: 100 mm HOT-PLATE AREA ->` along the bottom edge (see
+  [Hot-plate assembly](#hot-plate-assembly)). All board text is at least 1.0 mm high.
 
 **JLCPCB order:** the board is set up for full assembly by JLCPCB, with every SMD and
 through-hole part fitted, so nothing needs soldering on delivery. `fab/jlc/JLC_ORDER.md` is the
@@ -1031,8 +1098,30 @@ checklist: order-form settings, remarks to paste, rotations to
 check in the placement preview, the cost estimate, what to do on delivery (plug in a Pico 2 WH,
 flash the firmware, fit J10, wire the E-stop to J11), and enclosure notes. The JLC BOM carries an
 LCSC number on every line; through-hole parts sit in the placement file at their pad centre,
-because their footprint origins are on pin 1. The back silkscreen carries JLC's `JLCJLCJLCJLC`
-order-number placeholder.
+because their footprint origins are on pin 1. The placement file was regenerated for the EuroCard
+layout: each part's JLC rotation and centre correction was carried to its new position, so check
+JLC's placement preview as before. The BOM did not change. The back silkscreen carries JLC's
+`JLCJLCJLCJLC` order-number placeholder.
+
+### Hot-plate assembly
+
+The layout also lets you assemble the board by hand with a hot plate.
+
+- **All SMD parts are on the top side, inside one 100 mm wide area,** so you can reflow the SMD
+  side on a common 100 × 100 mm hot plate (e.g. Uyue 946-1010). The 60 mm strip on the left holds
+  only through-hole parts (the Pico sockets J14/J15, TP3 and J20) and the J12 offset write-in field.
+  Silkscreen ticks on both long edges mark the two ends of the area, and the text
+  `<- THROUGH-HOLE ONLY` / `ALL SMD PARTS: 100 mm HOT-PLATE AREA ->` runs along the bottom edge.
+- **Order:** apply paste and place all SMD parts, reflow on the plate, then hand-solder every
+  through-hole part (sockets, headers, BNCs and J17's shell legs) with an iron. There are no parts on
+  the bottom side, so the board lies flat on the plate. The exposed pads of U14 and U17 reflow on the
+  plate; this flow needs no hot air.
+- **Spacing for tweezers:** every pair of parts is at least 0.5 mm apart, courtyard to courtyard
+  (pads at least 1 mm apart). Five pairs in the carried output block stay as designed: U13–C9 and
+  U19–C21 (0.03 mm, the VDD bypass capacitors right at the pins), and J18–R27, J19–R28 and J21–R32
+  (0.23 mm). The parts around U17/U18, U15/L1, U14 and U9 are spread out around their ICs.
+- **Thermal relief** on every plane-connected pad (0.5 mm gap, 0.5 mm spokes), so you can
+  hand-solder the through-hole GND pins.
 
 ---
 

@@ -33,3 +33,7 @@ erc.json
 *_drc_violations.json
 # KiCad per-user view settings (layer visibility, open files)
 *.kicad_prl
+# EuroCard re-layout (tools/eurocard): router clone, its Python venv, run files
+tools/eurocard/KiCadRoutingTools/
+tools/eurocard/.venv/
+tools/eurocard/work/

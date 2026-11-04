@@ -11,13 +11,13 @@ order.
 |---|---|
 | PCB | `../PiDG_Pico_Gerbers.zip` |
 | BOM (parts list) | `PiDG_Pico_JLC_BOM.csv`: 41 lines, every one with an LCSC part number |
-| CPL (placement file) | `PiDG_Pico_JLC_CPL.csv`: all 84 placed parts; rotations and centres corrected to JLC's own footprints by `tools/jlc_cpl` |
+| CPL (placement file) | `PiDG_Pico_JLC_CPL.csv`: all 84 placed parts; rotations and centres corrected to JLC's own footprints by `tools/jlc_cpl`. Regenerated for the EuroCard layout by carrying each part's JLC rotation and centre correction to its new position. |
 
 ## PCB options
 
 | Option | Setting |
 |---|---|
-| Layers / size / qty | 4 layers, 126 × 126 mm (read from the gerbers), 5 pcs |
+| Layers / size / qty | 4 layers, 160 × 100 mm EuroCard (read from the gerbers; the job file reports 160.1 × 100.1 mm because of the 0.1 mm outline line), 5 pcs |
 | Thickness / material | 1.6 mm, FR-4 standard |
 | Stackup | JLC04161H-7628 (the design's documented stackup; "no requirement" is also fine) |
 | Impedance control | No |
@@ -39,8 +39,8 @@ order.
 
 **Paste into the order remarks:**
 
-> J17 (USB-C) is flush with the top board edge by design. J7, J8, J12 (BNC, KH-BNC50-3511 50 ohm
-> only, do not substitute KH-BNC75-3511) overhang the right edge by about 21 mm, and TP3 (right-angle header) overhangs the top edge, all by design — please
+> J17 (USB-C) is flush with the right board edge, below the BNCs, by design. J7, J8, J12 (BNC, KH-BNC50-3511 50 ohm
+> only, do not substitute KH-BNC75-3511) overhang the right edge by about 21 mm, and TP3 (right-angle header) overhangs the left edge, all by design — please
 > hand-solder these, no wave fixture. J14/J15 are sockets for a plug-in module: seat them flat and
 > perpendicular. Do not substitute U3 (74LVC1G00), U9, U13/U19,
 > U14 (CH224A only, not CH224K), U15, U17 (adjustable LT3065 only), U18,
@@ -76,35 +76,36 @@ extended (about $3 loading fee each in Economic).
 ## Placement preview — check before approving
 
 The CPL rotations and centres are already corrected to JLC's own LCSC footprints (`tools/jlc_cpl`,
-see its README; re-run it after any layout change). Still check these in the preview against the
+see its README; re-run it after any layout change). For the EuroCard layout the CPL was regenerated
+by carrying each part's correction to its new position. Still check these in the preview against the
 board's pin-1 marks before approving:
 
 - SOT-23-5: U1, U3, U5, U7, U8, U9, U10 · TSOT-23-6: U15 · SOT-23-6: U18 · SC-70-6: U16
 - SOIC-8: U13, U19 · SOIC-14: U2, U4, U6 · ESSOP-10 with exposed pad: U14 · MSOP-12 with exposed pad: U17
-- J17 USB-C (opening toward the top edge) · J1–J6 IDC headers (key notch as on the silkscreen)
+- J17 USB-C (opening toward the right edge) · J1–J6 IDC headers (key notch as on the silkscreen)
 - J7/J8/J12 BNCs (barrels past the right edge) · TP3 (pins pointing off the board edge)
 
 ## Cost estimate (5 boards, before shipping and Japanese consumption tax)
 
 | Item | Estimate |
 |---|---|
-| 5 bare boards | ≈ $26 (estimate; JLC's calculator needs a login: confirm there) |
+| 5 bare boards | ≈ $26 (estimate for the old 126 × 126 mm board; JLC's calculator needs a login: re-quote there at 160 × 100 mm) |
 | Assembly fees | ≈ $87 (setup + stencil ≈ $10, 20 extended SMT loading fees × $3.07 ≈ $61, joints and through-hole hand soldering ≈ $17) |
 | Components | ≈ $85 (with JLC attrition; the 0.1 % resistors, LT3065 and BNCs are the largest lines; not re-priced after the 2026-10-31 change, which adds a UCC27524, three 2512 resistors, two capacitors and a header and removes U12, R5, C8 and J16) |
-| **Total** | **≈ $200** (cost-down review model, 2026-10-05), plus shipping (≈ $10–35 to Tokyo, 2–7 days); confirm in JLC's quote |
+| **Total** | **≈ $200** (cost-down review model, 2026-10-05, for the 126 × 126 mm board; re-quote at 160 × 100 mm), plus shipping (≈ $10–35 to Tokyo, 2–7 days); confirm in JLC's quote |
 
 ## On delivery (no soldering)
 
 JLC doesn't supply these:
 
 1. **Pico module:** buy a **Raspberry Pi Pico 2 WH** (the version with pin headers already fitted)
-   and plug it in, components up, USB toward the top edge (see the outline on the board). JLC's
+   and plug it in, components up, USB toward the left edge (see the outline on the board). JLC's
    Pico 2 W (C42394205) comes without headers.
 2. **Load the firmware** (see the top-level README, Quick start).
 3. **Jumpers:** fit a shunt on **J10 2-3** (LCSC C100114, or any 2.54 mm shunt), and on **J18**,
    **J19** and **J21 1-2** (50 Ω outputs: Laser 1, Laser 2 and External Sync Out; 2-3 for a
    high-impedance load). On **J11**, wire the normally-closed E-stop switch across pins 1-2, or fit
-   a shunt on 1-2 for bench work. Leave **J20** (clock jumper, left of the Pico) **open** (150 MHz)
+   a shunt on 1-2 for bench work. Leave **J20** (clock jumper, right of the Pico) **open** (150 MHz)
    unless that Pico has passed the soak test in `Hardware.md` ("Clock jumper (J20)"); keep the
    sixth shunt loose for it.
 4. **Before the first power-up on J17:** the solder-bridge checks in the README (First-board
@@ -112,25 +113,31 @@ JLC doesn't supply these:
 
 ## Enclosure notes
 
-- **Mounting:** 4 × M3 holes on a 114 × 114 mm square, 6 mm in from each edge of the
-  126 × 126 mm board. Copper is kept 3 mm clear of each hole.
+Positions are as seen from the top side, with the board landscape (160 mm wide, 100 mm tall).
+
+- **EuroCard, 160 × 100 mm.** The two 160 mm edges have no parts within 2.5 mm (the IEC 60297-3
+  card-guide border), so the board fits card guides and extruded enclosures whose slots take the
+  160 mm edges, such as the Hammond 1455N1601. Zone copper goes to 0.5 mm from these edges, under
+  solder mask. All external connectors are on the two 100 mm edges.
+- **Mounting:** 4 × M3 unplated holes. MH1, MH3 and MH4 are in the corners, 4 mm in from both
+  edges. MH2 is 4 mm from the top edge but 22 mm from the right edge, so an M3 washer (7 mm) clears
+  the J7 BNC body. Copper is kept 3 mm clear of each hole.
 - **Right edge:** the three BNC barrels stand about 20.6 mm past the board edge (20.58 mm from the
   Kinghelm KH-BNC50-3511 drawing), with the axis about 6.6 mm
   above the board. Laser 1, Laser 2, External Sync Out from top to bottom, for a
   panel with matching holes (1/2-28UNEF thread, D-hole). Measure both on the first board before
   cutting a panel. The housing is plastic, so fit the panel nuts to take the bayonet torque.
-- **Top edge: two USB ports, labelled on the silkscreen:**
-  - **J17 USB-C, `POWER ONLY`:** centred 82 mm from the board's left edge, flush with the top edge,
-    sitting on the board surface. Needs a cut-out.
-  - **Pico micro-USB, `CONTROL / PROGRAM`** (commands and firmware): centred about 37 mm from the
-    left edge, at the top edge, raised about 13 mm above the board surface on the sockets (8.5 mm
-    socket + 2.5 mm header spacer + module). Needs a cut-out at that height; confirm the height on
-    the first assembled board.
-  - TP3's pins stick out 2.1 mm past the top edge, left of the Pico.
+  - **J17 USB-C, `POWER ONLY`:** below the BNCs, flush with the right edge, sitting on the board
+    surface. Needs a cut-out.
+- **Left edge:**
+  - **Pico micro-USB, `CONTROL / PROGRAM`** (commands and firmware): the Pico sits top-left with
+    its USB end at the left edge, raised about 13 mm above the board surface on the sockets (8.5 mm
+    socket + 2.5 mm header spacer + module). Needs a cut-out at that height; confirm the position
+    and height on the first assembled board.
+  - TP3 (right-angle 2-pin header) below the Pico, with its pins out of the left edge.
 - **Inside the enclosure, reached from above:**
-  - The six camera IDC headers stand upright between about 17 and 30 mm in from the bottom edge, so
-    the ribbons leave upward.
+  - The six camera IDC headers stand upright in one row along the bottom of the board (12 mm
+    pitch), not on an edge, so the ribbons leave upward.
   - J10, J11 (the E-stop wiring), and the output-mode jumpers J18/J19/J21 (between the 2512
     resistors and the BNCs).
-  - J20 (clock jumper): vertical 2-pin header 7.6 mm left of the Pico socket J14, level with Pico
-    pins 13-14. Its shunt is reached beside the seated Pico (pin centres 6 mm from the module edge).
+  - J20 (clock jumper): vertical 2-pin header right of the Pico's GPIO end, below the J14 row.
