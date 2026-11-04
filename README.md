@@ -1,4 +1,4 @@
-# PiDG
+# PiEBV
 
 A USB-controlled pulse-timing box for particle image velocimetry (PIV), built around a Raspberry
 Pi Pico 2 W. It triggers two laser drivers and synchronizes up to six event cameras.
@@ -44,7 +44,7 @@ pio run
 | **Laser 2** (CH2) | BNC J8 | Trigger for the second laser driver: the same pulse, starting exactly `DELAY` after Laser 1 |
 | **Sync** | Camera ports J1–J6 | A steady 1 MHz clock that all six cameras keep time by |
 | **Trigger** (the marker) | Camera ports J1–J6 | A pulse at the same instant as every Laser 1 pulse. Each camera records it as a timestamp in its data. (Jumper J10 can switch the cameras to the Laser 1 pulse itself instead.) |
-| **Pixel reset** | Camera ports J1–J6 | Holds the camera sensors blank between flash pairs. Controlled only by PiDG (`PIXGATE`) |
+| **Pixel reset** | Camera ports J1–J6 | Holds the camera sensors blank between flash pairs. Controlled only by PiEBV (`PIXGATE`) |
 | **External Sync Out** | BNC J12 | A copy of the camera trigger (the marker, or Laser 1 with J10 on 1-2) for other equipment: a 5 V pulse, with J21 set to match the input |
 
 - Every signal to the cameras is **1.8 V**, the level they are built for. The laser outputs and
@@ -57,7 +57,7 @@ pio run
 - The firmware sets **no laser-driver limits** (pulse width, duty, spacing). Set what your driver is
   rated for. It only stops the pulses from running into each other.
 
-PiDG was designed for two **PicoLas LDP-V** laser-diode drivers (models 10-70 and 240-100) and six
+PiEBV was designed for two **PicoLas LDP-V** laser-diode drivers (models 10-70 and 240-100) and six
 **IDS uEye UE-39B0XCP-E** event cameras. Other drivers with a 5 V trigger input should work too, with
 the output mode (J18/J19) set to match their input.
 
@@ -122,7 +122,7 @@ the output mode (J18/J19) set to match their input.
   short the camera's own supplies at the board (pin 1 is the camera's 1.8 V output, pin 8 its USB
   5 V). The remaining risk is in the harness: fit only wires 2, 3, 4, 5 and 7 (or cut 1, 6 and 8),
   and never join pin 1 or 8 to a ground wire. Pin 6 is undocumented: don't assume it is a ground.
-- **Set every camera to sync slave.** PiDG drives the sync pin, so a camera set as sync master would
+- **Set every camera to sync slave.** PiEBV drives the sync pin, so a camera set as sync master would
   fight it.
 - **Never fit a shunt across all three pins of J10.**
 - **Don't short J12.** External Sync Out can be high for up to half the period (`MARKERWIDTH` is
@@ -186,7 +186,7 @@ lines do: with every marker (J10 on 2-3, also while DISARMED), or with every Las
   instrument must line up with the cameras to better than ~30 ns (Hardware.md, First-board checks).
 - One device per output, no BNC tee, and don't short it (see [Safety](#safety)).
 
-The board has no pixel-reset input any more: PiDG alone controls the camera pixel reset
+The board has no pixel-reset input any more: PiEBV alone controls the camera pixel reset
 ([`PIXGATE`](#pixel-reset-gate-pixgate)).
 
 ### Jumpers
@@ -599,7 +599,7 @@ COMBINE 0   ->  OK COMBINE=0 (CH1 on LASER 1, CH2 on LASER 2)
 
 ### Pixel-reset gate (`PIXGATE`)
 
-PiDG can hold every camera's pixels in reset **between pulse pairs**, like a shutter: the pixels
+PiEBV can hold every camera's pixels in reset **between pulse pairs**, like a shutter: the pixels
 are free from `PIXLEAD` before the Laser 1 pulse until `PIXLAG` after the last laser pulse, and
 held in reset for the rest of each period. This cuts out background and noise events between
 pairs, and every pair starts from freshly reset pixels.
@@ -628,7 +628,7 @@ PIXGATE 1   ->  OK PIXGATE=1 (pixels reset between pulse pairs while ARMED)
 PIXLAG 50000 -> OK PIXLAG=50000 (actual 50000.000 ns, 7500 cyc)
 ```
 
-- **PiDG is the only source of the pixel reset.** The board has no reset input; with `PIXGATE 0`
+- **PiEBV is the only source of the pixel reset.** The board has no reset input; with `PIXGATE 0`
   the cameras run freely.
 - **Find PIXLEAD and PIXLAG by experiment.** How long the sensor needs to settle after a reset, and
   how long after a flash its events keep arriving, are not published. Start generous (the

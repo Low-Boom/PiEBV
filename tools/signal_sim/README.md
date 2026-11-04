@@ -1,6 +1,6 @@
 # Signal simulation of the timing nets
 
-Transmission-line simulation of the PiDG trigger, laser and External Sync Out nets. It uses the
+Transmission-line simulation of the PiEBV trigger, laser and External Sync Out nets. It uses the
 routed geometry from `PiDG_Pico.kicad_pcb` and datasheet device values. It calculates:
 
 - the CH1-to-CH2 skew at U7/U8 and at J7/J8, for each J10 position, with and without R19;

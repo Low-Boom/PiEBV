@@ -1,4 +1,4 @@
-# PiDG simulator
+# PiEBV simulator
 
 The firmware's command protocol, running on your computer. `pidg_sim` compiles the unmodified
 `src/protocol.cpp` and `src/pulse_timing.h` against a small fake of the Arduino core (`fake/`). It

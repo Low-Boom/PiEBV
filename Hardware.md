@@ -1,6 +1,6 @@
-# PiDG hardware reference (Pico 2 W, 4-layer board)
+# PiEBV hardware reference (Pico 2 W, 4-layer board)
 
-This is the design reference for the PiDG board: what each part of the circuit does and what to check on the first boards. It is for anyone building, checking or
+This is the design reference for the PiEBV board: what each part of the circuit does and what to check on the first boards. It is for anyone building, checking or
 changing the hardware. To *use* the board, see the [README](README.md).
 
 The board is built around a socketed Raspberry Pi Pico 2 W, on 4 copper layers.
@@ -743,7 +743,7 @@ CHn_DRIVE ──┬── R25/R26 47 Ω 2 W ──┬── CHn_OUT ── BNC c
 > **One driver per output, no BNC tees.** A transmission-line simulation (typical corners, 50 Ω
 > mode) gives: J7 and J8 joined into one 50 Ω input → 3.4 V per pulse (the idle channel's 68 Ω sinks
 > half), and 6.9 V where the pulses overlap (DELAY < WIDTH), above the LDP-V's 5.2 V damage limit;
-> one output teed to two drivers → 3.0 V each. The PiDG itself survives either (see
+> one output teed to two drivers → 3.0 V each. The PiEBV itself survives either (see
 > [Board output rating](#board-output-rating)).
 >
 > PicoLas's acceptance test applies: a scope with **50 Ω input termination** must read 0 to

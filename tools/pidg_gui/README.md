@@ -1,6 +1,6 @@
-# PiDG web GUI
+# PiEBV web GUI
 
-A small local web server that drives the PiDG over USB serial. The browser page does everything
+A small local web server that drives the PiEBV over USB serial. The browser page does everything
 the serial commands do, and draws the timing of one PIV pulse pair above the settings.
 
 - **Everything shown comes from the board.** The chart, the edge table and every "actual …" line
@@ -22,7 +22,7 @@ python -m pip install pyserial
 Then, from the repository root:
 
 ```
-python tools/pidg_gui/pidg_gui.py --connect auto      # finds the PiDG on USB, opens http://127.0.0.1:8765
+python tools/pidg_gui/pidg_gui.py --connect auto      # finds the PiEBV on USB, opens http://127.0.0.1:8765
 python tools/pidg_gui/pidg_gui.py                     # choose the port on the page instead
 python tools/pidg_gui/pidg_gui.py --connect COM7      # or /dev/ttyACM0, /dev/cu.usbmodem1101
 python tools/pidg_gui/pidg_gui.py --connect sim       # no hardware: the simulator (see below)
@@ -43,7 +43,7 @@ never uses 1200 baud, which would reboot the Pico into its bootloader.
 
 | Part | What it does |
 |---|---|
-| Header | Device list, with PiDG boards marked; **↻** rescans. **Connect**/**Disconnect**. The board's identity and, under it, a system line: clock, why it last restarted, crash restarts (watchdog), the watchdog timeout and reply bytes dropped. A crash restart or dropped replies is flagged ⚠. Then the theme button, the **ARMED** indicator and **DISARM**. |
+| Header | Device list, with PiEBV boards marked; **↻** rescans. **Connect**/**Disconnect**. The board's identity and, under it, a system line: clock, why it last restarted, crash restarts (watchdog), the watchdog timeout and reply bytes dropped. A crash restart or dropped replies is flagged ⚠. Then the theme button, the **ARMED** indicator and **DISARM**. |
 | Arming | A short strip above the charts: **ARM** and **DISARM**, with the firmware's arming state, start hold-off and `HW` status. |
 | Timing chart | One pulse pair, with Laser 1, Laser 2, marker and pixel reset on a common time axis. (The sync clock runs continuously, so it is not drawn.) Time 0 is the CH1 rising edge. **Pulses** zooms to the two laser pulses. **Pulses + reset window** also shows the `PIXLEAD`/`PIXLAG` window. Hover for the level of every signal at that instant. |
 | Sequence chart | Three consecutive pairs, with the marker and the pixel-reset gate between pairs. |
@@ -125,7 +125,7 @@ JSON API (same origin, used by the page):
 | Route | Does |
 |---|---|
 | `GET /api/state` | Connection state and the parsed `STATUS` |
-| `GET /api/ports` | Serial ports (PiDG boards flagged) and whether the simulator is built |
+| `GET /api/ports` | Serial ports (PiEBV boards flagged) and whether the simulator is built |
 | `GET /api/log?since=N` | Console entries after sequence number `N` |
 | `POST /api/connect` `{"target": "COM7"}` | Connect (`sim`, a port or a URL) |
 | `POST /api/disconnect` | Close the link (does not disarm) |

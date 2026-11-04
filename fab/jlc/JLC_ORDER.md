@@ -1,4 +1,4 @@
-# PiDG — JLCPCB order checklist (full assembly)
+# PiEBV — JLCPCB order checklist (full assembly)
 
 Goal: boards that arrive fully assembled, with every surface-mount (SMD) **and** through-hole part
 fitted by JLCPCB, so nothing needs soldering on delivery. Part numbers and stock were checked
