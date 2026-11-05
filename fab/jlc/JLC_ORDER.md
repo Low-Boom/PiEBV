@@ -39,7 +39,7 @@ order.
 
 **Paste into the order remarks:**
 
-> J17 (USB-C) is flush with the right board edge, below the BNCs, by design. J7, J8, J12 (BNC, KH-BNC50-3511 50 ohm
+> J17 (USB-C) is flush with the left board edge, at the bottom, by design. J7, J8, J12 (BNC, KH-BNC50-3511 50 ohm
 > only, do not substitute KH-BNC75-3511) overhang the right edge by about 21 mm, and TP3 (right-angle header) overhangs the left edge, all by design — please
 > hand-solder these, no wave fixture. J14/J15 are sockets for a plug-in module: seat them flat and
 > perpendicular. Do not substitute U3 (74LVC1G00), U9, U13/U19,
@@ -82,7 +82,7 @@ board's pin-1 marks before approving:
 
 - SOT-23-5: U1, U3, U5, U7, U8, U9, U10 · TSOT-23-6: U15 · SOT-23-6: U18 · SC-70-6: U16
 - SOIC-8: U13, U19 · SOIC-14: U2, U4, U6 · ESSOP-10 with exposed pad: U14 · MSOP-12 with exposed pad: U17
-- J17 USB-C (opening toward the right edge) · J1–J6 IDC headers (key notch as on the silkscreen)
+- J17 USB-C (opening toward the left edge) · J1–J6 IDC headers (key notch as on the silkscreen)
 - J7/J8/J12 BNCs (barrels past the right edge) · TP3 (pins pointing off the board edge)
 
 ## Cost estimate (5 boards, before shipping and Japanese consumption tax)
@@ -119,22 +119,23 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
   card-guide border), so the board fits card guides and extruded enclosures whose slots take the
   160 mm edges, such as the Hammond 1455N1601. Zone copper goes to 0.5 mm from these edges, under
   solder mask. All external connectors are on the two 100 mm edges.
-- **Mounting:** 4 × M3 unplated holes. MH1, MH3 and MH4 are in the corners, 4 mm in from both
-  edges. MH2 is 4 mm from the top edge but 22 mm from the right edge, so an M3 washer (7 mm) clears
-  the J7 BNC body. Copper is kept 3 mm clear of each hole.
+- **Mounting:** 4 × M3 unplated holes, all in the corners, 4 mm in from both edges: centres
+  152 × 92 mm apart. An M3 washer (7 mm) at MH2 clears the J7 BNC body. Copper is kept 3 mm clear
+  of each hole.
 - **Right edge:** the three BNC barrels stand about 20.6 mm past the board edge (20.58 mm from the
   Kinghelm KH-BNC50-3511 drawing), with the axis about 6.6 mm
   above the board. Laser 1, Laser 2, External Sync Out from top to bottom, for a
   panel with matching holes (1/2-28UNEF thread, D-hole). Measure both on the first board before
-  cutting a panel. The housing is plastic, so fit the panel nuts to take the bayonet torque.
-  - **J17 USB-C, `POWER ONLY`:** below the BNCs, flush with the right edge, sitting on the board
-    surface. Needs a cut-out.
+  cutting a panel. The housing is plastic, so fit the panel nuts to take the bayonet torque. The
+  right edge has only the three BNCs.
 - **Left edge:**
   - **Pico micro-USB, `CONTROL / PROGRAM`** (commands and firmware): the Pico sits top-left with
     its USB end at the left edge, raised about 13 mm above the board surface on the sockets (8.5 mm
     socket + 2.5 mm header spacer + module). Needs a cut-out at that height; confirm the position
     and height on the first assembled board.
   - TP3 (right-angle 2-pin header) below the Pico, with its pins out of the left edge.
+  - **J17 USB-C, `POWER ONLY`:** below TP3, at the bottom of the left edge, flush with the edge,
+    sitting on the board surface. Needs a cut-out.
 - **Inside the enclosure, reached from above:**
   - The six camera IDC headers stand upright in one row along the bottom of the board (12 mm
     pitch), not on an edge, so the ribbons leave upward.

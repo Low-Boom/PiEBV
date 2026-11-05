@@ -137,9 +137,9 @@ interlock and Connectors.
 ## The board
 
 The board is a **EuroCard, 160 × 100 mm**. Orientation used below: the board is landscape (160 mm
-wide), seen from the top side. All connectors are on the two short edges: the Pico's micro-USB and
-TP3 on the **left** edge, and the three BNCs with the USB-C connector J17 below them on the
-**right** edge. The Pico plugs into two horizontal sockets at the top left, with its micro-USB at
+wide), seen from the top side. All connectors are on the two short edges: the Pico's micro-USB,
+TP3 and, at the bottom, the USB-C connector J17 on the **left** edge, and only the three BNCs on
+the **right** edge. The Pico plugs into two horizontal sockets at the top left, with its micro-USB at
 the left edge, and the six camera ports run in one row along the bottom. The two USB ports are
 labelled on the board: **`CONTROL / PROGRAM — PICO MICRO-USB`** (commands and firmware) and
 **`POWER ONLY — USB-C PD 15 V`** (J17). The long (160 mm) edges have no parts within 2.5 mm, so the
@@ -152,10 +152,9 @@ board fits EuroCard card guides and slotted enclosures.
              |                     J20 (clock)                    J19 J8 =|  Laser 2 (BNC)
              |= TP3 (1 MHz scope)                                         |
              |  J12 offset field                                 J21 J12 =|  External Sync Out (BNC)
-             |                                                       J17 =|  USB-C = POWER ONLY
-             |                       J1   J2   J3   J4   J5   J6          |  (camera ports)
+ USB-C       |= J17                                                       |
+ = POWER ONLY|       J1   J2   J3   J4   J5   J6   (camera ports)         |
              +------------------------------------------------------------+
-               <- through-hole only | all SMD parts: 100 mm hot-plate area ->
 ```
 
 (Not to scale. J18, J19 and J21 are the output-mode jumpers.)
@@ -196,8 +195,7 @@ The board has no pixel-reset input any more: PiEBV alone controls the camera pix
 
 ### Jumpers
 
-J10 and J11 are numbered 1-2-3, as their silkscreen pin labels show (`CH1 TRG MKR`, `ON` … `OFF`).
-J18, J19 and J21 stand upright between the
+J10 and J11 are numbered 1-2-3 from **left to right**. J18, J19 and J21 stand upright between the
 large resistors and the BNCs: J18's and J21's pin 1 is at the top, J19's at the bottom. Pin 1 always
 has the square pad.
 
@@ -240,8 +238,8 @@ next to the pin pairs.
   firmware can't see them, and the pulse timing is the same in both modes.
 
 **J20 — clock jumper (300 MHz overclock).** A 2-pin header right of the Pico, below the J14 row.
-Pin 1 (square pad) goes to GP10 through R29 (1 kΩ, which protects GP10 if a program drives
-it), pin 2 is GND. A shunt on J20, read at every start (power-up or reset),
+Pin 1 (square pad, the lower pin) goes to GP10 through R29 (1 kΩ, which protects GP10 if a
+program drives it), pin 2 is GND. A shunt on J20, read at every start (power-up or reset),
 runs the Pico at 300 MHz instead of 150 MHz, so every time setting has 3.333 ns steps instead of
 6.667 ns. That is twice the chip's rated speed: soak-test each Pico first, as described in
 [Hardware.md](Hardware.md#clock-jumper-j20-300-mhz-overclock). No shunt (the default) is the
@@ -858,6 +856,7 @@ so re-run it on the EuroCard board before you rely on the exact ns figures.
 | `fab/` | Manufacturing: master parts list `fab/PiDG_Pico_BOM.csv` (with the design-constraint notes), gerbers and drill files, and `fab/jlc/` JLCPCB assembly files and [order checklist](fab/jlc/JLC_ORDER.md) |
 | `libs/`, `fp-lib-table`, `sym-lib-table` | Project-local KiCad symbols and footprints |
 | `tools/jlc_cpl/` | Corrects the JLC placement file to JLC's own footprints (see its README) |
+| `tools/eurocard/` | Rebuilds this EuroCard board from the 126 × 126 mm hand layout: placement, KiCadRoutingTools routing, checks (see its README) |
 
 ## License
 

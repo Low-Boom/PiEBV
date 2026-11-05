@@ -34,9 +34,9 @@ cp "$W/planes.kicad_pro" "$W/tapped.kicad_pro"
   --power-nets GND "+5V" "+12V" "VBUS_PD" "+5V_PD" "+3V3" "+1V8" "Net-(U15-SW)" "Net-(J17-CC*)" PWM_1MHz \
   --power-nets-widths 0.4 0.5 0.5 0.5 0.5 0.5 0.5 0.6 0.2 0.5 \
   --escalation off --fab-tier standard --same-net-pad-clearance 0.1 --no-fix-drc-settings \
-  --via-cost 200 --turn-cost 300 --direction-preference-cost 0 \
+  --via-cost 150 --turn-cost 300 --direction-preference-cost 0 \
   --length-match-group "Sync*" --length-match-group "Trigger*" --length-match-group "TDRSTN*" \
-  --meander-amplitude 1.5 --meander-spacing 1.5 --write-fill) > "$W/route.log" 2>&1
+  --meander-amplitude 1.5 --meander-spacing 1.0 --write-fill) > "$W/route.log" 2>&1
 grep -A3 '^Run complete' "$W/route.log" | tail -2
 
 # 5. Unlock, refill, then GND stitching (edge fence 10 mm, area 15 mm) across F.Cu / In1 / B.Cu.
