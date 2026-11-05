@@ -147,11 +147,11 @@ board fits EuroCard card guides and slotted enclosures.
 
 ```
              +------------------------------------------------------------+
- Pico USB    |= Pico 2 W, in J15 (top row)  J10 (trigger select)  J18 J7 =|  Laser 1 (BNC)
- = CONTROL   |  and J14 (bottom row)        J11 (laser enable)            |
-             |                     J20 (clock)                    J19 J8 =|  Laser 2 (BNC)
-             |= TP3 (1 MHz scope)                                         |
-             |  J12 offset field                                 J21 J12 =|  External Sync Out (BNC)
+ Pico USB    |= Pico 2 W, in J15 (top row)                        J18 J7 =|  Laser 1 (BNC)
+ = CONTROL   |  and J14 (bottom row)        J10 (trigger select)          |
+             |= TP3 (1 MHz scope)  J20 (clock)                    J19 J8 =|  Laser 2 (BNC)
+             |  J12 offset field            J11 (laser enable)            |
+             |                                                   J21 J12 =|  External Sync Out (BNC)
  USB-C       |= J17                                                       |
  = POWER ONLY|       J1   J2   J3   J4   J5   J6   (camera ports)         |
              +------------------------------------------------------------+
