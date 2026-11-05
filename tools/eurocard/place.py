@@ -11,6 +11,61 @@ assert not any(t.IsLocked() for t in b.GetTracks()), "source has locked tracks"
 # Original poses and pads, for carrying copper with its footprint (see the end).
 old_pose = {f.GetReference(): (ToMM(f.GetPosition().x), ToMM(f.GetPosition().y), f.GetOrientationDegrees()) for f in b.GetFootprints()}
 old_pads = [(ToMM(p.GetPosition().x), ToMM(p.GetPosition().y), p.GetNetname(), f.GetReference()) for f in b.GetFootprints() for p in f.Pads()]
+old_padpos = {(f.GetReference(), p.GetNumber()): (ToMM(p.GetPosition().x), ToMM(p.GetPosition().y)) for f in b.GetFootprints() for p in f.Pads()}
+
+# Hand-routed local paths kept with their parts (the parts of each pair move rigidly together):
+# decoupling caps to their IC supply pins, and the buck's input, ground, SW and BST connections.
+LOCAL_PATHS = [("C1", "1", "U1", "5"), ("C1", "1", "U2", "14"), ("C2", "1", "U3", "5"), ("C2", "1", "U4", "14"),
+               ("C3", "1", "U5", "5"), ("C3", "1", "U6", "14"),
+               ("C12", "1", "U15", "3"), ("U15", "3", "U15", "2"), ("C12", "2", "U15", "4"),
+               ("U15", "5", "L1", "1"), ("U15", "5", "C13", "2"), ("U15", "6", "C13", "1")]
+def copper_path(ra, na, rb, nb):
+    """Tracks/vias of the shortest original copper path between two pads (endpoints within 0.8 mm
+    of a pad centre are its terminals; track ends join within 0.05 mm, or inside a via's ring)."""
+    import heapq
+    net = [p for p in b.FindFootprintByReference(ra).Pads() if p.GetNumber() == na][0].GetNetname()
+    items = [t for t in b.GetTracks() if t.GetNetname() == net]
+    pts = []                                     # (x, y, item)
+    for t in items:
+        if t.GetClass() == "PCB_VIA": pts.append((ToMM(t.GetPosition().x), ToMM(t.GetPosition().y), t))
+        else:
+            pts.append((ToMM(t.GetStart().x), ToMM(t.GetStart().y), t)); pts.append((ToMM(t.GetEnd().x), ToMM(t.GetEnd().y), t))
+    adj = {}
+    def link(i, j, w, it): adj.setdefault(i, []).append((j, w, it)); adj.setdefault(j, []).append((i, w, it))
+    for k in range(0, len(pts)):
+        x, y, t = pts[k]
+        for m in range(k + 1, len(pts)):
+            x2, y2, t2 = pts[m]
+            r, via = 0.05, None
+            if t.GetClass() == "PCB_VIA" or t2.GetClass() == "PCB_VIA":
+                via = t if t.GetClass() == "PCB_VIA" else t2
+                r = ToMM(via.GetWidth(pcbnew.F_Cu)) / 2 + 0.05
+            if math.hypot(x - x2, y - y2) < r: link(k, m, 0.0, via)   # a via on the path is kept too
+    for k, (x, y, t) in enumerate(pts):          # the two ends of one segment
+        if t.GetClass() != "PCB_VIA" and k + 1 < len(pts) and pts[k + 1][2] is t:
+            link(k, k + 1, ToMM(int(t.GetLength())), t)
+    def term(r, n):
+        cx, cy = old_padpos[(r, n)]
+        return [k for k, (x, y, t) in enumerate(pts) if math.hypot(x - cx, y - cy) <= 0.8]
+    src, dst = term(ra, na), set(term(rb, nb))
+    dist = {k: 0.0 for k in src}; prev = {}; q = [(0.0, k) for k in src]; heapq.heapify(q)
+    while q:
+        d, u = heapq.heappop(q)
+        if d > dist.get(u, 1e9): continue
+        if u in dst:
+            path = set(); 
+            while u in prev:
+                u, it = prev[u]
+                if it is not None: path.add(it.m_Uuid.AsString())
+            return path
+        for v, w, it in adj.get(u, []):
+            if d + w < dist.get(v, 1e9): dist[v] = d + w; prev[v] = (u, it); heapq.heappush(q, (d + w, v))
+    return set()
+import math
+local_items = {}                                 # track UUID -> owner footprint
+for ra, na, rb, nb in LOCAL_PATHS:
+    for i in copper_path(ra, na, rb, nb): local_items[i] = ra
+print("local paths:", len(LOCAL_PATHS), "->", len(local_items), "tracks")
 X0, Y0, W, H = 130.0, 30.0, 160.0, 100.0          # new board outline (mm)
 
 def P(x, y): return VECTOR2I(FromMM(x), FromMM(y))
@@ -112,8 +167,8 @@ def spread(anchor, refs, s):
         f.SetPosition(VECTOR2I(int(a.x + s * (p.x - a.x)), int(a.y + s * (p.y - a.y))))
 spread("U17", "C16 C17 C18 C19 R12 R13 R20 U18 R21 R22 R23 C20", 1.35)
 spread("U18", "R21 R22 R23 C20", 1.3)
-spread("U15", "L1 C12 C13 C14 C15 U16", 1.3)
-spread("U14", "C11", 1.3)
+spread("U15", "C14 C15 U16", 1.3)          # U15/C12/L1/C13 stay as drawn: the buck's hot loop and SW node
+f = fp("C11"); f.SetPosition(P(148.6, 118.4)); f.SetOrientationDegrees(90)   # U14 VHV (pin 1) decoupling, beside pin 1
 f = fp("R10"); f.SetPosition(P(140.5, 121.0)); f.SetOrientationDegrees(0)   # U14 CFG1 resistor, below pad 9
 
 # Mounting holes in the corners, 4 mm in; their copper keep-out zones follow.
@@ -180,7 +235,8 @@ for t in list(b.GetTracks()):
           [(ToMM(t.GetStart().x), ToMM(t.GetStart().y)), (ToMM(t.GetEnd().x), ToMM(t.GetEnd().y))]
     net = t.GetNetname(); ref = None
     o = owner(net, pts)
-    if net in CARRY_NETS and o: ref = o[1]
+    if t.m_Uuid.AsString() in local_items: ref = local_items[t.m_Uuid.AsString()]
+    elif net in CARRY_NETS and o: ref = o[1]
     elif net == "GND" and o and o[0] <= 3.0 and o[1] in CARRY_GND: ref = o[1]
     if ref is None: continue
     if via: t.SetPosition(P(*carry(*pts[0], ref)))
