@@ -166,9 +166,11 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
   shorter lane has a small 45° bump. On the 126 mm board they were 86.32 and 81.74 mm, 4.6 mm
   apart. The two lanes are at least 2.24 mm apart (never within 1 mm), at least 22.4 mm from
   `PWM_1MHz` and `SYNC_N`, and at least 0.54 mm from any other net (8.2 mm of run within 1 mm).
-- **Camera lines, length-matched** (buffer pin to header pin): `Sync1..6` 100.1–101.2 mm (spread
-  1.0 mm), `Trigger1..6` 110.2–111.3 mm (spread 1.2 mm), `TDRSTN1..6` 53.3–54.8 mm
-  (spread 1.6 mm). On the 126 mm board they were not matched (Sync 28–71 mm, Trigger 21–56 mm,
+- **Camera lines, length-matched** (buffer pin to header pin, as KiCad's length tool measures:
+  vias over the layers they join, runs cut at the pad outlines): `Sync1..6` 100.98–101.58 mm
+  (spread 0.60 mm), `Trigger1..6` 110.71–112.33 mm (spread 1.62 mm; Trigger4 is the long one, the
+  other five are within 0.37 mm), `TDRSTN1..6` 53.47–54.70 mm (spread 1.23 mm). 1.6 mm is about
+  10 ps. On the 126 mm board they were not matched (Sync 28–71 mm, Trigger 21–56 mm,
   TDRSTN 20–41 mm). Sync and Trigger lines are at least 2.88 mm apart.
 - **Plane taps.** Every SMD GND and +5V pad has its own short tap track to a via into In1 or In2
   (47 taps), placed outward from the part body first. +5V has only 12.4 mm of surface copper; the
@@ -651,23 +653,24 @@ J10's silkscreen reads **`CH1 / TRG / MKR`** (pins 1/2/3).
 J10.1 reaches `_PULSE_OUT_CH1` through **R19 (100 Ω)**; it idles LOW while DISARMED. R19
 is there for the laser timing. Without it, the 1-2 shunt would hang the whole `PWM_TRIG_TAP` net
 (U5, R9, U19 and 63.6 mm of trace) directly on the CH1 GPIO. The transmission-line simulation
-in `tools/signal_sim` (typical corner, 4 mA GPIO) puts CH1 behind CH2 at U7/U8 by the values below.
-These values come from the 126 mm layout (a ~59 mm net, unequal laser pulse lanes); re-run
-`tools/signal_sim` on the EuroCard board before you rely on the exact ns figures.
+in `tools/signal_sim` (typical corner, 4 mA GPIO; EuroCard routing) puts CH1 behind CH2 at U7/U8
+by the values below. On the 126 mm layout (unequal laser pulse lanes) the 2-3 row was 0.22 / 0.25 ns
+and the 1-2 row 0.38 / 0.42 ns; the equal-length lanes remove most of that.
 
 | J10 | With R19 (100 Ω) | Without R19 |
 |---|---|---|
-| 2-3 or open | 0.22 / 0.25 ns (rise / fall), up to 0.68 ns | 0.25 / 0.27 ns, up to 0.66 ns |
-| 1-2 | 0.38 / 0.42 ns, up to 1.7 ns at the GPIO and threshold corners | 0.67 / 0.82 ns, up to 2.2 ns |
+| 2-3 or open | 0.023 / 0.031 ns (rise / fall), up to 0.075 ns | 0.038 / 0.036 ns, up to 0.088 ns |
+| 1-2 | 0.22 / 0.23 ns, up to 1.27 ns at the GPIO and threshold corners | 0.56 / 0.70 ns, up to 1.89 ns |
 
-CH1 is later because the J10/R19 branch loads `_PULSE_OUT_CH1` and `_PULSE_OUT_CH2` has no matching
-load.
+With J10 on 2-3, the small remaining skew comes from the R17 and R19 stubs on `_PULSE_OUT_CH1`
+(`_PULSE_OUT_CH2` has only R18). With J10 on 1-2, CH1 is later because the J10/R19 branch loads
+`_PULSE_OUT_CH1`.
 
 So with J10 on 1-2 the laser delay error depends on the jumper even with R19. R19 cuts it by about
-45–50 % at the typical corner and by about 20 % at the worst corner. With J10 on 1-2, at J7/J8 it
-is 0.35–0.54 ns with R19 and 0.61–1.60 ns without, before U13's own channel matching (1 ns typical,
+60–67 % at the typical corner and by about 33 % at the worst corner. With J10 on 1-2, at J7/J8 it
+is 0.19–0.33 ns with R19 and 0.51–1.44 ns without, before U13's own channel matching (1 ns typical,
 2 ns maximum), which is larger. R19 costs the camera trigger and
-J12 0.7–1.4 ns of edge, which doesn't matter there. Keep R19.
+J12 0.7–1.5 ns of edge, which doesn't matter there. Keep R19.
 
 **With no shunt fitted, R9 (10 k) pulls `PWM_TRIG_TAP` low,** so all six camera triggers and J12
 idle low instead of following a floating input on 63.6 mm of trace. 10 k, rather than a weaker
@@ -829,15 +832,14 @@ trigger lines are high, and low while `PWM_TRIG_TAP` is low, including with no s
 - **Timing: measure the offset to the cameras on each board.** J12 follows GP11 through U19, and
   the camera trigger lines through U5 and U6, so the two are offset by a fixed delay that the
   datasheets don't pin down. From the GP11 edge, simulated in `tools/signal_sim` (4 mA default
-  drive, J10 on 2-3, J21 on 1-2, J12 into 50 Ω; min / typ / max over the datasheet corners). These
-  values come from the 126 mm layout; re-run `tools/signal_sim` on the EuroCard board before you
-  rely on the exact ns figures:
+  drive, J10 on 2-3, J21 on 1-2, J12 into 50 Ω; min / typ / max over the datasheet corners;
+  EuroCard routing):
 
   | Path | Rising edge | Falling edge |
   |---|---|---|
-  | GP11 → J12 (U19 + R30/J21 + ~4 ns of GP11 edge to U19's threshold) | 10.4 / 21.7 / 34.1 ns | 9.8 / 21.0 / 32.3 ns |
-  | GP11 → Trigger1–6 at J1–J6 pin 4 (U5 + U6, mean of the six) | 6.9 / 10.9 / 19.2 ns | 7.3 / 11.2 / 19.8 ns |
-  | **J12 minus camera trigger** | **−8.2 / +10.8 / +26.8 ns** | −9.2 / +9.8 / +24.2 ns |
+  | GP11 → J12 (U19 + R30/J21 + ~4 ns of GP11 edge to U19's threshold) | 10.2 / 21.5 / 33.5 ns | 9.7 / 20.8 / 32.1 ns |
+  | GP11 → Trigger1–6 at J1–J6 pin 4 (U5 + U6, mean of the six) | 7.1 / 11.1 / 19.6 ns | 7.6 / 11.5 / 20.0 ns |
+  | **J12 minus camera trigger** | **−8.8 / +10.4 / +26.0 ns** | −9.6 / +9.4 / +23.8 ns |
 
   The offset limits are not the difference of the rows above: both paths share the GP11 corner, and
   the extremes pair a fast U19 with slow U5/U6 or the reverse. The range is wide because U19
@@ -845,13 +847,14 @@ trigger lines are high, and low while `PWM_TRIG_TAP` is low, including with no s
   independently. The typical value uses U19's 17 ns, which TI specifies at TJ = 125 °C; TI's 25 °C
   curves read 16–16.5 ns rising and 18–19 ns falling, so the typical offset may be about 1 ns less
   on the rising edge and up to 2 ns more on the falling edge. With an older-die U19 (13 ns typical)
-  the typical offset is +6.9 ns rising, +5.7 ns falling. If the GP11 pad sits at its datasheet
-  VOH/VOL limit, J12 can reach 39 ns and the offset spans −10.9 to +31 ns. On one board the offset is fixed: measured once ([first-board check 4](#first-board-checks)),
+  the typical offset is +6.5 ns rising, +5.2 ns falling. If the GP11 pad sits at its datasheet
+  VOH/VOL limit, J12 can reach 38 ns (39 ns on the 126 mm layout, where the offset then spanned
+  −10.9 to +31 ns; that span was not re-computed). On one board the offset is fixed: measured once ([first-board check 4](#first-board-checks)),
   it holds to about 0.5 ns, plus 1–2 ns over temperature (estimates). It depends on the jumpers:
-  J10 on 1-2 adds about +0.75 ns (rising edge; −0.13 ns falling), and J21 in Hi-Z mode about
+  J10 on 1-2 adds about +0.77 ns (rising edge; −0.16 ns falling), and J21 in Hi-Z mode about
   +0.65 ns, so measure each
-  setting you use. On the 126 mm layout the six trigger lines differed by up to 0.3 ns from their
-  routing; on the EuroCard board they are length-matched to 110.2–111.3 mm (spread 1.2 mm).
+  setting you use. The six trigger lines are length-matched (110.71–112.33 mm) and arrive within
+  0.03–0.05 ns of each other in the simulation (up to 0.3 ns on the 126 mm layout).
 
 - **Duty and loads.** J12 is high at most 50 % of the time, the firmware's MARKERWIDTH limit (67 %
   with J10 on 1-2 and `COMBINE 1`; see [Board output rating](#board-output-rating)); don't short it. One load per output, no BNC tee,
@@ -1038,7 +1041,7 @@ Ordered by what would bite hardest.
    below TP3 (RISE, FALL, and the J10/J21 setting it applies to): J12 through the 50 Ω-terminated input, Trigger1 at J1 pin 4
    with a 10× probe and a short ground spring, both edges, at the 50 % points (J12 ~2.4 V, Trigger1
    0.9 V). Deskew the two scope channels first, and subtract the delay of J12's cable (RG-58
-   ~5.05 ns/m). Repeat for each J10/J21 setting you use. Expect −9 to +27 ns, typically about
+   ~5.05 ns/m). Repeat for each J10/J21 setting you use. Expect −9 to +26 ns, typically about
    +10 ns (J12 later); see [External Sync Out](#external-sync-out-j12). With J21 on 2-3 and the
    scope at 1 MΩ: 4.55–5.08 V, peak at most ~5.3 V at the end of a 2 m cable. With the Pico's USB
    alone (J17 unplugged), J12 must stay at 0 V. With

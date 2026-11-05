@@ -268,6 +268,22 @@ def main():
                     elif db <= o["w"] / 2 + 1: uf.u(node, ("s", j, 1))
                     else:
                         cid = ("c", j, len(o["cuts"])); o["cuts"].append((tt, cid)); uf.u(node, cid)
+        # copper that overlaps a pad without a track END inside it (autorouted chains through a row
+        # of gate inputs, or an end just outside the pad): join each separate piece ONCE, on its
+        # segment closest to the pad centre (a second join of the same piece would close a
+        # zero-length loop)
+        for p in pads:
+            c = p.GetPosition(); cands = []
+            for i, s in enumerate(segs):
+                if s["arc"] or not p.IsOnLayer(s["lid"]): continue
+                if not p.GetEffectiveShape(s["lid"]).Collide(pcbnew.SHAPE_SEGMENT(
+                        pcbnew.VECTOR2I(int(s["a"][0]), int(s["a"][1])), pcbnew.VECTOR2I(int(s["b"][0]), int(s["b"][1])), int(s["w"])), 0):
+                    continue
+                d, tt = seg_point_dist((c.x, c.y), s["a"], s["b"])
+                cands.append((d, i, tt))
+            for d, i, tt in sorted(cands):
+                if uf.f(("s", i, 0)) == uf.f(pad_name(p)) or uf.f(("s", i, 1)) == uf.f(pad_name(p)): continue
+                s = segs[i]; cid = ("c", i, len(s["cuts"])); s["cuts"].append((tt, cid)); uf.u(pad_name(p), cid)
         # vias sitting inside pads
         for k, v in enumerate(vias):
             for p in pads:

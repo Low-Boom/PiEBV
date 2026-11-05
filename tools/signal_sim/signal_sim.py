@@ -112,7 +112,11 @@ class Ckt:
         self.add(f"R{self.uid()} {a} {b} {max(ohm, 1e-3):.6g}")
 
     def L(self, a, b, nh):
-        self.add(f"L{self.uid()} {a} {b} {nh:.5g}n")
+        # 1 mOhm in series (about a few mm of 0.3 mm copper): a loop of lumped sections, as the
+        # overlapping bends of an autorouted meander make, is otherwise a singular inductor loop
+        m = f"lr{self.uid()}"
+        self.add(f"L{self.uid()} {a} {m} {nh:.5g}n")
+        self.add(f"R{self.uid()} {m} {b} 1e-3")
 
     def T(self, a, b, z0, td_ns, ref="0"):
         # REL/ABS 10: fewer slope breakpoints; results equal to the default within 0.1 mV (checked)

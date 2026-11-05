@@ -186,7 +186,7 @@ lines do: with every marker (J10 on 2-3, also while DISARMED), or with every Las
 - It needs the 15 V charger on J17; on the Pico's USB alone J12 stays at 0 V.
 - J12 and the cameras' trigger are offset by a fixed delay: J12 passes a 12 V driver, the camera
   trigger lines pass 1.8 V buffers. It is typically about +10 ns (J12 later), but anywhere from
-  −9 to +27 ns from part to part. **Measure it once on each board** and write it in the `J12-TRIG OFFSET (MEASURED)` field on the silkscreen (left area, below TP3), if your
+  −9 to +26 ns from part to part. **Measure it once on each board** and write it in the `J12-TRIG OFFSET (MEASURED)` field on the silkscreen (left area, below TP3), if your
   instrument must line up with the cameras to better than ~30 ns (Hardware.md, First-board checks).
 - One device per output, no BNC tee, and don't short it (see [Safety](#safety)).
 
@@ -835,8 +835,7 @@ replace a scope check on the board.
 nets, built from the routed board and datasheet values, run through the ngspice in KiCad 10. It
 gives the CH1-to-CH2 skew for each J10 setting, J12's delay and its offset to the camera triggers,
 and the output levels. Run it after changing the routing or a part in these chains; see
-[its README](tools/signal_sim/README.md). The results in Hardware.md come from the 126 mm layout,
-so re-run it on the EuroCard board before you rely on the exact ns figures.
+[its README](tools/signal_sim/README.md). The results in Hardware.md are from the EuroCard routing.
 
 ---
 

@@ -47,7 +47,9 @@ and applies it to the new pose.
 | `route_planes.py` (KRT) | GND stitching: edge fence at 10 mm, area lattice at 15 mm. |
 | `silk.py`, `finish.py` | Moves reference labels clear of other silkscreen; title block. |
 
-Checks: `gaps.py` (courtyard gaps, long-edge strips), `pathlen.py` (pad-to-pad copper length).
+Checks: `gaps.py` (courtyard gaps, long-edge strips), `pathlen.py` (pad-to-pad centre-line length;
+right for the drawn pulse lanes, but it reads meanders short because it merges track ends closer
+than 0.15 mm; measure the matched camera lines with KiCad's length tool instead).
 
 ## Laser pulse lanes
 

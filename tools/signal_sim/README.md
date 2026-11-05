@@ -65,7 +65,11 @@ its input capacitance, so each stage is simulated alone and the delays are added
 | D1 | U7/U8 outputs | U13 inputs (`CH1_GATED`, `CH2_GATED`) |
 
 **Board traces.** Each routed run is a lossless T line with the Z0 and delay of its layer and
-width. A run shorter than 2 mm is a lumped LC section. A via is a lumped C-L-C section. All
+width. A run shorter than 2 mm is a lumped LC section. A via is a lumped C-L-C section. Each
+lumped L has 1 mΩ in series, so that a loop of lumped sections (the overlapping bends of an
+autorouted meander) does not make the matrix singular; on the 126 mm geometry this changes no
+result by more than 0.001 ns. `extract_geometry.py` joins a pad to a track that overlaps the pad
+without ending in it (once per separate piece of copper), as autorouted tracks often do. All
 simulated nets are on F.Cu or B.Cu, so they are microstrip: F.Cu over In1 (GND), B.Cu over In2
 (+5V plane, AC reference only). For a 0.3 mm trace, Z0 is 54.5 ohm and the delay is 6.06 ps/mm.
 

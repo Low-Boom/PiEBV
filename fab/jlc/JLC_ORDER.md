@@ -77,7 +77,8 @@ extended (about $3 loading fee each in Economic).
 
 The CPL rotations and centres are already corrected to JLC's own LCSC footprints (`tools/jlc_cpl`,
 see its README; re-run it after any layout change). For the EuroCard layout the CPL was regenerated
-by carrying each part's correction to its new position. Still check these in the preview against the
+by carrying each part's correction to its new position; `tools/jlc_cpl` run on the new board gives
+the same CPL for all 84 parts. Still check these in the preview against the
 board's pin-1 marks before approving:
 
 - SOT-23-5: U1, U3, U5, U7, U8, U9, U10 · TSOT-23-6: U15 · SOT-23-6: U18 · SC-70-6: U16

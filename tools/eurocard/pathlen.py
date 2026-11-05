@@ -31,7 +31,7 @@ def path(pa, pb):
             ti, tj = pts[i][3], pts[j][3]
             r = max(ToMM(ti.GetWidth()), ToMM(tj.GetWidth())) / 2 if ti.GetClass() != "PCB_VIA" and tj.GetClass() != "PCB_VIA" else 0.15
             if ti.GetClass() == "PCB_VIA" or tj.GetClass() == "PCB_VIA":   # anywhere inside the via ring
-                r = ToMM((ti if ti.GetClass() == "PCB_VIA" else tj).GetWidth(pcbnew.F_Cu)) / 2
+                r = ToMM((ti if ti.GetClass() == "PCB_VIA" else tj).GetWidth(pcbnew.F_Cu)) / 2 + 0.05
             if pts[i][2] == pts[j][2] and math.hypot(pts[i][0] - pts[j][0], pts[i][1] - pts[j][1]) < r:
                 link(key(*pts[i][:3]), key(*pts[j][:3]), 0.0)
     # T-junctions: an endpoint on the interior of another same-layer segment joins both of its ends
@@ -47,12 +47,22 @@ def path(pa, pb):
             if math.hypot(ax + u * vx - x, ay + u * vy - y) < ToMM(t.GetWidth()) / 2:
                 Lt = math.sqrt(L2); k = key(x, y, l)
                 link(k, key(ax, ay, l), u * Lt); link(k, key(bx, by, l), (1 - u) * Lt)
-    def terminals(p):                            # track ends lying inside the pad shape
-        out = []
+    def terminals(p):
+        # track ends inside the pad (cost: end to pad centre), and tracks that pass through the pad
+        # without ending in it (cost: along the track from the point nearest the pad centre)
+        out = []; c = p.GetPosition(); cx, cy = ToMM(c.x), ToMM(c.y)
         for x, y, l, t in pts:
             lid = b.GetLayerID(l)
             if p.IsOnLayer(lid) and p.GetEffectiveShape(lid).Collide(pcbnew.VECTOR2I(pcbnew.FromMM(x), pcbnew.FromMM(y)), pcbnew.FromMM(0.05)):
-                c = p.GetPosition(); out.append((key(x, y, l), math.hypot(x - ToMM(c.x), y - ToMM(c.y))))
+                out.append((key(x, y, l), math.hypot(x - cx, y - cy)))
+        for t in segs:
+            lid = t.GetLayer(); l = b.GetLayerName(lid)
+            if not p.IsOnLayer(lid) or not p.GetEffectiveShape(lid).Collide(t.GetEffectiveShape(lid), 0): continue
+            s0, e0 = t.GetStart(), t.GetEnd(); ax, ay, bx, by = ToMM(s0.x), ToMM(s0.y), ToMM(e0.x), ToMM(e0.y)
+            vx, vy = bx - ax, by - ay; L2 = vx * vx + vy * vy
+            if L2 == 0: continue
+            u = max(0.0, min(1.0, ((cx - ax) * vx + (cy - ay) * vy) / L2)); Lt = math.sqrt(L2)
+            out.append((key(ax, ay, l), u * Lt)); out.append((key(bx, by, l), (1 - u) * Lt))
         return out
     src, dst = terminals(pa), dict(terminals(pb))
     dist = {}; q = [(d, k) for k, d in src]; heapq.heapify(q)
