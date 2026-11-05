@@ -10,7 +10,7 @@ b = pcbnew.LoadBoard(sys.argv[1])
 NETS = {"GND": 0.4, "+5V": 0.5}       # tap track width by net (necked to the pad below)
 VIA_D, VIA_DR = 0.6, 0.3
 CLR, HOLE_CLR, H2H, EDGE = 0.2, 0.25, 0.3, 0.6   # copper, copper-to-hole, hole-to-hole, edge (mm)
-SAME_PAD = 0.1                         # via ring to same-net SMD pad (no via-in-pad)
+SAME_PAD = 0.25                        # via ring to any same-net SMD pad, own pad included (solder-wicking margin)
 F = pcbnew.F_Cu
 
 bb = b.GetBoardEdgesBoundingBox()
@@ -58,6 +58,26 @@ def via_ok(x, y, net, own_pad):
     layers = [pcbnew.F_Cu, pcbnew.B_Cu]  # inner layers are planes; the via joins its own plane
     return clear(circle(x, y, VIA_D / 2), net, layers, own_pad, True)
 
+KEPT_VIA_MAX = 5.0                      # kept copper counts as a tap only if it reaches a via this close (mm)
+def kept_via(p, net):
+    """Distance (mm, pad centre to via centre) of the nearest same-net via, or through-hole pad, reached
+    from pad p through same-net tracks and the SMD pads they touch (e.g. an IC pin joined to its
+    exposed pad, whose vias are in the pad); None if the kept copper reaches neither."""
+    px, py = ToMM(p.GetPosition().x), ToMM(p.GetPosition().y)
+    def touch(a, c):
+        return any(a.IsOnLayer(l) and c.IsOnLayer(l) and a.GetEffectiveShape(l).Collide(c.GetEffectiveShape(l), 0) for l in (F, pcbnew.B_Cu))
+    seen = {id(p)}; q = [p]; best = None
+    while q:
+        it = q.pop()
+        for c in tracks + pads:
+            if id(c) in seen or c.GetNetname() != net or not touch(it, c): continue
+            seen.add(id(c))
+            if c.GetClass() == "PCB_VIA" or (c.GetClass() == "PAD" and c.HasHole()):
+                cx, cy = ToMM(c.GetPosition().x), ToMM(c.GetPosition().y)
+                d = math.hypot(cx - px, cy - py); best = d if best is None else min(best, d)
+            else: q.append(c)
+    return best
+
 added = []
 for f in b.GetFootprints():
     for p in f.Pads():
@@ -65,7 +85,11 @@ for f in b.GetFootprints():
         if net not in NETS or p.GetAttribute() != pcbnew.PAD_ATTRIB_SMD or not p.IsOnLayer(F): continue
         if p.GetSize().x < FromMM(0.2): continue
         # already tapped by kept (hand-routed) copper: a same-net track or via touches the pad
-        if any(t.GetNetname() == net and t.IsOnLayer(F) and p.GetEffectiveShape(F).Collide(t.GetEffectiveShape(F), 0) for t in tracks): continue
+        if any(t.GetNetname() == net and t.IsOnLayer(F) and p.GetEffectiveShape(F).Collide(t.GetEffectiveShape(F), 0) for t in tracks):
+            d = kept_via(p, net)
+            if d is not None and d <= KEPT_VIA_MAX:
+                print("skip tap (kept copper):", f.GetReference() + "." + p.GetNumber(), net, "via at", round(d, 2), "mm"); continue
+            print("WARNING: kept copper on", f.GetReference() + "." + p.GetNumber(), "reaches no via within", KEPT_VIA_MAX, "mm (", d, "): tapping it")
         px, py = ToMM(p.GetPosition().x), ToMM(p.GetPosition().y)
         sx, sy = ToMM(p.GetSize().x) / 2, ToMM(p.GetSize().y) / 2
         a = math.radians(p.GetOrientationDegrees())
@@ -89,6 +113,8 @@ for f in b.GetFootprints():
                 d = edge + SAME_PAD + VIA_D / 2 + ext
                 lx, ly = dx * d, dy * d                       # pad frame -> board (KiCad +angle CCW, y down)
                 x = px + lx * math.cos(a) + ly * math.sin(a); y = py - lx * math.sin(a) + ly * math.cos(a)
+                # own pad by shape: the ray step above under-reads the gap on diagonals and rounded pads
+                if p.GetEffectiveShape(F).Collide(circle(x, y, VIA_D / 2), FromMM(SAME_PAD) - 1): continue
                 if not via_ok(x, y, net, p): continue
                 if not clear(seg(px, py, x, y, w), net, [F], p, False): continue
                 best = (x, y); break

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Rebuild the EuroCard (160 x 100 mm) board from the hand-routed 126 x 126 mm Rev 1 board.
 # Steps: place.py -> plane registration -> taps.py -> route.py (KiCadRoutingTools) -> unlock ->
-# GND stitching -> silk.py -> finish.py -> KiCad DRC. Result: work/final/PiDG_Pico.kicad_pcb
+# GND stitching -> tjoin.py / dangling.py -> silk.py -> finish.py -> KiCad DRC -> gaps.py.
+# Result: work/final/PiDG_Pico.kicad_pcb (DRC report drc.json, gap report gaps.txt)
 # usage: bash build.sh            (KRT_DIR / KRT_PY / KICAD_PY / KICAD_CLI / SRC_REV override the defaults)
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"; ROOT="$(cd "$HERE/../.." && pwd)"
@@ -34,7 +35,7 @@ cp "$W/planes.kicad_pro" "$W/tapped.kicad_pro"
   --power-nets GND "+5V" "+12V" "VBUS_PD" "+5V_PD" "+3V3" "+1V8" "Net-(U15-SW)" "Net-(J17-CC*)" PWM_1MHz \
   --power-nets-widths 0.4 0.5 0.5 0.5 0.5 0.5 0.5 0.6 0.2 0.5 \
   --escalation off --fab-tier standard --same-net-pad-clearance 0.1 --no-fix-drc-settings \
-  --via-cost 150 --turn-cost 300 --direction-preference-cost 0 \
+  --via-cost 200 --turn-cost 300 --direction-preference-cost 0 --mps-reverse-rounds \
   --length-match-group "Sync*" --length-match-group "Trigger*" --length-match-group "TDRSTN*" \
   --meander-amplitude 1.5 --meander-spacing 1.0 --write-fill) > "$W/route.log" 2>&1
 grep -A3 '^Run complete' "$W/route.log" | tail -2
@@ -50,7 +51,15 @@ cp "$W/r/PiDG_Pico.kicad_pcb" "$W/st_in.kicad_pcb"; cp "$W/tapped.kicad_pro" "$W
 mkdir -p "$W/final"; project "$W/final"
 cp "$W/st_out.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb"
 drc "$W/final" >/dev/null
+# Router clean-up: split tracks at T-joins (an end on another track's interior), then remove the stubs that
+# DRC still reports as dangling, if connectivity holds without them.
+"$KICAD_PY" "$HERE/tjoin.py" "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" 2>/dev/null | grep 'T-joins' || true
+drc "$W/final" >/dev/null
+"$KICAD_PY" "$HERE/dangling.py" "$W/final/drc.json" "$W/final/PiDG_Pico.kicad_pcb" 2>/dev/null | grep dangling || true
 "$KICAD_PY" "$HERE/silk.py" "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" 2>/dev/null
 "$KICAD_PY" "$HERE/finish.py" "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" 2>/dev/null
 drc "$W/final"
+# Courtyard gaps, long-edge strips and mounting-hole washers (report; MH lines must be absent).
+"$KICAD_PY" "$HERE/gaps.py" "$W/final/PiDG_Pico.kicad_pcb" > "$W/final/gaps.txt" 2>/dev/null || true
+echo "gaps.py: $(grep -c . "$W/final/gaps.txt" || true) lines, MH lines: $(grep -c '^MH' "$W/final/gaps.txt" || true)"
 echo "result: $W/final/PiDG_Pico.kicad_pcb"
