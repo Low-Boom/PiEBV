@@ -31,6 +31,7 @@ the change gave KiCad DRC 0 violations and 0 unconnected.
 | F11 | 45 tap vias have their ring 0.10 mm from their own pad (Rev 1: 12). Solder wicking risk on a hot plate. | `taps.py`: `SAME_PAD = 0.25`, and check the own pad by shape. |
 | F12 | MH1–MH4 (y 34 and 126): the 7 mm washer reaches 0.5 mm from the long edges, 2.0 mm into the 2.5 mm card-guide strip. The docs say the board fits card guides. | `place.py`: MH at y 36 and 124 (rectangle 152 × 88 mm), before routing; `gaps.py` to check holes. |
 | F13 | TP3 pin tips are 2.04 mm past the left edge; a flush end plate touches PWM_1MHz. | `place.py`: TP3 to (141.0, 67.0); tips 0.96 mm inside the edge. |
+| F31 | (Owner review, 2026-11-06.) The autorouted copper has many strange bump-outs and jogs that make the board look odd. The preferred style is Manhattan-diagonal: long straight runs at 0°/90°/45° with few, clean corners, as on the hand board. Measured (pcbnew): the angles are on the 45° grid (8 off-grid segments), so the issue is jog density. Camera lines: 10.2 segments per 10 mm, 774 of 1296 segments shorter than 0.5 mm (hand board 2.4 per 10 mm). Other nets: 4.0 per 10 mm, 155 of 615 shorter than 0.5 mm (hand board 2.8). | Camera lines: the camera-first pass of F2/F3, with fewer, larger meanders of real spacing, placed on straight runs. Other nets: a higher `--turn-cost`, and a post-route straightening step that merges collinear segments and replaces a jog with a straight 0°/45°/90° run where the clearance allows (DRC after it). Acceptance: segments per 10 mm near the hand board's 2.8 on non-camera nets, no segment < 0.5 mm except at pads and vias. |
 | F14 | Stale numbers in Hardware.md (tap count, camera range, pad span, PWM_TRIG_TAP length). | Tap count and CC width corrected in this commit. Do the rest after the rebuild. |
 
 ## Low
@@ -57,8 +58,8 @@ the change gave KiCad DRC 0 violations and 0 unconnected.
 ## Order of work
 
 1. Placement and carry changes, one rebuild: F1, F6, F7, F8, F12, F13, F15, F16, then the
-   camera-first routing pass (F2, F3).
-2. Post-route steps: F18 `ends.py`, F26 `frag_stitch.py`, F27, F28 `tidy.py`, F21 paste, silk (F10, F20).
+   camera-first routing pass (F2, F3), routed in Manhattan-diagonal style (F31).
+2. Post-route steps: F31 straightening, F18 `ends.py`, F26 `frag_stitch.py`, F27, F28 `tidy.py`, F21 paste, silk (F10, F20).
 3. Checks: DRC, parity, netlist, `gaps.py`, KiCad-measured lengths, pulse lanes, CPL.
 4. `signal_sim` patch (F5), re-run, then all doc edits (F14, F19, F22–F25, F29, F30) and the
    gerber zip (F4).
