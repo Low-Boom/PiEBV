@@ -273,7 +273,13 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
     `Sync1`. A via would need the camera meander moved; removing the piece would need a rule area in
     the GND pour. Neither is done.
   - Two GND vias carried from Rev 1 have their ring 0.20 mm from their own pad: U13.3 via
-    (236.0, 60.935) and U19.3 via (241.9, 98.435). All 45 tap vias are at least 0.25 mm.
+    (236.0, 60.935) and U19.3 via (241.9, 98.435) (hole edge 0.35 mm from the pad). All 45 tap vias
+    are at least 0.25 mm; that 0.25 mm is `taps.py`'s own rule, not a DRC rule. No DRC rule applies
+    here: the board's clearance rules (netclass `Default` clearance 0.20 mm, `min_hole_clearance`
+    0.20 mm) are checked only between different nets, and KiCad 10 checks no clearance between a
+    via and a pad of the same net (test on a copy: the U13.3 via moved until its hole touched the
+    pad, DRC still clean). Both vias are tented on both sides (board setup `tenting front / back`,
+    no per-via override), so no via copper is open to solder next to the pad.
 
 ---
 
