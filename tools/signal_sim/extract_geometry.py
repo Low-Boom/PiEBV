@@ -200,6 +200,15 @@ def main():
     tracks_by_net = {}
     for t in b.GetTracks():
         tracks_by_net.setdefault(t.GetNetname(), []).append(t)
+    # Canonical item order (audit n12): the tree walk and the BFS keep the first edge they meet, so on a net with
+    # loops the branches, their labels and the path lengths followed the item order of the board file, which
+    # changes when a tool saves the board again. Sort pads by name and tracks / vias by geometry.
+    def tkey(t):
+        if t.GetClass() == "PCB_VIA": return (1, t.GetPosition().x, t.GetPosition().y, 0, 0, 0)
+        s, e = sorted([(t.GetStart().x, t.GetStart().y), (t.GetEnd().x, t.GetEnd().y)])
+        return (0, t.GetLayer(), s[0], s[1], e[0], e[1], t.GetWidth())
+    for v in pads_by_net.values(): v.sort(key=lambda p: (p.GetParentFootprint().GetReference(), p.GetNumber()))
+    for v in tracks_by_net.values(): v.sort(key=tkey)
     gnd_fill = {}
     for z in b.Zones():
         if z.GetNetname() == "GND" and z.IsFilled():
@@ -268,6 +277,22 @@ def main():
                     elif db <= o["w"] / 2 + 1: uf.u(node, ("s", j, 1))
                     else:
                         cid = ("c", j, len(o["cuts"])); o["cuts"].append((tt, cid)); uf.u(node, cid)
+        # copper that overlaps a pad without a track END inside it (autorouted chains through a row
+        # of gate inputs, or an end just outside the pad): join each separate piece ONCE, on its
+        # segment closest to the pad centre (a second join of the same piece would close a
+        # zero-length loop)
+        for p in pads:
+            c = p.GetPosition(); cands = []
+            for i, s in enumerate(segs):
+                if s["arc"] or not p.IsOnLayer(s["lid"]): continue
+                if not p.GetEffectiveShape(s["lid"]).Collide(pcbnew.SHAPE_SEGMENT(
+                        pcbnew.VECTOR2I(int(s["a"][0]), int(s["a"][1])), pcbnew.VECTOR2I(int(s["b"][0]), int(s["b"][1])), int(s["w"])), 0):
+                    continue
+                d, tt = seg_point_dist((c.x, c.y), s["a"], s["b"])
+                cands.append((d, i, tt))
+            for d, i, tt in sorted(cands):
+                if uf.f(("s", i, 0)) == uf.f(pad_name(p)) or uf.f(("s", i, 1)) == uf.f(pad_name(p)): continue
+                s = segs[i]; cid = ("c", i, len(s["cuts"])); s["cuts"].append((tt, cid)); uf.u(pad_name(p), cid)
         # vias sitting inside pads
         for k, v in enumerate(vias):
             for p in pads:

@@ -21,7 +21,7 @@ pio run
 2. Flash `.pio/build/pico2w/firmware.uf2`: hold **BOOTSEL** while connecting the Pico's micro-USB
    cable, then copy the UF2 to the `RP2350` drive. Flash with the Pico out of the board or J17
    unplugged.
-3. Seat the Pico components-up, USB toward the board's top edge. Set J10 to **2-3** and J18, J19
+3. Seat the Pico components-up, USB toward the board's left edge. Set J10 to **2-3** and J18, J19
    and J21 to **1-2** for the 50 Ω scope checks; leave J11 empty until instructed to check the outputs.
 4. Connect the 15 V charger to J17 and the Pico's micro-USB to the computer. Open the Pico's serial
    port, enable local echo, and send `STATUS`.
@@ -136,24 +136,28 @@ interlock and Connectors.
 
 ## The board
 
-Orientation used below: the USB-C connector J17 is on the **top** edge, and the three BNCs stick
-out of the **right** edge. The Pico plugs into two sockets left of centre, with its micro-USB at the
-top edge, and the six camera ports run along the bottom. The two USB ports on the top edge are
+The board is a **EuroCard, 160 × 100 mm**. Orientation used below: the board is landscape (160 mm
+wide), seen from the top side. All connectors are on the two short edges: the Pico's micro-USB,
+TP3 and, at the bottom, the USB-C connector J17 on the **left** edge, and only the three BNCs on
+the **right** edge. The Pico plugs into two horizontal sockets at the top left, with its micro-USB at
+the left edge, and the six camera ports run in one row along the bottom. The two USB ports are
 labelled on the board: **`CONTROL / PROGRAM — PICO MICRO-USB`** (commands and firmware) and
-**`POWER ONLY — USB-C PD 15 V`** (J17).
+**`POWER ONLY — USB-C PD 15 V`** (J17). The long (160 mm) edges have no parts within 2.5 mm, so the
+board fits EuroCard card guides and slotted enclosures.
 
 ```
- top edge:  TP3   Pico micro-USB = CONTROL         J17 USB-C = POWER ONLY
-           +------------+--------+----------------------------------------+
-           |            |  Pico  |                                         |
-           |            |  2 W   |       J11 (laser enable)                |
-           |            | in J14 |                          J18 (mode) J7 =|  Laser 1  (BNC)
-           |            | / J15  |              J10 (trigger select)       |
-           |            +--------+                          J19 (mode) J8 =|  Laser 2  (BNC)
-           |                                                              |
-           |  J1   J2   J3   J4   J5   J6   (camera ports)  J21 (mode) J12 =|  External Sync Out (BNC)
-           +--------------------------------------------------------------+
+             +------------------------------------------------------------+
+ Pico USB    |= Pico 2 W, in J15 (top row)                        J18 J7 =|  Laser 1 (BNC)
+ = CONTROL   |  and J14 (bottom row)        J10 (trigger select)          |
+             |= TP3 (1 MHz scope)  J20 (clock)                    J19 J8 =|  Laser 2 (BNC)
+             |  J12 offset field            J11 (laser enable)            |
+             |                                                   J21 J12 =|  External Sync Out (BNC)
+ USB-C       |= J17                                                       |
+ = POWER ONLY|       J1   J2   J3   J4   J5   J6   (camera ports)         |
+             +------------------------------------------------------------+
 ```
+
+(Not to scale. J18, J19 and J21 are the output-mode jumpers.)
 
 ### Connectors
 
@@ -167,8 +171,8 @@ labelled on the board: **`CONTROL / PROGRAM — PICO MICRO-USB`** (commands and 
 | **J10** | Camera trigger source (jumper) | A shunt | See [Jumpers](#jumpers) |
 | **J11** | Laser enable (jumper) | A shunt, or a normally-closed E-stop switch | See [Jumpers](#jumpers) |
 | **J18**, **J19**, **J21** | Output mode (jumpers; J18 = Laser 1, J19 = Laser 2, J21 = External Sync Out) | A shunt | See [Jumpers](#jumpers) |
-| **J20** | Clock jumper, 2-pin header left of the Pico socket J14 | Nothing (150 MHz), or a shunt (300 MHz overclock) | See [Jumpers](#jumpers). Leave it open unless that Pico passed the soak test. |
-| **TP3** | 2-pin header on the top edge | A scope | Pin 1 = the 1 MHz sync straight from the Pico (3.3 V) · pin 2 = ground |
+| **J20** | Clock jumper, 2-pin header right of the Pico, below the J14 row | Nothing (150 MHz), or a shunt (300 MHz overclock) | See [Jumpers](#jumpers). Leave it open unless that Pico passed the soak test. |
+| **TP3** | 2-pin header on the left edge, below the Pico | A scope | Pin 1 = the 1 MHz sync straight from the Pico (3.3 V) · pin 2 = ground |
 
 #### J12 — External Sync Out
 
@@ -182,7 +186,7 @@ lines do: with every marker (J10 on 2-3, also while DISARMED), or with every Las
 - It needs the 15 V charger on J17; on the Pico's USB alone J12 stays at 0 V.
 - J12 and the cameras' trigger are offset by a fixed delay: J12 passes a 12 V driver, the camera
   trigger lines pass 1.8 V buffers. It is typically about +10 ns (J12 later), but anywhere from
-  −9 to +27 ns from part to part. **Measure it once on each board** and write it in the field on the silkscreen below J12, if your
+  −9 to +26 ns from part to part. **Measure it once on each board** and write it in the `J12-TRIG OFFSET (MEASURED)` field on the silkscreen (left area, below TP3), if your
   instrument must line up with the cameras to better than ~30 ns (Hardware.md, First-board checks).
 - One device per output, no BNC tee, and don't short it (see [Safety](#safety)).
 
@@ -233,9 +237,9 @@ next to the pin pairs.
 - The two jumpers are independent, so one output can drive an LDP-V and the other a logic input. The
   firmware can't see them, and the pulse timing is the same in both modes.
 
-**J20 — clock jumper (300 MHz overclock).** A 2-pin header left of the Pico socket J14. Pin 1
-(square pad, the lower pin) goes to GP10 through R29 (1 kΩ, which protects GP10 if a program drives
-it), pin 2 is GND. A shunt on J20, read at every start (power-up or reset),
+**J20 — clock jumper (300 MHz overclock).** A 2-pin header right of the Pico, below the J14 row.
+Pin 1 (square pad, the lower pin) goes to GP10 through R29 (1 kΩ, which protects GP10 if a
+program drives it), pin 2 is GND. A shunt on J20, read at every start (power-up or reset),
 runs the Pico at 300 MHz instead of 150 MHz, so every time setting has 3.333 ns steps instead of
 6.667 ns. That is twice the chip's rated speed: soak-test each Pico first, as described in
 [Hardware.md](Hardware.md#clock-jumper-j20-300-mhz-overclock). No shunt (the default) is the
@@ -245,9 +249,10 @@ rated 150 MHz. After any watchdog restart the Pico stays at 150 MHz until it is 
 ### Seating the Pico
 
 Fit a **Raspberry Pi Pico 2 W** (or a plain Pico 2, which needs the `pico2` firmware image) with
-pin headers into the two sockets, J14 (left) and J15 (right). Seat it **components up, with its
-micro-USB connector at the top edge**, next to the label `CONTROL / PROGRAM — PICO MICRO-USB`. Pico
-pin 1 then goes into the top-left socket hole, marked `1`. **Fitted the other way round, it can be
+pin headers into the two horizontal sockets, J15 (top row) and J14 (bottom row). Seat it
+**components up, with its micro-USB connector at the left edge**, next to the label
+`CONTROL / PROGRAM — PICO MICRO-USB`. Pico pin 1 then goes into pad 1 of J14: the left end of the
+bottom row, at the pin-1 mark. **Fitted the other way round, it can be
 destroyed** (the board's 5 V would land on one of its signal pins).
 
 Fit the Pico before connecting any camera: without it, the camera sync and reset lines are
@@ -284,7 +289,7 @@ with 50 Ω inputs (or 50 Ω feed-through terminators).
    named `RP2350` appears. Copy `firmware.uf2` onto it: the drive disappears and the Pico starts
    the firmware. (Later updates can use `pio run -t upload`; see
    [Building from source](#building-from-source).)
-2. **Seat the Pico,** components up, USB toward the top edge ([details](#seating-the-pico)).
+2. **Seat the Pico,** components up, USB toward the left edge ([details](#seating-the-pico)).
 3. **Set the jumpers:** J10 on **2-3** (cameras triggered by the marker), and J18 and J19 on
    **1-2** (50 Ω outputs, for the LDP-V). Leave **J11 empty** for now, so the lasers stay off, and
    **J20 empty** (the rated 150 MHz clock).
@@ -830,7 +835,7 @@ replace a scope check on the board.
 nets, built from the routed board and datasheet values, run through the ngspice in KiCad 10. It
 gives the CH1-to-CH2 skew for each J10 setting, J12's delay and its offset to the camera triggers,
 and the output levels. Run it after changing the routing or a part in these chains; see
-[its README](tools/signal_sim/README.md).
+[its README](tools/signal_sim/README.md). The results in Hardware.md are from the EuroCard routing.
 
 ---
 
@@ -850,6 +855,7 @@ and the output levels. Run it after changing the routing or a part in these chai
 | `fab/` | Manufacturing: master parts list `fab/PiDG_Pico_BOM.csv` (with the design-constraint notes), gerbers and drill files, and `fab/jlc/` JLCPCB assembly files and [order checklist](fab/jlc/JLC_ORDER.md) |
 | `libs/`, `fp-lib-table`, `sym-lib-table` | Project-local KiCad symbols and footprints |
 | `tools/jlc_cpl/` | Corrects the JLC placement file to JLC's own footprints (see its README) |
+| `tools/eurocard/` | Rebuilds this EuroCard board from the 126 × 126 mm hand layout: placement, KiCadRoutingTools routing, checks (see its README) |
 
 ## License
 
