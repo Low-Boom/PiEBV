@@ -26,6 +26,11 @@ post() { local s="${1%%:*}" l="${1#*:}" f="$2"; shift 2
   if ! "$KICAD_PY" "$HERE/$s.py" "$@" > "$W/$l.log" 2>> "$W/post.log"; then
     echo "post: $s.py failed (stderr in $W/post.log):"; grep -v "^swig/python\|image handler" "$W/post.log" | tail -20; exit 1; fi
   grep -v "^swig/python" "$W/$l.log" | grep -E "$f" || true; }
+# R1: every via in a file KRT reads or writes must be a via KRT models as an obstacle (viaguard.py, KRT python).
+# KRT's "3 via block(s) could not be read" warning is "(via J18 / J19 / J21 2-3)" text in three Description
+# properties, not copper; viaguard counts the real (top-level) via blocks and stops the build on a mismatch.
+vguard() { if ! "$KRT_PY" "$HERE/viaguard.py" "$KRT_DIR" "$@" >> "$W/viaguard.log" 2>&1; then
+  grep '^viaguard' "$W/viaguard.log"; exit 1; fi; grep '^viaguard' "$W/viaguard.log" | tail -n "$#"; }
 
 # 1. Placement on the new outline; carried copper and the equal-length pulse lanes are locked.
 git -C "$ROOT" show "$SRC_REV:PiDG_Pico.kicad_pcb" > "$W/src.kicad_pcb"
@@ -65,6 +70,7 @@ cp "$W/tapped.kicad_pro" "$W/cam_l.kicad_pro"
 (cd "$KRT_DIR" && "$KRT_PY" py_router/route.py "$W/cam_l.kicad_pcb" "$W/routed.kicad_pcb" --nets "*" \
   "${RARGS[@]}" --via-cost 200 --turn-cost 2000 --mps-reverse-rounds --write-fill) > "$W/route.log" 2>&1
 grep -A3 '^Run complete' "$W/route.log" | tail -2
+vguard "$W/placed.kicad_pcb" "$W/tapped.kicad_pcb" "$W/cam_l.kicad_pcb" "$W/routed.kicad_pcb"
 
 # 5. Unlock, straighten (F31b), repair (F27), refill, then GND stitching (edge fence 10 mm, area 15 mm)
 #    across F.Cu / In1 / B.Cu. straighten before repair: it has no 0.3 mm keep rule round SMD bodies.
@@ -81,6 +87,7 @@ cp "$W/r/PiDG_Pico.kicad_pcb" "$W/st_in.kicad_pcb"; cp "$W/tapped.kicad_pro" "$W
 (cd "$KRT_DIR" && "$KRT_PY" py_router/route_planes.py "$W/st_in.kicad_pcb" "$W/st_out.kicad_pcb" --nets GND GND GND \
   --plane-layers F.Cu In1.Cu B.Cu --skip-existing-zones --thermal-relief --via-size 0.6 --via-drill 0.3 \
   --same-net-pad-clearance 0.1 --stitch-vias --stitch-edge-fence --stitch-pitch 15 --stitch-fence-pitch 10) > "$W/stitch.log" 2>&1
+vguard "$W/st_in.kicad_pcb" "$W/st_out.kicad_pcb"
 
 # 6. Final touches and DRC.
 mkdir -p "$W/final"; project "$W/final"
