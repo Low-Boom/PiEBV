@@ -11,12 +11,12 @@ const DIR = path.join(S, '..', '..') + '/'; // repo root (KiCad project)
 const kp = JSON.parse(fs.readFileSync(path.join(S, 'kpads.json'), 'utf8'));
 
 // ref -> LCSC from the JLC BOM
-const bom = fs.readFileSync(DIR + 'fab/jlc/PiDG_Pico_JLC_BOM.csv', 'utf8').trim().split(/\r?\n/).slice(1)
+const bom = fs.readFileSync(DIR + 'fab/jlc/PiEBV_Pico_JLC_BOM.csv', 'utf8').trim().split(/\r?\n/).slice(1)
   .map(l => l.match(/"([^"]*)"/g).map(x => x.slice(1, -1)));
 const lcsc = {};
 for (const [, des, , code] of bom) for (const r of des.split(',')) lcsc[r.trim()] = code;
 
-const cpl = fs.readFileSync(DIR + 'fab/jlc/PiDG_Pico_JLC_CPL.csv', 'utf8').trim().split(/\r?\n/);
+const cpl = fs.readFileSync(DIR + 'fab/jlc/PiEBV_Pico_JLC_CPL.csv', 'utf8').trim().split(/\r?\n/);
 const header = cpl[0];
 const rows = cpl.slice(1).map(l => l.match(/"([^"]*)"/g).map(x => x.slice(1, -1)));
 

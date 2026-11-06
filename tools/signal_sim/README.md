@@ -1,7 +1,7 @@
 # Signal simulation of the timing nets
 
 Transmission-line simulation of the PiEBV trigger, laser and External Sync Out nets. It uses the
-routed geometry from `PiDG_Pico.kicad_pcb` and datasheet device values. It calculates:
+routed geometry from `PiEBV_Pico.kicad_pcb` and datasheet device values. It calculates:
 
 - the CH1-to-CH2 skew at U7/U8 and at J7/J8, for each J10 position, with and without R19;
 - the delay from the GP11 edge to J12 and to the camera trigger pins (J1-J6 pin 4), and the
@@ -19,7 +19,7 @@ value in `devices.json`. The last results are in `results.md`.
 | `signal_sim.py` | The runner. Builds one ngspice netlist for each circuit stage and corner, runs it through KiCad's `ngspice.dll`, and writes `results.md` and `results.json`. |
 | `geometry.json` | Input. Stackup, line values (Z0, delay, L and C per mm) and the routed tree of each net: branches, layers, widths, lengths and vias. Made by `extract_geometry.py`. |
 | `devices.json` | Input. Device parameters for each corner, with the datasheet and table for each value. Keys that end in `_est`, and blocks with `"est": true`, are estimates. |
-| `extract_geometry.py` | Makes `geometry.json` from `../../PiDG_Pico.kicad_pcb` (read only) with KiCad's `pcbnew`. |
+| `extract_geometry.py` | Makes `geometry.json` from `../../PiEBV_Pico.kicad_pcb` (read only) with KiCad's `pcbnew`. |
 | `fd_cache.json` | Cache of the field-solver results that `extract_geometry.py` uses. |
 | `results.md` | Output. The tables for all cases, the hand-calculation checks and the gate calibration. |
 | `results.json` | Output. The same results as numbers, for other scripts. |

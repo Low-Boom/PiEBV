@@ -1,5 +1,5 @@
 #pragma once
-// PIO-based precision pulse generation for the PiDG delay generator.
+// PIO-based precision pulse generation for the PiEBV delay generator.
 //
 // One PIO program shape covers every timed output:
 //  - PulseChannel: free-running "delay, then pulse-high, then idle-low" loop.

@@ -1087,7 +1087,7 @@ doesn't publish the camera's own thresholds or input pull, so confirm on the ben
 J7 Laser 1 (out), J8 Laser 2 (out), J12 External Sync Out (out, a copy of the camera trigger; see
 [External Sync Out](#external-sync-out-j12)). Shells on GND.
 Part: Kinghelm KH-BNC50-3511 (50 Ω, right angle; LCSC C2837587), footprint
-`PiDG_Local:BNC_Kinghelm_KH-BNC50-3511_Horizontal`: the Amphenol B6252HB-NPP3G-50 pad pattern,
+`PiEBV_Local:BNC_Kinghelm_KH-BNC50-3511_Horizontal`: the Amphenol B6252HB-NPP3G-50 pad pattern,
 which the Kinghelm drawing matches within 0.04 mm (its 3D model is the Amphenol body). Never fit the
 75 Ω KH-BNC75-3511. Its posts sit in
 a plastic housing and the shell reaches GND through one lead, so use the panel nuts in an enclosure.
@@ -1259,7 +1259,7 @@ The layout also lets you assemble the board by hand with a hot plate.
 - **Paste: use a stencil.** U16 and U17 have 0.65 mm pitch (pads 0.35 and 0.40 mm wide, so gaps of
   0.30 and 0.25 mm), and J17's pads are as little as 0.27 mm apart. Paste from a syringe is hard to meter
   for these gaps. Order a steel stencil, 0.12 mm thick, cut from
-  `fab/gerbers/PiDG_Pico-F_Paste.gbr` (apertures equal to the pads; at 0.12 mm every U16/U17 lead
+  `fab/gerbers/PiEBV_Pico-F_Paste.gbr` (apertures equal to the pads; at 0.12 mm every U16/U17 lead
   aperture has an area ratio of 1.09 or more, above the 0.66 minimum of IPC-7525), and use type 4
   paste. Print the whole board in one pass. The exposed pads get reduced paste so that solder does not
   wick into their thermal vias: U14's paste is an "H" that keeps its two via holes clear,
@@ -1281,13 +1281,13 @@ The layout also lets you assemble the board by hand with a hot plate.
 
 | Path | What |
 |---|---|
-| `PiDG_Pico.kicad_sch` | schematic |
-| `PiDG_Pico.kicad_pcb` | board. Copper fingerprint (fp.py, sha256 of sorted track/via tuples) `98a60c3b4332d6e9`: 1015 segments / 2489.2 mm / 194 vias / 0 duplicates. The T6 commit (`2e1baaf`) quotes `c27822f7b03012e7`, which is wrong; this row is the correction (the commit message cannot be amended without a rewrite) |
-| `fab/PiDG_Pico_BOM.csv` | master parts list with the design-constraint NOTE rows (hand-maintained; KiCad's `export_bom` ignores DNP attributes). The JLC BOM in `fab/jlc/` is derived from it. |
-| `fab/jlc/PiDG_Pico_JLC_BOM.csv`, `fab/jlc/PiDG_Pico_JLC_CPL.csv`, `fab/jlc/JLC_ORDER.md` | JLCPCB full-assembly upload files (all 84 placed parts, LCSC numbers) and the order checklist |
-| `fab/gerbers/`, `fab/PiDG_Pico_Gerbers.zip` | gerbers, Excellon drill files (plated and unplated) and job file, from the board's stored plot settings. Zip: 14 files, sha256 `9cc3ef0b328f1b3ad587a783bc3b5d4feb345d1e0d5631f9155cf8d3d592ce3f` (exported 2026-11-06 from the `2e1baaf` board after the T6 copper change; re-export check: the `c2bb8c1` board re-exported with `kicad-cli pcb export gerbers --board-plot-params` plus `drill --format excellon --excellon-separate-th` gives all committed files equal except the ProjectId and timestamp lines) |
-| `libs/PiDG_Local.kicad_sym` | Pico 2 W, UCC27524, LT3065 and TPS3700 symbols |
-| `libs/PiDG_Local.pretty/` | `*_EdgeTrim` footprint variants (see below) and the J7/J8/J12 BNC footprint (see [BNCs](#bncs-50-ω)) |
+| `PiEBV_Pico.kicad_sch` | schematic |
+| `PiEBV_Pico.kicad_pcb` | board. Copper fingerprint (fp.py, sha256 of sorted track/via tuples) `98a60c3b4332d6e9`: 1015 segments / 2489.2 mm / 194 vias / 0 duplicates. The T6 commit (`2e1baaf`) quotes `c27822f7b03012e7`, which is wrong; this row is the correction (the commit message cannot be amended without a rewrite) |
+| `fab/PiEBV_Pico_BOM.csv` | master parts list with the design-constraint NOTE rows (hand-maintained; KiCad's `export_bom` ignores DNP attributes). The JLC BOM in `fab/jlc/` is derived from it. |
+| `fab/jlc/PiEBV_Pico_JLC_BOM.csv`, `fab/jlc/PiEBV_Pico_JLC_CPL.csv`, `fab/jlc/JLC_ORDER.md` | JLCPCB full-assembly upload files (all 84 placed parts, LCSC numbers) and the order checklist |
+| `fab/gerbers/`, `fab/PiEBV_Pico_Gerbers.zip` | gerbers, Excellon drill files (plated and unplated) and job file, from the board's stored plot settings. Zip: 14 files, sha256 `6a0a29aa4eed95512623a007ff587eeef30a2cb081fa7a0d6f2679ff834e074c` (re-exported 2026-11-07 after the PiDG→PiEBV rename — new ProjectId name and file names, identical copper to the `2e1baaf` board; earlier export: 14 files, sha256 `9cc3ef0b...592ce3f`, from the `2e1baaf` board after the T6 copper change; re-export check: the `c2bb8c1` board re-exported with `kicad-cli pcb export gerbers --board-plot-params` plus `drill --format excellon --excellon-separate-th` gives all committed files equal except the ProjectId and timestamp lines) |
+| `libs/PiEBV_Local.kicad_sym` | Pico 2 W, UCC27524, LT3065 and TPS3700 symbols |
+| `libs/PiEBV_Local.pretty/` | `*_EdgeTrim` footprint variants (see below) and the J7/J8/J12 BNC footprint (see [BNCs](#bncs-50-ω)) |
 | `src/` | firmware: `board.h` (pin map), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `laser_gate.*` (CH1/CH2 gate, start-up hook), `protocol.*` (serial commands), `main.cpp` (arming, hold-off, watchdog) |
 | `platformio.ini` | build configuration: platform pinned to an exact commit; `pico2w` (default) and `pico2` builds |
 | `tools/timing_check/` | checks `pulse_timing.h` against a cycle-level PIO model (see its README) |
@@ -1297,7 +1297,7 @@ The layout also lets you assemble the board by hand with a hot plate.
 outline runs off the board and trips `silk_edge_clearance`. TP3 overhung the edge until it moved
 in (review F13); its pins now end 0.96 mm inside the edge, and it keeps its variant, whose
 silkscreen stops at the plastic body (the stock outline also follows the pins). The variants
-in `libs/PiDG_Local.pretty/` are the stock footprints with that off-board silkscreen clipped:
+in `libs/PiEBV_Local.pretty/` are the stock footprints with that off-board silkscreen clipped:
 **identical part, identical pads, silkscreen only** (J17's variant also stops its side marks
 short of the front shell-leg pads). Order the standard parts; the placement file
 carries the stock package names for that reason. To trim the silkscreen on another overhanging
@@ -1305,8 +1305,8 @@ connector, make a variant the same way rather than editing the footprint on the 
 trade a `silk_edge_clearance` warning for a `lib_footprint_mismatch` one.
 
 **Re-running the checks.** DRC from Pcbnew, or
-`kicad-cli pcb drc --schematic-parity --refill-zones PiDG_Pico.kicad_pcb`; ERC with
-`kicad-cli sch erc --format json PiDG_Pico.kicad_sch`. The ERC JSON reports every coordinate and
+`kicad-cli pcb drc --schematic-parity --refill-zones PiEBV_Pico.kicad_pcb`; ERC with
+`kicad-cli sch erc --format json PiEBV_Pico.kicad_sch`. The ERC JSON reports every coordinate and
 length at 1/100 of the true mm value despite declaring `"coordinate_units": "mm"`: multiply by 100.
 
 **Current state:** the DRC command above prints `Found 1 violations`, `Found 0 unconnected items`:

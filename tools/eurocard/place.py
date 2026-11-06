@@ -1,4 +1,4 @@
-# EuroCard (160 x 100 mm) re-placement of PiDG_Pico.kicad_pcb with KiCad's pcbnew API.
+# EuroCard (160 x 100 mm) re-placement of PiEBV_Pico.kicad_pcb with KiCad's pcbnew API.
 # usage: python.exe place.py <in.kicad_pcb> <out.kicad_pcb>
 # Rigid groups keep the hand layout inside each block (laser/ext-sync output block keeps its
 # length-matched copper geometry when the tracks are re-imported). All tracks/vias are removed.

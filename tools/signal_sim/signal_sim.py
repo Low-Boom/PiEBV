@@ -1,4 +1,4 @@
-"""signal_sim.py - transmission-line simulation of the PiDG timing nets.
+"""signal_sim.py - transmission-line simulation of the PiEBV timing nets.
 
 Run with KiCad 10's Python (numpy is included; pcbnew is not needed):
     "%LOCALAPPDATA%\\Programs\\KiCad\\10.0\\bin\\python.exe" signal_sim.py

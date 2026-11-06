@@ -1,4 +1,4 @@
-# Independent cycle-level model of the RP2350 PIO running the PiDG pulse program.
+# Independent cycle-level model of the RP2350 PIO running the PiEBV pulse program.
 # Semantics from RP2350 datasheet ch.11:
 #  11.2.2 one instr/cycle unless stalled; 11.4.2.2 JMP X-- cond on X before dec, dec unconditional;
 #  11.4.7 PULL block stalls on empty TX FIFO; 11.5.2 PC update: JMP-taken > wrap > +1;

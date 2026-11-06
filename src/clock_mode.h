@@ -15,7 +15,7 @@
 // counter, reset_scratch.h), the clock stays at 150 MHz even with the jumper fitted, so
 // an unstable chip cannot crash in a loop at 300 MHz. Power-cycle to try again.
 //
-// This header has no SDK dependency, so the simulator (tools/pidg_sim) prints the same
+// This header has no SDK dependency, so the simulator (tools/piebv_sim) prints the same
 // CLKMODE text.
 
 #include <cstdint>

@@ -1,5 +1,5 @@
 {
- "board": "PiDG_Pico.kicad_pcb",
+ "board": "PiEBV_Pico.kicad_pcb",
  "units": "mm, ohm, ps",
  "kicad_connectivity_unconnected_total": 0,
  "stackup": {

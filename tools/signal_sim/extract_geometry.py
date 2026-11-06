@@ -1,5 +1,5 @@
-# extract_geometry.py - routed geometry of the PiDG trigger/laser/sync nets for signal_sim.py.
-# Run with KiCad 10 python (pcbnew + numpy). Reads ../../PiDG_Pico.kicad_pcb (read only);
+# extract_geometry.py - routed geometry of the PiEBV trigger/laser/sync nets for signal_sim.py.
+# Run with KiCad 10 python (pcbnew + numpy). Reads ../../PiEBV_Pico.kicad_pcb (read only);
 # writes geometry.json next to this file. fd_cache.json holds the field-solver results
 # (delete it to solve again: ~8 min).
 # Part 1: stackup -> Z0 / Td per mm (Hammerstad-Jensen 1980 closed form, plus a 2-D
@@ -10,7 +10,7 @@ import numpy as np
 import pcbnew
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-BOARD = os.path.normpath(os.path.join(HERE, "..", "..", "PiDG_Pico.kicad_pcb"))
+BOARD = os.path.normpath(os.path.join(HERE, "..", "..", "PiEBV_Pico.kicad_pcb"))
 OUT = os.path.join(HERE, "geometry.json")
 C0 = 299792458.0
 ETA0 = 376.730313668
@@ -508,7 +508,7 @@ def main():
                  "note": "ESTIMATE: H. Johnson, High-Speed Digital Design (1993) sec 7.3 via L=5.08h[ln(4h/d)+1] nH, C=1.41 er T D1/(D2-D1) pF (inch units); D2 assumes 0.3 mm plane clearance"}
 
     cn = b.GetConnectivity(); cn.RecalculateRatsnest()
-    out = {"board": "PiDG_Pico.kicad_pcb", "units": "mm, ohm, ps",
+    out = {"board": "PiEBV_Pico.kicad_pcb", "units": "mm, ohm, ps",
            "kicad_connectivity_unconnected_total": cn.GetUnconnectedCount(False),
            "stackup": {"layers": stack, "source": "board (stackup) block; Hardware.md: JLC04161H-7628",
                        "mask_er_estimate": MASK_ER, "gnd_pour_clearance_mm": pour_gap,

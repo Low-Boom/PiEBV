@@ -190,9 +190,9 @@ const ClockModeInfo &clockModeInfo() {
 // 4 at >= 250 MHz), USB, and setup(). Everything after it sees the final clock.
 // ---------------------------------------------------------------------------------
 extern "C" {
-static void pidg_preinit_clock_mode(void) {
+static void piebv_preinit_clock_mode(void) {
     clockModeBoot();
 }
 __attribute__((used, section(".preinit_array.00700")))
-void (*const pidg_preinit_clock_mode_ptr)(void) = pidg_preinit_clock_mode;
+void (*const piebv_preinit_clock_mode_ptr)(void) = piebv_preinit_clock_mode;
 }

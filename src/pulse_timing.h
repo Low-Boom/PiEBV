@@ -1,5 +1,5 @@
 #pragma once
-// Pure integer timing math for the PiDG pulse programs and the SYNC clock. No hardware
+// Pure integer timing math for the PiEBV pulse programs and the SYNC clock. No hardware
 // access and no Arduino dependency, so it also compiles on a host:
 // tools/timing_check/ builds this exact header into a small harness and checks
 // it cycle-for-cycle against a Python model of the RP2350 PIO (see its README).
@@ -364,7 +364,7 @@ inline const char *realizeTiming(const PulseParams &p, uint32_t clk, RealizedTim
 }
 
 // ---------------------------------------------------------------- restart decisions
-// Used by src/main.cpp and by the host simulator (tools/pidg_sim), so the two cannot drift.
+// Used by src/main.cpp and by the host simulator (tools/piebv_sim), so the two cannot drift.
 
 // True if `b` loads different cycle counts or a different pin mode into the pulse state
 // machines than `a`, i.e. applying `b` over `a` needs a restart. SYNC (syncDiv) is not
