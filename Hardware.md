@@ -177,25 +177,27 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
   (0.3 mm, F.Cu) before routing and locked them. From the GPIO pin to U13's input, both channels are
   **66.16 mm** (CH1: 55.75 mm to U7, then 10.41 mm; CH2: 56.49 mm to U8, then 9.67 mm). The
   shorter lane has a small 45° bump. On the 126 mm board they were 86.32 and 81.74 mm, 4.6 mm
-  apart. The two lanes are at least 2.24 mm apart (never within 1 mm), at least 22.4 mm from
-  `PWM_1MHz` and `SYNC_N`, and at least 0.54 mm from any other net (8.2 mm of run within 1 mm).
+  apart. The two lanes are at least 2.24 mm apart (never within 1 mm), at least 22.3 mm from
+  `PWM_1MHz` and `SYNC_N`, and at least 2.3 mm from any other net (2.6 mm of run within 1 mm).
 - **Camera lines, length-matched** (buffer pin to header pin, as KiCad's length tool measures:
-  vias over the layers they join, runs cut at the pad outlines): `Sync1..6` 107.32–108.95 mm
-  (spread 1.63 mm; Sync4 is the long one, the other five are within 0.39 mm), `Trigger1..6`
-  55.28–57.10 mm (spread 1.82 mm; Trigger4 is the long one, the other five are within 0.52 mm),
-  `TDRSTN1..6` 52.06–53.91 mm (spread 1.85 mm). 1.9 mm is about 12 ps. The match starts at the
+  vias over the layers they join, runs cut at the pad outlines): `Sync1..6` 81.87–83.04 mm
+  (spread 1.18 mm; Sync5 is the long one, the other five are within 0.71 mm), `Trigger1..6`
+  42.46–43.60 mm (spread 1.13 mm; Trigger4 is the long one, the other five are within 0.86 mm),
+  `TDRSTN1..6` 51.60–53.05 mm (spread 1.45 mm; TDRSTN4 is the long one, the other five are within
+  0.92 mm). 1.45 mm is about 9 ps. The match starts at the
   buffer output, not at its input: the input fan-outs (`SYNC_N` from U1.4, `TRIG_N` from U5.4 and
   `PIXRST_N` from U3.4, each to the six gate inputs of its hex buffer U2, U6 or U4) are not matched,
-  and their branch lengths differ by 8–10 mm. On the 126 mm board they were not matched (Sync 28–71 mm, Trigger 21–56 mm,
-  TDRSTN 20–41 mm). Sync and Trigger lines are at least 1.47 mm apart. Open item: on 14 of the
-  18 lines, adjacent meander arms touch (0 mm gap), so the electrical lengths are shorter than
-  these values; see `tools/eurocard/REVIEW.md`, F2/F3.
+  and their branch lengths differ by 6–11 mm. On the 126 mm board they were not matched (Sync 28–71 mm, Trigger 21–56 mm,
+  TDRSTN 20–41 mm). Sync and Trigger lines are at least 1.96 mm apart. The camera lines are routed
+  first in a dedicated pass, so their meanders keep real arm spacing: no two runs of one line are
+  closer than 0.084 mm (nine tight exit hairpins) and the copper merges nowhere, so these are the
+  electrical lengths.
 - **Plane taps.** Each SMD GND and +5V pad that the carried hand copper does not already touch has
   its own short tap track to a via into In1 or In2 (45 taps), placed outward from the part body
-  first. Open item: the buck GND (C12.2, U15.4) has no via of its own; see
-  `tools/eurocard/REVIEW.md`, F1. +5V has only 12.4 mm of surface copper; the
+  first. The buck's GND link (C12.2 to U15.4) keeps its two hand vias, 1.74 and 1.90 mm from
+  C12.2. +5V has only 12.4 mm of surface copper; the
   In2 plane carries it.
-- **Totals:** 1911 track segments, 2807 mm of track (F.Cu 1829 mm, B.Cu 979 mm), 169 vias.
+- **Totals:** 1461 track segments, 2510 mm of track (F.Cu 1498 mm, B.Cu 1013 mm), 194 vias.
 
 ---
 
@@ -649,9 +651,9 @@ dedicated gate per camera.
 
 **Sync (1 MHz)**
 `GP15` (clk_gpout1) → U1.2 (74LVC1G04) → `SYNC_N` → U2 ×6 (SN74LVC04AD hex) → `Sync1..6` → J1–J6 pin 5
-(TP3 taps `PWM_1MHz`). On the board, `PWM_1MHz` is 87.7 mm of 0.5 mm track, nearly all on B.Cu,
-with 1 via. `PWM_1MHz` and `SYNC_N` stay at least 22.4 mm from the laser pulse lanes, and
-`PWM_1MHz` stays at least 1.37 mm from every signal that is not a 1 MHz signal.
+(TP3 taps `PWM_1MHz`). On the board, `PWM_1MHz` is 83.7 mm of 0.5 mm track, nearly all on B.Cu,
+with 1 via. `PWM_1MHz` and `SYNC_N` stay at least 22.3 mm from the laser pulse lanes, and
+`PWM_1MHz` stays at least 1.01 mm from every signal that is not a 1 MHz signal.
 
 **Trigger**
 `GP11` → J10.3 → *[J10 jumper]* → `PWM_TRIG_TAP` → U5.2 → `TRIG_N` → U6 ×6 → `Trigger1..6` →
@@ -672,29 +674,29 @@ J10's silkscreen reads **`CH1 / TRG / MKR`** (pins 1/2/3).
 
 J10.1 reaches `_PULSE_OUT_CH1` through **R19 (100 Ω)**; it idles LOW while DISARMED. R19
 is there for the laser timing. Without it, the 1-2 shunt would hang the whole `PWM_TRIG_TAP` net
-(U5, R9, U19 and 64.9 mm of trace) directly on the CH1 GPIO. The transmission-line simulation
-in `tools/signal_sim` (typical corner, 4 mA GPIO; EuroCard routing of commit 8db06a6, not yet re-run
-on the current routing, see `tools/eurocard/REVIEW.md`, F5) puts CH1 behind CH2 at U7/U8
+(U5, R9, U19 and 73.2 mm of trace) directly on the CH1 GPIO. The transmission-line simulation
+in `tools/signal_sim` (169 ngspice runs on the final routing; typical corner, 4 mA GPIO in the
+table) puts CH1 behind CH2 at U7/U8
 by the values below. On the 126 mm layout (unequal laser pulse lanes) the 2-3 row was 0.22 / 0.25 ns
 and the 1-2 row 0.38 / 0.42 ns; the equal-length lanes remove most of that.
 
 | J10 | With R19 (100 Ω) | Without R19 |
 |---|---|---|
-| 2-3 or open | 0.023 / 0.031 ns (rise / fall), up to 0.075 ns | 0.038 / 0.036 ns, up to 0.088 ns |
-| 1-2 | 0.22 / 0.23 ns, up to 1.27 ns at the GPIO and threshold corners | 0.56 / 0.70 ns, up to 1.89 ns |
+| 2-3 or open | 0.001 / 0.007 ns (rise / fall), up to 0.025 ns | 0.016 / 0.013 ns, up to 0.037 ns |
+| 1-2 | 0.20 / 0.21 ns, up to 1.26 ns at the GPIO and threshold corners | 0.57 / 0.71 ns, up to 2.01 ns |
 
 With J10 on 2-3, the small remaining skew comes from the R17 and R19 stubs on `_PULSE_OUT_CH1`
 (`_PULSE_OUT_CH2` has only R18). With J10 on 1-2, CH1 is later because the J10/R19 branch loads
 `_PULSE_OUT_CH1`.
 
 So with J10 on 1-2 the laser delay error depends on the jumper even with R19. R19 cuts it by about
-60–67 % at the typical corner and by about 33 % at the worst corner. With J10 on 1-2, at J7/J8 it
-is 0.19–0.33 ns with R19 and 0.51–1.44 ns without, before U13's own channel matching (1 ns typical,
+65–70 % at the typical corner and by about 37 % at the worst corner. With J10 on 1-2, at J7/J8 it
+is 0.18–0.31 ns with R19 and 0.51–1.49 ns without, before U13's own channel matching (1 ns typical,
 2 ns maximum), which is larger. R19 costs the camera trigger and
-J12 0.7–1.5 ns of edge, which doesn't matter there. Keep R19.
+J12 0.75–1.65 ns of edge, which doesn't matter there. Keep R19.
 
 **With no shunt fitted, R9 (10 k) pulls `PWM_TRIG_TAP` low,** so all six camera triggers and J12
-idle low instead of following a floating input on 64.9 mm of trace. 10 k, rather than a weaker
+idle low instead of following a floating input on 73.2 mm of trace. 10 k, rather than a weaker
 pull-down, holds U5's 1.8 V input at ≤ 0.05 V even at worst-case input leakage, and loads the
 selected GPIO by only 330 µA.
 
@@ -854,13 +856,13 @@ trigger lines are high, and low while `PWM_TRIG_TAP` is low, including with no s
   the camera trigger lines through U5 and U6, so the two are offset by a fixed delay that the
   datasheets don't pin down. From the GP11 edge, simulated in `tools/signal_sim` (4 mA default
   drive, J10 on 2-3, J21 on 1-2, J12 into 50 Ω; min / typ / max over the datasheet corners;
-  EuroCard routing of commit 8db06a6; re-run pending, see `tools/eurocard/REVIEW.md`, F5):
+  re-run on the final EuroCard routing):
 
   | Path | Rising edge | Falling edge |
   |---|---|---|
-  | GP11 → J12 (U19 + R30/J21 + ~4 ns of GP11 edge to U19's threshold) | 10.2 / 21.5 / 33.5 ns | 9.7 / 20.8 / 32.1 ns |
-  | GP11 → Trigger1–6 at J1–J6 pin 4 (U5 + U6, mean of the six) | 7.1 / 11.1 / 19.6 ns | 7.6 / 11.5 / 20.0 ns |
-  | **J12 minus camera trigger** | **−8.8 / +10.4 / +26.0 ns** | −9.6 / +9.4 / +23.8 ns |
+  | GP11 → J12 (U19 + R30/J21 + ~4 ns of GP11 edge to U19's threshold) | 10.2 / 21.6 / 33.7 ns | 9.7 / 20.9 / 32.2 ns |
+  | GP11 → Trigger1–6 at J1–J6 pin 4 (U5 + U6, mean of the six) | 6.7 / 10.8 / 19.1 ns | 7.2 / 11.1 / 19.6 ns |
+  | **J12 minus camera trigger** | **−8.2 / +10.8 / +26.5 ns** | **−9.1 / +9.8 / +24.2 ns** |
 
   The offset limits are not the difference of the rows above: both paths share the GP11 corner, and
   the extremes pair a fast U19 with slow U5/U6 or the reverse. The range is wide because U19
@@ -868,15 +870,15 @@ trigger lines are high, and low while `PWM_TRIG_TAP` is low, including with no s
   independently. The typical value uses U19's 17 ns, which TI specifies at TJ = 125 °C; TI's 25 °C
   curves read 16–16.5 ns rising and 18–19 ns falling, so the typical offset may be about 1 ns less
   on the rising edge and up to 2 ns more on the falling edge. With an older-die U19 (13 ns typical)
-  the typical offset is +6.5 ns rising, +5.2 ns falling. If the GP11 pad sits at its datasheet
-  VOH/VOL limit, J12 can reach 38 ns (39 ns on the 126 mm layout, where the offset then spanned
+  the typical offset is +6.9 ns rising, +5.7 ns falling. If the GP11 pad sits at its datasheet
+  VOH/VOL limit, J12 can reach 38.6 ns (39 ns on the 126 mm layout, where the offset then spanned
   −10.9 to +31 ns; that span was not re-computed). On one board the offset is fixed: measured once ([first-board check 4](#first-board-checks)),
   it holds to about 0.5 ns, plus 1–2 ns over temperature (estimates). It depends on the jumpers:
-  J10 on 1-2 adds about +0.77 ns (rising edge; −0.16 ns falling), and J21 in Hi-Z mode about
-  +0.65 ns, so measure each
+  J10 on 1-2 adds about +0.83 ns (rising edge; −0.20 ns falling), and J21 in Hi-Z mode about
+  +0.65 ns rising / +0.63 ns falling, so measure each
   setting you use. The six trigger lines are length-matched from U6's outputs to the headers
-  (55.28–57.10 mm; the `TRIG_N` fan-out to U6's inputs is not matched) and arrive within
-  0.03–0.05 ns of each other in the simulation (up to 0.3 ns on the 126 mm layout).
+  (42.46–43.60 mm; the `TRIG_N` fan-out to U6's inputs is not matched) and arrive within
+  0.04–0.06 ns of each other in the simulation (up to 0.3 ns on the 126 mm layout).
 
 - **Duty and loads.** J12 is high at most 50 % of the time, the firmware's MARKERWIDTH limit (67 %
   with J10 on 1-2 and `COMBINE 1`; see [Board output rating](#board-output-rating)); don't short it. One load per output, no BNC tee,
@@ -884,7 +886,7 @@ trigger lines are high, and low while `PWM_TRIG_TAP` is low, including with no s
 - **Layout.** J21, R31 and R32 copy the Laser 1 block 40 mm lower, on J12's centre-pin row, and
   U19, C21, C22 and R30 copy U13's layout. These parts are in the rigid output block (see the
   laser [Output mode](#output-mode) layout). The +12V and `LASER_PWR_OK` runs to U19 are autorouted
-  (`LASER_PWR_OK` is 89.6 mm of track). The silkscreen reads `EXT SYNC OUT`, with `50Ω` and
+  (`LASER_PWR_OK` is 86.4 mm of track). The silkscreen reads `EXT SYNC OUT`, with `50Ω` and
   `HiZ` beside J21. The `J12-TRIG OFFSET (MEASURED)` field (boxes for RISE and FALL in ns, and the
   J10/J21 setting) is in the left area of the board, below TP3 (no longer below J12). It takes the
   hand-written result of [first-board check 4](#first-board-checks).
@@ -1106,16 +1108,17 @@ antenna keep-out is needed.
   option on 4-layer boards) is not needed. On the JLC order form choose *Tented*, not *Plugged*.
 - **No controlled impedance is needed.** The longest critical run (U13 to J7/J8 through the
   output-mode block, ~50 mm, Z0 ≈ 55 Ω; unchanged in the EuroCard re-layout) is electrically short
-  compared with the driver's edges. The camera lines are 53–111 mm, length-matched in each group
+  compared with the driver's edges. The camera lines are 42–83 mm, length-matched in each group
   from the buffer output to the header. Order *Impedance control: No*.
 - **Copper keep-outs:** zone copper stays 0.5 mm from the board edge on all four layers, and a
   3 mm-radius keep-out keeps all copper (including the In2 +5 V plane) away from each M3 hole, so a
   metal screw or standoff can't touch a plane in the hole wall. No parts are within 2.5 mm of the
   two 160 mm edges (card-guide border; see [EuroCard mechanics](#eurocard-mechanics)); zone copper
   there still goes to 0.5 mm from the edge, under solder mask.
-- **Ground stitching:** 43 edge-fence vias at 10 mm pitch, 1.5 mm in from the outline, and 23 area
-  stitching vias on a 15 mm grid (66 in total), plus a tap via at every SMD GND and +5V pad. The
-  board has 169 vias in total (GND 115, +5V 12, signals and other power 42).
+- **Ground stitching:** 46 edge-fence vias at 10 mm pitch (two gaps on the left edge where parts
+  intrude), 1.5 mm in from the outline, and 37 area stitching vias (83 in total), plus a tap via
+  at every SMD GND and +5V pad (45 taps). The board has 194 vias in total (GND 134, +5V 12,
+  signals and other power 48).
 - **Silkscreen** shows the Pico outline, the `CONTROL / PROGRAM` and `POWER ONLY` port labels, and a
   pin-1 mark (a module fitted the other way round would put the board's +5 V on one of its GPIO
   pins). J10, J11, J18, J19, J20 and J21 are labelled as described above. The
@@ -1137,7 +1140,7 @@ JLC's placement preview as before. The BOM did not change. The back silkscreen c
 
 The layout also lets you assemble the board by hand with a hot plate.
 
-- **All SMD parts are on the top side.** Their pads span 132 mm of the board's 160 mm width, so
+- **All SMD parts are on the top side.** Their pads span 133.4 mm of the board's 160 mm width, so
   the plate must be about 140 mm wide or more (e.g. a 200 × 200 mm plate).
 - **Order:** apply paste and place all SMD parts, reflow on the plate, then hand-solder every
   through-hole part (sockets, headers, BNCs and J17's shell legs) with an iron. There are no parts on
