@@ -246,12 +246,23 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
   vias beside the signal vias on this routing, with no track change; the finding is low severity
   for these 1.8 V LVC lines (edges about 1–3 ns), so the verified copper is kept. Add the option
   if EMI measurements call for it, then run the build checks again.
-- **Totals:** 1022 track segments, 2491 mm of track (F.Cu 1476 mm, B.Cu 1015 mm), 194 vias. No two
+- **R9 / J10 area.** `PIXRST_GATE` on B.Cu, from its via at (205, 52.4) to its via at (218.3, 86.1),
+  runs 45°, vertical at x 209.1, 45° (`simplify.py`). The router's 1.8 mm 45° jog between two
+  verticals (x 208.2 and x 210) is removed. The length is the same (39.21 mm on B.Cu) and the vias
+  do not change. The vertical is 0.65 mm from the `PWM_TRIG_TAP` via at (210.2, 57.2) and from the
+  `LASER_EN_TAP` via at (208.0, 68.5), and 1.13 mm from the +5V tap via at (210.68, 67.05) (was
+  0.23 mm). The other shapes there are necessary. `PWM_TRIG_TAP` leaves J10.2 up and over the
+  `PIXRST_GATE` via, then comes down to its via at R9.1. The two nets must cross, and they can
+  cross only above the CH1 pulse lane (F.Cu, y 53.8), where `PIXRST_GATE` is still on F.Cu. Its
+  via (210.2, 57.2) is R9.1's only connection (R9 is a front SMD part), so it is not a plane jump
+  on the J10-to-U5 path. `CH1_J10` needs its via to cross the lane (no via in the R19.2 pad), and
+  `PWM_Trig` leaves J10.3 with one 45° run.
+- **Totals:** 1020 track segments, 2491 mm of track (F.Cu 1476 mm, B.Cu 1015 mm), 194 vias. No two
   segments are identical.
 - **Known residuals** (router artefacts; none is a DRC error):
   - Length match: the router left Sync5 0.89 mm past its group target; the group spreads are 1.18 /
     1.03 / 1.37 mm (Sync / Trigger / TDRSTN), against its 0.5 mm tolerance: at most about 8.5 ps.
-  - Segment density: non-camera nets (GND and +5V excluded) 2.75 segments per 10 mm (hand board
+  - Segment density: non-camera nets (GND and +5V excluded) 2.74 segments per 10 mm (hand board
     2.8); camera lines 5.25 per 10 mm (9.08 before the clean-up). Segments shorter than 0.5 mm
     with no pad or via at either end: 35 on the camera lines (0.1–0.42 mm steps; 269 before) and 25
     on other nets, 14 of them with no branch at either end (for example four +12V pieces of

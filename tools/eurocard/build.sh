@@ -2,7 +2,8 @@
 # Rebuild the EuroCard (160 x 100 mm) board from the hand-routed 126 x 126 mm Rev 1 board.
 # Steps: place.py -> plane registration -> taps.py -> route.py camera lines (matched) -> lock.js -> route.py
 # other nets (KiCadRoutingTools) -> unlock -> straighten.py -> repair.py -> GND stitching -> frag_stitch.py ->
-# tjoin.py / dangling.py -> tidy.py -> silk.py -> finish.py -> ends.py -> camclean.py -> camjoint.py -> ends.py -> KiCad DRC -> gaps.py.
+# tjoin.py / dangling.py -> tidy.py -> silk.py -> finish.py -> ends.py -> camclean.py -> camjoint.py -> ends.py -> simplify.py ->
+# KiCad DRC -> gaps.py.
 # Result: work/final/PiDG_Pico.kicad_pcb (DRC report drc.json, gap report gaps.txt)
 # usage: bash build.sh            (KRT_DIR / KRT_PY / KICAD_PY / KICAD_CLI / SRC_REV override the defaults)
 set -euo pipefail
@@ -126,6 +127,9 @@ post kilen:kilen1 . "$B" "$PRO" "$W/len1.txt" "$KICAD_CLI"
 post camclean:camtrim '^camclean|LEFT' "$B" "$B" --protect "$W/tapped.kicad_pcb" --trim "$W/len0.txt" "$W/len1.txt" "${CAM[@]}"
 post ends:ends3 '^ends' "$B" "$B" "${CAM[@]}"
 post kilen:kilen2 . "$B" "$PRO" "$W/len2.txt" "$KICAD_CLI"
+# S1: router jog on PIXRST_GATE (B.Cu, R9 / J10 area) re-shaped, length kept by geometry, no via change
+# (simplify.py). After the last camera step, so camera copper, stitch vias and plane taps are as before.
+post simplify '^simplify|LEFT' "$B" "$B"
 drc "$W/final"
 node "$HERE/meander_check.js" "$W/final/PiDG_Pico.kicad_pcb" 0.3 Sync Trigger TDRSTN
 # Courtyard gaps, long-edge strips and mounting-hole washers (report; MH lines must be absent).
