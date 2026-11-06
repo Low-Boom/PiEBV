@@ -200,6 +200,15 @@ def main():
     tracks_by_net = {}
     for t in b.GetTracks():
         tracks_by_net.setdefault(t.GetNetname(), []).append(t)
+    # Canonical item order (audit n12): the tree walk and the BFS keep the first edge they meet, so on a net with
+    # loops the branches, their labels and the path lengths followed the item order of the board file, which
+    # changes when a tool saves the board again. Sort pads by name and tracks / vias by geometry.
+    def tkey(t):
+        if t.GetClass() == "PCB_VIA": return (1, t.GetPosition().x, t.GetPosition().y, 0, 0, 0)
+        s, e = sorted([(t.GetStart().x, t.GetStart().y), (t.GetEnd().x, t.GetEnd().y)])
+        return (0, t.GetLayer(), s[0], s[1], e[0], e[1], t.GetWidth())
+    for v in pads_by_net.values(): v.sort(key=lambda p: (p.GetParentFootprint().GetReference(), p.GetNumber()))
+    for v in tracks_by_net.values(): v.sort(key=tkey)
     gnd_fill = {}
     for z in b.Zones():
         if z.GetNetname() == "GND" and z.IsFilled():
