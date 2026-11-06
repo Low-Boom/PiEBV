@@ -128,7 +128,9 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
   above the board. Laser 1, Laser 2, External Sync Out from top to bottom, for a
   panel with matching holes (1/2-28UNEF thread, D-hole). Measure both on the first board before
   cutting a panel. The housing is plastic, so fit the panel nuts to take the bayonet torque. The
-  right edge has only the three BNCs.
+  housing front is 0.32 mm behind the board edge: with the panel against the board edge, fit a
+  0.3 mm shim washer on each barrel between the housing and the panel, so that the nut does not
+  pull the BNC forward and load its solder joints. The right edge has only the three BNCs.
 - **Left edge:**
   - **Pico micro-USB, `CONTROL / PROGRAM`** (commands and firmware): the Pico sits top-left with
     its USB end at the left edge, raised about 13 mm above the board surface on the sockets (8.5 mm
@@ -143,3 +145,14 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
   - J10, J11 (the E-stop wiring), and the output-mode jumpers J18/J19/J21 (between the 2512
     resistors and the BNCs).
   - J20 (clock jumper): vertical 2-pin header right of the Pico's GPIO end, below the J14 row.
+- **Cable exits:** the camera harnesses and the J11 E-stop wires must leave through an end panel.
+  Two strips of the short edges have no connector (measured between courtyards):
+  - left edge: 31.8 mm between TP3 and J17 (38.8–70.6 mm below the top edge). J11 (47.5 mm below
+    the top edge) is level with it: run the E-stop pair straight left and mount the
+    normally-closed switch in the left panel there, or pass its cable through a grommet.
+  - right edge: the lowest 31.7 mm, below J12 (MH4 is in its bottom corner).
+
+  The camera ribbons rise from J1–J6 and go to a slot in either strip (J1 is 58 mm from the left
+  edge, J6 31 mm from the right edge). A 10-way ribbon (1.27 mm pitch) is 12.7 mm wide, so the
+  slot is one ribbon wide with the ribbons stacked flat; a harness with only the five used wires
+  (pins 2, 3, 4, 5 and 7) makes a smaller bundle.

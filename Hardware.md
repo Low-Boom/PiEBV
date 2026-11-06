@@ -118,14 +118,17 @@ pre-tinned, tolerates rework better than OSP (whose coating degrades with repeat
 solders with either leaded or lead-free solder.
 
 The finest pitches are U16 (SC-70-6) and U17 (LT3065, MSOP-12 with an exposed pad), both 0.65 mm.
-J17 is a 6-pin power-only USB-C receptacle: pads 0.7–0.9 mm wide with gaps of 0.3 mm or more. There
+J17 is a 6-pin power-only USB-C receptacle: pads 0.7–0.9 mm wide with gaps of 0.27–0.38 mm (the two
+smallest, 0.27 mm, are B9–A5 and B5–A9). There
 is no BGA and no leadless part: every IC has gull-wing leads, so the board can also be assembled by
 hand. Only the exposed pads of U14 and U17 need hot air or a hot plate (see
 [Hot-plate assembly](#hot-plate-assembly)): their GND vias are tented
 like all the others, so solder cannot be fed through them from the back. The HASL surface is
 uneven enough that J17 is worth inspecting for solder bridges
-(see [first-board check 5](#first-board-checks)). Most passives and SOT-23s use `_HandSolder`
-footprints (U16, U17, L1 and U14's exposed pad are the exceptions).
+(see [first-board check 5](#first-board-checks)). All 0805, 1206 and 2512 passives and the
+SOT-23-5/TSOT-23-6 parts (U1, U3, U5, U7–U10, U15) use `_HandSolder`/`_HandSoldering` footprints.
+The other SMD parts use standard footprints: U18 (SOT-23-6), U16 (SC-70-6), U17 (MSOP-12), U14
+(SSOP-10), the SOICs (U2, U4, U6, U13, U19), L1 and J17.
 
 **Board size:** the gerber job file reports 160.1 × 100.1 mm because the outline's extents include
 its 0.1 mm line width. The fabricated board is **160.0 × 100.0 mm**, a EuroCard. (Before the
@@ -147,6 +150,16 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
     bottom.
 - **Camera headers J1–J6:** one row along the bottom of the board, 12 mm pitch, vertical 2×5 IDC
   with the ribbons going up. They are not on an edge.
+- **Cable exits:** in an enclosure closed along the long edges, the camera harnesses and the J11
+  E-stop wires must leave through an end panel. Two strips of the short edges have no connector
+  (measured between courtyards): on the left edge, 31.8 mm between TP3 and J17 (38.8–70.6 mm below
+  the top edge); on the right edge, the lowest 31.7 mm, below J12 (MH4 is in its bottom corner).
+  J11 (47.5 mm below the top edge) is level with the left strip: run the E-stop pair straight left
+  and mount the normally-closed switch in the left panel there, or pass its cable through a
+  grommet. The camera ribbons rise from J1–J6 and go to a slot in either strip: J1 is 58 mm from the
+  left edge, J6 31 mm from the right edge. A 10-way ribbon (1.27 mm pitch) is 12.7 mm wide, so the
+  slot is one ribbon wide with the ribbons stacked flat; a harness with only the five used wires
+  (pins 2, 3, 4, 5 and 7) makes a smaller bundle.
 - **MH1–MH4:** M3, unplated, all in the corners, 4 mm in from both edges: centres 152 × 92 mm
   apart. The output block (BNCs, jumpers, resistors, U7/U8/U13/U19) sits low enough that an M3
   washer (7 mm) at MH2 clears the J7 BNC body.
@@ -170,7 +183,10 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
   vias over the layers they join, runs cut at the pad outlines): `Sync1..6` 107.32–108.95 mm
   (spread 1.63 mm; Sync4 is the long one, the other five are within 0.39 mm), `Trigger1..6`
   55.28–57.10 mm (spread 1.82 mm; Trigger4 is the long one, the other five are within 0.52 mm),
-  `TDRSTN1..6` 52.06–53.91 mm (spread 1.85 mm). 1.9 mm is about 12 ps. On the 126 mm board they were not matched (Sync 28–71 mm, Trigger 21–56 mm,
+  `TDRSTN1..6` 52.06–53.91 mm (spread 1.85 mm). 1.9 mm is about 12 ps. The match starts at the
+  buffer output, not at its input: the input fan-outs (`SYNC_N` from U1.4, `TRIG_N` from U5.4 and
+  `PIXRST_N` from U3.4, each to the six gate inputs of its hex buffer U2, U6 or U4) are not matched,
+  and their branch lengths differ by 8–10 mm. On the 126 mm board they were not matched (Sync 28–71 mm, Trigger 21–56 mm,
   TDRSTN 20–41 mm). Sync and Trigger lines are at least 1.47 mm apart. Open item: on 14 of the
   18 lines, adjacent meander arms touch (0 mm gap), so the electrical lengths are shorter than
   these values; see `tools/eurocard/REVIEW.md`, F2/F3.
@@ -858,7 +874,8 @@ trigger lines are high, and low while `PWM_TRIG_TAP` is low, including with no s
   it holds to about 0.5 ns, plus 1–2 ns over temperature (estimates). It depends on the jumpers:
   J10 on 1-2 adds about +0.77 ns (rising edge; −0.16 ns falling), and J21 in Hi-Z mode about
   +0.65 ns, so measure each
-  setting you use. The six trigger lines are length-matched (55.28–57.10 mm) and arrive within
+  setting you use. The six trigger lines are length-matched from U6's outputs to the headers
+  (55.28–57.10 mm; the `TRIG_N` fan-out to U6's inputs is not matched) and arrive within
   0.03–0.05 ns of each other in the simulation (up to 0.3 ns on the 126 mm layout).
 
 - **Duty and loads.** J12 is high at most 50 % of the time, the firmware's MARKERWIDTH limit (67 %
@@ -963,6 +980,9 @@ Part: Kinghelm KH-BNC50-3511 (50 Ω, right angle; LCSC C2837587), footprint
 which the Kinghelm drawing matches within 0.04 mm (its 3D model is the Amphenol body). Never fit the
 75 Ω KH-BNC75-3511. Its posts sit in
 a plastic housing and the shell reaches GND through one lead, so use the panel nuts in an enclosure.
+The housing front is 0.32 mm behind the right board edge. With the panel against the board edge,
+the nut would pull each BNC forward by that gap and load its solder joints: fit a 0.3 mm shim
+washer on each barrel, between the housing front and the panel, before you tighten the nut.
 J7/J8/J12 drive a 50 Ω or a high-impedance load, set per channel by J18/J19/J21 (see
 [Output mode](#output-mode)).
 
@@ -1052,7 +1072,7 @@ Ordered by what would bite hardest.
    alone (J17 unplugged), J12 must stay at 0 V. With
    `PIXGATE 0`, TDRSTN at every camera port must stay high (no other source of pixel reset).
 5. **Before the first USB-C PD power-up, check the fine-pitch parts for solder bridges.** J17's pads are
-   0.3 mm apart and U16's and U17's leads 0.65 mm pitch, on lead-free HASL. With no power applied, check
+   as little as 0.27 mm apart and U16's and U17's leads 0.65 mm pitch, on lead-free HASL. With no power applied, check
    that VBUS_PD is not shorted to GND, CC1 or CC2 (at J17 and U14 pins), and that +5V_PD and +5V are
    not shorted to GND (at U16). U14's CC pins are rated to 32 V, but a VBUS-to-CC bridge would put
    VBUS_PD on the cable's CC line. U14 pins 1 (VHV) and 8 (VBUS) sit directly on VBUS_PD, so also
@@ -1086,8 +1106,8 @@ antenna keep-out is needed.
   option on 4-layer boards) is not needed. On the JLC order form choose *Tented*, not *Plugged*.
 - **No controlled impedance is needed.** The longest critical run (U13 to J7/J8 through the
   output-mode block, ~50 mm, Z0 ≈ 55 Ω; unchanged in the EuroCard re-layout) is electrically short
-  compared with the driver's edges. The camera lines are 53–111 mm, length-matched in each group.
-  Order *Impedance control: No*.
+  compared with the driver's edges. The camera lines are 53–111 mm, length-matched in each group
+  from the buffer output to the header. Order *Impedance control: No*.
 - **Copper keep-outs:** zone copper stays 0.5 mm from the board edge on all four layers, and a
   3 mm-radius keep-out keeps all copper (including the In2 +5 V plane) away from each M3 hole, so a
   metal screw or standoff can't touch a plane in the hole wall. No parts are within 2.5 mm of the
@@ -1123,6 +1143,17 @@ The layout also lets you assemble the board by hand with a hot plate.
   through-hole part (sockets, headers, BNCs and J17's shell legs) with an iron. There are no parts on
   the bottom side, so the board lies flat on the plate. The exposed pads of U14 and U17 reflow on the
   plate; this flow needs no hot air.
+- **Paste: use a stencil.** U16 and U17 have 0.65 mm pitch (pads 0.35 and 0.40 mm wide, so gaps of
+  0.30 and 0.25 mm), and J17's pads are as little as 0.27 mm apart. Paste from a syringe is hard to meter
+  for these gaps. Order a steel stencil, 0.12 mm thick, cut from
+  `fab/gerbers/PiDG_Pico-F_Paste.gbr` (apertures equal to the pads; at 0.12 mm every U16/U17 lead
+  aperture has an area ratio of 1.09 or more, above the 0.66 minimum of IPC-7525), and use type 4
+  paste. Print the whole board in one pass. The exposed pads get reduced paste so that solder does not
+  wick into their thermal vias: U14's paste is an "H" that keeps its two via holes clear,
+  and U17's is four small windows (they still cover about 35 % of its via holes).
+  Without a stencil, dispense paste only on the exposed pads of U14 and U17 and on the coarser
+  parts, reflow, then drag-solder the U16, U17 and J17 leads with an iron and flux, and remove
+  bridges with braid.
 - **Spacing for tweezers:** every pair of parts is at least 0.5 mm apart, courtyard to courtyard
   (pads at least 1 mm apart). Five pairs in the carried output block stay as designed: U13–C9 and
   U19–C21 (0.03 mm, the VDD bypass capacitors right at the pins), and J18–R27, J19–R28 and J21–R32
