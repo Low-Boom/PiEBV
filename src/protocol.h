@@ -1,5 +1,5 @@
 #pragma once
-// Line-based ASCII serial protocol for the PiDG delay generator.
+// Line-based ASCII serial protocol for the PiEBV delay generator.
 //
 // One command per line, terminated by '\n', '\r' or "\r\n". Backspace (0x08)
 // and DEL (0x7F) erase the previous character, so raw terminals work. A bare

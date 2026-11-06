@@ -1,4 +1,4 @@
-// PiDG - PIV delay generator (Raspberry Pi Pico 2 / Pico 2 W, RP2350)
+// PiEBV - PIV delay generator (Raspberry Pi Pico 2 / Pico 2 W, RP2350)
 // Built via the community arduino-pico core (see platformio.ini) since
 // PlatformIO's official "raspberrypi" platform/Mbed core has no RP2350
 // support; the wireless radio of a Pico 2 W is unused by this firmware.
@@ -412,7 +412,7 @@ void printSystemStatus(Print &out) {
 }
 
 void printIdentity(Print &out) {
-    out.print(F("PiDG delay generator ("));
+    out.print(F("PiEBV delay generator ("));
     out.print(kBoardName);
     out.println(F("), firmware " PIDG_FIRMWARE_VERSION));
 }
@@ -465,8 +465,8 @@ void setup() {
         // give the USB CDC connection a moment, but don't hang forever
     }
 
-    // One line: hosts recognize a reboot by its start (tools/pidg_gui/pidg_device.py).
-    Serial.print(F("PiDG delay generator ready, lasers DISARMED (reset: "));
+    // One line: hosts recognize a reboot by its start (tools/piebv_gui/piebv_device.py).
+    Serial.print(F("PiEBV delay generator ready, lasers DISARMED (reset: "));
     Serial.print(resetReasonName(g_reset.reason));
     Serial.print(clockModeBannerNote(clockModeInfo()));
     Serial.println(F("). Type HELP for commands."));

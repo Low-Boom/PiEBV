@@ -74,9 +74,9 @@ bool gateIsOpen() {
 // static data in .preinit_array.00110. It is not a dynamic initializer.
 // ---------------------------------------------------------------------------------
 extern "C" {
-static void pidg_preinit_laser_gate_close(void) {
+static void piebv_preinit_laser_gate_close(void) {
     laser::gateClose();
 }
 __attribute__((used, section(".preinit_array.00110")))
-void (*const pidg_preinit_laser_gate_close_ptr)(void) = pidg_preinit_laser_gate_close;
+void (*const piebv_preinit_laser_gate_close_ptr)(void) = piebv_preinit_laser_gate_close;
 }

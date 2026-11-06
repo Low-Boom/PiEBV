@@ -9,9 +9,9 @@ order.
 
 | Step | File |
 |---|---|
-| PCB | `../PiDG_Pico_Gerbers.zip` (the 14 files of `../gerbers/` without the drill-map PDFs, CRLF line ends as KiCad writes them on Windows; on a checkout with LF line ends the zip does not byte-match `../gerbers/`, but the content is the same) |
-| BOM (parts list) | `PiDG_Pico_JLC_BOM.csv`: 41 lines, every one with an LCSC part number |
-| CPL (placement file) | `PiDG_Pico_JLC_CPL.csv`: all 84 placed parts; rotations and centres corrected to JLC's own footprints by `tools/jlc_cpl`. Regenerated for the EuroCard layout by carrying each part's JLC rotation and centre correction to its new position. |
+| PCB | `../PiEBV_Pico_Gerbers.zip` (the 14 files of `../gerbers/` without the drill-map PDFs, CRLF line ends as KiCad writes them on Windows; on a checkout with LF line ends the zip does not byte-match `../gerbers/`, but the content is the same) |
+| BOM (parts list) | `PiEBV_Pico_JLC_BOM.csv`: 41 lines, every one with an LCSC part number |
+| CPL (placement file) | `PiEBV_Pico_JLC_CPL.csv`: all 84 placed parts; rotations and centres corrected to JLC's own footprints by `tools/jlc_cpl`. Regenerated for the EuroCard layout by carrying each part's JLC rotation and centre correction to its new position. |
 
 ## PCB options
 

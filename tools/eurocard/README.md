@@ -25,11 +25,11 @@ cd KiCadRoutingTools && ..\.venv\Scripts\python.exe build_router.py
 bash build.sh       # about 3 minutes; result and DRC report in work/final/
 ```
 
-Copy `work/final/PiDG_Pico.kicad_pcb` over `../../PiDG_Pico.kicad_pcb`, then export the gerbers and
+Copy `work/final/PiEBV_Pico.kicad_pcb` over `../../PiEBV_Pico.kicad_pcb`, then export the gerbers and
 drill files and regenerate the JLC placement file:
 
 ```
-python.exe cpl.py <old board> ../../fab/jlc/PiDG_Pico_JLC_CPL.csv <new board> <new CPL>
+python.exe cpl.py <old board> ../../fab/jlc/PiEBV_Pico_JLC_CPL.csv <new board> <new CPL>
 ```
 
 `cpl.py` keeps each part's JLC rotation and centroid correction (from `tools/jlc_cpl` on the old board)

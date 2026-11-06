@@ -83,7 +83,7 @@ F26/F27/F28 measured acceptance.
 
 Merge Phase 3 into `eurocard` (local commit). Re-extract geometry from the
 final board, run final signal_sim (F5), update Hardware.md tables (F14) with
-measured values, rebuild `fab/PiDG_Pico_Gerbers.zip` from `fab/gerbers` (F4,
+measured values, rebuild `fab/PiEBV_Pico_Gerbers.zip` from `fab/gerbers` (F4,
 14 files, no drill-map PDFs). Full verification suite.
 
 ## Phase 5 — dual adversarial review

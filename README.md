@@ -399,31 +399,31 @@ a restart. A terminal opened later sees nothing until you type something: try `I
 
 ### Web GUI
 
-[`tools/pidg_gui`](tools/pidg_gui) is a browser page for the same commands. It shows every setting
+[`tools/piebv_gui`](tools/piebv_gui) is a browser page for the same commands. It shows every setting
 with the value the hardware actually produces, and draws the timing of one pulse pair (and of three
 pairs in a row) from the board's own report. It runs a small web server on your computer; the only
 thing to install is pyserial:
 
 ```
 python -m pip install pyserial
-python tools/pidg_gui/pidg_gui.py --connect auto        # then open http://127.0.0.1:8765
+python tools/piebv_gui/piebv_gui.py --connect auto        # then open http://127.0.0.1:8765
 ```
 
 - It opens the Pico's serial port itself, so close any other terminal first.
 - Esc or the DISARM button disarms from anywhere on the page. Closing the page does not disarm.
-- `--connect sim` runs it against [`tools/pidg_sim`](tools/pidg_sim) instead: the firmware's real
+- `--connect sim` runs it against [`tools/piebv_sim`](tools/piebv_sim) instead: the firmware's real
   command code, built for your computer, with no board needed.
 
-See [its README](tools/pidg_gui/README.md) for the full guide.
+See [its README](tools/piebv_gui/README.md) for the full guide.
 
 ### Scripting (Python)
 
-[`tools/pidg_example.py`](tools/pidg_example.py) is a complete example using pyserial
+[`tools/piebv_example.py`](tools/piebv_example.py) is a complete example using pyserial
 (`python -m pip install pyserial`). It finds the port, reads `STATUS`, sets the timing, arms, and
 always disarms at the end, however the script stops:
 
 ```
-python tools/pidg_example.py --freq 15 --width 100 --delay 10000 --seconds 5
+python tools/piebv_example.py --freq 15 --width 100 --delay 10000 --seconds 5
 ```
 
 The core of a host script looks like this:
@@ -484,7 +484,7 @@ Wireless control is possible as a future option, as firmware-only work:
 - decide whether `ARM` may be sent wirelessly (`DISARM` must always stay reachable).
 
 The [web GUI](#web-gui) would need no change: it already accepts a network address such as
-`socket://pidg.local:4242` wherever it takes a serial port.
+`socket://piebv.local:4242` wherever it takes a serial port.
 
 The board has solid copper under the module's antenna, which shortens the radio's range. That is
 fine for the intended short range (a few metres, like Bluetooth), so no board change is needed.
@@ -544,7 +544,7 @@ DELAY          ->  DELAY=1003 (actual 1000.000 ns, 150 cyc)
 WIDTH 101      ->  OK WIDTH=101 (actual 100.000 ns, 15 cyc)
 ARM            ->  OK ARMED=1 (laser pulses start after a 498 us hold-off)
 DISARM         ->  OK ARMED=0
-ID?            ->  PiDG delay generator (Pico 2 W), firmware 5dfedd5
+ID?            ->  PiEBV delay generator (Pico 2 W), firmware 5dfedd5
 ```
 
 - The `ID?` version is `git describe --always --dirty` of the git checkout the firmware was built
@@ -845,14 +845,14 @@ and the output levels. Run it after changing the routing or a part in these chai
 |---|---|
 | `src/` | Firmware: `main.cpp` (start-up, arming, crash watchdog), `protocol.*` (serial commands), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `sync_clock.*` (1 MHz SYNC clock), `clock_mode.*` (clock jumper: 150 or 300 MHz at boot), `laser_gate.*` (laser output gate), `board.h` (pin map) |
 | `platformio.ini` | Build configuration (`pico2w` and `pico2` builds) |
-| `tools/pidg_example.py` | Python example script |
-| `tools/pidg_gui/` | Web GUI: settings, timing chart and console in the browser |
-| `tools/pidg_sim/` | Simulator: the firmware's command code built for a computer, for trying the GUI and scripts without a board |
+| `tools/piebv_example.py` | Python example script |
+| `tools/piebv_gui/` | Web GUI: settings, timing chart and console in the browser |
+| `tools/piebv_sim/` | Simulator: the firmware's command code built for a computer, for trying the GUI and scripts without a board |
 | `tools/timing_check/` | Timing checks run on a computer |
 | `tools/signal_sim/` | Transmission-line simulation of the timing nets (KiCad's ngspice) |
-| `PiDG_Pico.kicad_pro` / `.kicad_sch` / `.kicad_pcb` | **Current hardware:** KiCad project of the 4-layer board |
+| `PiEBV_Pico.kicad_pro` / `.kicad_sch` / `.kicad_pcb` | **Current hardware:** KiCad project of the 4-layer board |
 | `Hardware.md` | [Full hardware reference](Hardware.md) |
-| `fab/` | Manufacturing: master parts list `fab/PiDG_Pico_BOM.csv` (with the design-constraint notes), gerbers and drill files, and `fab/jlc/` JLCPCB assembly files and [order checklist](fab/jlc/JLC_ORDER.md) |
+| `fab/` | Manufacturing: master parts list `fab/PiEBV_Pico_BOM.csv` (with the design-constraint notes), gerbers and drill files, and `fab/jlc/` JLCPCB assembly files and [order checklist](fab/jlc/JLC_ORDER.md) |
 | `libs/`, `fp-lib-table`, `sym-lib-table` | Project-local KiCad symbols and footprints |
 | `tools/jlc_cpl/` | Corrects the JLC placement file to JLC's own footprints (see its README) |
 | `tools/eurocard/` | Rebuilds this EuroCard board from the 126 × 126 mm hand layout: placement, KiCadRoutingTools routing, checks (see its README) |

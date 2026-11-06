@@ -33,4 +33,4 @@ def git_version(project_dir):
 version = git_version(env.subst("$PROJECT_DIR"))  # noqa: F821
 if version:
     projenv.Append(CPPDEFINES=[("PIDG_FIRMWARE_VERSION", env.StringifyMacro(version))])  # noqa: F821
-print("PiDG firmware version: %s" % (version or "unknown"))
+print("PiEBV firmware version: %s" % (version or "unknown"))
