@@ -8,13 +8,17 @@
 #            window length is kept (+ T1_BIAS: Trigger1 is the shortest Trigger line).
 #  J6.5    - Sync6 (no meander) from its via leg to J6.5: vertical, 45, horizontal, 45 (equal 45 legs), with
 #            the horizontal sized so that the window length is kept.
+#  J6 tail - Trigger6 (no meander) into J6: the 7-segment router jog at (241.6, 102.5) becomes one horizontal
+#            run at the window start y and one 45-degree leg to the window end (a review edit 2026-11-06; the
+#            window shortens the line by 1.657 mm, which the window's ltol allows).
 # A window is the run of one net / layer between two existing vertices (anchors). Guards, on the new copper
 # (edge to edge, same layer, tracks / vias / pad outlines as netgap.py): octilinear, no segment < MINSEG,
 # no turn > 90 degrees (joints included); to a line of another camera group the smallest gap between the
 # two groups before; to a STRICT net its gap before; to any other net min(gap before, FLOOR) - the camclean.py
 # rules - and not below min(the old window's gap to that net, LOCAL), so a window does not move closer to a
 # neighbour than it was (up to LOCAL = 0.30 mm); own copper more than
-# SKIP mm further along the run >= OWN; window length change <= NOCAP_TOL on a line without a meander.
+# SKIP mm further along the run >= OWN; window length change <= the window ltol (NOCAP_TOL unless the window
+# sets one) on a line without a meander.
 # A group (U6 pair) is applied only if all its windows pass; a window whose anchors are not found is left.
 # usage: python.exe camjoint.py in.kicad_pcb out.kicad_pcb
 import sys, math, fnmatch, wx; wx.DisableAsserts()
@@ -25,6 +29,7 @@ FLOOR, OWN, SKIP, NOCAP_TOL, MINSEG, TOL, LOCAL = 0.21, 0.45, 2.0, 0.15, 0.3, 0.
 STRICT = ["_PULSE_OUT_*", "PWM_1MHz", "SYNC_N"]
 CAM = ("Sync", "Trigger", "TDRSTN")
 X_LO, X_HI, Y_JOG, T1_BIAS = 220.85, 221.46, 93.2, 0.002     # Trigger1: verticals, jog end y; length bias (mm)
+J6T_LTOL = 1.70                                              # Trigger6 tail: allowed window shortening (mm, review edit 2026-11-06)
 R2 = math.sqrt(2)
 b = pcbnew.LoadBoard(sys.argv[1])
 LAYERS = (pcbnew.F_Cu, pcbnew.B_Cu)
@@ -138,16 +143,19 @@ def sync6(A, B, Lold):        # V, 45 (a/2), H, 45 (a/2): length (dy - a) + (dx 
     dx, dy = B[0] - A[0], B[1] - A[1]; a = (dx + dy - Lold) / (2 - R2)
     P1 = (A[0], A[1] + dy - a); P2 = (P1[0] + a / 2, P1[1] + a / 2); P3 = (B[0] - a / 2, P2[1])
     return [A, P1, P2, P3, B]
-GROUPS = [("U6 pair", [("Trigger2", pcbnew.F_Cu, (221.6, 97.9), (223.1315, 92.5686), trigger2, True),
-                       ("Trigger1", pcbnew.F_Cu, (216.5619, 96.5), (223.0435, 89.8565), trigger1, False)]),
-          ("J6.5", [("Sync6", pcbnew.F_Cu, (249.9, 110.6), (252.2321, 116.3321), sync6, False)])]
+def trig6(A, B, Lold):        # J6 tail: horizontal run at A.y, then one 45-degree leg to B (turn x from the leg)
+    return [A, (B[0] - (B[1] - A[1]), A[1]), B]
+GROUPS = [("U6 pair", [("Trigger2", pcbnew.F_Cu, (221.6, 97.9), (223.1315, 92.5686), trigger2, True, NOCAP_TOL),
+                       ("Trigger1", pcbnew.F_Cu, (216.5619, 96.5), (223.0435, 89.8565), trigger1, False, NOCAP_TOL)]),
+          ("J6.5", [("Sync6", pcbnew.F_Cu, (249.9, 110.6), (252.2321, 116.3321), sync6, False, NOCAP_TOL)]),
+          ("J6 tail", [("Trigger6", pcbnew.F_Cu, (241.6, 102.5), (254.98424, 109.58424), trig6, False, J6T_LTOL)])]
 
 edits, nchg = [], 0
 def netgap0(layer, segs, hw, other):                    # as netgap, against the copper before this step
     return min((seg_seg(s, g) - hw - h for s in segs for L, h, g in ITEMS0.get(other, ()) if L == layer), default=1e9)
 for gname, wins in GROUPS:
     plan, msgs, saved = [], [], {n: list(v) for n, v in ITEMS.items()}
-    for net, L, A, B, shape, has_caps in wins:          # 1. all new windows of the group, into the live copper
+    for net, L, A, B, shape, has_caps, ltol in wins:          # 1. all new windows of the group, into the live copper
         w = window(net, L, A, B)
         if not w: msgs.append(f"{net}: anchors not found"); plan = None; break
         pts, objs, i, j = w; old = pts[i:j + 1]; Lold = plen(old)
@@ -155,9 +163,9 @@ for gname, wins in GROUPS:
         segs = [new[k] + new[k + 1] for k in range(len(new) - 1)]
         gone = [tuple(o[2]) for o in objs[i:j]]
         ITEMS[net] = [it for it in ITEMS[net] if not (it[0] == L and it[2] in gone)] + [(L, hw, s) for s in segs]
-        plan.append((net, L, hw, objs[i:j], new, pts, i, j, old, Lold, has_caps))
+        plan.append((net, L, hw, objs[i:j], new, pts, i, j, old, Lold, has_caps, ltol))
     ok = plan is not None
-    for net, L, hw, objs, new, pts, i, j, old, Lold, has_caps in (plan or []):   # 2. check each against the others' new copper
+    for net, L, hw, objs, new, pts, i, j, old, Lold, has_caps, ltol in (plan or []):   # 2. check each against the others' new copper
         full = pts[:i] + new + pts[j + 1:]; dl = plen(new) - Lold
         lo, hi = max(1, i), min(len(full) - 1, i + len(new))                          # joints included
         segs = [new[k] + new[k + 1] for k in range(len(new) - 1)]; oldsegs = [old[k] + old[k + 1] for k in range(len(old) - 1)]
@@ -165,7 +173,7 @@ for gname, wins in GROUPS:
         if any(not octi(new[k], new[k + 1]) for k in range(len(new) - 1)): why.append("not octilinear")
         if any(dist(new[k], new[k + 1]) < MINSEG for k in range(len(new) - 1)): why.append("segment < %.1f mm" % MINSEG)
         if any(turn(full[k - 1], full[k], full[k + 1]) > 90.01 for k in range(lo, hi)): why.append("turn > 90")
-        if not has_caps and abs(dl) > NOCAP_TOL: why.append("length %+.3f" % dl)
+        if not has_caps and abs(dl) > ltol: why.append("length %+.3f" % dl)
         for other in sorted(n for n in ITEMS if n and n != net):
             g = netgap(net, L, segs, hw, other)
             if g > 3: continue
