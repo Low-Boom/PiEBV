@@ -143,9 +143,11 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
   also suits extruded enclosures whose slots take the 160 mm edges, such as the Hammond
   1455N1601. Zone copper still goes to 0.5 mm from these edges, under solder mask.
 - **All external connectors are on the two short (100 mm) edges:**
-  - left edge: the Pico 2 W's micro-USB (`CONTROL / PROGRAM`) at the top, TP3 (1 MHz scope
-    header, right-angle) below the Pico, with its pins out of the left edge, and J17 (USB-C PD
-    power input) at the bottom, face flush with the edge;
+  - left edge: the Pico 2 W's micro-USB (`CONTROL / PROGRAM`) at the top, its receptacle face
+    0.285 mm past the edge (x 129.715; the module and receptacle outlines are on F.Fab), TP3 (1 MHz
+    scope header, right-angle) below the Pico, its pins pointing at the left edge and ending 0.96 mm
+    inside it (reach it from above), and J17 (USB-C PD power input) at the bottom, face flush with
+    the edge;
   - right edge: only the BNCs J7 (Laser 1), J8 (Laser 2) and J12 (External Sync Out), top to
     bottom.
 - **Camera headers J1–J6:** one row along the bottom of the board, 12 mm pitch, vertical 2×5 IDC
@@ -160,9 +162,30 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
   left edge, J6 31 mm from the right edge. A 10-way ribbon (1.27 mm pitch) is 12.7 mm wide, so the
   slot is one ribbon wide with the ribbons stacked flat; a harness with only the five used wires
   (pins 2, 3, 4, 5 and 7) makes a smaller bundle.
-- **MH1–MH4:** M3, unplated, all in the corners, 4 mm in from both edges: centres 152 × 92 mm
-  apart. The output block (BNCs, jumpers, resistors, U7/U8/U13/U19) sits low enough that an M3
-  washer (7 mm) at MH2 clears the J7 BNC body.
+- **MH1–MH4:** M3, unplated, in the corners, 4 mm in from the 100 mm edges and 6 mm in from the
+  160 mm edges: centres 152 × 88 mm apart. The output block (BNCs, jumpers, resistors, U7/U8/U13/U19) sits low enough that an M3
+  washer (7 mm) at MH2 clears the J7 BNC body. In card guides or the 1455N1601 slots, leave the
+  holes empty (no screw, nut, washer or standoff): a 7 mm washer reaches the 2.5 mm guide border.
+- **Hammond 1455N1601** (values from the Hammond drawing; confirm them on a sample): 11 board slots
+  (2.0 mm wide, 3.5 mm pitch), slot span 100.00 ± 0.51 mm, length 160.00 ± 0.50 mm, so the nominal
+  clearance to the board is zero: measure the extrusion before ordering, and dress the long edges
+  by no more than 0.2 mm (the GND and +5 V plane edges are 0.5 mm in). Use the lowest or the second
+  slot: about 41.8 or 38.3 mm above the board top. Below the board, the corner rails reach about
+  6.4 mm in from each long edge; only MH1–MH4 are in that strip, and the bottom side has no parts.
+  The end-bezel window is 97.1 × 48.7 mm; all the cut-outs below are inside it.
+- **End-panel cut-outs** (distances from the top 160 mm edge, y = 30; heights above the board top):
+
+  | Edge | Item | Centre from top edge | Notes |
+  |---|---|---|---|
+  | left | Pico micro-USB | 20.50 mm | about 13 mm up (on its sockets); face 0.285 mm past the edge |
+  | left | TP3 (1 MHz + GND) | 34.46 / 37.00 mm (GND / 1 MHz pin) | pins end 0.96 mm inside the edge; no cut-out needed, reach it from above |
+  | left | J17 USB-C | 76.00 mm | flush with the edge |
+  | right | J7 / J8 / J12 BNC | 20.445 / 40.130 / 60.450 mm | axis about 6.6 mm up; barrels about 20.6 mm past the edge |
+
+  Size each USB cut-out for the cable plug's overmould, not for the receptacle: J17 is flush and the
+  Pico receptacle is only 0.285 mm proud, so a panel of normal thickness otherwise stops the plug
+  before it seats (USB-C overmould up to 12.35 × 6.5 mm; measure the micro-USB cable). The right
+  panel is seen from outside: mirror the drawing if it is drawn from the inside.
 
 ### Routing
 
@@ -1007,8 +1030,8 @@ USB port.
 | TP3 | 1×2 right-angle, left edge below the Pico | 1 `PWM_1MHz` · 2 GND |
 | J20 | 1×2 vertical, clock jumper, right of the Pico's GPIO end, below the J14 row (pin 1 at the bottom) | 1 `CLK_SEL_JMP` (R29 1 kΩ to GP10) · 2 GND. Shunt = 300 MHz, open = 150 MHz ([clock jumper](#clock-jumper-j20-300-mhz-overclock)) |
 
-The camera trigger leaves the board on J12, and J11 is the only user interlock. TP3 sits on the left
-edge below the Pico, with its pins over the edge.
+The camera trigger leaves the board on J12, and J11 is the only user interlock. TP3 sits at the left
+edge below the Pico; its pins point at the edge and end 0.96 mm inside it.
 
 **TP3** is a scope point with its own ground pin. J10 carries
 `CAMERA TRIGGER: TRG-MKR = MARKER / TRG-CH1 = LASER 1` to the right of its `CH1 TRG MKR` pin labels.
@@ -1022,7 +1045,8 @@ a Pico GPIO, so an external source would fight it. Treat it as a monitor point.
 ### MH1–MH4
 
 M3, unplated, mechanical only, each with a 3 mm-radius copper keep-out. All four are in the
-corners, 4 mm in from both edges: centres 152 × 92 mm apart. An M3 washer (7 mm) at MH2 clears the
+corners, 4 mm in from the 100 mm edges and 6 mm in from the 160 mm edges: centres 152 × 88 mm
+apart. An M3 washer (7 mm) at MH2 clears the
 J7 BNC body.
 
 ---
@@ -1183,8 +1207,10 @@ The layout also lets you assemble the board by hand with a hot plate.
 | `tools/timing_check/` | checks `pulse_timing.h` against a cycle-level PIO model (see its README) |
 | `tools/signal_sim/` | transmission-line simulation (ngspice, routed geometry) of the trigger, laser and J12 nets: R19 skew, J12 delay and offset, output levels (see its README) |
 
-**The `*_EdgeTrim` footprints.** TP3 overhangs the board edge, and J17's face is flush with
-it, so their stock silkscreen outlines run off the board and trip `silk_edge_clearance`. The variants
+**The `*_EdgeTrim` footprints.** J17's face is flush with the left edge, so its stock silkscreen
+outline runs off the board and trips `silk_edge_clearance`. TP3 overhung the edge until it moved
+in (review F13); its pins now end 0.96 mm inside the edge, and it keeps its variant, whose
+silkscreen stops at the plastic body (the stock outline also follows the pins). The variants
 in `libs/PiDG_Local.pretty/` are the stock footprints with that off-board silkscreen clipped:
 **identical part, identical pads, silkscreen only** (J17's variant also stops its side marks
 short of the front shell-leg pads). Order the standard parts; the placement file
