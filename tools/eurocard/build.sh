@@ -20,8 +20,12 @@ project() { cp "$ROOT/PiDG_Pico.kicad_pro" "$ROOT/PiDG_Pico.kicad_sch" "$ROOT/fp
 # only make drc.json for dangling.py are not gates ("|| true").
 drc() { "$KICAD_CLI" pcb drc --schematic-parity --severity-all --refill-zones --save-board --format json -o "$1/drc.json" "$1/PiDG_Pico.kicad_pcb" >/dev/null
   "$KICAD_PY" "$HERE/drc_gate.py" "$1/drc.json"; }
-# Post-route script: post NAME FILTER args... -> work/NAME.log, filtered lines shown; a script error stops the build.
-post() { local s="$1" f="$2"; shift 2; "$KICAD_PY" "$HERE/$s.py" "$@" > "$W/$s.log" 2>/dev/null; grep -v "^swig/python" "$W/$s.log" | grep -E "$f" || true; }
+# Post-route script: post NAME[:LOG] FILTER args... -> stdout to work/LOG.log (LOG defaults to NAME), filtered lines
+# shown; stderr appended to work/post.log. A script error stops the build and shows the end of post.log (n7).
+post() { local s="${1%%:*}" l="${1#*:}" f="$2"; shift 2
+  if ! "$KICAD_PY" "$HERE/$s.py" "$@" > "$W/$l.log" 2>> "$W/post.log"; then
+    echo "post: $s.py failed (stderr in $W/post.log):"; grep -v "^swig/python\|image handler" "$W/post.log" | tail -20; exit 1; fi
+  grep -v "^swig/python" "$W/$l.log" | grep -E "$f" || true; }
 
 # 1. Placement on the new outline; carried copper and the equal-length pulse lanes are locked.
 git -C "$ROOT" show "$SRC_REV:PiDG_Pico.kicad_pcb" > "$W/src.kicad_pcb"
@@ -90,7 +94,9 @@ drc "$W/final" >/dev/null || true
 drc "$W/final" >/dev/null || true
 "$KICAD_PY" "$HERE/dangling.py" "$W/final/drc.json" "$W/final/PiDG_Pico.kicad_pcb" 2>/dev/null | grep dangling || true
 # F28: remove copper-invisible stitch bridges and slivers < 0.08 mm; --protect keeps the carried hand copper.
-post tidy . "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" --protect "$W/tapped.kicad_pcb"
+# --before st_in (n5): a "bridge" is a copper-invisible segment that the stitch step and later steps added
+# (absent from st_in), as F28 intends; without it, any off-grid copper-invisible segment counted.
+post tidy . "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" --before "$W/st_in.kicad_pcb" --protect "$W/tapped.kicad_pcb"
 "$KICAD_PY" "$HERE/silk.py" "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" 2>/dev/null
 "$KICAD_PY" "$HERE/finish.py" "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" 2>/dev/null
 # F18 (last copper change): camera track ends trimmed to the pad edge, off-centre via ends joined to the via
