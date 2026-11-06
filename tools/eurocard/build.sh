@@ -2,7 +2,7 @@
 # Rebuild the EuroCard (160 x 100 mm) board from the hand-routed 126 x 126 mm Rev 1 board.
 # Steps: place.py -> plane registration -> taps.py -> route.py camera lines (matched) -> lock.js -> route.py
 # other nets (KiCadRoutingTools) -> unlock -> straighten.py -> repair.py -> GND stitching -> frag_stitch.py ->
-# tjoin.py / dangling.py -> tidy.py -> silk.py -> finish.py -> ends.py -> KiCad DRC -> gaps.py.
+# tjoin.py / dangling.py -> tidy.py -> silk.py -> finish.py -> ends.py -> camclean.py -> ends.py -> KiCad DRC -> gaps.py.
 # Result: work/final/PiDG_Pico.kicad_pcb (DRC report drc.json, gap report gaps.txt)
 # usage: bash build.sh            (KRT_DIR / KRT_PY / KICAD_PY / KICAD_CLI / SRC_REV override the defaults)
 set -euo pipefail
@@ -90,7 +90,7 @@ post frag_stitch . "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb"
 drc "$W/final" >/dev/null || true
 # Router clean-up: split tracks at T-joins (an end on another track's interior), then remove the stubs that
 # DRC still reports as dangling, if connectivity holds without them.
-"$KICAD_PY" "$HERE/tjoin.py" "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" 2>/dev/null | grep 'T-joins' || true
+"$KICAD_PY" "$HERE/tjoin.py" "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" 2>/dev/null | grep "T-joins" || true
 drc "$W/final" >/dev/null || true
 "$KICAD_PY" "$HERE/dangling.py" "$W/final/drc.json" "$W/final/PiDG_Pico.kicad_pcb" 2>/dev/null | grep dangling || true
 # F28: remove copper-invisible stitch bridges and slivers < 0.08 mm; --protect keeps the carried hand copper.
@@ -99,9 +99,23 @@ drc "$W/final" >/dev/null || true
 post tidy . "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" --before "$W/st_in.kicad_pcb" --protect "$W/tapped.kicad_pcb"
 "$KICAD_PY" "$HERE/silk.py" "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" 2>/dev/null
 "$KICAD_PY" "$HERE/finish.py" "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" 2>/dev/null
-# F18 (last copper change): camera track ends trimmed to the pad edge, off-centre via ends joined to the via
-# centre. KiCad's length reading changes here; read camera lengths / skew on the board after this step.
+# F18: camera track ends trimmed to the pad edge, off-centre via ends joined to the via centre. KiCad's length
+# reading changes here.
 post ends . "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" "Sync?" "Trigger?" "TDRSTN?"
+# U1 (last copper change): camera-line clean-up, length kept (camclean.py: square meander caps, staircases and
+# acute corners replaced by clean 0/45/90 runs, caps moved to restore each line's pad-edge length); then ends.py
+# again, to trim a pad end that a new segment reaches through the pad. Read camera lengths / skew after this.
+# KiCad reads a re-shaped meander up to ~0.1 mm differently from its centre-line sum, so the camera lengths are
+# read with KiCad before (len0) and after (len1), and camclean --trim moves the caps by the difference (len2 = len0
+# on every line with caps).
+CAM=("Sync?" "Trigger?" "TDRSTN?"); B="$W/final/PiDG_Pico.kicad_pcb"; PRO="$W/final/PiDG_Pico.kicad_pro"
+post kilen:kilen0 . "$B" "$PRO" "$W/len0.txt" "$KICAD_CLI"
+post camclean '^camclean|LEFT' "$B" "$B" --protect "$W/tapped.kicad_pcb" "${CAM[@]}"
+post ends:ends2 '^ends' "$B" "$B" "${CAM[@]}"
+post kilen:kilen1 . "$B" "$PRO" "$W/len1.txt" "$KICAD_CLI"
+post camclean:camtrim '^camclean|LEFT' "$B" "$B" --protect "$W/tapped.kicad_pcb" --trim "$W/len0.txt" "$W/len1.txt" "${CAM[@]}"
+post ends:ends3 '^ends' "$B" "$B" "${CAM[@]}"
+post kilen:kilen2 . "$B" "$PRO" "$W/len2.txt" "$KICAD_CLI"
 drc "$W/final"
 node "$HERE/meander_check.js" "$W/final/PiDG_Pico.kicad_pcb" 0.3 Sync Trigger TDRSTN
 # Courtyard gaps, long-edge strips and mounting-hole washers (report; MH lines must be absent).
