@@ -94,3 +94,27 @@ measured values, rebuild `fab/PiDG_Pico_Gerbers.zip` from `fab/gerbers` (F4,
   adversarial stance (assume the fix is wrong until proven).
 - Findings from either side are fixed, re-verified, then the work is
   reported. Push only on explicit user instruction.
+
+## Audit fixes (branch `fix/audit-findings`)
+
+The dual audit of 801ae47 found 23 items; the fix report with before/after
+measurements is `tools/eurocard/work/audit/FIX_AUDIT_REPORT.md` (build output
+folder, not committed). Decisions recorded here:
+
+- **F9 (return path of B.Cu lines): no extra GND return vias.** The review's
+  option, `route_planes.py --add-gnd-vias --gnd-via-distance 1.5` in the
+  stitching step, adds 50 GND vias beside the signal vias on the current
+  routing and changes no track (tested on the build's `st_in`, scratch only).
+  REVIEW.md leaves it as "decide before use", and the fix check rated the
+  finding low severity (1.8 V LVC lines, 1–3 ns edges; the B.Cu GND pour gives
+  about 18.9 pF/cm² to the +5 V plane). The conservative choice keeps the
+  verified copper; Hardware.md (Routing, "Reference planes") records the B.Cu
+  lengths, the return path and the option. Add it if EMI measurements call
+  for it, then run all gates again.
+- **U1 (camera-line "ducking" near J1–J6):** level 1 of the fix ladder, a
+  deterministic clean-up (`camclean.py`, length kept; `kilen.py` +
+  `camclean.py --trim` for KiCad's length reading). Router re-route (level 2)
+  was not needed.
+- **Separation values:** measured with `netgap.py` and checked with KiCad DRC
+  rules; several values in the audit's own table were wrong (its script
+  missed parallel runs and pads). Hardware.md gives the measured values.
