@@ -15,7 +15,9 @@ KICAD_CLI="${KICAD_CLI:-C:/Users/Flow-Lab/AppData/Local/Programs/KiCad/10.0/bin/
 export EP_PASTE_SPLIT="${EP_PASTE_SPLIT:-1}"    # U14 EP paste split (F21); set 0 for the library window
 W="$HERE/work"; rm -rf "$W"; mkdir -p "$W"
 project() { cp "$ROOT/PiDG_Pico.kicad_pro" "$ROOT/PiDG_Pico.kicad_sch" "$ROOT/fp-lib-table" "$ROOT/sym-lib-table" "$1/"; cp -r "$ROOT/libs" "$1/"; }
-# Gate (F21): count only non-warning severities as violations; warnings are printed so they stay in the log.
+# Gate (F21, M8): count only non-warning severities as violations; warnings are printed so they stay in the log.
+# drc_gate.py exits 1 on any violation or unconnected item, which stops the build (set -e). The two DRC runs that
+# only make drc.json for dangling.py are not gates ("|| true").
 drc() { "$KICAD_CLI" pcb drc --schematic-parity --severity-all --refill-zones --save-board --format json -o "$1/drc.json" "$1/PiDG_Pico.kicad_pcb" >/dev/null
   "$KICAD_PY" "$HERE/drc_gate.py" "$1/drc.json"; }
 # Post-route script: post NAME FILTER args... -> work/NAME.log, filtered lines shown; a script error stops the build.
@@ -81,11 +83,11 @@ mkdir -p "$W/final"; project "$W/final"
 cp "$W/st_out.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb"
 # F26: GND vias for F.Cu / B.Cu pour islands with < 2 vias and for neck pieces the stitch lattice skipped.
 post frag_stitch . "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb"
-drc "$W/final" >/dev/null
+drc "$W/final" >/dev/null || true
 # Router clean-up: split tracks at T-joins (an end on another track's interior), then remove the stubs that
 # DRC still reports as dangling, if connectivity holds without them.
 "$KICAD_PY" "$HERE/tjoin.py" "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" 2>/dev/null | grep 'T-joins' || true
-drc "$W/final" >/dev/null
+drc "$W/final" >/dev/null || true
 "$KICAD_PY" "$HERE/dangling.py" "$W/final/drc.json" "$W/final/PiDG_Pico.kicad_pcb" 2>/dev/null | grep dangling || true
 # F28: remove copper-invisible stitch bridges and slivers < 0.08 mm; --protect keeps the carried hand copper.
 post tidy . "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" --protect "$W/tapped.kicad_pcb"
