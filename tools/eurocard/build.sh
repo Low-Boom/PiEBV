@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Rebuild the EuroCard (160 x 100 mm) board from the hand-routed 126 x 126 mm Rev 1 board.
 # Steps: place.py -> plane registration -> taps.py -> route.py camera lines (matched) -> lock.js -> route.py
-# other nets (KiCadRoutingTools) -> unlock ->
-# GND stitching -> tjoin.py / dangling.py -> silk.py -> finish.py -> KiCad DRC -> gaps.py.
+# other nets (KiCadRoutingTools) -> unlock -> straighten.py -> repair.py -> GND stitching -> frag_stitch.py ->
+# tjoin.py / dangling.py -> tidy.py -> silk.py -> finish.py -> ends.py -> KiCad DRC -> gaps.py.
 # Result: work/final/PiDG_Pico.kicad_pcb (DRC report drc.json, gap report gaps.txt)
 # usage: bash build.sh            (KRT_DIR / KRT_PY / KICAD_PY / KICAD_CLI / SRC_REV override the defaults)
 set -euo pipefail
@@ -18,6 +18,8 @@ project() { cp "$ROOT/PiDG_Pico.kicad_pro" "$ROOT/PiDG_Pico.kicad_sch" "$ROOT/fp
 # Gate (F21): count only non-warning severities as violations; warnings are printed so they stay in the log.
 drc() { "$KICAD_CLI" pcb drc --schematic-parity --severity-all --refill-zones --save-board --format json -o "$1/drc.json" "$1/PiDG_Pico.kicad_pcb" >/dev/null
   "$KICAD_PY" "$HERE/drc_gate.py" "$1/drc.json"; }
+# Post-route script: post NAME FILTER args... -> work/NAME.log, filtered lines shown; a script error stops the build.
+post() { local s="$1" f="$2"; shift 2; "$KICAD_PY" "$HERE/$s.py" "$@" > "$W/$s.log" 2>/dev/null; grep -v "^swig/python" "$W/$s.log" | grep -E "$f" || true; }
 
 # 1. Placement on the new outline; carried copper and the equal-length pulse lanes are locked.
 git -C "$ROOT" show "$SRC_REV:PiDG_Pico.kicad_pcb" > "$W/src.kicad_pcb"
@@ -58,8 +60,17 @@ cp "$W/tapped.kicad_pro" "$W/cam_l.kicad_pro"
   "${RARGS[@]}" --via-cost 200 --turn-cost 2000 --mps-reverse-rounds --write-fill) > "$W/route.log" 2>&1
 grep -A3 '^Run complete' "$W/route.log" | tail -2
 
-# 5. Unlock, refill, then GND stitching (edge fence 10 mm, area 15 mm) across F.Cu / In1 / B.Cu.
-mkdir -p "$W/r"; node "$HERE/unlock.js" "$W/routed.kicad_pcb" "$W/r/PiDG_Pico.kicad_pcb"; project "$W/r"; drc "$W/r"
+# 5. Unlock, straighten (F31b), repair (F27), refill, then GND stitching (edge fence 10 mm, area 15 mm)
+#    across F.Cu / In1 / B.Cu. straighten before repair: it has no 0.3 mm keep rule round SMD bodies.
+mkdir -p "$W/r"; node "$HERE/unlock.js" "$W/routed.kicad_pcb" "$W/r/PiDG_Pico.kicad_pcb"
+post straighten '^straighten' "$W/r/PiDG_Pico.kicad_pcb" "$W/r/PiDG_Pico.kicad_pcb" --protect "$W/tapped.kicad_pcb"
+# F27: every front SMD part except J17 (USB-C). A foreign-net F.Cu run within 0.3 mm of a part's pad hull is
+# routed again; on this routing C2 (PIXRST_GATE), C3 / C22 (LASER_PWR_OK) and C4 / C5 (LASER_EN).
+REPAIR_PARTS=(C1 C2 C3 C4 C5 C6 C7 C9 C10 C11 C12 C13 C14 C15 C16 C17 C18 C19 C20 C21 C22 L1
+  R2 R3 R6 R7 R8 R9 R10 R12 R13 R16 R17 R18 R19 R20 R21 R22 R23 R24 R25 R26 R27 R28 R29 R30 R31 R32
+  U1 U2 U3 U4 U5 U6 U7 U8 U9 U10 U13 U14 U15 U16 U17 U18 U19)
+post repair 'run of|rerouted|no route' "$W/r/PiDG_Pico.kicad_pcb" "$W/r/PiDG_Pico.kicad_pcb" "${REPAIR_PARTS[@]}"
+project "$W/r"; drc "$W/r"
 cp "$W/r/PiDG_Pico.kicad_pcb" "$W/st_in.kicad_pcb"; cp "$W/tapped.kicad_pro" "$W/st_in.kicad_pro"
 (cd "$KRT_DIR" && "$KRT_PY" py_router/route_planes.py "$W/st_in.kicad_pcb" "$W/st_out.kicad_pcb" --nets GND GND GND \
   --plane-layers F.Cu In1.Cu B.Cu --skip-existing-zones --thermal-relief --via-size 0.6 --via-drill 0.3 \
@@ -68,14 +79,21 @@ cp "$W/r/PiDG_Pico.kicad_pcb" "$W/st_in.kicad_pcb"; cp "$W/tapped.kicad_pro" "$W
 # 6. Final touches and DRC.
 mkdir -p "$W/final"; project "$W/final"
 cp "$W/st_out.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb"
+# F26: GND vias for F.Cu / B.Cu pour islands with < 2 vias and for neck pieces the stitch lattice skipped.
+post frag_stitch . "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb"
 drc "$W/final" >/dev/null
 # Router clean-up: split tracks at T-joins (an end on another track's interior), then remove the stubs that
 # DRC still reports as dangling, if connectivity holds without them.
 "$KICAD_PY" "$HERE/tjoin.py" "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" 2>/dev/null | grep 'T-joins' || true
 drc "$W/final" >/dev/null
 "$KICAD_PY" "$HERE/dangling.py" "$W/final/drc.json" "$W/final/PiDG_Pico.kicad_pcb" 2>/dev/null | grep dangling || true
+# F28: remove copper-invisible stitch bridges and slivers < 0.08 mm; --protect keeps the carried hand copper.
+post tidy . "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" --protect "$W/tapped.kicad_pcb"
 "$KICAD_PY" "$HERE/silk.py" "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" 2>/dev/null
 "$KICAD_PY" "$HERE/finish.py" "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" 2>/dev/null
+# F18 (last copper change): camera track ends trimmed to the pad edge, off-centre via ends joined to the via
+# centre. KiCad's length reading changes here; read camera lengths / skew on the board after this step.
+post ends . "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" "Sync?" "Trigger?" "TDRSTN?"
 drc "$W/final"
 node "$HERE/meander_check.js" "$W/final/PiDG_Pico.kicad_pcb" 0.3 Sync Trigger TDRSTN
 # Courtyard gaps, long-edge strips and mounting-hole washers (report; MH lines must be absent).

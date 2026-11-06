@@ -47,8 +47,14 @@ and applies it to the new pose.
 | `lock.js` | Locks the camera copper, so that the second pass routes around it and does not re-route it. |
 | `route.py` (KRT), other nets | Routes all other nets around the locked camera copper: via cost 200, turn cost 2000 (fewer short jogs), `--mps-reverse-rounds`, no length matching. |
 | `unlock.js` | Removes the `locked` marks the router input needed. |
+| `straighten.py` | F31: merges collinear segments and replaces jogs with one or two 0/45/90-degree runs where clearance allows. Not on GND, +5V, camera lines, pulse lanes or carried copper (`--protect tapped.kicad_pcb`). Runs before `repair.py`, because it has no 0.3 mm keep rule round SMD bodies. |
+| `repair.py` | F27: routes again each foreign-net F.Cu run that comes within 0.3 mm of the pad hull of a front SMD part (all except J17). On this routing: C2 (PIXRST_GATE), C3 / C22 (LASER_PWR_OK), C4 / C5 (LASER_EN). Prints `no route found` if it cannot. |
 | `route_planes.py` (KRT) | GND stitching: edge fence at 10 mm, area lattice at 15 mm. |
+| `frag_stitch.py` | F26: GND vias for F.Cu / B.Cu pour islands with fewer than 2 vias and for neck pieces that the stitch lattice skipped. |
+| `tjoin.py`, `dangling.py` | Split tracks at T-joins; remove the stubs DRC reports as dangling, if connectivity holds. |
+| `tidy.py` | F28: removes copper-invisible stitch bridges, slivers < 0.08 mm and in-pad duplicates; `--protect tapped.kicad_pcb` keeps the carried hand copper. |
 | `silk.py`, `finish.py` | Moves reference labels clear of other silkscreen; title block. |
+| `ends.py` | F18 (last copper change): trims camera track ends to the pad edge and joins off-centre via ends to the via centre, so KiCad measures every camera line pad edge to pad edge. Read camera lengths after this step. |
 
 Checks: `gaps.py` (courtyard gaps, long-edge strips), `pathlen.py` (pad-to-pad centre-line length;
 right for the drawn pulse lanes, but it reads meanders short because it merges track ends closer
