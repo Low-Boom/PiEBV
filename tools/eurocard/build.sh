@@ -11,9 +11,12 @@ KRT_DIR="${KRT_DIR:-$HERE/KiCadRoutingTools}"     # github.com/drandyhaas/KiCadR
 KRT_PY="${KRT_PY:-$HERE/.venv/Scripts/python.exe}"
 KICAD_PY="${KICAD_PY:-C:/Users/Flow-Lab/AppData/Local/Programs/KiCad/10.0/bin/python.exe}"
 KICAD_CLI="${KICAD_CLI:-C:/Users/Flow-Lab/AppData/Local/Programs/KiCad/10.0/bin/kicad-cli.exe}"
+export EP_PASTE_SPLIT="${EP_PASTE_SPLIT:-1}"    # U14 EP paste split (F21); set 0 for the library window
 W="$HERE/work"; rm -rf "$W"; mkdir -p "$W"
 project() { cp "$ROOT/PiDG_Pico.kicad_pro" "$ROOT/PiDG_Pico.kicad_sch" "$ROOT/fp-lib-table" "$ROOT/sym-lib-table" "$1/"; cp -r "$ROOT/libs" "$1/"; }
-drc() { "$KICAD_CLI" pcb drc --schematic-parity --severity-all --refill-zones --save-board --format json -o "$1/drc.json" "$1/PiDG_Pico.kicad_pcb" | grep Found; }
+# Gate (F21): count only non-warning severities as violations; warnings are printed so they stay in the log.
+drc() { "$KICAD_CLI" pcb drc --schematic-parity --severity-all --refill-zones --save-board --format json -o "$1/drc.json" "$1/PiDG_Pico.kicad_pcb" >/dev/null
+  "$KICAD_PY" "$HERE/drc_gate.py" "$1/drc.json"; }
 
 # 1. Placement on the new outline; carried copper and the equal-length pulse lanes are locked.
 git -C "$ROOT" show "$SRC_REV:PiDG_Pico.kicad_pcb" > "$W/src.kicad_pcb"
