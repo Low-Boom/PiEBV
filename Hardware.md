@@ -1282,10 +1282,10 @@ The layout also lets you assemble the board by hand with a hot plate.
 | Path | What |
 |---|---|
 | `PiDG_Pico.kicad_sch` | schematic |
-| `PiDG_Pico.kicad_pcb` | board |
+| `PiDG_Pico.kicad_pcb` | board. Copper fingerprint (fp.py, sha256 of sorted track/via tuples) `98a60c3b4332d6e9`: 1015 segments / 2489.2 mm / 194 vias / 0 duplicates. The T6 commit (`2e1baaf`) quotes `c27822f7b03012e7`, which is wrong; this row is the correction (the commit message cannot be amended without a rewrite) |
 | `fab/PiDG_Pico_BOM.csv` | master parts list with the design-constraint NOTE rows (hand-maintained; KiCad's `export_bom` ignores DNP attributes). The JLC BOM in `fab/jlc/` is derived from it. |
 | `fab/jlc/PiDG_Pico_JLC_BOM.csv`, `fab/jlc/PiDG_Pico_JLC_CPL.csv`, `fab/jlc/JLC_ORDER.md` | JLCPCB full-assembly upload files (all 84 placed parts, LCSC numbers) and the order checklist |
-| `fab/gerbers/`, `fab/PiDG_Pico_Gerbers.zip` | gerbers, Excellon drill files (plated and unplated) and job file, from the board's stored plot settings |
+| `fab/gerbers/`, `fab/PiDG_Pico_Gerbers.zip` | gerbers, Excellon drill files (plated and unplated) and job file, from the board's stored plot settings. Zip: 14 files, sha256 `9cc3ef0b328f1b3ad587a783bc3b5d4feb345d1e0d5631f9155cf8d3d592ce3f` (exported 2026-11-06 from the `2e1baaf` board after the T6 copper change; re-export check: the `c2bb8c1` board re-exported with `kicad-cli pcb export gerbers --board-plot-params` plus `drill --format excellon --excellon-separate-th` gives all committed files equal except the ProjectId and timestamp lines) |
 | `libs/PiDG_Local.kicad_sym` | Pico 2 W, UCC27524, LT3065 and TPS3700 symbols |
 | `libs/PiDG_Local.pretty/` | `*_EdgeTrim` footprint variants (see below) and the J7/J8/J12 BNC footprint (see [BNCs](#bncs-50-ω)) |
 | `src/` | firmware: `board.h` (pin map), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `laser_gate.*` (CH1/CH2 gate, start-up hook), `protocol.*` (serial commands), `main.cpp` (arming, hold-off, watchdog) |

@@ -2207,9 +2207,9 @@
   },
   "Trigger1": {
    "root": "U6.2",
-   "total_len_mm": 42.0697,
+   "total_len_mm": 42.4132,
    "via_count": 0,
-   "segment_count": 33,
+   "segment_count": 21,
    "components": 1,
    "independent_loops": 0,
    "unreached_pads": [],
@@ -2217,7 +2217,7 @@
     {
      "a": "U6.2",
      "b": "J1.4",
-     "len_mm": 42.0697,
+     "len_mm": 42.4132,
      "layer": "F.Cu",
      "width_mm": 0.3,
      "vias": 0,
@@ -2225,7 +2225,7 @@
       {
        "layer": "F.Cu",
        "width_mm": 0.3,
-       "len_mm": 42.0697
+       "len_mm": 42.4132
       }
      ]
     }
@@ -2241,7 +2241,7 @@
      "smd": false,
      "x_mm": 195.58,
      "y_mm": 114.04,
-     "path_len_from_root_mm": 42.0697,
+     "path_len_from_root_mm": 42.4132,
      "path_vias_from_root": 0
     },
     {
@@ -2279,17 +2279,17 @@
    "gnd_pour_edge_gap": {
     "F.Cu": {
      "len_mm": 42.56,
-     "frac_gap_lt_0p35mm": 0.814,
-     "frac_gap_lt_0p6mm": 0.846,
-     "frac_gap_lt_1mm": 0.854
+     "frac_gap_lt_0p35mm": 0.812,
+     "frac_gap_lt_0p6mm": 0.84,
+     "frac_gap_lt_1mm": 0.852
     }
    }
   },
   "Trigger2": {
    "root": "U6.4",
-   "total_len_mm": 42.3162,
+   "total_len_mm": 43.3233,
    "via_count": 0,
-   "segment_count": 39,
+   "segment_count": 21,
    "components": 1,
    "independent_loops": 0,
    "unreached_pads": [],
@@ -2297,7 +2297,7 @@
     {
      "a": "U6.4",
      "b": "J2.4",
-     "len_mm": 42.3162,
+     "len_mm": 43.3233,
      "layer": "F.Cu",
      "width_mm": 0.3,
      "vias": 0,
@@ -2305,7 +2305,7 @@
       {
        "layer": "F.Cu",
        "width_mm": 0.3,
-       "len_mm": 42.3162
+       "len_mm": 43.3233
       }
      ]
     }
@@ -2321,7 +2321,7 @@
      "smd": false,
      "x_mm": 207.58,
      "y_mm": 114.04,
-     "path_len_from_root_mm": 42.3162,
+     "path_len_from_root_mm": 43.3233,
      "path_vias_from_root": 0
     },
     {
@@ -2346,9 +2346,9 @@
    "gnd_pour_edge_gap": {
     "F.Cu": {
      "len_mm": 43.32,
-     "frac_gap_lt_0p35mm": 0.687,
-     "frac_gap_lt_0p6mm": 0.758,
-     "frac_gap_lt_1mm": 0.862
+     "frac_gap_lt_0p35mm": 0.738,
+     "frac_gap_lt_0p6mm": 0.84,
+     "frac_gap_lt_1mm": 0.904
     }
    }
   },
@@ -2562,9 +2562,9 @@
   },
   "Trigger6": {
    "root": "U6.12",
-   "total_len_mm": 39.1319,
+   "total_len_mm": 37.6751,
    "via_count": 2,
-   "segment_count": 17,
+   "segment_count": 12,
    "components": 1,
    "independent_loops": 0,
    "unreached_pads": [],
@@ -2572,7 +2572,7 @@
     {
      "a": "U6.12",
      "b": "J6.4",
-     "len_mm": 39.1319,
+     "len_mm": 37.6751,
      "layer": "B.Cu+F.Cu",
      "width_mm": 0.3,
      "vias": 2,
@@ -2590,7 +2590,7 @@
       {
        "layer": "F.Cu",
        "width_mm": 0.3,
-       "len_mm": 22.904
+       "len_mm": 21.4471
       }
      ]
     }
@@ -2606,7 +2606,7 @@
      "smd": false,
      "x_mm": 255.58,
      "y_mm": 114.04,
-     "path_len_from_root_mm": 39.1319,
+     "path_len_from_root_mm": 37.6751,
      "path_vias_from_root": 2
     },
     {
@@ -2630,10 +2630,10 @@
    "branch_points": {},
    "gnd_pour_edge_gap": {
     "F.Cu": {
-     "len_mm": 23.73,
-     "frac_gap_lt_0p35mm": 0.897,
-     "frac_gap_lt_0p6mm": 0.958,
-     "frac_gap_lt_1mm": 0.99
+     "len_mm": 22.07,
+     "frac_gap_lt_0p35mm": 0.89,
+     "frac_gap_lt_0p6mm": 0.955,
+     "frac_gap_lt_1mm": 0.989
     },
     "B.Cu": {
      "len_mm": 15.88,
@@ -3403,9 +3403,9 @@
   },
   "Sync6": {
    "root": "U2.12",
-   "total_len_mm": 78.0198,
+   "total_len_mm": 78.5026,
    "via_count": 2,
-   "segment_count": 40,
+   "segment_count": 32,
    "components": 1,
    "independent_loops": 0,
    "unreached_pads": [],
@@ -3413,7 +3413,7 @@
     {
      "a": "U2.12",
      "b": "J6.5",
-     "len_mm": 78.0198,
+     "len_mm": 78.5026,
      "layer": "B.Cu+F.Cu",
      "width_mm": 0.3,
      "vias": 2,
@@ -3431,7 +3431,7 @@
       {
        "layer": "F.Cu",
        "width_mm": 0.3,
-       "len_mm": 8.478
+       "len_mm": 8.9608
       }
      ]
     }
@@ -3447,7 +3447,7 @@
      "smd": false,
      "x_mm": 253.04,
      "y_mm": 116.58,
-     "path_len_from_root_mm": 78.0198,
+     "path_len_from_root_mm": 78.5026,
      "path_vias_from_root": 2
     },
     {
