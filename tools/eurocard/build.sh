@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Rebuild the EuroCard (160 x 100 mm) board from the hand-routed 126 x 126 mm Rev 1 board.
-# Steps: place.py -> plane registration -> taps.py -> route.py (KiCadRoutingTools) -> unlock ->
+# Steps: place.py -> plane registration -> taps.py -> route.py camera lines (matched) -> lock.js -> route.py
+# other nets (KiCadRoutingTools) -> unlock ->
 # GND stitching -> tjoin.py / dangling.py -> silk.py -> finish.py -> KiCad DRC -> gaps.py.
 # Result: work/final/PiDG_Pico.kicad_pcb (DRC report drc.json, gap report gaps.txt)
 # usage: bash build.sh            (KRT_DIR / KRT_PY / KICAD_PY / KICAD_CLI / SRC_REV override the defaults)
@@ -32,15 +33,29 @@ cp "$ROOT/PiDG_Pico.kicad_pro" "$W/placed.kicad_pro"
 "$KICAD_PY" "$HERE/taps.py" "$W/planes.kicad_pcb" "$W/tapped.kicad_pcb" 2>/dev/null | grep -i 'tap' || true
 cp "$W/planes.kicad_pro" "$W/tapped.kicad_pro"
 
-# 4. Autoroute: F.Cu/B.Cu only, fixed sizes, no via-in-pad, matched camera lines.
-(cd "$KRT_DIR" && "$KRT_PY" py_router/route.py "$W/tapped.kicad_pcb" "$W/routed.kicad_pcb" --nets "*" \
-  --layers F.Cu In1.Cu In2.Cu B.Cu --layer-costs 1.0 -1 -1 1.0 --track-width 0.3 --clearance 0.2 \
-  --power-nets GND "+5V" "+12V" "VBUS_PD" "+5V_PD" "+3V3" "+1V8" "Net-(U15-SW)" "Net-(J17-CC*)" PWM_1MHz \
-  --power-nets-widths 0.4 0.5 0.5 0.5 0.5 0.5 0.5 0.6 0.2 0.5 \
-  --escalation off --fab-tier standard --same-net-pad-clearance 0.1 --no-fix-drc-settings \
-  --via-cost 200 --turn-cost 300 --direction-preference-cost 0 --mps-reverse-rounds \
+# 4. Autoroute: F.Cu/B.Cu only, fixed sizes, no via-in-pad. Two passes (F2, F3): the camera lines first, alone and
+#    length-matched, then locked; then all other nets around them.
+RARGS=(--layers F.Cu In1.Cu In2.Cu B.Cu --layer-costs 1.0 -1 -1 1.0 --track-width 0.3 --clearance 0.2
+  --power-nets GND "+5V" "+12V" "VBUS_PD" "+5V_PD" "+3V3" "+1V8" "Net-(U15-SW)" "Net-(J17-CC*)" PWM_1MHz
+  --power-nets-widths 0.4 0.5 0.5 0.5 0.5 0.5 0.5 0.6 0.2 0.5
+  --escalation off --fab-tier standard --same-net-pad-clearance 0.1 --no-fix-drc-settings --direction-preference-cost 0)
+# 4a. The 18 camera lines in a fixed order (searched for this placement; with the MPS order the group targets come
+#     from lines routed late and the long way). --meander-spacing is in track widths: 2.5 x 0.3 = 0.75 mm arm
+#     pitch, 0.45 mm gap between arms. Via cost 150: at 200 Sync5/Sync6 route 95-125 mm and Sync1 cannot match.
+CAM_ORDER=(Trigger1 Trigger4 Trigger3 TDRSTN3 TDRSTN2 Trigger5 Sync1 TDRSTN1 Trigger6 TDRSTN4 Sync2 TDRSTN5 Sync4 TDRSTN6 Sync3 Sync5 Sync6 Trigger2)
+(cd "$KRT_DIR" && "$KRT_PY" py_router/route.py "$W/tapped.kicad_pcb" "$W/cam.kicad_pcb" --nets "${CAM_ORDER[@]}" --ordering original \
+  "${RARGS[@]}" --via-cost 150 --turn-cost 300 \
   --length-match-group "Sync*" --length-match-group "Trigger*" --length-match-group "TDRSTN*" \
-  --meander-amplitude 1.5 --meander-spacing 1.0 --write-fill) > "$W/route.log" 2>&1
+  --meander-amplitude 2.0 --meander-spacing 2.5 --length-match-tolerance 0.5) > "$W/route_cam.log" 2>&1
+grep -A2 '^Run complete' "$W/route_cam.log" | tail -1
+grep -E 'Length matching group|NOT matched' "$W/route_cam.log" || true
+node "$HERE/meander_check.js" "$W/cam.kicad_pcb" 0.3 Sync Trigger TDRSTN    # exit 1: arms (own copper) < 0.3 mm apart
+node "$HERE/lock.js" "$W/cam.kicad_pcb" "$W/cam_l.kicad_pcb" '^(Sync|Trigger|TDRSTN)[1-6]$'
+cp "$W/tapped.kicad_pro" "$W/cam_l.kicad_pro"
+# 4b. All other nets around the locked camera copper, no length-match groups. Turn cost 2000 (F31; 300 before):
+#     segments shorter than 0.5 mm 184 -> 79, +2 vias.
+(cd "$KRT_DIR" && "$KRT_PY" py_router/route.py "$W/cam_l.kicad_pcb" "$W/routed.kicad_pcb" --nets "*" \
+  "${RARGS[@]}" --via-cost 200 --turn-cost 2000 --mps-reverse-rounds --write-fill) > "$W/route.log" 2>&1
 grep -A3 '^Run complete' "$W/route.log" | tail -2
 
 # 5. Unlock, refill, then GND stitching (edge fence 10 mm, area 15 mm) across F.Cu / In1 / B.Cu.
@@ -62,6 +77,7 @@ drc "$W/final" >/dev/null
 "$KICAD_PY" "$HERE/silk.py" "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" 2>/dev/null
 "$KICAD_PY" "$HERE/finish.py" "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" 2>/dev/null
 drc "$W/final"
+node "$HERE/meander_check.js" "$W/final/PiDG_Pico.kicad_pcb" 0.3 Sync Trigger TDRSTN
 # Courtyard gaps, long-edge strips and mounting-hole washers (report; MH lines must be absent).
 "$KICAD_PY" "$HERE/gaps.py" "$W/final/PiDG_Pico.kicad_pcb" > "$W/final/gaps.txt" 2>/dev/null || true
 echo "gaps.py: $(grep -c . "$W/final/gaps.txt" || true) lines, MH lines: $(grep -c '^MH' "$W/final/gaps.txt" || true)"

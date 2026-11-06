@@ -42,7 +42,10 @@ and applies it to the new pose.
 | `place.py` | New outline. Moves the parts in rigid groups (the laser / External Sync output block keeps its hand-routed copper), spreads the machine-assembly clusters for hand placement (not U15/C12/L1/C13: the buck's hot loop stays as drawn), keeps the hand-routed local paths of parts that move together (`LOCAL_PATHS`: buffer decoupling, buck input/GND/SW/BST), moves text, mounting holes and zones. Draws the two equal-length laser pulse lanes. Removes all other copper. |
 | `route_planes.py` (KRT) | Registers the In1 GND and In2 +5V planes with the router. |
 | `taps.py` | Every SMD GND / +5V pad gets a short track to a via into its plane (clearance-checked with KiCad's shapes), outward from the part body first so the pad keeps its thermal spokes. Without this the router draws +5V as a ~190 mm surface tree. |
-| `route.py` (KRT) | Routes everything else on F.Cu/B.Cu (inner layers forbidden), fixed sizes, no via-in-pad, via cost 150, length-matched Sync*, Trigger*, TDRSTN* (meander amplitude 1.5 mm, spacing 1.0 mm; the best of 12 setting variants for this placement). |
+| `route.py` (KRT), camera pass | Routes the 18 camera lines first, alone, in a fixed order (`--ordering original`, searched for this placement), and length-matches Sync*, Trigger*, TDRSTN*: via cost 150, meander amplitude 2.0 mm, spacing 2.5 track widths (0.75 mm arm pitch, 0.45 mm gap between arms), tolerance 0.5 mm. F.Cu/B.Cu only (inner layers forbidden), fixed sizes, no via-in-pad. |
+| `meander_check.js` | Stops the build if a camera line comes within 0.3 mm of its own copper 2 mm or more further along the line (merged or too-close meander arms). Runs on the camera pass and on the final board. |
+| `lock.js` | Locks the camera copper, so that the second pass routes around it and does not re-route it. |
+| `route.py` (KRT), other nets | Routes all other nets around the locked camera copper: via cost 200, turn cost 2000 (fewer short jogs), `--mps-reverse-rounds`, no length matching. |
 | `unlock.js` | Removes the `locked` marks the router input needed. |
 | `route_planes.py` (KRT) | GND stitching: edge fence at 10 mm, area lattice at 15 mm. |
 | `silk.py`, `finish.py` | Moves reference labels clear of other silkscreen; title block. |
