@@ -15,7 +15,7 @@ Every gate is "input threshold crossing + internal delay -> output ramp behind a
 resistance". The internal delay is calibrated so that the gate model, driven and loaded as in its
 datasheet test circuit, reproduces the datasheet propagation delay.
 """
-import ctypes, os, sys, json, math, re, time
+import ctypes, heapq, os, sys, json, math, re, time
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -90,6 +90,18 @@ def node(name):
     return "n_" + re.sub(r"[^A-Za-z0-9]", "_", name).lower()
 
 
+def branch_vias(g):
+    """Indices of the branches that leave a via node (VIA...) on the other layer than the branch
+    that arrives there. geometry.json counts only the vias inside a branch; the barrel of a via
+    that is also a branch point is in series only with the branches that change layer at it."""
+    arrive = {}
+    for e in g["edges"]:
+        if e["a"] != e["b"]:
+            arrive.setdefault(e["b"], e["runs"][-1]["layer"])
+    return {i for i, e in enumerate(g["edges"]) if e["a"].startswith("VIA") and e["a"] != e["b"]
+            and arrive.get(e["a"], e["runs"][0]["layer"]) != e["runs"][0]["layer"]}
+
+
 class Ckt:
     def __init__(self, title, tmax_ps):
         self.lines = [f"* {title}", ".model DESD D(IS=1e-14 N=1.2 RS=5)",
@@ -155,11 +167,17 @@ class Ckt:
     def net(self, name, skip=()):
         """All routed branches of a board net (geometry.json). skip: (a, b) pad pairs to leave out."""
         g = GEOM["nets"][name]
-        for e in g["edges"]:
+        bv = branch_vias(g)
+        for i, e in enumerate(g["edges"]):
             if (e["a"], e["b"]) in skip:
                 continue
             pn = lambda p: node(name + "_" + p) if p.startswith("BP") else node(p)
-            nv = self.runs(pn(e["a"]), pn(e["b"]), e["runs"])
+            a = pn(e["a"])
+            if i in bv:                  # barrel of a branch-point via, in series with this branch
+                v = self.uid("v")
+                self.via(a, v)
+                a = v
+            nv = self.runs(a, pn(e["b"]), e["runs"])
             assert nv == e["vias"], (name, e["a"], e["b"], nv, e["vias"])
 
     def tran(self, tstop_ns):
@@ -383,7 +401,12 @@ class Model:
         for name, pad in (("gp11", "J14.15"), ("gp12", "J14.16"), ("gp13", "J14.17")):
             add_gpio(c, name, pad, drive, slew, strength)
         c.net("PWM_Trig")
-        c.net("PWM_TRIG_TAP", skip=(("R9.1", "U19.2"),) if optd else ())
+        # option d cuts the branch that arrives at U19.2 (named from the geometry: R9.1 -> U19.2 on
+        # the 126 mm board, VIA2 -> U19.2 on the EuroCard; a fixed pad pair silently cut nothing)
+        cut = tuple((e["a"], e["b"]) for e in GEOM["nets"]["PWM_TRIG_TAP"]["edges"]
+                    if e["b"] == "U19.2" and e["a"] != "U19.2") if optd else ()
+        assert cut or not optd, "option d: no PWM_TRIG_TAP branch ends at U19.2"
+        c.net("PWM_TRIG_TAP", skip=cut)
         c.net("CH1_J10")
         c.net("_PULSE_OUT_CH1")
         c.net("_PULSE_OUT_CH2")
@@ -1044,23 +1067,41 @@ def main():
     c.net("PWM_TRIG_TAP")
     c.tran(4.0)
     t, w = sp.run(c.lines, [node("U5.2"), node("U19.2")])
-    def path_ps(net, pad):
-        g = GEOM["nets"][net]
-        return sum(r["len_mm"] * LAYERS[f"{r['layer']}_w{r['width_mm']:.3f}"]["td_ps_per_mm"]
-                   for e in g["edges"] for r in e["runs"] if e["b"] in path_edges(g, pad))
-    def path_edges(g, pad):
-        par = {e["b"]: e["a"] for e in g["edges"]}
-        out, p = set(), pad
-        while p in par:
-            out.add(p)
-            p = par[p]
-        return out
     via_ps = math.sqrt(VIA["L_nH_est"] * 1e-9 * VIA["C_pF_est"] * 1e-12) * 1e12
-    base = path_ps("PWM_Trig", "J10.3") + via_ps
+
+    def path_ps(net, pad):
+        """Shortest root -> pad delay (ps; run length x Td/mm + via_ps per via) and its via count.
+        Dijkstra on the branches as undirected edges. Not a parent-map walk: a branch that starts
+        and ends on one pad (a == b, a routed loop at a pad) makes that walk cycle forever. Such a
+        branch, and the longer of two parallel branches, is not on the first-arrival path."""
+        g = GEOM["nets"][net]
+        bv = branch_vias(g)
+        adj = {}
+        for i, e in enumerate(g["edges"]):
+            if e["a"] == e["b"]:
+                continue
+            nv = e["vias"] + (i in bv)
+            ps = sum(r["len_mm"] * LAYERS[f"{r['layer']}_w{r['width_mm']:.3f}"]["td_ps_per_mm"]
+                     for r in e["runs"]) + nv * via_ps
+            adj.setdefault(e["a"], []).append((ps, nv, e["b"]))
+            adj.setdefault(e["b"], []).append((ps, nv, e["a"]))
+        best, todo = {}, [(0.0, 0, g["root"])]
+        while todo:
+            d, nv, p = heapq.heappop(todo)
+            if p in best:
+                continue
+            best[p] = (d, nv)
+            for ps, v, q in adj.get(p, ()):
+                if q not in best:
+                    heapq.heappush(todo, (d + ps, nv + v, q))
+        return best[pad]
+    base, base_nv = path_ps("PWM_Trig", "J10.3")
     for pad in ("U5.2", "U19.2"):
-        hand = (base + path_ps("PWM_TRIG_TAP", pad)) * 1e-3
+        ps, nv = path_ps("PWM_TRIG_TAP", pad)
+        hand = (base + ps) * 1e-3
         sim = cross(t, w[node(pad)], 0.05, True, 1.0) - 1.0
-        checks.append([f"first arrival J14.15 -> {pad} (ideal step, no loads)", "sum of run length x Td/mm + 1 via sqrt(LC)",
+        checks.append([f"first arrival J14.15 -> {pad} (ideal step, no loads)",
+                       f"sum of run length x Td/mm + {base_nv + nv} via sqrt(LC)",
                        f(hand, 3), f(sim, 3), f(sim - hand, 3)])
     # 5. gate calibration: model into the datasheet test load gives tpd back
     g5 = M.gate_tint("SN74LVC1G04", "typ", True)
