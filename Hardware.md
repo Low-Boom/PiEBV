@@ -250,19 +250,21 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
 - **Known residuals** (router artefacts; none is a DRC error):
   - Length match: the router left Sync5 0.89 mm past its group target; the group spreads are 1.18 /
     1.04 / 1.37 mm (Sync / Trigger / TDRSTN), against its 0.5 mm tolerance: at most about 8.5 ps.
-  - Segment density: non-camera nets (GND and +5V excluded) 2.76 segments per 10 mm (hand board
+  - Segment density: non-camera nets (GND and +5V excluded) 2.75 segments per 10 mm (hand board
     2.8); camera lines 5.62 per 10 mm (9.08 before the clean-up). Segments shorter than 0.5 mm
-    with no pad or via at either end: 68 on the camera lines (0.1–0.42 mm steps; 269 before) and 26
-    on other nets, 15 of them with no branch at either end (for example four +12V pieces of
+    with no pad or via at either end: 68 on the camera lines (0.1–0.42 mm steps; 269 before) and 25
+    on other nets, 14 of them with no branch at either end (for example four +12V pieces of
     0.1–0.42 mm at x 237.8–238.4, y 77.4–77.8).
   - Camera staircases that the clean-up could not replace (8 runs, 74 segments): Trigger1 and
     Trigger2 leave U6 side by side in 14- and 19-step staircases (no room to straighten one
     without the other); Sync6 approaches J6.5 in a 10-step staircase over 4.2 mm (straight, it would
     be 0.71 mm shorter, and Sync6 has no meander to put the length back); Trigger4, TDRSTN4 and
     TDRSTN6 keep small length bumps; 3-step jogs on Trigger1 at J1.4 and on TDRSTN6 near U4.
-  - Four segments shorter than 0.08 mm: `+12V` 0.051 mm at (239.808, 76.85) (a T-join split of the
-    carried +12V lane), `Sync6` 0.017 mm on B.Cu at (197.683, 91.6) (at its via), `Trigger1`
-    0.050 mm and `Trigger4` 0.079 mm at the J1.4 and J4.4 pad ends.
+  - Three segments shorter than 0.08 mm, all on camera lines (`tidy.py` does not change camera
+    copper): `Sync6` 0.017 mm on B.Cu at (197.683, 91.6) (at its via), `Trigger1` 0.050 mm and
+    `Trigger4` 0.079 mm at the J1.4 and J4.4 pad ends. The fourth, a `+12V` 0.051 mm step at
+    (239.808, 76.85) from the router's 0.5 mm run onto the carried U17.11–U17.12 tie, was not
+    load-bearing; `tidy.py` now ends both tracks at (239.8, 76.85) and removes it.
   - Two GND vias carried from Rev 1 have their ring 0.20 mm from their own pad: U13.3 via
     (236.0, 60.935) and U19.3 via (241.9, 98.435). All 45 tap vias are at least 0.25 mm.
 

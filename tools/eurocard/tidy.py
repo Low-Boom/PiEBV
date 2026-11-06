@@ -66,4 +66,40 @@ for _, t in cand:
     removed.append(f"{nm} {b.GetLayerName(lay)} ({ToMM(s.x):.3f},{ToMM(s.y):.3f})-({ToMM(e.x):.3f},{ToMM(e.y):.3f}) "
                    f"w{ToMM(w):.2f} L{ToMM(math.hypot(e.x - s.x, e.y - s.y)):.3f} {k}")
 print(f"tidy: removed {len(removed)}"); [print("  ", r) for r in removed]
+
+# Sliver merge (R3): a sliver S (< 0.08 mm) that is not copper-invisible joins the end of track V to the end of
+# track H (one other track at each end, same net / layer, neither protected). V and H are extended / cut to the
+# intersection Q of their centre lines and S is removed, so V and H keep their directions (no off-grid stub).
+# Only if Q is < 0.08 mm from both of S's ends and neither V nor H turns round; undone like a removal above.
+# On this board: the router's +12V 0.5 mm run ends with a 0.051 mm step from (239.8, 76.8) to (239.808, 76.85),
+# a point on the carried U17.11-U17.12 tie (0.4 mm); Q = (239.8, 76.85), H loses 0.008 mm under V's end cap.
+P1 = lambda p: (round(ToMM(p.x), 3), round(ToMM(p.y), 3))
+merged = []
+for t in [t for t in T if t.GetClass() == "PCB_TRACK" and t.GetLength() < SLIVER and t.GetLength() > 0
+          and not any(fnmatch.fnmatchcase(t.GetNetname(), p) for p in KEEP_NETS) and key(t) not in protect]:
+    code, lay = t.GetNetCode(), t.GetLayer(); A, P = t.GetStart(), t.GetEnd()
+    at = lambda q: [u for u in T if u is not t and u.GetClass() == "PCB_TRACK" and u.GetNetCode() == code
+                    and u.GetLayer() == lay and (P1(u.GetStart()) == P1(q) or P1(u.GetEnd()) == P1(q))]
+    va, hp = at(A), at(P)
+    if len(va) != 1 or len(hp) != 1 or va[0] is hp[0] or key(va[0]) in protect or key(hp[0]) in protect: continue
+    V, H = va[0], hp[0]
+    vend = "s" if P1(V.GetStart()) == P1(A) else "e"; hend = "s" if P1(H.GetStart()) == P1(P) else "e"
+    vf = V.GetEnd() if vend == "s" else V.GetStart(); hf = H.GetEnd() if hend == "s" else H.GetStart()   # fixed ends
+    d1 = (A.x - vf.x, A.y - vf.y); d2 = (P.x - hf.x, P.y - hf.y); den = d1[0] * d2[1] - d1[1] * d2[0]
+    if den == 0: continue                                                  # parallel: no intersection
+    u = ((hf.x - vf.x) * d2[1] - (hf.y - vf.y) * d2[0]) / den; w_ = ((hf.x - vf.x) * d1[1] - (hf.y - vf.y) * d1[0]) / den
+    if u <= 0 or w_ <= 0: continue                                         # V or H would turn round
+    Q = pcbnew.VECTOR2I(int(round(vf.x + u * d1[0])), int(round(vf.y + u * d1[1])))
+    if math.hypot(Q.x - A.x, Q.y - A.y) >= SLIVER or math.hypot(Q.x - P.x, Q.y - P.y) >= SLIVER: continue
+    s0 = state(code); sw, nm = t.GetWidth(), t.GetNetname()
+    setv = V.SetStart if vend == "s" else V.SetEnd; seth = H.SetStart if hend == "s" else H.SetEnd
+    setv(Q); seth(Q); b.Remove(t); T[:] = [x for x in T if x is not t]
+    s1 = state(code)
+    if s1[0] > s0[0] or s1[1] != s0[1] or s1[2] > s0[2]:
+        setv(A); seth(P)
+        n = pcbnew.PCB_TRACK(b); n.SetStart(A); n.SetEnd(P); n.SetWidth(sw); n.SetLayer(lay); n.SetNetCode(code); b.Add(n); T.append(n)
+        print(f"   kept {nm} ({ToMM(A.x):.3f},{ToMM(A.y):.3f}): merge would change connectivity"); continue
+    merged.append(f"{nm} {b.GetLayerName(lay)} ({ToMM(A.x):.4f},{ToMM(A.y):.4f})-({ToMM(P.x):.4f},{ToMM(P.y):.4f}) "
+                  f"L{ToMM(math.hypot(P.x - A.x, P.y - A.y)):.3f} -> joint ({ToMM(Q.x):.4f},{ToMM(Q.y):.4f})")
+print(f"tidy: merged {len(merged)} sliver(s)"); [print("  ", r) for r in merged]
 pcbnew.SaveBoard(a[1], b)
