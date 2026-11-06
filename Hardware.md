@@ -265,6 +265,13 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
     `Trigger4` 0.079 mm at the J1.4 and J4.4 pad ends. The fourth, a `+12V` 0.051 mm step at
     (239.808, 76.85) from the router's 0.5 mm run onto the carried U17.11–U17.12 tie, was not
     load-bearing; `tidy.py` now ends both tracks at (239.8, 76.85) and removes it.
+  - One F.Cu GND pour piece has no stitch via (`frag_stitch.py` "no site: F.Cu neck 5.6 192.71
+    93.59"; the two numbers are the corner of the piece's core, the piece is (192.2, 93.1)–(194.8,
+    96.7)). It is 5.6 mm² and joins the main F.Cu GND fill through a 0.72 mm neck, so it is not
+    floating. It lies over the B.Cu meander of `Sync1` (arms 0.75 mm apart, 0.45 mm gap); a 0.6 mm
+    through via needs 1.0 mm between two arms (0.2 mm clearance), so all 41 candidate sites fail on
+    `Sync1`. A via would need the camera meander moved; removing the piece would need a rule area in
+    the GND pour. Neither is done.
   - Two GND vias carried from Rev 1 have their ring 0.20 mm from their own pad: U13.3 via
     (236.0, 60.935) and U19.3 via (241.9, 98.435). All 45 tap vias are at least 0.25 mm.
 
