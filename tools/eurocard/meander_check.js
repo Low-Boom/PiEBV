@@ -16,7 +16,7 @@ for(const net of Object.keys(pads).filter(n=>pf.some(p=>n.startsWith(p))).sort()
  for(const g of segs){const [p,q]=g.xy;const L=Math.hypot(q[0]-p[0],q[1]-p[1]);const k=Math.max(1,Math.ceil(L/0.05));const i0=pts.length;
   for(let j=0;j<=k;j++)pts.push({x:p[0]+(q[0]-p[0])*j/k,y:p[1]+(q[1]-p[1])*j/k,l:g.l,w:g.w});for(let j=0;j<k;j++)link(i0+j,i0+j+1,L/k)}
  const H={},key=(x,y)=>Math.floor(x/0.5)+","+Math.floor(y/0.5);pts.forEach((p,i)=>(H[key(p.x,p.y)]=H[key(p.x,p.y)]||[]).push(i));
- const near=(x,y,r,skip)=>{const gx=Math.floor(x/0.5),gy=Math.floor(y/0.5),o=[];for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(const j of H[(gx+dx)+","+(gy+dy)]||[])if(j!==skip&&Math.hypot(pts[j].x-x,pts[j].y-y)<r)o.push(j);return o};
+ const near=(x,y,r,skip)=>{const gx=Math.floor(x/0.5),gy=Math.floor(y/0.5),sp=Math.max(1,Math.ceil(r/0.5)),o=[];for(let dx=-sp;dx<=sp;dx++)for(let dy=-sp;dy<=sp;dy++)for(const j of H[(gx+dx)+","+(gy+dy)]||[])if(j!==skip&&Math.hypot(pts[j].x-x,pts[j].y-y)<r)o.push(j);return o};   // cell span derived from r: adjacent cells alone miss points up to ~r+0.5 mm away (e.g. parallel meander arms two 0.5 mm cells apart at a 0.6 mm query radius)
  pts.forEach((p,i)=>{for(const j of near(p.x,p.y,0.011,i))if(pts[j].l===p.l)link(i,j,0)});          // shared ends, T-joins
  for(const v of vias){const id=pts.length;pts.push({x:v.xy[0][0],y:v.xy[0][1],l:"via"});for(const j of near(v.xy[0][0],v.xy[0][1],0.31,id))link(id,j,0)}
  const D=new Float64Array(pts.length).fill(1e9),Q=[];pts.forEach((p,i)=>{if(Math.hypot(p.x-S[0],p.y-S[1])<1.0){D[i]=0;Q.push(i)}});

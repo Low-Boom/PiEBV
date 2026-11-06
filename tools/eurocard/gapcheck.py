@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # Independent edge-to-edge gap measurement for specific net pairs on the residuals board.
 # Expected (documented + agent report): CH2-lane run vs CLK_SEL ~0.538 mm (parallel run x171.5-172.4, y64.3-65.2);
-# R18 branch vs PWM_1MHz/SYNC_N ~21.70 mm.
+# R18 branch vs PWM_1MHz/SYNC_N ~21.70 mm. No bounding-box cutoff: a fixed cutoff discards every pair when the
+# true minimum is larger than the cutoff (the 21.70 mm lane pair is >1 mm apart everywhere) and reports
+# "no same-layer pairs" instead of measuring.
 import re, math, sys
 
 def parse(path):
@@ -49,13 +51,6 @@ def min_gap(segsA, segsB):
     sl, slpair = 1e9, None
     for sa in segsA:
         for sb in segsB:
-            # quick bbox reject
-            axmin, axmax = min(sa[0], sa[2]), max(sa[0], sa[2])
-            aymin, aymax = min(sa[1], sa[3]), max(sa[1], sa[3])
-            bxmin, bxmax = min(sb[0], sb[2]), max(sb[0], sb[2])
-            bymin, bymax = min(sb[1], sb[3]), max(sb[1], sb[3])
-            if axmax + 1 < bxmin or bxmax + 1 < axmin or aymax + 1 < bymin or bymax + 1 < aymin:
-                continue
             d = seg_dist(sa, sb) - (sa[4] + sb[4]) / 2.0  # edge-to-edge
             if d < best:
                 best, bestpair = d, (sa, sb)

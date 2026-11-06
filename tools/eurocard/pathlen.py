@@ -16,6 +16,23 @@ def path(pa, pb):
     def key(x, y, l): return (round(x, 3), round(y, 3), l)
     def link(a, c, w): nodes.setdefault(a, []).append((c, w)); nodes.setdefault(c, []).append((a, w))
     pts = []                                     # all endpoints, to join coincident ones
+    # Tracks a pad passes through (pad shape collides with the track, pad-centre projection strictly interior)
+    # get their graph edge split at the projected point: without the split, both pads inside the same
+    # unsplit track only connect to the track's endpoints, and the measured path rounds via an endpoint
+    # (e.g. (0,0)-(10,0) with pads at (2,0)/(8,0) measures 10 mm via (0,0) instead of the 6 mm between pads).
+    splits = {}
+    for pd in (pa, pb):
+        c = pd.GetPosition(); cx, cy = ToMM(c.x), ToMM(c.y)
+        for t in items:
+            if t.GetClass() == "PCB_VIA": continue
+            lid = t.GetLayer(); l = b.GetLayerName(lid)
+            if not pd.IsOnLayer(lid) or not pd.GetEffectiveShape(lid).Collide(t.GetEffectiveShape(lid), 0): continue
+            s0, e0 = t.GetStart(), t.GetEnd(); ax, ay, bx, by = ToMM(s0.x), ToMM(s0.y), ToMM(e0.x), ToMM(e0.y)
+            vx, vy = bx - ax, by - ay; L2 = vx * vx + vy * vy
+            if L2 == 0: continue
+            u = ((cx - ax) * vx + (cy - ay) * vy) / L2
+            if not (0.0 < u < 1.0): continue
+            splits.setdefault(id(t), []).append((u, ax + u * vx, ay + u * vy))
     for t in items:
         if t.GetClass() == "PCB_VIA":
             x, y = ToMM(t.GetPosition().x), ToMM(t.GetPosition().y)
@@ -23,7 +40,15 @@ def path(pa, pb):
         else:
             l = b.GetLayerName(t.GetLayer()); s, e = t.GetStart(), t.GetEnd()
             a, c = key(ToMM(s.x), ToMM(s.y), l), key(ToMM(e.x), ToMM(e.y), l)
-            link(a, c, ToMM(int(t.GetLength())))
+            Lt = ToMM(int(t.GetLength()))
+            sp = sorted(splits.get(id(t), []))
+            if not sp:
+                link(a, c, Lt)
+            else:                                # split the edge at each projected pad position
+                prev, pu = a, 0.0
+                for u, px, py in sp:
+                    k = key(px, py, l); link(prev, k, (u - pu) * Lt); prev, pu = k, u
+                link(prev, c, (1.0 - pu) * Lt)
             pts += [(ToMM(s.x), ToMM(s.y), l, t), (ToMM(e.x), ToMM(e.y), l, t)]
     # join endpoints that touch (within 0.15 mm, e.g. track ends inside a via or on each other)
     for i in range(len(pts)):
@@ -61,8 +86,9 @@ def path(pa, pb):
             s0, e0 = t.GetStart(), t.GetEnd(); ax, ay, bx, by = ToMM(s0.x), ToMM(s0.y), ToMM(e0.x), ToMM(e0.y)
             vx, vy = bx - ax, by - ay; L2 = vx * vx + vy * vy
             if L2 == 0: continue
-            u = max(0.0, min(1.0, ((cx - ax) * vx + (cy - ay) * vy) / L2)); Lt = math.sqrt(L2)
-            out.append((key(ax, ay, l), u * Lt)); out.append((key(bx, by, l), (1 - u) * Lt))
+            u = ((cx - ax) * vx + (cy - ay) * vy) / L2
+            if 0.0 < u < 1.0:                   # pad interior to the track: connect to its split node
+                out.append((key(ax + u * vx, ay + u * vy, l), math.hypot(ax + u * vx - cx, ay + u * vy - cy)))
         return out
     src, dst = terminals(pa), dict(terminals(pb))
     dist = {}; q = [(d, k) for k, d in src]; heapq.heapify(q)
