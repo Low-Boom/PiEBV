@@ -234,9 +234,37 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
 - **Plane taps.** Each SMD GND and +5V pad that the carried hand copper does not already touch has
   its own short tap track to a via into In1 or In2 (45 taps), placed outward from the part body
   first. The buck's GND link (C12.2 to U15.4) keeps its two hand vias, 1.74 and 1.90 mm from
-  C12.2. +5V has only 12.4 mm of surface copper; the
-  In2 plane carries it.
-- **Totals:** 1461 track segments, 2510 mm of track (F.Cu 1498 mm, B.Cu 1013 mm), 194 vias.
+  C12.2. +5V has only 14.67 mm of surface copper (12 segments); the In2 plane carries it.
+- **Reference planes (F9).** F.Cu signals run over In1 GND and B.Cu signals over In2 +5 V, both
+  0.21 mm away. On B.Cu: Sync 413.9 mm, Trigger 15.9 mm (Trigger6), TDRSTN 249.8 mm, `PWM_1MHz`
+  79.6 mm, `PWM_TRIG_TAP` 70.2 mm, `PIXRST_GATE` 39.2 mm. Their return current flows in the +5 V
+  plane; at a layer change it crosses to GND through the B.Cu GND pour over In2 (about 18.9 pF/cm²)
+  and the In1–In2 core (about 3.7 pF/cm²). The discrete +5 V-to-GND capacitors are C4 and C5
+  (224, 57.8 / 60.8) and C6 (214.5, 78.7). Decision: no extra GND return vias. The review's option
+  (`route_planes.py --add-gnd-vias --gnd-via-distance 1.5` in the stitching step) would add 50 GND
+  vias beside the signal vias on this routing, with no track change; the finding is low severity
+  for these 1.8 V LVC lines (edges about 1–3 ns), so the verified copper is kept. Add the option
+  if EMI measurements call for it, then run the build checks again.
+- **Totals:** 1061 track segments, 2491 mm of track (F.Cu 1476 mm, B.Cu 1015 mm), 194 vias. No two
+  segments are identical.
+- **Known residuals** (router artefacts; none is a DRC error):
+  - Length match: the router left Sync5 0.89 mm past its group target; the group spreads are 1.18 /
+    1.04 / 1.37 mm (Sync / Trigger / TDRSTN), against its 0.5 mm tolerance: at most about 8.5 ps.
+  - Segment density: non-camera nets (GND and +5V excluded) 2.76 segments per 10 mm (hand board
+    2.8); camera lines 5.62 per 10 mm (9.08 before the clean-up). Segments shorter than 0.5 mm
+    with no pad or via at either end: 68 on the camera lines (0.1–0.42 mm steps; 269 before) and 26
+    on other nets, 15 of them with no branch at either end (for example four +12V pieces of
+    0.1–0.42 mm at x 237.8–238.4, y 77.4–77.8).
+  - Camera staircases that the clean-up could not replace (8 runs, 74 segments): Trigger1 and
+    Trigger2 leave U6 side by side in 14- and 19-step staircases (no room to straighten one
+    without the other); Sync6 approaches J6.5 in a 10-step staircase over 4.2 mm (straight, it would
+    be 0.71 mm shorter, and Sync6 has no meander to put the length back); Trigger4, TDRSTN4 and
+    TDRSTN6 keep small length bumps; 3-step jogs on Trigger1 at J1.4 and on TDRSTN6 near U4.
+  - Four segments shorter than 0.08 mm: `+12V` 0.051 mm at (239.808, 76.85) (a T-join split of the
+    carried +12V lane), `Sync6` 0.017 mm on B.Cu at (197.683, 91.6) (at its via), `Trigger1`
+    0.050 mm and `Trigger4` 0.079 mm at the J1.4 and J4.4 pad ends.
+  - Two GND vias carried from Rev 1 have their ring 0.20 mm from their own pad: U13.3 via
+    (236.0, 60.935) and U19.3 via (241.9, 98.435). All 45 tap vias are at least 0.25 mm.
 
 ---
 
