@@ -2,7 +2,7 @@
 # Rebuild the EuroCard (160 x 100 mm) board from the hand-routed 126 x 126 mm Rev 1 board.
 # Steps: place.py -> plane registration -> taps.py -> route.py camera lines (matched) -> lock.js -> route.py
 # other nets (KiCadRoutingTools) -> unlock -> straighten.py -> repair.py -> GND stitching -> frag_stitch.py ->
-# tjoin.py / dangling.py -> tidy.py -> silk.py -> finish.py -> ends.py -> camclean.py -> ends.py -> KiCad DRC -> gaps.py.
+# tjoin.py / dangling.py -> tidy.py -> silk.py -> finish.py -> ends.py -> camclean.py -> camjoint.py -> ends.py -> KiCad DRC -> gaps.py.
 # Result: work/final/PiDG_Pico.kicad_pcb (DRC report drc.json, gap report gaps.txt)
 # usage: bash build.sh            (KRT_DIR / KRT_PY / KICAD_PY / KICAD_CLI / SRC_REV override the defaults)
 set -euo pipefail
@@ -118,6 +118,9 @@ post ends . "$W/final/PiDG_Pico.kicad_pcb" "$W/final/PiDG_Pico.kicad_pcb" "Sync?
 CAM=("Sync?" "Trigger?" "TDRSTN?"); B="$W/final/PiDG_Pico.kicad_pcb"; PRO="$W/final/PiDG_Pico.kicad_pro"
 post kilen:kilen0 . "$B" "$PRO" "$W/len0.txt" "$KICAD_CLI"
 post camclean '^camclean|LEFT' "$B" "$B" --protect "$W/tapped.kicad_pcb" "${CAM[@]}"
+# R5: joint re-shape of the Trigger1 / Trigger2 staircases at U6 and of the Sync6 staircase at J6.5 (camjoint.py;
+# camclean's guards, all windows of a group or none). Before kilen1, so camtrim restores Trigger2 with its caps.
+post camjoint '^camjoint|FAIL|anchors' "$B" "$B"
 post ends:ends2 '^ends' "$B" "$B" "${CAM[@]}"
 post kilen:kilen1 . "$B" "$PRO" "$W/len1.txt" "$KICAD_CLI"
 post camclean:camtrim '^camclean|LEFT' "$B" "$B" --protect "$W/tapped.kicad_pcb" --trim "$W/len0.txt" "$W/len1.txt" "${CAM[@]}"

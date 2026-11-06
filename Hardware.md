@@ -216,7 +216,7 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
 - **Camera lines, length-matched** (buffer pin to header pin, as KiCad's length tool measures:
   vias over the layers they join, runs cut at the pad outlines): `Sync1..6` 81.87–83.04 mm
   (spread 1.18 mm; Sync5 is the long one, 0.89 mm past the router's target, the other five are
-  within 0.71 mm), `Trigger1..6` 42.56–43.60 mm (spread 1.04 mm; Trigger4 is the long one, the
+  within 0.71 mm), `Trigger1..6` 42.56–43.60 mm (spread 1.03 mm; Trigger4 is the long one, the
   other five are within 0.76 mm), `TDRSTN1..6` 51.69–53.05 mm (spread 1.37 mm; TDRSTN4 is the
   long one, the other five are within 0.83 mm). 1.37 mm is about 8.5 ps. The match starts at the
   buffer output, not at its input: the input fan-outs (`SYNC_N` from U1.4, `TRIG_N` from U5.4 and
@@ -227,7 +227,8 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
   (B.Cu). The camera lines are routed first in a dedicated pass, then cleaned up
   (`camclean.py`, with each line's length kept): each meander is a comb of straight arms 0.75 mm
   apart (0.45 mm gap) joined by straight caps with 90° corners, and the router's staircases and
-  acute exit corners are replaced by straight 0°/45°/90° runs. No corner of a camera line turns
+  acute exit corners are replaced by straight 0°/45°/90° runs (`camjoint.py` re-shapes Trigger1 and
+  Trigger2 at U6 together, and Sync6 at J6.5). No corner of a camera line turns
   more than 90°, and two parts of one line more than 1 mm apart along it are at least 0.36 mm
   apart (0.45 mm for parts more than 2 mm apart), so the copper of a line merges nowhere and these
   are the electrical lengths.
@@ -245,21 +246,24 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
   vias beside the signal vias on this routing, with no track change; the finding is low severity
   for these 1.8 V LVC lines (edges about 1–3 ns), so the verified copper is kept. Add the option
   if EMI measurements call for it, then run the build checks again.
-- **Totals:** 1061 track segments, 2491 mm of track (F.Cu 1476 mm, B.Cu 1015 mm), 194 vias. No two
+- **Totals:** 1022 track segments, 2491 mm of track (F.Cu 1476 mm, B.Cu 1015 mm), 194 vias. No two
   segments are identical.
 - **Known residuals** (router artefacts; none is a DRC error):
   - Length match: the router left Sync5 0.89 mm past its group target; the group spreads are 1.18 /
-    1.04 / 1.37 mm (Sync / Trigger / TDRSTN), against its 0.5 mm tolerance: at most about 8.5 ps.
+    1.03 / 1.37 mm (Sync / Trigger / TDRSTN), against its 0.5 mm tolerance: at most about 8.5 ps.
   - Segment density: non-camera nets (GND and +5V excluded) 2.75 segments per 10 mm (hand board
-    2.8); camera lines 5.62 per 10 mm (9.08 before the clean-up). Segments shorter than 0.5 mm
-    with no pad or via at either end: 68 on the camera lines (0.1–0.42 mm steps; 269 before) and 25
+    2.8); camera lines 5.25 per 10 mm (9.08 before the clean-up). Segments shorter than 0.5 mm
+    with no pad or via at either end: 35 on the camera lines (0.1–0.42 mm steps; 269 before) and 25
     on other nets, 14 of them with no branch at either end (for example four +12V pieces of
     0.1–0.42 mm at x 237.8–238.4, y 77.4–77.8).
-  - Camera staircases that the clean-up could not replace (8 runs, 74 segments): Trigger1 and
-    Trigger2 leave U6 side by side in 14- and 19-step staircases (no room to straighten one
-    without the other); Sync6 approaches J6.5 in a 10-step staircase over 4.2 mm (straight, it would
-    be 0.71 mm shorter, and Sync6 has no meander to put the length back); Trigger4, TDRSTN4 and
-    TDRSTN6 keep small length bumps; 3-step jogs on Trigger1 at J1.4 and on TDRSTN6 near U4.
+  - Camera staircases that the clean-up keeps (5 runs, 31 segments): Trigger4, TDRSTN4 and TDRSTN6
+    keep small length bumps; 3-step jogs on Trigger1 at J1.4 and on TDRSTN6 near U4. The Trigger1 /
+    Trigger2 staircases at U6 (14 and 19 steps) and the Sync6 staircase at J6.5 (10 steps) are
+    replaced by `camjoint.py`: Trigger2 runs vertical at x 221.6, then 45° to U6.4; Trigger1 runs
+    vertical at x 220.85 and x 221.46 with one 45° jog, then 45° to U6.2 (its window keeps its
+    length, +0.002 mm); Sync6 runs vertical, 45°, horizontal, 45° to J6.5 (length kept). Gaps there:
+    Trigger1–Trigger2 0.371 → 0.435 mm, Trigger2 to the U6.7 GND via 0.296 → 0.440 mm, Trigger1 to
+    `PIXRST_GATE` 0.560 mm (unchanged).
   - Three segments shorter than 0.08 mm, all on camera lines (`tidy.py` does not change camera
     copper): `Sync6` 0.017 mm on B.Cu at (197.683, 91.6) (at its via), `Trigger1` 0.050 mm and
     `Trigger4` 0.079 mm at the J1.4 and J4.4 pad ends. The fourth, a `+12V` 0.051 mm step at
