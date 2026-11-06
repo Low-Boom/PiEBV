@@ -175,7 +175,7 @@ installed. The 14 files are the same as before (no drill-map PDFs, CRLF as KiCad
 - b1ad2e9 EuroCard R4: document the F.Cu GND neck piece without a stitch via
 - b8b642b EuroCard R7: name the rule situation for the two Rev 1 GND vias
 - eaacbe5 EuroCard R5: joint re-shape of the Trigger1/Trigger2 (U6) and Sync6 (J6.5) staircases
-- (this report) EuroCard residuals: RESIDUAL_REPORT.md
+- 7a58ae8 EuroCard residuals: RESIDUAL_REPORT.md (this report)
 
 Note: the R3 commit did not update the "Totals: 1061 track segments" line in Hardware.md. The R5
 commit sets it to 1022.
