@@ -723,7 +723,7 @@ with 1 via. `PWM_1MHz` and `SYNC_N` stay at least 21.70 mm from the laser pulse 
 `PWM_1MHz` (edge to edge on one layer, tracks and vias; `tools/eurocard/netgap.py`): 0.65 mm to
 the Sync6 via at (197.4, 91.5), 1.43 mm to Sync5 and 1.90 mm to `SYNC_N`, which carry the same
 1 MHz sync; 3.55 mm to `TDRSTN1`, the nearest net that does not carry it; 0.232 mm to a GND via
-on B.Cu at (194.84, 87.25), 0.888 mm to a +1V8 track, 2.03 mm to a +5V via. Counting pads too:
+on In2.Cu at (194.84, 87.25), 0.888 mm to a +1V8 track, 2.03 mm to a +5V via. Counting pads too:
 0.28 mm to U1's unused pin 1 (next to its input, pin 2), 0.872 mm to C1.1 (+1V8), 1.58 mm from
 the J14.20 pad to a `PWM_Trig` track and 2.20 mm to J20.1 (`CLK_SEL_JMP`).
 
