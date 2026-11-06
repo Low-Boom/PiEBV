@@ -200,21 +200,37 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
   (0.3 mm, F.Cu) before routing and locked them. From the GPIO pin to U13's input, both channels are
   **66.16 mm** (CH1: 55.75 mm to U7, then 10.41 mm; CH2: 56.49 mm to U8, then 9.67 mm). The
   shorter lane has a small 45° bump. On the 126 mm board they were 86.32 and 81.74 mm, 4.6 mm
-  apart. The two lanes are at least 2.24 mm apart (never within 1 mm), at least 22.3 mm from
-  `PWM_1MHz` and `SYNC_N`, and at least 2.3 mm from any other net (2.6 mm of run within 1 mm).
+  apart. CH2's lane also has a 22.78 mm branch to R18.1 (its 10 kΩ pull-down), drawn as a balance
+  stub: its length trims the CH1-minus-CH2 skew at U7/U8 for the R19/J10 load on CH1, whose
+  R19/R17 branch is 7.8 mm. R19.2 continues CH1's pulse as `CH1_J10` (behind 100 Ω) to J10.1.
+  Gaps, edge to edge on one layer (tracks and vias; pads where stated; zone fills not counted;
+  `tools/eurocard/netgap.py`): the two lanes are at least 2.24 mm apart; lane copper is at least
+  21.70 mm from `PWM_1MHz` and `SYNC_N` (the nearest part is the R18 branch); to all other nets it
+  is at least 0.45 mm: 0.45 mm to the `CH1_J10` via at (192.9, 52.9) (CH1's own pulse behind
+  R19), 0.54 mm to `CLK_SEL` (a 0.9 mm parallel run of the CH2 lane at x 171.5–172.4, y
+  64.3–65.2), 0.60 mm to the GND track from U7.3 (the pin next to the lane's pin U7.2), 0.63 mm
+  to `LASER_EN` at U8.1, 0.95 mm to a
+  `PIXRST_GATE` via, and 1.9 mm or more to every other net. At the pins the pin pitch sets the gap:
+  0.22 mm from the U7.2 pad to a `LASER_EN` track, 0.30 mm between the U7/U8 pads, 0.84 mm
+  between the J14 socket pads, and 3.91 mm from the CH2 lane to the J14.20 (`PWM_1MHz`) pad.
 - **Camera lines, length-matched** (buffer pin to header pin, as KiCad's length tool measures:
   vias over the layers they join, runs cut at the pad outlines): `Sync1..6` 81.87–83.04 mm
-  (spread 1.18 mm; Sync5 is the long one, the other five are within 0.71 mm), `Trigger1..6`
-  42.46–43.60 mm (spread 1.13 mm; Trigger4 is the long one, the other five are within 0.86 mm),
-  `TDRSTN1..6` 51.60–53.05 mm (spread 1.45 mm; TDRSTN4 is the long one, the other five are within
-  0.92 mm). 1.45 mm is about 9 ps. The match starts at the
+  (spread 1.18 mm; Sync5 is the long one, 0.89 mm past the router's target, the other five are
+  within 0.71 mm), `Trigger1..6` 42.56–43.60 mm (spread 1.04 mm; Trigger4 is the long one, the
+  other five are within 0.76 mm), `TDRSTN1..6` 51.69–53.05 mm (spread 1.37 mm; TDRSTN4 is the
+  long one, the other five are within 0.83 mm). 1.37 mm is about 8.5 ps. The match starts at the
   buffer output, not at its input: the input fan-outs (`SYNC_N` from U1.4, `TRIG_N` from U5.4 and
   `PIXRST_N` from U3.4, each to the six gate inputs of its hex buffer U2, U6 or U4) are not matched,
   and their branch lengths differ by 6–11 mm. On the 126 mm board they were not matched (Sync 28–71 mm, Trigger 21–56 mm,
-  TDRSTN 20–41 mm). Sync and Trigger lines are at least 1.96 mm apart. The camera lines are routed
-  first in a dedicated pass, so their meanders keep real arm spacing: no two runs of one line are
-  closer than 0.084 mm (nine tight exit hairpins) and the copper merges nowhere, so these are the
-  electrical lengths.
+  TDRSTN 20–41 mm). Gaps between the groups: Sync and Trigger at least 1.11 mm (Sync4's via at
+  (209.9, 98.9) to a Trigger1 track, F.Cu), Trigger and TDRSTN 0.75 mm, Sync and TDRSTN 0.32 mm
+  (B.Cu). The camera lines are routed first in a dedicated pass, then cleaned up
+  (`camclean.py`, with each line's length kept): each meander is a comb of straight arms 0.75 mm
+  apart (0.45 mm gap) joined by straight caps with 90° corners, and the router's staircases and
+  acute exit corners are replaced by straight 0°/45°/90° runs. No corner of a camera line turns
+  more than 90°, and two parts of one line more than 1 mm apart along it are at least 0.36 mm
+  apart (0.45 mm for parts more than 2 mm apart), so the copper of a line merges nowhere and these
+  are the electrical lengths.
 - **Plane taps.** Each SMD GND and +5V pad that the carried hand copper does not already touch has
   its own short tap track to a via into In1 or In2 (45 taps), placed outward from the part body
   first. The buck's GND link (C12.2 to U15.4) keeps its two hand vias, 1.74 and 1.90 mm from
@@ -675,8 +691,13 @@ dedicated gate per camera.
 **Sync (1 MHz)**
 `GP15` (clk_gpout1) → U1.2 (74LVC1G04) → `SYNC_N` → U2 ×6 (SN74LVC04AD hex) → `Sync1..6` → J1–J6 pin 5
 (TP3 taps `PWM_1MHz`). On the board, `PWM_1MHz` is 83.7 mm of 0.5 mm track, nearly all on B.Cu,
-with 1 via. `PWM_1MHz` and `SYNC_N` stay at least 22.3 mm from the laser pulse lanes, and
-`PWM_1MHz` stays at least 1.01 mm from every signal that is not a 1 MHz signal.
+with 1 via. `PWM_1MHz` and `SYNC_N` stay at least 21.70 mm from the laser pulse lanes. Gaps of
+`PWM_1MHz` (edge to edge on one layer, tracks and vias; `tools/eurocard/netgap.py`): 0.65 mm to
+the Sync6 via at (197.4, 91.5), 1.43 mm to Sync5 and 1.90 mm to `SYNC_N`, which carry the same
+1 MHz sync; 3.55 mm to `TDRSTN1`, the nearest net that does not carry it; 0.232 mm to a GND via
+on B.Cu at (194.84, 87.25), 0.888 mm to a +1V8 track, 2.03 mm to a +5V via. Counting pads too:
+0.28 mm to U1's unused pin 1 (next to its input, pin 2), 0.872 mm to C1.1 (+1V8), 1.58 mm from
+the J14.20 pad to a `PWM_Trig` track and 2.20 mm to J20.1 (`CLK_SEL_JMP`).
 
 **Trigger**
 `GP11` → J10.3 → *[J10 jumper]* → `PWM_TRIG_TAP` → U5.2 → `TRIG_N` → U6 ×6 → `Trigger1..6` →
