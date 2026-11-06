@@ -1272,8 +1272,14 @@ trade a `silk_edge_clearance` warning for a `lib_footprint_mismatch` one.
 `kicad-cli sch erc --format json PiDG_Pico.kicad_sch`. The ERC JSON reports every coordinate and
 length at 1/100 of the true mm value despite declaring `"coordinate_units": "mm"`: multiply by 100.
 
-**Current state:** DRC 0 violations, 0 unconnected items; ERC 0 violations. The schematic-parity
-check also reports 200 *warnings*, none of them electrical:
+**Current state:** the DRC command above prints `Found 1 violations`, `Found 0 unconnected items`:
+the one violation is a warning, `lib_footprint_mismatch` on U14 (its paste "H", review F21,
+above). There are no errors; the build's gate (`tools/eurocard/drc_gate.py`) counts non-warning
+violations and unconnected items only and fails the build on any. ERC 0 violations. **Do not run
+"Update Footprint from Library" on U14:** it puts back the library's exposed-pad paste window,
+which covers both 0.3 mm via holes in the pad (100 % of each hole), so solder paste would flow
+into the vias; the F21 edit in `tools/eurocard/finish.py` exists to remove that window. The
+schematic-parity check also reports 200 *warnings*, none of them electrical:
 - 174 net-name mismatches: board net names lack the `/` root-sheet prefix the schematic gives local
   labels (`TDRSTN1` vs `/TDRSTN1`, same connections), and unused J14/J15 socket pads carry no net
   instead of `unconnected-(…)`;
