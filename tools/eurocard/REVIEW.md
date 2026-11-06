@@ -3,8 +3,10 @@
 A multi-agent review of the board at commit 995759e, made on 2026-11-05/06. Six lenses (power,
 signal integrity, assembly, mechanics, routing, docs) gave 30 distinct findings. For each finding, one
 agent measured it again and a second agent checked the proposed fix in a scratch rebuild of this
-pipeline. 29 findings were confirmed; F19 was confirmed only as a doc gap. **No fix is applied yet.**
-The board, DRC result (0 violations, 0 unconnected) and netlist are unchanged.
+pipeline. 29 findings were confirmed; F19 was confirmed only as a doc gap. The tables below describe
+the board at 995759e. The fixes were applied afterwards on branch `eurocard` (plan and phases in
+FIX_PLAN.md), then audited; the audit fixes and the decisions on F9 and U1 are at the end of
+FIX_PLAN.md.
 
 "Fix" gives the change that the fix check found correct. "Scratch-built" means that a rebuild with
 the change gave KiCad DRC 0 violations and 0 unconnected.

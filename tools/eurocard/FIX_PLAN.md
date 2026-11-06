@@ -7,23 +7,25 @@ is user-managed.
 
 ## Fixed environment
 
-- Shared KRT (do not clone per worktree):
-  - `KRT_DIR=C:/Users/Flow-Lab/AppData/Local/Temp/claude/c--Users-Flow-Lab-Repos-PiDG/18383752-ebde-4e6d-a792-895ff890d364/scratchpad/krt_src/KiCadRoutingTools`
-  - `KRT_PY=C:/Users/Flow-Lab/AppData/Local/Temp/claude/c--Users-Flow-Lab-Repos-PiDG/18383752-ebde-4e6d-a792-895ff890d364/scratchpad/krt_venv/Scripts/python.exe`
-  - Build: `KRT_DIR=... KRT_PY=... bash tools/eurocard/build.sh` (~90–120 s)
-- Verified fix code (protected copy, read-only reference):
-  `C:/Users/Flow-Lab/Repos/PiDG-wt/_verified-fixes/`
+- One shared KiCadRoutingTools clone at commit 8759686 and its venv (see
+  `tools/eurocard/README.md`, Setup), outside the worktrees:
+  - `KRT_DIR=<path to the KiCadRoutingTools clone>`
+  - `KRT_PY=<path to that venv's python.exe>`
+  - Build: `KRT_DIR=... KRT_PY=... bash tools/eurocard/build.sh` (about 2.5 min)
+- Verified fix code: a read-only copy next to the worktrees, `_verified-fixes/`
   (`verify-fix-<F>/` per finding, `simfix/` F5 patch + val126, `review-routing/`
-  camera-first prototype incl. frag_stitch.py)
-- Worktrees: `C:/Users/Flow-Lab/Repos/PiDG-wt/p1-{placement,sim,docs,postroute}`,
-  `p2-routing`, `p3-postroute` (created as each phase starts).
+  camera-first prototype incl. frag_stitch.py); session scratch, not in the repository.
+- Worktrees: one git worktree per phase branch (`fix/p1-placement`, `fix/p1-sim`,
+  `fix/p1-docs`, `fix/p1-postroute`, `fix/p2-routing`, `fix/p3-postroute`), created as
+  each phase starts.
 
 ## Verification gates (board changes)
 
 1. DRC: 0 violations, 0 unconnected (`work/final/drc.json`)
 2. CPL cross-check vs `tools/jlc_cpl`: 84 rows, 0 position/rotation discrepancies
 3. Pad-net parity vs ref `3883378`: 88 footprints, 0 inner tracks, 0 locked
-4. KiCad-measured camera lengths (Sync ~107.6, Trigger ~55.5, TDRSTN ~52.8)
+4. KiCad-measured camera lengths (after the fixes and the audit fixes: Sync 81.87–83.04,
+   Trigger 42.56–43.60, TDRSTN 51.69–53.05 mm; spreads 1.18 / 1.04 / 1.37 mm)
 5. Fab outputs regenerated (gerbers, drill, CPL) before any zip
 
 ## Phase 1 — parallel (4 agents, effort high)

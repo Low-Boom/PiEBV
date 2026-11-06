@@ -192,5 +192,8 @@ Order: straighten -> repair -> frag_stitch -> tidy -> ends (stitch by route_plan
   find new cases.
 - ends.py changes KiCad's camera lengths by design (pad-edge metric). Any skew gate (F18
   `.kicad_dru`) must read the board after ends.py.
-- Test helpers (not committed) are in `work-test/` at the worktree root: drc.sh, lens.py, edgelen.py,
-  topo.py, frag.py, segm.py, newsegs.py, netgap.py, netdist.py, img.py, padcount.py, viacrt.py, render.py.
+- The test helpers used for this report (drc.sh, lens.py, edgelen.py, topo.py, frag.py, segm.py,
+  newsegs.py, netgap.py, netdist.py, img.py, padcount.py, viacrt.py, render.py) were in an uncommitted
+  scratch folder, `work-test/`, of the `fix/p1-postroute` worktree; they are not in the repository.
+  For the same checks use KiCad DRC, `kilen.py` (KiCad camera lengths) and `netgap.py` (copper gaps;
+  not the scratch script of the same name).
