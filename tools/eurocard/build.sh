@@ -7,7 +7,7 @@
 # Result: work/final/PiEBV_Pico.kicad_pcb (DRC report drc.json, gap report gaps.txt)
 # usage: bash build.sh            (KRT_DIR / KRT_PY / KICAD_PY / KICAD_CLI / SRC_REV override the defaults)
 set -euo pipefail
-HERE="$(cd "$(dirname "$0")" && pwd)"; ROOT="$(cd "$HERE/../.." && pwd)"
+HERE="$(cd "$(dirname "$0")" && pwd -W)"; ROOT="$(cd "$HERE/../.." && pwd -W)"   # -W: native git/python/kicad need C:/... not the MSYS /c/... form
 SRC_REV="${SRC_REV:-3883378}"                     # main with the hand-routed 126 x 126 mm Rev 1 board
 KRT_DIR="${KRT_DIR:-$HERE/KiCadRoutingTools}"     # github.com/drandyhaas/KiCadRoutingTools @ 8759686
 KRT_PY="${KRT_PY:-$HERE/.venv/Scripts/python.exe}"
@@ -74,8 +74,11 @@ cp "$W/tapped.kicad_pro" "$W/cam_l.kicad_pro"
 grep -A3 '^Run complete' "$W/route.log" | tail -2
 vguard "$W/placed.kicad_pcb" "$W/tapped.kicad_pcb" "$W/cam_l.kicad_pcb" "$W/routed.kicad_pcb"
 
-# 5. Unlock, straighten (F31b), repair (F27), refill, then GND stitching (edge fence 10 mm, area 15 mm)
-#    across F.Cu / In1 / B.Cu. straighten before repair: it has no 0.3 mm keep rule round SMD bodies.
+# 5. Unlock, straighten (F31b), repair (F27), refill, then GND edge-fence stitching (10 mm)
+#    across F.Cu / In1 / B.Cu. The interior 15 mm stitching LATTICE was removed on user request
+#    (2026-11-07): only the perimeter edge fence remains; frag_stitch.py (F26) still bonds any pour
+#    island that would otherwise lose its last via. straighten before repair: it has no 0.3 mm keep
+#    rule round SMD bodies.
 mkdir -p "$W/r"; node "$HERE/unlock.js" "$W/routed.kicad_pcb" "$W/r/PiEBV_Pico.kicad_pcb"
 post straighten '^straighten' "$W/r/PiEBV_Pico.kicad_pcb" "$W/r/PiEBV_Pico.kicad_pcb" --protect "$W/tapped.kicad_pcb"
 # F27: every front SMD part except J17 (USB-C). A foreign-net F.Cu run within 0.3 mm of a part's pad hull is
@@ -88,7 +91,7 @@ project "$W/r"; drc "$W/r"
 cp "$W/r/PiEBV_Pico.kicad_pcb" "$W/st_in.kicad_pcb"; cp "$W/tapped.kicad_pro" "$W/st_in.kicad_pro"
 (cd "$KRT_DIR" && "$KRT_PY" py_router/route_planes.py "$W/st_in.kicad_pcb" "$W/st_out.kicad_pcb" --nets GND GND GND \
   --plane-layers F.Cu In1.Cu B.Cu --skip-existing-zones --thermal-relief --via-size 0.6 --via-drill 0.3 \
-  --same-net-pad-clearance 0.1 --stitch-vias --stitch-edge-fence --stitch-pitch 15 --stitch-fence-pitch 10) > "$W/stitch.log" 2>&1
+  --same-net-pad-clearance 0.1 --stitch-edge-fence --stitch-fence-pitch 10) > "$W/stitch.log" 2>&1
 vguard "$W/st_in.kicad_pcb" "$W/st_out.kicad_pcb"
 
 # 6. Final touches and DRC.

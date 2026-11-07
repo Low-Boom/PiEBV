@@ -141,7 +141,7 @@ for r, (x, y, a) in {"R24": (191.0, 41.0, 0), "R17": (191.0, 46.0, 0), "R19": (1
 
 # 1.8 V LDO (U9, C6, C7): centred above the buffer row between U4 and U6, right of the J11
 # interlock text (x <= 213.0).
-for r, (x, y, a) in {"C7": (220.9, 82.05, 0), "U9": (216.0, 83.0, 0), "C6": (214.5, 78.7, 90)}.items():
+for r, (x, y, a) in {"C7": (220.9, 82.05, 0), "U9": (216.0, 83.0, 0), "C6": (214.5, 76.5, 90)}.items():   # C6 down 2.2mm: clears the VBUS_PD y~80 straight run (was a 9-jog staircase around C6's +5V pad)
     f = fp(r); f.SetPosition(P(x, y)); f.SetOrientationDegrees(a)
 
 # Camera buffer trios in a row directly above the headers (as on the original board).
