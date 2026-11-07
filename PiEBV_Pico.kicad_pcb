@@ -13346,7 +13346,7 @@
 		(layer "F.Cu")
 		(uuid "a205343f-1f2f-4402-b202-74f4e8de5e71")
 		(at 133.4 106 -90)
-		(descr "[PiDG] front silkscreen trimmed so nothing prints past the board edge (receptacle face flush with it); side marks stop short of the front shell-leg pads. USB Type-C receptacle for USB 2.0, 6 pin, https://omo-oss-file.thefastfile.com/portal-saas/new2023011311465142457/cms/file/134891b2-9b01-4104-89d3-96207243f692.pdf")
+		(descr "[PiEBV] front silkscreen trimmed so nothing prints past the board edge (receptacle face flush with it); side marks stop short of the front shell-leg pads. USB Type-C receptacle for USB 2.0, 6 pin, https://omo-oss-file.thefastfile.com/portal-saas/new2023011311465142457/cms/file/134891b2-9b01-4104-89d3-96207243f692.pdf")
 		(tags "usb usb-c 2.0 pd")
 		(property "Reference" "J17"
 			(at 0 -8.3 90)
