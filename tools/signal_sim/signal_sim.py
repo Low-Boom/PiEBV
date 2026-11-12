@@ -37,15 +37,19 @@ EDGES = ("rise", "fall")
 
 # ----------------------------------------------------------------------------- ngspice
 class Spice:
-    """KiCad's ngspice.dll through ctypes. One circuit at a time; vectors read from memory."""
+    """KiCad's ngspice.dll (Windows) or libngspice.so (Linux) through ctypes. One circuit at a time;
+    vectors read from memory."""
     class _VI(ctypes.Structure):
         _fields_ = [("name", ctypes.c_char_p), ("type", ctypes.c_int), ("flags", ctypes.c_short),
                     ("real", ctypes.POINTER(ctypes.c_double)), ("comp", ctypes.c_void_p),
                     ("length", ctypes.c_int)]
 
     def __init__(self, bindir):
-        os.add_dll_directory(bindir)
-        self.ng = ctypes.CDLL(os.path.join(bindir, "ngspice.dll"))
+        if os.name == "nt":
+            os.add_dll_directory(bindir)
+            self.ng = ctypes.CDLL(os.path.join(bindir, "ngspice.dll"))
+        else:   # Linux / macOS: the shared ngspice library of the system (package libngspice0); NGSPICE_LIB overrides
+            self.ng = ctypes.CDLL(os.environ.get("NGSPICE_LIB") or "libngspice.so.0")
         self.log = []
         pf = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_void_p)
         self._cb = pf(lambda s, i, u: (self.log.append(s.decode(errors="replace")), 0)[1])

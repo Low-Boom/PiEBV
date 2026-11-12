@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+"""Hand clean-up of router squiggles (Rev 2), after jogs.py.
+
+Each entry replaces a chain of track vertices by a cleaner chain between the same two end
+points. The length change of each edit is printed. Camera-line edits either keep the length
+(TDRSTN6) or shorten the longest line of a group (Trigger4), so no length-match group gets a
+larger spread; tools/rev2/build.sh checks that with KiCad's own length reading.
+
+usage (KiCad 10 Python): tidy.py IN.kicad_pcb OUT.kicad_pcb
+"""
+import math
+import sys
+
+import pcbnew
+
+b = pcbnew.LoadBoard(sys.argv[1])
+MM, mm = pcbnew.FromMM, pcbnew.ToMM
+OLD = [t for t in b.Tracks() if t.Type() != pcbnew.PCB_VIA_T]
+GONE = []                                               # removed items stay referenced (see pcb_edit.py)
+
+EDITS = [
+    # Trigger4 (F.Cu): length bump in a straight 45 deg run -> straight. Trigger4 is the longest Trigger line.
+    ("Trigger4", "F.Cu",
+     [(231.6, 107.6), (232.661, 108.661), (232.661, 109.191), (232.201, 109.651), (232.201, 110.181), (232.731, 110.181),
+      (233.191, 109.721), (233.721, 109.721), (235.45, 111.45)],
+     [(231.6, 107.6), (235.45, 111.45)]),
+    # TDRSTN6 (B.Cu): six-segment bump in a straight 45 deg run -> one square step of the same length (0.822 mm extra).
+    ("TDRSTN6", "B.Cu",
+     [(241.9, 104.4), (248.279, 110.779), (248.809, 110.779), (248.88, 110.708), (249.41, 110.708), (249.41, 111.238),
+      (249.339, 111.309), (249.339, 111.839), (251.39, 113.89)],
+     [(241.9, 104.4), (248.0, 110.5), (249.403, 110.5), (249.403, 111.903), (251.39, 113.89)]),
+    # TDRSTN2 (B.Cu): right-left zigzag below its via -> one vertical and one 45 deg run.
+    ("TDRSTN2", "B.Cu",
+     [(206.8, 95.1), (207.1, 94.8), (207.1, 94.7), (206.1, 93.7)],
+     [(206.8, 95.1), (206.8, 94.4), (206.1, 93.7)]),
+    # +5V_PD (F.Cu): two small steps with a 0.2 mm flat between them -> one 45 deg run.
+    ("+5V_PD", "F.Cu",
+     [(167.0, 113.8), (167.6, 113.2), (167.8, 113.2), (167.98, 113.02), (168.72, 113.02)],
+     [(167.0, 113.8), (167.78, 113.02), (168.72, 113.02)]),
+    # +12V (F.Cu) at U19.6: four pieces of 0.1-0.7 mm -> one 45 deg run and one vertical run into the via.
+    ("+12V", "F.Cu",
+     [(246.2, 98.4), (246.7, 98.9), (246.7, 99.0), (246.9, 99.2), (246.9, 99.3)],
+     [(246.2, 98.4), (246.9, 99.1), (246.9, 99.6)]),
+]
+
+
+def near(p, q):
+    return abs(mm(p.x) - q[0]) < 0.002 and abs(mm(p.y) - q[1]) < 0.002
+
+
+def seg(net, layer, a, c):
+    for t in OLD:
+        if t.GetNetname() == net and b.GetLayerName(t.GetLayer()) == layer and \
+                ((near(t.GetStart(), a) and near(t.GetEnd(), c)) or (near(t.GetStart(), c) and near(t.GetEnd(), a))):
+            return t
+    raise SystemExit("tidy: %s %s segment %s - %s not found" % (net, layer, a, c))
+
+
+def plen(pts):
+    return sum(math.hypot(c[0] - a[0], c[1] - a[1]) for a, c in zip(pts, pts[1:]))
+
+
+for net, layer, old, new in EDITS:
+    olds = [seg(net, layer, a, c) for a, c in zip(old, old[1:])]
+    w, lid, n = olds[0].GetWidth(), olds[0].GetLayer(), olds[0].GetNet()
+    ends = (olds[0].GetStart() if near(olds[0].GetStart(), old[0]) else olds[0].GetEnd(),
+            olds[-1].GetEnd() if near(olds[-1].GetEnd(), old[-1]) else olds[-1].GetStart())
+    for t in olds:
+        b.Remove(t)
+        OLD.remove(t)
+        GONE.append(t)
+    pts = [ends[0]] + [pcbnew.VECTOR2I(MM(x), MM(y)) for x, y in new[1:-1]] + [ends[1]]
+    if not near(ends[1], new[-1]):                      # the new chain ends at another point (a via or a track)
+        pts[-1] = pcbnew.VECTOR2I(MM(new[-1][0]), MM(new[-1][1]))
+    for a, c in zip(pts, pts[1:]):
+        t = pcbnew.PCB_TRACK(b)
+        t.SetStart(a)
+        t.SetEnd(c)
+        t.SetWidth(w)
+        t.SetLayer(lid)
+        t.SetNet(n)
+        b.Add(t)
+    print("tidy: %-8s %s  %d -> %d segments, length %+.3f mm" % (net, layer, len(old) - 1, len(new) - 1, plen(new) - plen(old)))
+pcbnew.SaveBoard(sys.argv[2], b, True)
