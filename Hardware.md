@@ -72,6 +72,10 @@ Images of the Rev 2 board, made by `tools/rev2/images.sh` from `PiEBV_Pico.kicad
 
 ![In2.Cu](docs/img/layer_3_In2_Cu.png)
 
+**In2.Cu power islands (colour map) with the B.Cu tracks**
+
+![In2 power islands](docs/img/in2_islands.png)
+
 **Layer 4, B.Cu (bottom): signals, GND fill**
 
 ![B.Cu](docs/img/layer_4_B_Cu.png)
@@ -889,6 +893,8 @@ and 5 of J1–J6 are 3.3 V signals.
 In2.Cu is the power layer. Rev 1 had one +5 V plane. Rev 2 has one island for each rail, in a GND
 fill. Parts connect to their island through a via beside the pad on the top layer (a tap), or
 directly if the pad is a through-hole pad. The outlines are in `tools/rev2/pcb_edit.py` (section 4).
+
+![In2 power islands](docs/img/in2_islands.png)
 
 | Island | Where | Copper area | Taps | Parts on it |
 |---|---|---|---|---|

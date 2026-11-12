@@ -12,7 +12,8 @@ svg layer_2_In1_Cu  "In1.Cu,Edge.Cuts"
 svg layer_3_In2_Cu  "In2.Cu,Edge.Cuts"
 svg layer_4_B_Cu    "B.Cu,Edge.Cuts"
 svg top_assembly    "F.Silkscreen,F.Mask,F.Fab,Edge.Cuts"
-"$KICAD_CLI" pcb render --side top --width 2400 --height 1500 --quality high --background opaque -o "$O/render_top.png" "$B" >/dev/null
-"$KICAD_CLI" pcb render --side bottom --width 2400 --height 1500 --quality high --background opaque -o "$O/render_bottom.png" "$B" >/dev/null
-"$KICAD_CLI" pcb render --rotate "-55,0,-25" --perspective --width 2400 --height 1500 --quality high --background opaque --zoom 0.9 -o "$O/render_3d.png" "$B" >/dev/null
+"$KICAD_CLI" pcb render --side top --width 2400 --height 1500 --zoom 1.45 --quality high --background opaque -o "$O/render_top.png" "$B" >/dev/null
+"$KICAD_CLI" pcb render --side bottom --width 2400 --height 1500 --zoom 1.45 --quality high --background opaque -o "$O/render_bottom.png" "$B" >/dev/null
+"$KICAD_CLI" pcb render --rotate "-55,0,-25" --perspective --width 2400 --height 1500 --quality high --background opaque --zoom 1.25 -o "$O/render_3d.png" "$B" >/dev/null
+"${KICAD_PY:-python3}" "$HERE/island_map.py" "$B" "$O/in2_islands.png" 2>/dev/null
 echo "images: written to $O"
