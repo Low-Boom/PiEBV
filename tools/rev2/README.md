@@ -26,6 +26,7 @@ pulse lanes and the output block keep their Rev 1 copper.
 | `jog_choices.json` | For each staircase: `"B"` = merge at the other end, `"skip"` = leave it. No entry = merge at the first end. |
 | `jogfit.py` | Fits `jog_choices.json` to a new routing. Run it by hand after the camera routing changes. It runs `jogs.py` and DRC in a loop: a merge with a DRC violation goes to `"B"`, then to `"skip"`. |
 | `tidy.py` | Hand clean-up of three router squiggles after `jogs.py`: the `Sync1` pad entry at U2, `+5V_PD`, and `+12V` at U19. |
+| `viafix.py` | Camera vias: 0.6 mm pad where the clearance permits (the router makes 0.5 mm); track ends that are off a via centre move to the centre. |
 | `trim.py` | Fine length trim of the camera lines by KiCad's own length reading. It moves meander caps; a line with no meander gets one square bump. |
 | `spokes.py` | Adds a small pour cut-out at each pad that DRC reports with too few thermal spokes (header GND pins beside a camera track). The In1.Cu connection of the pad does not change. |
 | `plane_check.py` | Lists the In2 island under each B.Cu track, the points where a track changes island, and the plane taps of each rail. |
@@ -83,7 +84,7 @@ as in `tools/eurocard/build.sh`.
 4. A check confirms that the router changed no other copper (91 other nets).
 5. `jogs.py` merges 59 router staircases on 14 nets. The length of each line stays the same.
 6. `tidy.py` makes 3 hand edits.
-7. `trim.py` makes the lines of each group equal by KiCad's own length reading (two passes).
+7. `trim.py` makes the lines of each group equal by KiCad's own length reading (three passes). `viafix.py` runs before it.
 8. `spokes.py` adds 4 pour cut-outs at header GND pins where a camera track leaves only one
    thermal spoke on F.Cu or B.Cu. These pins keep their full connection to the In1 GND plane.
 9. `uuidfix.py` runs again. Then the checks below run.
@@ -112,9 +113,9 @@ Result on the committed board:
   0.000 mm); `TDRSTN1`–`TDRSTN6` 53.924 mm (spread 0.000 mm). The Rev 1 spreads were 1.18 / 2.47 /
   1.37 mm.
 - The stubs from the resistors to the header pins are the same for all six headers: Sync
-  4.43 mm, TDRSTN 5.09 mm, Trigger 9.77 mm.
-- 1496 track segments, 2998.5 mm of track (F.Cu 2108.0 mm, B.Cu 890.6 mm), 223 vias, no
-  duplicate segments. Copper fingerprint (`stats.py`): `e49b4e784743a369`.
+  4.85 mm, TDRSTN 5.09 mm, Trigger 9.77 mm.
+- 1496 track segments, 2998.7 mm of track (F.Cu 2108.2 mm, B.Cu 890.6 mm), 223 vias, no
+  duplicate segments. Copper fingerprint (`stats.py`): `eab3d9100c38dee0`.
 
 ## Notes
 

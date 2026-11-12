@@ -51,6 +51,11 @@ order.
 
 ## Rev 2: do before ordering
 
+0. **Vias.** Ten vias on the camera lines are 0.5 mm with a 0.3 mm hole (0.1 mm annular ring).
+   All other vias are 0.6 mm with a 0.3 mm hole. Before the order, make sure that JLCPCB's
+   current capability for a 4-layer board permits a 0.5 mm via with a 0.3 mm hole. This was not
+   checked (no access to jlcpcb.com from the build machine).
+
 1. **Run `tools/jlc_cpl`** (it needs internet access to JLC's footprint library) on the Rev 2
    board and copy its `cpl_new.csv` over `PiEBV_Pico_JLC_CPL.csv`. Until then the rotations of
    D1–D6, Q1, Q2 and U20–U23 are the KiCad rotations. A wrong rotation puts an LED in backwards

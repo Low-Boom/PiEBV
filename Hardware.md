@@ -297,11 +297,18 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
 
   | Group | Buffer pad to resistor pad | Spread | Rev 1 spread | Stub, resistor to header pin |
   |---|---|---|---|---|
-  | `Sync1..6` | 78.142–78.168 mm | 0.025 mm | 1.18 mm | 4.43 mm |
+  | `Sync1..6` | 78.142–78.168 mm | 0.025 mm | 1.18 mm | 4.85 mm |
   | `Trigger1..6` | 45.144 mm | 0.000 mm | 2.47 mm | 9.77 mm |
   | `TDRSTN1..6` | 53.924 mm | 0.000 mm | 1.37 mm | 5.09 mm |
 
-  0.025 mm is about 0.2 ps. The stubs are the same for all six headers. The match starts at the
+  0.025 mm is about 0.2 ps. The stubs are the same for all six headers. These are KiCad's readings:
+  KiCad cuts each track at the pad outline. The track ends are at different points in the pads
+  (as much as 0.9 mm from the pad centre), so the copper path from pad centre to pad centre can
+  differ by about 1 mm (about 6 ps) in a group. The router makes 0.5 mm vias with a 0.3 mm hole
+  (0.1 mm annular ring). `tools/rev2/viafix.py` makes 12 of the 22 camera vias 0.6 mm; the other 10
+  stay at 0.5 mm because a larger pad would break the 0.2 mm clearance. Confirm with the
+  fabricator that a 0.5 mm via with a 0.3 mm hole is acceptable. Nine corners of camera tracks
+  are acute (45 degrees inside), as the router made them. The match starts at the
   buffer output, not at its input: the input fan-outs (`SYNC_N` from U1.4, `TRIG_N` from U5.4 and
   `PIXRST_N` from U3.4, each to the six gate inputs of its hex buffer U2, U6 or U4) are not matched,
   and their branch lengths differ by 6–11 mm. On the 126 mm board the camera lines were not matched
@@ -337,7 +344,7 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
   via (210.2, 57.2) is R9.1's only connection (R9 is a front SMD part), so it is not a plane jump
   on the J10-to-U5 path. `CH1_J10` needs its via to cross the lane (no via in the R19.2 pad), and
   `PWM_Trig` leaves J10.3 with one 45° run.
-- **Totals (Rev 2):** 1496 track segments, 2998.5 mm of track (F.Cu 2108.0 mm, B.Cu 890.6 mm), 223 vias
+- **Totals (Rev 2):** 1496 track segments, 2998.7 mm of track (F.Cu 2108.2 mm, B.Cu 890.6 mm), 223 vias
   (`tools/rev2/stats.py`). No two segments are identical. Rev 1: 1015 segments, 2489 mm, 173 vias.
 - **Rev 2 build of the copper** (`tools/rev2/build.sh`). The steps, in order:
   1. `pcb_edit.py` removes the Rev 1 camera copper. It places R52–R69 with their stubs. It draws
@@ -1340,7 +1347,7 @@ x = (pin 1 of the header on its right) − 4.73 mm. In each column, from the top
 coordinates, mm): the Trigger resistor of the header on the left (`Trigger(k−1)`) at y 108.0,
 the TDRSTN resistor of the header on the right (`TDRSTN(k)`) at y 113.9, and its Sync resistor
 (`Sync(k)`) at y 117.88. The stubs from the resistor to the header pin are on F.Cu and are the
-same for all six headers: Sync 4.43 mm, TDRSTN 5.09 mm, Trigger 9.77 mm. The resistor references
+same for all six headers: Sync 4.85 mm, TDRSTN 5.09 mm, Trigger 9.77 mm. The resistor references
 are not on the silkscreen. For hand assembly, solder R52–R69 before the headers J1–J6: the
 header bodies then stand on both sides of each resistor column.
 
@@ -1606,10 +1613,10 @@ The layout also lets you assemble the board by hand with a hot plate.
 | Path | What |
 |---|---|
 | `PiEBV_Pico.kicad_sch` | schematic |
-| `PiEBV_Pico.kicad_pcb` | board, Rev 2. Copper fingerprint (`tools/rev2/stats.py`: SHA-256 of the sorted track and via lines, first 16 digits) `e49b4e784743a369`: 1496 segments / 2998.5 mm / 223 vias / 0 duplicates. The Rev 1 EuroCard board (`4381eab`) gives `27ee9924ec2199bf` with this tool: 1015 segments / 2489.2 mm / 173 vias. (Rev 1 text quoted `98a60c3b4332d6e9` from a tool `fp.py` that is not in the repository, and 194 vias from before the stitching lattice was removed.) |
+| `PiEBV_Pico.kicad_pcb` | board, Rev 2. Copper fingerprint (`tools/rev2/stats.py`: SHA-256 of the sorted track and via lines, first 16 digits) `eab3d9100c38dee0`: 1496 segments / 2998.5 mm / 223 vias / 0 duplicates. The Rev 1 EuroCard board (`4381eab`) gives `27ee9924ec2199bf` with this tool: 1015 segments / 2489.2 mm / 173 vias. (Rev 1 text quoted `98a60c3b4332d6e9` from a tool `fp.py` that is not in the repository, and 194 vias from before the stitching lattice was removed.) |
 | `fab/PiEBV_Pico_BOM.csv` | master parts list with the design-constraint NOTE rows (hand-maintained; KiCad's `export_bom` ignores DNP attributes). The JLC BOM in `fab/jlc/` is derived from it. |
 | `fab/jlc/PiEBV_Pico_JLC_BOM.csv`, `fab/jlc/PiEBV_Pico_JLC_CPL.csv`, `fab/jlc/JLC_ORDER.md` | JLCPCB full-assembly upload files (all 148 placed parts, LCSC numbers) and the order checklist |
-| `fab/gerbers/`, `fab/PiEBV_Pico_Gerbers.zip` | gerbers, Excellon drill files (plated and unplated), drill maps and job file of the Rev 2 board, from the board's stored plot settings, made by `tools/rev2/fab.sh`. Zip: 14 files (no drill maps). The committed zip has sha256 `4c5b152c9b420281c33568880f69b1b4163a1f90f33c0b8130f683e3ed06fe90`. The gerber files contain their creation date, so a new run of `tools/rev2/fab.sh` gives another check sum for the same board. `fab.sh` does not write the board file. Note on Rev 1: the fab package and the placement file in the repository before Rev 2 were exported before the last Rev 1 layout change (C6 moved by 2.2 mm, stitching vias removed) and did not match the Rev 1 board. |
+| `fab/gerbers/`, `fab/PiEBV_Pico_Gerbers.zip` | gerbers, Excellon drill files (plated and unplated), drill maps and job file of the Rev 2 board, from the board's stored plot settings, made by `tools/rev2/fab.sh`. Zip: 14 files (no drill maps). The committed zip has sha256 `28ef57f38bff82ebfd1f4d52d53ba07026a1a4f18d125722cda5e7e9badc60e2`. The gerber files contain their creation date, so a new run of `tools/rev2/fab.sh` gives another check sum for the same board. `fab.sh` does not write the board file. Note on Rev 1: the fab package and the placement file in the repository before Rev 2 were exported before the last Rev 1 layout change (C6 moved by 2.2 mm, stitching vias removed) and did not match the Rev 1 board. |
 | `libs/PiEBV_Local.kicad_sym` | Pico 2 W, UCC27524, LT3065 and TPS3700 symbols |
 | `libs/PiEBV_Local.pretty/` | `*_EdgeTrim` footprint variants (see below) and the J7/J8/J12 BNC footprint (see [BNCs](#bncs-50-ω)) |
 | `src/` | firmware: `board.h` (pin map), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `laser_gate.*` (CH1/CH2 gate, start-up hook), `protocol.*` (serial commands), `main.cpp` (arming, hold-off, watchdog) |

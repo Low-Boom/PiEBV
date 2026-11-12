@@ -63,12 +63,13 @@ print("router: copper of the %d other nets not changed" % len({k[0] for k in a})
 PY
 "$KICAD_PY" "$HERE/jogs.py" "$W/b0.kicad_pcb" "$W/b.kicad_pcb" "$HERE/jog_choices.json" "$W/jogs.json" 2>&1 | q
 "$KICAD_PY" "$HERE/tidy.py" "$W/b.kicad_pcb" "$W/c.kicad_pcb" 2>&1 | q
-# Fine trim to KiCad's own length reading (it includes the via length), two passes: meander caps move, and a
+# Fine trim to KiCad's own length reading (it includes the via length), three passes: meander caps move, and a
 # line with no meander gets one bump. c.kicad_pcb -> e.kicad_pcb.
-cp "$ROOT/PiEBV_Pico.kicad_pro" "$W/c.kicad_pro"; cp "$W/c.kicad_pcb" "$W/c0.kicad_pcb"
-for pass in 1 2; do
+"$KICAD_PY" "$HERE/viafix.py" "$W/c.kicad_pcb" "$W/c0.kicad_pcb" 2>&1 | q; cp "$W/c0.kicad_pcb" "$W/c.kicad_pcb"   # camera vias 0.6 mm, ends on via centres
+cp "$ROOT/PiEBV_Pico.kicad_pro" "$W/c.kicad_pro"
+for pass in 1 2 3; do
   "$KICAD_PY" "$ROOT/tools/eurocard/kilen.py" "$W/c.kicad_pcb" "$W/c.kicad_pro" "$W/len_c.txt" "$KICAD_CLI" >/dev/null
-  "$KICAD_PY" "$HERE/trim.py" "$W/c.kicad_pcb" "$W/len_c.txt" "$W/e.kicad_pcb" 2>&1 | q | grep -c "changed by [+-]0*[1-9.]" | sed "s/^/trim: pass $pass, lines changed: /"
+  "$KICAD_PY" "$HERE/trim.py" "$W/c.kicad_pcb" "$W/len_c.txt" "$W/e.kicad_pcb" 2>&1 | q | { grep -c "changed by [+-]0*\.\?0*[1-9]" || true; } | sed "s/^/trim: pass $pass, lines changed: /"
   cp "$W/e.kicad_pcb" "$W/c.kicad_pcb"
 done
 mkdir -p "$W/pre"; cp "$W/c.kicad_pcb" "$W/pre/PiEBV_Pico.kicad_pcb"
