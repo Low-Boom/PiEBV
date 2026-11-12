@@ -167,6 +167,30 @@ P("**Wrong J22 setting (3.3 V with an IDS camera):** the 1.8 V pin would see %.2
   "That is why J22 stays open with IDS cameras.\n" % (min(r["high"] for r in bad), max(r["high"] for r in bad),
                                                       max(r["vmax"] for r in bad)))
 
+# All 18 lines with their own routed geometry and resistor, at the fast corner (the largest overshoot), 2 m ribbon.
+P("### All camera lines\n")
+P("Each of the 18 lines with its own routed copper, its on-board %.0f ohm resistor (R52-R69) and its stub to the "
+  "header pin, at the fast corner (the largest overshoot) with the longest ribbon. The EVK4 has no pixel-reset "
+  "input, so `TDRSTN` is run for IDS only.\n" % H["series_r_ohm"])
+GROUPS = (("Sync", "U2", 5), ("Trigger", "U6", 4), ("TDRSTN", "U4", 3))
+YPIN = [2, 4, 6, 8, 10, 12]
+rows, RES["case2_all"] = [], {}
+for vcam, load in ((1.8, "ids"), (3.3, "evk4")):
+    for gname, u, jpin in GROUPS:
+        if load == "evk4" and gname == "TDRSTN":
+            continue
+        rr = [harness_case(vcam, "min", load, max(H["lengths_m"]), None, "%s%d" % (gname, i), "J%d.%d" % (i, jpin),
+                           "%s.%d" % (u, YPIN[i - 1])) for i in range(1, 7)]
+        RES["case2_all"]["%s_%s" % (load, gname)] = rr
+        rows.append([load.upper(), "%.1f V" % vcam, gname + "1-6", f(min(r["high"] for r in rr), 2) + " - " + f(max(r["high"] for r in rr), 2),
+                     f(max(r["vmax"] for r in rr), 2), f(min(r["vmin"] for r in rr), 2),
+                     f(min(r["t50_rise"] for r in rr)) + " - " + f(max(r["t50_rise"] for r in rr)),
+                     f(min(r["ring_low_after_rise"] for r in rr), 2) if load == "evk4" else "-"])
+P(table(["camera", "+VCAM", "lines", "high (V)", "highest peak (V)", "lowest after the fall (V)", "rise to VCAM/2 (ns)",
+         "EVK4: lowest level after the rise (V)"], rows))
+P("\nThe rise time includes the board line and %.1f m of ribbon. The spread of the rise time in a group is the "
+  "residual skew of the model at the camera end.\n" % max(H["lengths_m"]))
+
 # ============================================================================ case 3
 P("## 3. +VCAM budget\n")
 vc = R2["vcam"]

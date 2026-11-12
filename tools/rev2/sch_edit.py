@@ -4,8 +4,8 @@
 Reads the Rev 1 schematic and writes the Rev 2 schematic. Changes:
   * the supply of U1-U6 and C1-C3 moves from +1V8 to the new net +VCAM;
   * U20 (TPS2116 power mux) makes +VCAM from +1V8 (U9, VIN1) or +3V3 (Pico 3V3_OUT, VIN2).
-    MODE is on +3V3 (manual mode); PR1 (net VCAM_SEL) has R34 (10k) to +3V3, so with J22 open
-    the mux passes VIN1 = +1V8. A shunt on J22 pulls PR1 to 0.3 V through R35 (1k) and the mux
+    MODE is on +3V3 (manual mode); PR1 (net VCAM_SEL) has R34 and R70 (10k each) to +3V3, so with J22 open
+    the mux passes VIN1 = +1V8. A shunt on J22 pulls PR1 to 0.55 V through R35 (1k) and the mux
     passes VIN2 = +3V3. R51 (4.7k) discharges +VCAM;
   * R52-R69 (47R, 0805): one series resistor in each camera line at the camera header
     (source termination for the camera cable). The header-side nets are Sync1_C ... TDRSTN6_C;
@@ -287,7 +287,7 @@ def nfet(ref, x, y, desc):
 X, Y = 71.12, 340.36
 o += symbol("Power_Management:TPS2116DRL", "U20", "TPS2116DRL", X, Y, 0, [str(k) for k in range(1, 9)],
             fp="Package_TO_SOT_SMD:SOT-583-8",
-            desc="Power mux for +VCAM: VIN2 (+1V8) with J22 open, VIN1 (+3V3) with J22 fitted. MODE = VIN1, PR1 threshold 1.0 V.",
+            desc="Power mux for +VCAM: VIN1 (+1V8) with J22 open, VIN2 (+3V3) with J22 fitted. MODE on +3V3, PR1 threshold 1.0 V.",
             ref_at=(X - 7.62, Y - 9.144, 0, "left"), val_at=(X, Y - 9.144, 0, "left"))
 xl, xr = X - 10.16, X + 10.16
 # VIN1 = +1V8 (U9; its output capacitor C7 is the VIN1 capacitor)
@@ -321,6 +321,9 @@ o += res_h("R35", "1k", jx + 15.24, jy + 7.62, "Series resistor between J22 and 
 o += wire((jx + 17.78, jy + 7.62), (jx + 22.86, jy + 7.62), (jx + 30.48, jy + 7.62)) + junction(jx + 22.86, jy + 7.62)
 o += label("VCAM_SEL", jx + 30.48, jy + 7.62, "left")
 o += res_v("R34", "10k", jx + 22.86, jy + 5.08, "PR1 pull-up: with J22 open the mux passes VIN1 = +1V8") + power("+3V3", jx + 22.86, jy + G, 0)
+# R70: second pull-up in parallel with R34, so that one open solder joint cannot leave PR1 floating
+o += junction(jx + 27.94, jy + 7.62)
+o += res_v("R70", "10k", jx + 27.94, jy + 5.08, "Second PR1 pull-up, in parallel with R34") + power("+3V3", jx + 27.94, jy + G, 0)
 o += text("Camera I/O supply +VCAM (U1-U6). J22 open: 1.8 V (IDS uEye EVS). J22 fitted: 3.3 V (Prophesee EVK4).\n"
           "U20 (MODE high): PR1 high = VIN1 (+1V8), PR1 low = VIN2 (+3V3). R34 holds PR1 high with J22 open.\n"
           "A bridge from PR1 to pin 3 or pin 5, an open MODE pin or a missing Pico cannot give 3.3 V.\n"
@@ -430,4 +433,4 @@ if LOCAL_LIB:
         v = "\n".join(l[1:] if l.startswith("\t") else l for l in v.split("\n"))
         L = L.rstrip()[:-1].rstrip() + "\n\t" + v + "\n)\n"
         open(LOCAL_LIB, "w", encoding="utf-8", newline="\n").write(L)
-print("sch_edit: %d supply symbols moved to +VCAM; U20-U23, Q1, Q2, D1-D6, J22, C23-C36, R33-R69, TP4-TP9 added" % moved)
+print("sch_edit: %d supply symbols moved to +VCAM; U20-U23, Q1, Q2, D1-D6, J22, C23-C36, R33-R70, TP4-TP9 added" % moved)

@@ -33,11 +33,11 @@ CAM='^(Sync|Trigger|TDRSTN)[1-6]$'
 node "$ROOT/tools/eurocard/lock.js" "$W/a.kicad_pcb" "$W/a_l.kicad_pcb" "^(?!(Sync|Trigger|TDRSTN)[1-6]\$).*|^Trigger3\$"
 CAM_ORDER=(Trigger1 Trigger4 TDRSTN3 TDRSTN5 Trigger5 Sync3 TDRSTN1 Sync5 TDRSTN4 Trigger6 TDRSTN2 Sync4 Sync1 Sync2 Trigger2 Sync6 TDRSTN6)
 (cd "$KRT_DIR" && "$KRT_PY" py_router/route.py "$W/a_l.kicad_pcb" "$W/cam.kicad_pcb" --nets "${CAM_ORDER[@]}" --ordering original \
-  --layers F.Cu In1.Cu In2.Cu B.Cu --layer-costs 1.0 -1 -1 1.0 --track-width 0.3 --clearance 0.2 \
+  --layers F.Cu In1.Cu In2.Cu B.Cu --layer-costs 1.0 -1 -1 1.0 --track-width 0.3 --clearance 0.2 --via-size 0.6 --via-drill 0.3 \
   --power-nets GND "+5V" "+12V" "VBUS_PD" "+5V_PD" "+3V3" "+1V8" "+VCAM" "Net-(U15-SW)" "Net-(J17-CC*)" PWM_1MHz \
   --power-nets-widths 0.4 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.6 0.2 0.5 \
   --escalation off --fab-tier standard --same-net-pad-clearance 0.1 --no-fix-drc-settings --direction-preference-cost 0 \
-  --via-cost 200 --turn-cost 300 \
+  --via-cost 225 --turn-cost 300 \
   --length-match-group "Sync[1-6]" --length-match-group "Trigger[1-6]" --length-match-group "TDRSTN[1-6]" \
   --meander-amplitude 2.0 --meander-spacing 2.5 --length-match-tolerance 0.5) > "$W/route_cam.log" 2>&1
 grep -A2 '^Run complete' "$W/route_cam.log" | tail -1
@@ -65,7 +65,7 @@ PY
 "$KICAD_PY" "$HERE/tidy.py" "$W/b.kicad_pcb" "$W/c.kicad_pcb" 2>&1 | q
 # Fine trim to KiCad's own length reading (it includes the via length), three passes: meander caps move, and a
 # line with no meander gets one bump. c.kicad_pcb -> e.kicad_pcb.
-"$KICAD_PY" "$HERE/viafix.py" "$W/c.kicad_pcb" "$W/c0.kicad_pcb" 2>&1 | q; cp "$W/c0.kicad_pcb" "$W/c.kicad_pcb"   # camera vias 0.6 mm, ends on via centres
+"$KICAD_PY" "$HERE/viafix.py" "$W/c.kicad_pcb" "$W/c0.kicad_pcb" 2>&1 | q; cp "$W/c0.kicad_pcb" "$W/c.kicad_pcb"   # track ends on via centres; check of the via size
 cp "$ROOT/PiEBV_Pico.kicad_pro" "$W/c.kicad_pro"
 for pass in 1 2 3; do
   "$KICAD_PY" "$ROOT/tools/eurocard/kilen.py" "$W/c.kicad_pcb" "$W/c.kicad_pro" "$W/len_c.txt" "$KICAD_CLI" >/dev/null

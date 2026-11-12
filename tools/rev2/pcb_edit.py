@@ -294,6 +294,11 @@ place("R34", 225.7, 35.3, 0, None)
 check_pad("R34", "2", 226.7, 35.3)
 track("+3V3", [(224.7, 35.3), (223.3, 35.3)], 0.4)
 via("+3V3", 223.3, 35.3)
+place("R70", 225.7, 32.9, 0, None)                    # second pull-up, above R34 and in parallel with it
+check_pad("R70", "2", 226.7, 32.9)
+assert PADNET[("R70", "1")] == "+3V3" and PADNET[("R70", "2")] == "VCAM_SEL"
+track("+3V3", [(224.7, 32.9), (224.7, 35.3)], 0.4)
+track("VCAM_SEL", [(226.7, 32.9), (226.7, 35.3)], 0.25)
 place("TP6", 220.9, 36.6, 0, None)
 track("+3V3", [(220.9, 36.6), (222.2, 35.3), (223.3, 35.3)], 0.4)
 # VCAM_SEL: R35.2 and R34.2 join on the lane between the two resistors; the lane goes between the J22 pads to U20.4

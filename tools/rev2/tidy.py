@@ -2,8 +2,7 @@
 """Hand clean-up of router squiggles (Rev 2), after jogs.py.
 
 Each entry replaces a chain of track vertices by a cleaner chain between the same two end
-points. The length change of each edit is printed. One camera line is edited (Sync1, at its buffer
-pad); trim.py runs after this tool and makes the lines of each group equal again.
+points. The length change of each edit is printed. No camera line is edited here.
 
 usage (KiCad 10 Python): tidy.py IN.kicad_pcb OUT.kicad_pcb
 """
@@ -18,11 +17,6 @@ OLD = [t for t in b.Tracks() if t.Type() != pcbnew.PCB_VIA_T]
 GONE = []                                               # removed items stay referenced (see pcb_edit.py)
 
 EDITS = [
-    # Sync1 (F.Cu) at U2.2: down-up wiggle between the via and the pad -> one flat run and one 45 deg run.
-    # trim.py runs after this tool and puts the length of the line back.
-    ("Sync1", "F.Cu",
-     [(189.7, 90.3), (190.0, 90.0), (190.2, 90.2), (190.5, 90.2), (191.0, 89.7)],
-     [(189.7, 90.3), (190.4, 90.3), (191.0, 89.7)]),
     # +5V_PD (F.Cu): two small steps with a 0.2 mm flat between them -> one 45 deg run.
     ("+5V_PD", "F.Cu",
      [(167.0, 113.8), (167.6, 113.2), (167.8, 113.2), (167.98, 113.02), (168.72, 113.02)],

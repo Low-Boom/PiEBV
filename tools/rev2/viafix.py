@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Router output clean-up at the camera vias.
 
-1. The router makes 0.5 mm vias (0.3 mm hole, 0.1 mm annular ring). A via gets the board's via size (0.6 mm
-   pad) if the larger pad keeps 0.22 mm to all other copper on F.Cu and B.Cu; the other vias stay at 0.5 mm.
+1. The router is told to make 0.6 mm vias with a 0.3 mm hole (the board's via size). A smaller camera via
+   is made 0.6 mm if the larger pad keeps 0.22 mm to all other copper on F.Cu and B.Cu; if it does not, the
+   tool stops (exit 1), so that the board has one via size.
 2. A camera track end that is within 0.2 mm of a via of its net, but not on the via centre, moves to the centre.
 trim.py runs after this tool and makes the lengths equal again. DRC then checks the clearances.
 
@@ -64,4 +65,6 @@ for t in tracks:
                 ns += 1
                 break
 pcbnew.SaveBoard(sys.argv[2], b, True)
-print("viafix: %d of %d camera vias set to 0.6 mm, %d track ends moved to a via centre" % (nv, len(vias), ns))
+small = [v for v in vias if v.GetWidth(pcbnew.F_Cu) < MM(0.6) or v.GetDrill() != MM(0.3)]
+print("viafix: %d camera vias, %d enlarged to 0.6 mm, %d not 0.6 / 0.3 mm, %d track ends moved to a via centre" % (len(vias), nv, len(small), ns))
+sys.exit(1 if small else 0)

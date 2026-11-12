@@ -22,7 +22,9 @@ NETS = ["PWM_Trig", "PWM_TRIG_TAP", "CH1_J10", "_PULSE_OUT_CH1", "_PULSE_OUT_CH2
         "EXT_SYNC_DRIVE_RAW", "EXT_SYNC_DRIVE", "EXT_SYNC_OUT", "EXT_SYNC_TERM",
         "TRIG_N"] + ["Trigger%d" % i for i in range(1, 7)] + ["SYNC_N"] + ["Sync%d" % i for i in range(1, 7)]
 # Rev 2: the header side of each camera line, after its series resistor (R52-R57 Sync, R58-R63 Trigger)
-NETS_C = ["Trigger%d_C" % i for i in range(1, 7)] + ["Sync%d_C" % i for i in range(1, 7)]
+# and the pixel-reset lines with their header side (R64-R69)
+NETS_C = ["Trigger%d_C" % i for i in range(1, 7)] + ["Sync%d_C" % i for i in range(1, 7)] + \
+         ["TDRSTN%d" % i for i in range(1, 7)] + ["TDRSTN%d_C" % i for i in range(1, 7)]
 
 # Signal source pad per net (tree root). Fallback: first pad.
 ROOT = {"PWM_Trig": "J14.15", "PWM_TRIG_TAP": "J10.2", "CH1_J10": "R19.2",
@@ -37,6 +39,8 @@ for i in range(1, 7):
     ROOT["Sync%d" % i] = "U2.%d" % [2, 4, 6, 8, 10, 12][i - 1]
     ROOT["Sync%d_C" % i] = "R%d.2" % (51 + i)
     ROOT["Trigger%d_C" % i] = "R%d.1" % (57 + i)
+    ROOT["TDRSTN%d" % i] = "U4.%d" % [2, 4, 6, 8, 10, 12][i - 1]
+    ROOT["TDRSTN%d_C" % i] = "R%d.2" % (63 + i)
 
 # Pin names from datasheets (pin numbers as in the footprints).
 PIN = {
