@@ -535,5 +535,5 @@ tb.SetTitle("Event-camera Synchronizer, IDS EVS / Prophesee EVK4 (Pico 2, EuroCa
 tb.SetRevision("2")
 tb.SetDate("2026-11-12")
 
-b.Save(DST)
+pcbnew.SaveBoard(DST, b, True)                         # True: do not write the project settings (.kicad_pro)
 print("pcb_edit: Rev 2 board written")
