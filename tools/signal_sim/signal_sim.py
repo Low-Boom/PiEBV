@@ -184,6 +184,16 @@ class Ckt:
             nv = self.runs(a, pn(e["b"]), e["runs"])
             assert nv == e["vias"], (name, e["a"], e["b"], nv, e["vias"])
 
+    def cam_net(self, name, rs=None):
+        """Camera line: buffer -> series resistor (Rev 2: R52-R69) -> header. On a Rev 1 geometry it is net(name)."""
+        self.net(name)
+        cn = name + "_C"
+        if cn in GEOM["nets"]:
+            rpad = lambda g: [p for e in g["edges"] for p in (e["a"], e["b"]) if re.match(r"R\d+\.\d$", p)][0]
+            r = DEV["rev2"]["harness"]["series_r_ohm"] if rs is None else rs
+            self.R(node(rpad(GEOM["nets"][name])), node(rpad(GEOM["nets"][cn])), max(r, 1e-3))
+            self.net(cn)
+
     def tran(self, tstop_ns):
         self.add(f".tran {self.tmax * 0.4:.4g}p {tstop_ns}n 0 {self.tmax:.4g}p")
 
@@ -475,7 +485,7 @@ class Model:
         r = g6["rout"][corner]
         for i, (p, q) in enumerate(ins.items()):
             add_switch_out(c, f"u6y{q}", node(f"U6.{q}"), g6["vcc"], r, r, g6["ramp_ns_est"][corner], ta, tb, start_high=False)
-            c.net(f"Trigger{i + 1}")
+            c.cam_net(f"Trigger{i + 1}")
             c.C(node(f"J{i + 1}.4"), DEV["loads"]["camera_pF_est"])
         c.tran(te)
         t, w = self.sp.run(c.lines, [node(f"J{i}.4") for i in range(1, 7)])

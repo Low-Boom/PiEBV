@@ -83,7 +83,8 @@ P("One U2 / U4 / U6 output (SN74LVC04A) drives its routed board line (`Trigger3`
                                                         E4["r_series_ohm"], E4["c_pF"]))
 
 
-def harness_case(vcam, corner, load, length_m, rs=0.0, net="Trigger3", pin="J3.4", out="U6.6"):
+def harness_case(vcam, corner, load, length_m, rs=None, net="Trigger3", pin="J3.4", out="U6.6"):
+    """rs: value of the on-board series resistor (None: the fitted value; 0: as Rev 1, no resistor)."""
     g = (R2["gates_3v3"] if vcam > 2.5 else BASE_GATES)["SN74LVC04A"]
     vk = "v3v3" if vcam > 2.5 else "v1v8"
     amp = {"min": "max", "typ": "typ", "max": "min"}[corner]      # fast corner = high supply
@@ -92,9 +93,9 @@ def harness_case(vcam, corner, load, length_m, rs=0.0, net="Trigger3", pin="J3.4
     ta, tb, te = 5.0, 105.0, 205.0
     r = g["rout"][corner]
     S.add_switch_out(c, "u6", node(out), v, r, r, g["ramp_ns_est"][corner], ta, tb, start_high=False)
-    c.net(net)
+    c.cam_net(net, rs)
     c.C(node(pin), S.BP["header_pin_pF_est"])
-    c.R(node(pin), "hw_in", max(H["r_ohm_per_m"] * length_m * 2 + rs, 1e-3))   # wire resistance + series resistor in the plug
+    c.R(node(pin), "hw_in", max(H["r_ohm_per_m"] * length_m * 2, 1e-3))        # wire resistance, signal and return
     c.T("hw_in", "cam", H["z0_ohm"], H["td_ns_per_m"] * length_m)
     if load == "evk4":
         c.add(".model DOPTO D(IS=%g N=%g RS=1)" % (E4["led_is"], E4["led_n"]))
@@ -121,7 +122,7 @@ def harness_case(vcam, corner, load, length_m, rs=0.0, net="Trigger3", pin="J3.4
 
 
 rows, RES["case2"] = [], {}
-RS = H["series_r_ohm"]
+RS = {"ids": H["series_r_ohm"], "evk4": H["series_r_ohm"]}
 for vcam, load in ((1.8, "ids"), (3.3, "evk4")):
     for L in H["lengths_m"]:
         for rs in (0.0, RS[load]):
@@ -131,7 +132,7 @@ for vcam, load in ((1.8, "ids"), (3.3, "evk4")):
                 rows.append([load.upper(), "%.1f V" % vcam, "%.1f m" % L, "%g" % rs, corner, f(r["high"], 2), f(r["vmax"], 2),
                              f(r["vmin"], 2), f(r["t50_rise"]), f(r.get("i_led_mA"), 2) if load == "evk4" else "-",
                              f(r.get("ring_low_after_rise"), 2) if load == "evk4" else "-"])
-P(table(["camera", "+VCAM", "ribbon", "series R in the plug (ohm)", "corner", "high (V)", "peak (V)", "lowest after the fall (V)",
+P(table(["camera", "+VCAM", "ribbon", "on-board series R (ohm)", "corner", "high (V)", "peak (V)", "lowest after the fall (V)",
          "rise to VCAM/2 (ns)", "EVK4 LED current (mA)", "EVK4: lowest level after the rise (V)"], rows))
 
 
@@ -149,15 +150,15 @@ P("- **EVK4 at 3.3 V, no series resistor:** steady level %.2f-%.2f V, LED curren
   "as the lowest high level and 5.5 V as the highest input voltage)." % (
       min(r["high"] for r in e0), max(r["high"] for r in e0), min(r["i_led_mA"] for r in e0), max(r["i_led_mA"] for r in e0),
       max(r["vmax"] for r in e0), min(r["vmin"] for r in e0), min(r["ring_low_after_rise"] for r in e0)))
-P("- **EVK4 at 3.3 V, %.0f ohm in each signal wire at the board end:** steady level %.2f-%.2f V (2.5 V or more is "
+P("- **EVK4 at 3.3 V, on-board %.0f ohm (R52-R63):** steady level %.2f-%.2f V (2.5 V or more is "
   "needed), LED current %.1f-%.1f mA (2.7 mA or more), peak %.2f V, %.2f V after a falling edge, lowest level after a "
   "rising edge %.2f V." % (RS["evk4"], min(r["high"] for r in e1), max(r["high"] for r in e1), min(r["i_led_mA"] for r in e1),
                          max(r["i_led_mA"] for r in e1), max(r["vmax"] for r in e1), min(r["vmin"] for r in e1),
                          min(r["ring_low_after_rise"] for r in e1)))
-P("- **IDS at 1.8 V, no series resistor (the Rev 1 condition, now with the ribbon in the model):** peak %.2f V and "
+P("- **IDS at 1.8 V, no series resistor (the Rev 1 condition, with the ribbon in the model):** peak %.2f V and "
   "%.2f V after a falling edge at the fast corner. IDS documents these pins as 1.8 V and publishes no input "
   "protection data." % (max(r["vmax"] for r in i0), min(r["vmin"] for r in i0)))
-P("- **IDS at 1.8 V, %.0f ohm in each signal wire at the board end:** peak %.2f V, %.2f V after a falling edge; the "
+P("- **IDS at 1.8 V, on-board %.0f ohm (R52-R69):** peak %.2f V, %.2f V after a falling edge; the "
   "edge at the camera is %.1f ns later at most.\n" % (RS["ids"], max(r["vmax"] for r in i1), min(r["vmin"] for r in i1),
                                                     max(a["t50_rise"] - b["t50_rise"] for a, b in zip(i1, i0))))
 bad = [harness_case(3.3, c, "ids", 2.0) for c in S.CORNERS]
@@ -317,8 +318,8 @@ P("\nLine of the net's length with a 40 ohm, 1 ns, 3.3 V source and a 5 pF load;
   "gap impedance, against the same line without a gap:\n" % PG["run_mm"])
 P(table(["net", "crossing (plane_check.py)", "gap model", "Z0 over the gap (ohm)", "added delay at the load (ps)",
          "largest change of the load waveform (mV)"], rows))
-P("\nAll 17 B.Cu camera lines (Sync1-6, TDRSTN2-6, Trigger6) stay over the +VCAM island from their via to the "
-  "header pin, so they cross no gap. `PWM_1MHz` and `PWM_TRIG_TAP` each cross one gap (+5V to +VCAM). "
+P("\nEvery B.Cu camera track (Sync, Trigger, TDRSTN) stays over the +VCAM island (`plane_check.py`), so no camera "
+  "line crosses a gap. `PWM_1MHz` and `PWM_TRIG_TAP` each cross one gap (+5V to +VCAM). "
   "The other B.Cu tracks that change island carry DC or indicator signals (`LASER_PWR_OK`, `CH2_SENSE`, "
   "`SYNC_SENSE`, the D2 cathode link, `+12V`).\n")
 pj = os.path.join(HERE, "..", "rev2", "work", "final", "plane.json")

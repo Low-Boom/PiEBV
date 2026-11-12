@@ -6,18 +6,19 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"; ROOT="$(cd "$HERE/../.." && pwd)"
 KICAD_CLI="${KICAD_CLI:-kicad-cli}"; KICAD_PY="${KICAD_PY:-python3}"
 B="$ROOT/PiEBV_Pico.kicad_pcb"; G="$ROOT/fab/gerbers"; T="$(mktemp -d)"
-# 1. DRC with the project rules, zones refilled and saved. Any error or unconnected item stops the script.
-"$KICAD_CLI" pcb drc --schematic-parity --severity-all --refill-zones --save-board --format json -o "$T/drc.json" "$B" >/dev/null
+# 1. DRC with the project rules on a copy with refilled zones (the board file is not changed; build.sh saved it
+#    with filled zones). Any error or unconnected item stops the script.
+"$KICAD_CLI" pcb drc --schematic-parity --severity-all --refill-zones --format json -o "$T/drc.json" "$B" >/dev/null
 "$KICAD_PY" "$ROOT/tools/eurocard/drc_gate.py" "$T/drc.json"
 # 2. Reference planes: every via and through-hole pad of a plane net over its island; B.Cu island changes listed.
-"$KICAD_PY" "$HERE/plane_check.py" "$B" > "$T/plane.txt" 2>/dev/null
-grep -q "NOT IN ISLAND" "$T/plane.txt" && { grep "NOT IN ISLAND" "$T/plane.txt"; exit 1; }
+if ! "$KICAD_PY" "$HERE/plane_check.py" "$B" > "$T/plane.txt" 2> "$T/plane.err"; then cat "$T/plane.err"; echo "fab: plane_check.py failed"; exit 1; fi
+if grep -q "NOT IN ISLAND" "$T/plane.txt"; then grep "NOT IN ISLAND" "$T/plane.txt"; exit 1; fi
 # 3. Gerbers (the board's stored plot settings), Excellon drill files with map PDFs, job file.
 rm -f "$G"/*
 "$KICAD_CLI" pcb export gerbers --board-plot-params -o "$G/" "$B" >/dev/null
 "$KICAD_CLI" pcb export drill --format excellon --excellon-separate-th --generate-map --map-format pdf -o "$G/" "$B" >/dev/null
-# 4. Zip for the fabricator: the 14 gerber, drill and job files (no map PDFs), fixed order and time stamps,
-#    so the same board gives the same zip.
+# 4. Zip for the fabricator: the 14 gerber, drill and job files (no map PDFs), fixed file order and zip time
+#    stamps. The gerber files hold their creation date, so two runs give zips with different check sums.
 "$KICAD_PY" - "$G" "$ROOT/fab/PiEBV_Pico_Gerbers.zip" <<'PY'
 import os, sys, zipfile
 g, out = sys.argv[1:3]

@@ -557,11 +557,8 @@
     0.5,
     2.0
    ],
-   "series_r_ohm": {
-    "ids": 47.0,
-    "evk4": 68.0
-   },
-   "series_r_note": "Series resistor in each signal wire at the board end of the harness (source termination). 47 ohm for the 1.8 V IDS harness, 68 ohm for the 3.3 V EVK4 harness: output resistance + series R is then close to the ribbon impedance at the typical corner."
+   "series_r_ohm": 47.0,
+   "series_r_note": "On-board series resistors R52-R69 (47 ohm, one in each camera line at the camera header; source termination of the cable). One value for both camera types: at 3.3 V a larger value gives less overshoot but a lower EVK4 input level."
   },
   "evk4_input": {
    "est": true,
