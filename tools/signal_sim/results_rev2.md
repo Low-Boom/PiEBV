@@ -8,12 +8,12 @@ GP11 edge start to the camera header pin 4 (J1-J6), reference level VCAM / 2, J1
 
 | +VCAM | corner | camera rise min (ns) | max | camera fall min (ns) | max | J12 minus camera, rise (ns) | fall (ns) |
 |---|---|---|---|---|---|---|---|
-| 1.8 V | min | 7.04 | 7.08 | 7.56 | 7.60 | 3.43 | 2.35 |
-| 1.8 V | typ | 11.02 | 11.07 | 11.36 | 11.41 | 10.49 | 9.49 |
-| 1.8 V | max | 18.93 | 18.98 | 19.16 | 19.22 | 13.15 | 12.40 |
-| 3.3 V | min | 5.89 | 5.96 | 5.45 | 5.55 | 4.56 | 4.43 |
-| 3.3 V | typ | 8.45 | 8.49 | 7.69 | 7.72 | 13.06 | 13.17 |
-| 3.3 V | max | 10.98 | 11.02 | 10.08 | 10.11 | 21.11 | 21.50 |
+| 1.8 V | min | 7.03 | 7.07 | 7.55 | 7.59 | 3.43 | 2.36 |
+| 1.8 V | typ | 11.01 | 11.07 | 11.35 | 11.41 | 10.50 | 9.50 |
+| 1.8 V | max | 18.91 | 18.96 | 19.14 | 19.20 | 13.17 | 12.42 |
+| 3.3 V | min | 5.88 | 5.95 | 5.44 | 5.54 | 4.57 | 4.44 |
+| 3.3 V | typ | 8.44 | 8.48 | 7.68 | 7.71 | 13.07 | 13.18 |
+| 3.3 V | max | 10.97 | 11.02 | 10.07 | 10.09 | 21.11 | 21.51 |
 
 The three corners use the same corner for the camera gates and for U19, as signal_sim.py does in its own offset table; that table also crosses the corners. At 3.3 V the camera gates are faster, so J12 is later relative to the camera pin than at 1.8 V. Measure the offset for the +VCAM setting in use (Hardware.md, first-board check 4).
 
@@ -23,39 +23,53 @@ One U2 / U4 / U6 output (SN74LVC04A) drives its routed board line (`Trigger3` as
 
 | camera | +VCAM | ribbon | on-board series R (ohm) | corner | high (V) | peak (V) | lowest after the fall (V) | rise to VCAM/2 (ns) | EVK4 LED current (mA) | EVK4: lowest level after the rise (V) |
 |---|---|---|---|---|---|---|---|---|---|---|
-| IDS | 1.8 V | 0.5 m | 0 | min | 1.84 | 3.02 | -1.19 | 3.30 | - | - |
-| IDS | 1.8 V | 0.5 m | 0 | typ | 1.80 | 2.51 | -0.71 | 3.62 | - | - |
-| IDS | 1.8 V | 0.5 m | 0 | max | 1.76 | 1.80 | -0.03 | 4.47 | - | - |
-| IDS | 1.8 V | 0.5 m | 47 | min | 1.84 | 2.18 | -0.34 | 3.39 | - | - |
+| IDS | 1.8 V | 0.5 m | 0 | min | 1.84 | 3.02 | -1.19 | 3.29 | - | - |
+| IDS | 1.8 V | 0.5 m | 0 | typ | 1.80 | 2.51 | -0.71 | 3.61 | - | - |
+| IDS | 1.8 V | 0.5 m | 0 | max | 1.76 | 1.80 | -0.03 | 4.46 | - | - |
+| IDS | 1.8 V | 0.5 m | 47 | min | 1.84 | 2.18 | -0.34 | 3.38 | - | - |
 | IDS | 1.8 V | 0.5 m | 47 | typ | 1.80 | 1.89 | -0.09 | 3.77 | - | - |
-| IDS | 1.8 V | 0.5 m | 47 | max | 1.76 | 1.76 | 0.00 | 4.75 | - | - |
-| IDS | 1.8 V | 2.0 m | 0 | min | 1.87 | 3.00 | -1.22 | 10.80 | - | - |
-| IDS | 1.8 V | 2.0 m | 0 | typ | 1.80 | 2.50 | -0.70 | 11.12 | - | - |
-| IDS | 1.8 V | 2.0 m | 0 | max | 1.76 | 1.80 | -0.03 | 11.97 | - | - |
-| IDS | 1.8 V | 2.0 m | 47 | min | 1.84 | 2.17 | -0.33 | 10.89 | - | - |
-| IDS | 1.8 V | 2.0 m | 47 | typ | 1.80 | 1.89 | -0.09 | 11.28 | - | - |
-| IDS | 1.8 V | 2.0 m | 47 | max | 1.76 | 1.76 | 0.00 | 12.26 | - | - |
-| EVK4 | 3.3 V | 0.5 m | 0 | min | 3.32 | 5.56 | -2.92 | 3.35 | 5.30 | 2.20 |
-| EVK4 | 3.3 V | 0.5 m | 0 | typ | 3.18 | 4.79 | -2.14 | 3.62 | 4.84 | 2.54 |
-| EVK4 | 3.3 V | 0.5 m | 0 | max | 2.99 | 3.81 | -1.10 | 4.14 | 4.23 | 2.81 |
-| EVK4 | 3.3 V | 0.5 m | 47 | min | 3.11 | 3.78 | -0.88 | 3.48 | 4.63 | 2.96 |
-| EVK4 | 3.3 V | 0.5 m | 47 | typ | 2.99 | 3.42 | -0.54 | 3.78 | 4.25 | 2.89 |
-| EVK4 | 3.3 V | 0.5 m | 47 | max | 2.84 | 2.93 | -0.11 | 4.39 | 3.75 | 2.69 |
-| EVK4 | 3.3 V | 2.0 m | 0 | min | 3.21 | 5.53 | -2.91 | 10.85 | 4.93 | 2.22 |
-| EVK4 | 3.3 V | 2.0 m | 0 | typ | 3.13 | 4.76 | -2.12 | 11.12 | 4.68 | 2.56 |
-| EVK4 | 3.3 V | 2.0 m | 0 | max | 2.98 | 3.79 | -1.10 | 11.65 | 4.21 | 2.81 |
-| EVK4 | 3.3 V | 2.0 m | 47 | min | 3.11 | 3.77 | -0.87 | 10.98 | 4.62 | 2.96 |
-| EVK4 | 3.3 V | 2.0 m | 47 | typ | 2.99 | 3.41 | -0.55 | 11.28 | 4.24 | 2.88 |
-| EVK4 | 3.3 V | 2.0 m | 47 | max | 2.83 | 2.93 | -0.12 | 11.89 | 3.74 | 2.69 |
+| IDS | 1.8 V | 0.5 m | 47 | max | 1.76 | 1.76 | 0.00 | 4.74 | - | - |
+| IDS | 1.8 V | 2.0 m | 0 | min | 1.87 | 3.00 | -1.22 | 10.79 | - | - |
+| IDS | 1.8 V | 2.0 m | 0 | typ | 1.80 | 2.50 | -0.70 | 11.11 | - | - |
+| IDS | 1.8 V | 2.0 m | 0 | max | 1.76 | 1.80 | -0.03 | 11.96 | - | - |
+| IDS | 1.8 V | 2.0 m | 47 | min | 1.84 | 2.17 | -0.33 | 10.88 | - | - |
+| IDS | 1.8 V | 2.0 m | 47 | typ | 1.80 | 1.89 | -0.09 | 11.27 | - | - |
+| IDS | 1.8 V | 2.0 m | 47 | max | 1.76 | 1.76 | 0.00 | 12.25 | - | - |
+| EVK4 | 3.3 V | 0.5 m | 0 | min | 3.32 | 5.58 | -2.94 | 3.34 | 5.30 | 2.20 |
+| EVK4 | 3.3 V | 0.5 m | 0 | typ | 3.18 | 4.80 | -2.15 | 3.61 | 4.84 | 2.54 |
+| EVK4 | 3.3 V | 0.5 m | 0 | max | 2.99 | 3.81 | -1.10 | 4.13 | 4.23 | 2.81 |
+| EVK4 | 3.3 V | 0.5 m | 47 | min | 3.11 | 3.78 | -0.88 | 3.47 | 4.63 | 2.97 |
+| EVK4 | 3.3 V | 0.5 m | 47 | typ | 2.99 | 3.42 | -0.54 | 3.77 | 4.25 | 2.89 |
+| EVK4 | 3.3 V | 0.5 m | 47 | max | 2.84 | 2.93 | -0.11 | 4.38 | 3.75 | 2.69 |
+| EVK4 | 3.3 V | 2.0 m | 0 | min | 3.20 | 5.54 | -2.93 | 10.84 | 4.93 | 2.22 |
+| EVK4 | 3.3 V | 2.0 m | 0 | typ | 3.13 | 4.77 | -2.13 | 11.11 | 4.68 | 2.55 |
+| EVK4 | 3.3 V | 2.0 m | 0 | max | 2.98 | 3.79 | -1.10 | 11.64 | 4.21 | 2.81 |
+| EVK4 | 3.3 V | 2.0 m | 47 | min | 3.11 | 3.77 | -0.87 | 10.97 | 4.62 | 2.96 |
+| EVK4 | 3.3 V | 2.0 m | 47 | typ | 2.99 | 3.41 | -0.55 | 11.27 | 4.24 | 2.88 |
+| EVK4 | 3.3 V | 2.0 m | 47 | max | 2.83 | 2.93 | -0.12 | 11.88 | 3.74 | 2.69 |
 
 The ribbon is a transmission line with an open end (IDS) or a high-resistance end (EVK4). Without a series resistor the output resistance of U2 / U4 / U6 is lower than the line impedance at the fast and typical corners, so the edge overshoots at the camera. The output resistances at the min and typ corners are estimates.
 
-- **EVK4 at 3.3 V, no series resistor:** steady level 2.98-3.32 V, LED current 4.2-5.3 mA, peak 5.56 V, -2.92 V after a falling edge, and the level falls back to 2.20 V after a rising edge (the camera manual gives 2.5 V as the lowest high level and 5.5 V as the highest input voltage).
+- **EVK4 at 3.3 V, no series resistor:** steady level 2.98-3.32 V, LED current 4.2-5.3 mA, peak 5.58 V, -2.94 V after a falling edge, and the level falls back to 2.20 V after a rising edge (the camera manual gives 2.5 V as the lowest high level and 5.5 V as the highest input voltage).
 - **EVK4 at 3.3 V, on-board 47 ohm (R52-R63):** steady level 2.83-3.11 V (2.5 V or more is needed), LED current 3.7-4.6 mA (2.7 mA or more), peak 3.78 V, -0.88 V after a falling edge, lowest level after a rising edge 2.69 V.
 - **IDS at 1.8 V, no series resistor (the Rev 1 condition, with the ribbon in the model):** peak 3.02 V and -1.22 V after a falling edge at the fast corner. IDS documents these pins as 1.8 V and publishes no input protection data.
 - **IDS at 1.8 V, on-board 47 ohm (R52-R69):** peak 2.18 V, -0.34 V after a falling edge; the edge at the camera is 0.3 ns later at most.
 
 **Wrong J22 setting (3.3 V with an IDS camera):** the 1.8 V pin would see 3.20-3.40 V steady and 4.43 V peak. That is why J22 stays open with IDS cameras.
+
+### All camera lines
+
+Each of the 18 lines with its own routed copper, its on-board 47 ohm resistor (R52-R69) and its stub to the header pin, at the fast corner (the largest overshoot) with the longest ribbon. The EVK4 has no pixel-reset input, so `TDRSTN` is run for IDS only.
+
+| camera | +VCAM | lines | high (V) | highest peak (V) | lowest after the fall (V) | rise to VCAM/2 (ns) | EVK4: lowest level after the rise (V) |
+|---|---|---|---|---|---|---|---|
+| IDS | 1.8 V | Sync1-6 | 1.84 - 1.84 | 2.16 | -0.33 | 11.02 - 11.09 | - |
+| IDS | 1.8 V | Trigger1-6 | 1.84 - 1.84 | 2.17 | -0.33 | 10.88 - 10.91 | - |
+| IDS | 1.8 V | TDRSTN1-6 | 1.84 - 1.84 | 2.16 | -0.32 | 10.89 - 10.94 | - |
+| EVK4 | 3.3 V | Sync1-6 | 3.11 - 3.11 | 3.82 | -0.92 | 11.10 - 11.17 | 2.96 |
+| EVK4 | 3.3 V | Trigger1-6 | 3.11 - 3.11 | 3.77 | -0.88 | 10.97 - 11.00 | 2.96 |
+
+The rise time includes the board line and 2.0 m of ribbon. The spread of the rise time in a group is the residual skew of the model at the camera end.
 
 ## 3. +VCAM budget
 
@@ -116,16 +130,15 @@ Every B.Cu camera track (Sync, Trigger, TDRSTN) stays over the +VCAM island (`pl
 | PWM_1MHz | 79.6 | +5V 74.5, +VCAM 4.4, GND 0.7 | 1 |
 | PWM_TRIG_TAP | 70.2 | +5V 40.6, +VCAM 28.9, GND 0.7 | 1 |
 | PWM_Trig | 9.6 | +5V 9.6 | 0 |
-| Sync1 | 72.5 | +VCAM 72.5 | 0 |
-| Sync2 | 31.9 | +VCAM 31.9 | 0 |
-| Sync4 | 67.0 | +VCAM 67.0 | 0 |
-| Sync5 | 54.4 | +VCAM 54.4 | 0 |
-| Sync6 | 43.8 | +VCAM 43.8 | 0 |
-| TDRSTN2 | 48.9 | +VCAM 48.9 | 0 |
-| TDRSTN4 | 47.8 | +VCAM 47.8 | 0 |
-| TDRSTN5 | 6.3 | +VCAM 6.3 | 0 |
-| TDRSTN6 | 45.8 | +VCAM 45.8 | 0 |
-| Trigger2 | 9.6 | +VCAM 9.6 | 0 |
+| Sync1 | 34.7 | +VCAM 34.7 | 0 |
+| Sync2 | 67.6 | +VCAM 67.6 | 0 |
+| Sync4 | 62.7 | +VCAM 62.7 | 0 |
+| Sync5 | 49.8 | +VCAM 49.8 | 0 |
+| Sync6 | 51.3 | +VCAM 51.3 | 0 |
+| TDRSTN2 | 47.9 | +VCAM 47.9 | 0 |
+| TDRSTN4 | 46.8 | +VCAM 46.8 | 0 |
+| TDRSTN5 | 28.4 | +VCAM 28.4 | 0 |
+| TDRSTN6 | 48.5 | +VCAM 48.5 | 0 |
 | Trigger6 | 4.9 | +VCAM 4.9 | 0 |
 
-Generated with 124 ngspice runs.
+Generated with 154 ngspice runs.
