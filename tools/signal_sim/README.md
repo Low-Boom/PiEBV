@@ -70,7 +70,7 @@ its input capacitance, so each stage is simulated alone and the delays are added
 | Stage | From | To |
 |---|---|---|
 | A | GP11, GP12, GP13 pads (and GP14 for option d) | U5.2, U19.2, U7.2, U8.2 through `PWM_Trig`, J10, `PWM_TRIG_TAP`, `CH1_J10`, `_PULSE_OUT_CH1/2`, R19, R9, R17 and R18 |
-| B1, B2 | U5 output, then the U6 outputs | U6 inputs (`TRIG_N`), then J1-J6 pin 4 (`Trigger1..6`) |
+| B1, B2 | U5 output, then the U6 outputs | U6 inputs (`TRIG_N`), then J1-J6 pin 4 (`Trigger1..6`, the series resistors R58-R63 and `Trigger1_C..6_C` on the Rev 2 board) |
 | C | U19 output (or U13 outputs) | R30 (R6/R7), J21 (J18/J19), R31, R32, the BNC, RG-58 cable and the load |
 | D1 | U7/U8 outputs | U13 inputs (`CH1_GATED`, `CH2_GATED`) |
 
@@ -123,7 +123,8 @@ than a few ps shows a numerical problem.
 - The GND pour beside most traces lowers Z0 to about 52 ohm and the delay to 5.94 ps/mm
   (`fd_masked_gcpw_gap0.30` in `geometry.json`). The runner uses the microstrip values. The
   difference in trace delay is about 2 %, which is small compared to the device spread.
-- The camera input is 5 pF (estimate). The ribbon cable to the camera is not in the model.
+- The camera input is 5 pF (estimate). The ribbon cable to the camera is not in the model of
+  `signal_sim.py`. Case 2 of `rev2_sim.py` has the cable.
 - The UCC27524 peak-current limit is not in the model. The output edge is an estimate.
 
 ## Sources
@@ -147,13 +148,14 @@ than a few ps shows a numerical problem.
 | Case | Question | Result (see `results_rev2.md` for the tables) |
 |---|---|---|
 | 1 | Camera trigger delay and J12-minus-camera offset at `+VCAM` = 1.8 V and 3.3 V | At 3.3 V the camera gates are faster: the camera edge is 2.5 ns (typ) to 8 ns (max corner) earlier, so J12 is later relative to the camera by that amount. |
-| 2 | Level and overshoot at the camera end of the harness (ribbon or twisted pair, 0.5 m and 2 m), IDS input at 1.8 V and EVK4 opto input at 3.3 V, with and without a series resistor at the board end | Without a resistor the edge overshoots (fast corner: 3.0 V on a 1.8 V line, 5.7 V on a 3.3 V line). 47 ohm (IDS) or 68 ohm (EVK4) at the board end removes most of it. |
-| 3 | `+VCAM` budget with six EVK4 cameras | 2.98 V or more at the EVK4 input without series resistor (2.78 V with 68 ohm); 58 mA peak from the Pico's 3V3_OUT. |
-| 4 | Activity-LED sense dividers: level at the monostable input, shortest pulse, load on the output | A 10 ns pulse holds the input above its threshold for 9 ns or more (3 ns needed). The output level changes by 2.4 mV at most. |
+| 2 | Level and overshoot at the camera end of the cable (ribbon or twisted pair, 0.5 m and 2 m), IDS input at 1.8 V and EVK4 opto input at 3.3 V, with the on-board 47 ohm series resistors (R52-R69) and without them | Without a resistor the edge overshoots (fast corner: 3.02 V and -1.22 V on a 1.8 V line, 5.56 V and -2.92 V on a 3.3 V line). With the on-board 47 ohm: 2.18 V and -0.34 V (IDS), 3.78 V and -0.88 V (EVK4). EVK4 steady level 2.83-3.11 V, LED current 3.7-4.6 mA. Wrong J22 setting (3.3 V into an IDS camera): 3.20-3.40 V steady, 4.43 V peak. |
+| 3 | `+VCAM` budget with six EVK4 cameras | At most 58 mA from the Pico's 3V3_OUT while Sync and Trigger are both high. This DC calculation does not include the on-board 47 ohm resistors (2.98 V or more at the EVK4 input), so 58 mA is an upper limit. Case 2 gives the level with the resistors (2.83 V or more). |
+| 4 | Activity-LED sense dividers (10 kohm with 12 pF, 4.7 kohm with 22 pF): level at the monostable input, shortest pulse, load on the output | A 10 ns pulse holds the input above its threshold for 8.7 ns or more (3 ns needed). The output level changes by 2.4 mV at most. |
 | 5 | Gap between two In2 islands under a B.Cu track | 2 ps and 11 mV or less at the receiver with the GND fill beside the track. |
 
 **Harness model.** The cable is a lossless line (`harness` in `devices.json`: Z0, delay, wire
-resistance; estimates). The IDS input is a capacitor. The EVK4 input is a resistor in series with a
+resistance; estimates). `series_r_ohm` in that block is the value of the on-board series resistors
+R52-R69 (47 ohm). The cable has no resistors. The IDS input is a capacitor. The EVK4 input is a resistor in series with a
 diode, fitted to the two currents in the EVK4 manual (`evk4_input`; estimate).
 
 **Gap model.** Case 5 gets the impedance of a B.Cu track that has no In2 copper above it from the

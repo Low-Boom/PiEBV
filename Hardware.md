@@ -6,9 +6,9 @@ changing the hardware. To *use* the board, see the [README](README.md).
 The board is built around a socketed Raspberry Pi Pico 2 W, on 4 copper layers.
 
 **Board revision 2** (2026-11-12). Rev 2 adds a selectable camera I/O level (1.8 V for IDS cameras,
-3.3 V for Prophesee EVK4 cameras), status LEDs, rail test pads, and power islands on the third
-copper layer. [Rev 2 changes](#rev-2-changes) lists the differences from Rev 1. The EVK4 wire harness
-is in [docs/EVK4_HARNESS.md](docs/EVK4_HARNESS.md).
+3.3 V for Prophesee EVK4 cameras), a 47 Ω series resistor in each camera line, status LEDs, rail
+test pads, and power islands on the third copper layer. [Rev 2 changes](#rev-2-changes) lists the
+differences from Rev 1. The EVK4 wire harness is in [docs/EVK4_HARNESS.md](docs/EVK4_HARNESS.md).
 
 **Status:** passes KiCad's design-rule check (DRC) and electrical-rule check (ERC) with 0
 violations. Not yet built: work through the [first-board checks](#first-board-checks) on the first
@@ -26,19 +26,22 @@ boards.
 
 | Item | Rev 1 | Rev 2 |
 |---|---|---|
-| Camera I/O level | 1.8 V only (U9) | `+VCAM`: 1.8 V with J22 open (default), 3.3 V with J22 fitted. U20 (TPS2116 power mux) selects the rail. D1 (blue) shows 3.3 V. See [+VCAM](#vcam-the-camera-signal-supply). |
+| Camera I/O level | 1.8 V only (U9) | `+VCAM`: 1.8 V with J22 open (default), 3.3 V with J22 fitted. U20 (TPS2116 power mux) selects the rail: VIN1 = +1V8, VIN2 = +3V3. R34 pulls the select pin PR1 up to +3V3 (1.8 V); a shunt on J22 pulls it low through R35 (3.3 V). R51 discharges `+VCAM`. D1 (blue) shows 3.3 V. See [+VCAM](#vcam-the-camera-signal-supply). |
 | Cameras | IDS uEye EVS | IDS uEye EVS (1.8 V), or Prophesee EVK4 (3.3 V) with the harness of [docs/EVK4_HARNESS.md](docs/EVK4_HARNESS.md) |
+| Series resistors in the camera lines | none | R52–R69, 47 Ω 1 %, 0805: one in each Sync, Trigger and TDRSTN line, between the buffer output and the camera header pin. They are the source termination of the camera cable. See [+VCAM](#vcam-the-camera-signal-supply). |
 | Status LEDs | none | D2 12 V good, D3 ARMED, D4/D5/D6 output activity of Laser 1 / Laser 2 / External Sync Out. See [Status LEDs](#status-leds). |
 | Firmware pin | – | GP17 = `ARMED_LED` (output, high while ARMED) |
 | Third copper layer (In2.Cu) | one +5 V plane | islands: +5V, +3V3, +1V8, +VCAM, +12V, in a GND fill. See [Power islands](#power-islands-in2cu). |
 | Test pads | TP3 only | TP4–TP9: +12V, +5V, +3V3, +1V8, +VCAM, GND |
 | U9, C6, C7 | beside the camera buffers | in the supply block at the top centre, beside U20 |
-| Parts | 84 placed | 129 placed, plus 6 test pads |
+| Parts | 84 placed | 148 placed, plus 6 test pads |
 | Finest pitch | 0.65 mm | 0.5 mm (U20, SOT-583) |
-| Routing | – | 5 router staircases merged and 5 squiggle runs replaced; `Sync1`–`Sync6` lengths unchanged. See [Routing](#routing). |
+| Camera line lengths (buffer pad to resistor pad in Rev 2) | group spreads 1.18 / 2.47 / 1.37 mm (Sync / Trigger / TDRSTN, buffer pin to header pin) | `Sync1`–`Sync6` 78.142–78.168 mm (spread 0.025 mm), `Trigger1`–`Trigger6` 45.144 mm (spread 0.000 mm), `TDRSTN1`–`TDRSTN6` 53.924 mm (spread 0.000 mm). The stubs from the resistors to the header pins are equal in each group. |
+| Routing | – | The Rev 1 camera copper is removed. The camera lines are routed again, from the buffer to the series resistor. See [Routing](#routing). |
 
-Rev 2 is made from the Rev 1 board by `tools/rev2` (see its README). The camera lines, the laser
-pulse lanes and the output block keep their Rev 1 copper, apart from the clean-up in the last row.
+Rev 2 is made from the Rev 1 board by `tools/rev2` (see its README). The laser pulse lanes and the
+output block keep their Rev 1 copper. The camera lines do not: `tools/rev2/build.sh` removes the
+Rev 1 camera copper and routes these lines again.
 
 ---
 
@@ -147,9 +150,9 @@ Images of the Rev 2 board, made by `tools/rev2/images.sh` from `PiEBV_Pico.kicad
 | Board | 160 × 100 mm (EuroCard), 4 copper layers, 1.6 mm FR4 |
 | Processor | Raspberry Pi Pico 2 W, in sockets (not soldered) |
 | Power | **USB-C PD input (J17, 15 V)** for the laser driver and the whole board; the Pico's own USB still powers the logic when J17 is unplugged |
-| Rails | **+VCAM** (camera signals: 1.8 V, or 3.3 V with J22 fitted) · 1.8 V (U9, to U20) · 3.3 V (Pico 3V3_OUT: R24, U20, U21–U23) · 5 V (logic, Pico VSYS) · **12 V** (11.8 V, output drivers U13 and U19, from J17 only) |
+| Rails | **+VCAM** (camera signals: 1.8 V, or 3.3 V with J22 fitted) · 1.8 V (U9, to U20) · 3.3 V (Pico 3V3_OUT: R24, R34, U20, U21–U23) · 5 V (logic, Pico VSYS) · **12 V** (11.8 V, output drivers U13 and U19, from J17 only) |
 | Design rules | 0.2 mm clearance, 0.2 mm track, 0.6/0.3 mm via, 0.5 mm copper-to-edge |
-| Parts | 129 placed parts (109 SMD, 20 through-hole), 6 bare test pads, 4 unplated mounting holes |
+| Parts | 148 placed parts (128 SMD, 20 through-hole), 6 bare test pads, 4 unplated mounting holes (158 footprints) |
 
 **Layers**
 
@@ -264,7 +267,8 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
   The Rev 1 board was
   autorouted with KiCadRoutingTools (github.com/drandyhaas/KiCadRoutingTools, commit 8759686,
   v0.23.8): 0.3 mm signals, 0.5 mm power, 0.6 mm buck switch node, 0.3 mm USB-C CC lines, 0.2 mm
-  clearance.
+  clearance. The Rev 2 build uses the same tool (same commit) for the camera lines only; all
+  other copper is locked during that step.
 - **Carried copper.** The hand-routed copper of the laser and External Sync Out output block (nets
   `CH1/2_GATED`, `CH1/2_DRIVE_RAW`, `CH1/2_DRIVE`, `CH1/2_OUT`, `CH1/2_TERM`,
   `EXT_SYNC_DRIVE_RAW`, `EXT_SYNC_DRIVE`, `EXT_SYNC_OUT` and `EXT_SYNC_TERM`, with their GND vias) and the exposed-pad thermal vias of U14 and U17 were kept unchanged. So were the hand-routed local paths of the parts that keep their original relative positions: the buck's input (C12 to U15 VIN and GND, 2.35 mm each), its SW node (U15 to L1 3.1 mm, with C13) and BST, and each decoupling capacitor of the camera buffers to its two ICs' supply pins (for example C2 to U3, 4.2 mm, no via). C11 sits beside U14's VHV pin (pin 1), 2.5 mm of track.
@@ -285,35 +289,35 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
   `PIXRST_GATE` via, and 1.9 mm or more to every other net. At the pins the pin pitch sets the gap:
   0.22 mm from the U7.2 pad to a `LASER_EN` track, 0.30 mm between the U7/U8 pads, 0.84 mm
   between the J14 socket pads, and 3.91 mm from the CH2 lane to the J14.20 (`PWM_1MHz`) pad.
-- **Camera lines, length-matched** (buffer pin to header pin, as KiCad's length tool measures:
-  vias over the layers they join, runs cut at the pad outlines): `Sync1..6` 81.87–83.04 mm
-  (spread 1.18 mm; Sync5 is the long one, 0.89 mm past the router's target, the other five are
-  within 0.71 mm), `Trigger1..6` 41.12–43.32 mm (spread 2.20 mm; Trigger6 is the short one, the
-  other five are within 1.65 mm; Rev 1: 41.12–43.60 mm, Rev 2 removes a length bump from Trigger4), `TDRSTN1..6` 51.69–53.05 mm (spread 1.37 mm; TDRSTN4 is the
-  long one, the other five are within 0.83 mm). 2.20 mm is about 13 ps. The match starts at the
+- **Camera lines, length-matched** (Rev 2). Each camera line has two parts: the routed line from
+  the buffer output pad (U2, U6 or U4) to the pad of its series resistor (R52–R69), and a short
+  F.Cu stub from the resistor to the header pin. The Rev 1 camera copper does not exist any more.
+  Lengths from the buffer pad to the resistor pad, as KiCad's length tool measures (via length
+  included):
+
+  | Group | Buffer pad to resistor pad | Spread | Rev 1 spread | Stub, resistor to header pin |
+  |---|---|---|---|---|
+  | `Sync1..6` | 78.142–78.168 mm | 0.025 mm | 1.18 mm | 4.43 mm |
+  | `Trigger1..6` | 45.144 mm | 0.000 mm | 2.47 mm | 9.77 mm |
+  | `TDRSTN1..6` | 53.924 mm | 0.000 mm | 1.37 mm | 5.09 mm |
+
+  0.025 mm is about 0.2 ps. The stubs are the same for all six headers. The match starts at the
   buffer output, not at its input: the input fan-outs (`SYNC_N` from U1.4, `TRIG_N` from U5.4 and
   `PIXRST_N` from U3.4, each to the six gate inputs of its hex buffer U2, U6 or U4) are not matched,
-  and their branch lengths differ by 6–11 mm. On the 126 mm board they were not matched (Sync 28–71 mm, Trigger 21–56 mm,
-  TDRSTN 20–41 mm). Gaps between the groups: Sync and Trigger at least 1.11 mm (Sync4's via at
-  (209.9, 98.9) to a Trigger1 track, F.Cu), Trigger and TDRSTN 0.75 mm, Sync and TDRSTN 0.32 mm
-  (B.Cu). The camera lines are routed first in a dedicated pass, then cleaned up
-  (`camclean.py`, with each line's length kept): each meander is a comb of straight arms 0.75 mm
-  apart (0.45 mm gap) joined by straight caps with 90° corners, and the router's staircases and
-  acute exit corners are replaced by straight 0°/45°/90° runs (`camjoint.py` re-shapes Trigger1 and
-  Trigger2 at U6 together, Sync6 at J6.5, and the Trigger6 jog at J6: one straight run and one
-  45° leg, 1.657 mm shorter, a review edit of 2026-11-06). No corner of a camera line turns
-  more than 90°, and two parts of one line more than 1 mm apart along it are at least 0.36 mm
-  apart (0.45 mm for parts more than 2 mm apart), so the copper of a line merges nowhere and these
-  are the electrical lengths.
+  and their branch lengths differ by 6–11 mm. On the 126 mm board the camera lines were not matched
+  (Sync 28–71 mm, Trigger 21–56 mm, TDRSTN 20–41 mm). The build checks that the spread in each
+  group is 0.1 mm or less, and that two parts of one camera line are at least 0.3 mm apart
+  (`tools/eurocard/meander_check.js`). The item "Rev 2 build of the copper" below gives the
+  steps. The gaps between the three groups were not measured again after the new routing.
 - **Plane taps.** Each SMD GND and +5V pad that the carried hand copper does not already touch has
   its own short tap track to a via into In1 or In2, placed outward from the part body
   first. Rev 2 adds the taps of the new parts and of the other rails (table under
   [Power islands](#power-islands-in2cu)). The buck's GND link (C12.2 to U15.4) keeps its two hand vias, 1.74 and 1.90 mm from
-  C12.2. +5V has only 14.67 mm of surface copper (12 segments); the In2 plane carries it.
+  C12.2. +5V has only 19.26 mm of surface copper (14 segments); the In2 plane carries it.
 - **Reference planes (F9).** F.Cu signals run over In1 GND and B.Cu signals over the In2 islands, both
-  0.21 mm away. In Rev 2 all B.Cu camera lines are over the +VCAM island from their via to the header,
+  0.21 mm away. In Rev 2 every B.Cu camera track is over the +VCAM island,
   and `PWM_1MHz` and `PWM_TRIG_TAP` each cross one island gap (+5V to +VCAM); see
-  [Power islands](#power-islands-in2cu). The rest of this item is the Rev 1 analysis (In2 = one +5 V plane). On B.Cu: Sync 413.9 mm, Trigger 15.9 mm (Trigger6), TDRSTN 249.8 mm, `PWM_1MHz`
+  [Power islands](#power-islands-in2cu). The rest of this item is the Rev 1 analysis (In2 = one +5 V plane, Rev 1 camera copper). On B.Cu: Sync 413.9 mm, Trigger 15.9 mm (Trigger6), TDRSTN 249.8 mm, `PWM_1MHz`
   79.6 mm, `PWM_TRIG_TAP` 70.2 mm, `PIXRST_GATE` 39.2 mm. Their return current flows in the +5 V
   plane; at a layer change it crosses to GND through the B.Cu GND pour over In2 (about 18.9 pF/cm²)
   and the In1–In2 core (about 3.7 pF/cm²). The discrete +5 V-to-GND capacitors are C4 and C5
@@ -333,56 +337,42 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
   via (210.2, 57.2) is R9.1's only connection (R9 is a front SMD part), so it is not a plane jump
   on the J10-to-U5 path. `CH1_J10` needs its via to cross the lane (no via in the R19.2 pad), and
   `PWM_Trig` leaves J10.3 with one 45° run.
-- **Totals (Rev 2):** 1149 track segments, 2885 mm of track (F.Cu 1748 mm, B.Cu 1137 mm), 216 vias
+- **Totals (Rev 2):** 1496 track segments, 2998.5 mm of track (F.Cu 2108.0 mm, B.Cu 890.6 mm), 223 vias
   (`tools/rev2/stats.py`). No two segments are identical. Rev 1: 1015 segments, 2489 mm, 173 vias.
-- **Rev 2 clean-up of jogs.** `tools/rev2/jogs.py` merges 5 router staircases (`+12V` at C17,
-  `Sync6` twice, `TDRSTN4`, `TDRSTN6`): two steps in one direction become one step, so the track
-  length is the same. `tools/rev2/tidy.py` replaces 5 squiggle runs: the `Trigger4` length bump
-  (8 segments to 1, 1.92 mm shorter: Trigger4 was the longest Trigger line), the `TDRSTN6` bump
-  (8 segments to 4, one square step, length kept), a `TDRSTN2` zigzag (0.25 mm shorter), and small
-  kinks on `+5V_PD` and on `+12V` at U19. KiCad's length reading after the clean-up: `Sync1..6`
-  unchanged to 0.0001 mm (81.87–83.04 mm, spread 1.18 mm), Trigger spread 2.47 to 2.20 mm, TDRSTN
-  spread unchanged (1.37 mm). One odd shape stays: the `TDRSTN4` length bump at (216.4–218.7,
-  99.4–102.0) on B.Cu. It holds 3.3 mm of matched length, and the copper around it has no free
-  area for a cleaner shape of that length.
-- **Known residuals** (router artefacts; none is a DRC error):
-  - Length match: the router left Sync5 0.89 mm past its group target; the group spreads are 1.18 /
-    2.47 / 1.37 mm (Sync / Trigger / TDRSTN), against its 0.5 mm tolerance (the Trigger spread
-    widened by the Trigger6 review edit of 2026-11-06, not a router artefact): at most about 15 ps.
-  - Segment density: non-camera nets (GND and +5V excluded) 2.74 segments per 10 mm (hand board
-    2.8); camera lines 5.21 per 10 mm (9.08 before the clean-up). Segments shorter than 0.5 mm
-    with no pad or via at either end (an end at a pad centre or on a pad outline, or at a via
-    centre, counts as at a pad or via): 37 on the camera lines (0.1–0.42 mm steps; 269 before) and
-    35 on other nets, 18 of them with no branch at either end (for example four +12V pieces of
-    0.1–0.42 mm at x 237.8–238.4, y 77.4–77.8).
-  - (Rev 1 state; Rev 2 removes the Trigger4 bump and re-shapes the TDRSTN6 bump, see above.)
-    Camera staircases that the clean-up keeps (5 runs, 31 segments): Trigger4, TDRSTN4 and TDRSTN6
-    keep small length bumps; 3-step jogs on Trigger1 at J1.4 and on TDRSTN6 near U4. The Trigger1 /
-    Trigger2 staircases at U6 (14 and 19 steps) and the Sync6 staircase at J6.5 (10 steps) are
-    replaced by `camjoint.py`: Trigger2 runs vertical at x 221.6, then 45° to U6.4; Trigger1 runs
-    vertical at x 220.85 and x 221.46 with one 45° jog, then 45° to U6.2 (its window keeps its
-    length, +0.002 mm); Sync6 runs vertical, 45°, horizontal, 45° to J6.5 (length kept); the
-    Trigger6 router jog at (241.6, 102.5) into J6 (7 segments) becomes one run to x 247.9 and one
-    45° leg to (254.98, 109.58), 1.657 mm shorter (a review edit of 2026-11-06). Gaps there:
-    Trigger1–Trigger2 0.371 → 0.435 mm, Trigger2 to the U6.7 GND via 0.296 → 0.440 mm, Trigger1 to
-    `PIXRST_GATE` 0.560 mm (unchanged); the Trigger6 window to +12V 1.652 → 2.450 mm and to
-    U19.OUTB 1.603 → 2.345 mm (both widen), to GND 1.002 mm, Sync6 2.308 mm and Trigger5 1.301 mm
-    (unchanged).
-  - Three segments shorter than 0.08 mm, all on camera lines (`tidy.py` does not change camera
-    copper): `Sync6` 0.017 mm on B.Cu at (197.683, 91.6) (at its via), `Trigger1` 0.050 mm and
-    `Trigger4` 0.079 mm at the J1.4 and J4.4 pad ends. The fourth, a `+12V` 0.051 mm step at
-    (239.808, 76.85) from the router's 0.5 mm run onto the carried U17.11–U17.12 tie, was not
-    load-bearing; `tidy.py` now ends both tracks at (239.8, 76.85) and removes it.
-  - One F.Cu GND pour piece has no stitch via (`frag_stitch.py` "no site: F.Cu neck 5.6 192.71
-    93.59"; the two numbers are the corner of the piece's core, the piece is (192.2, 93.1)–(194.8,
-    96.7)). It is 5.6 mm² and joins the main F.Cu GND fill through a 0.72 mm neck, so it is not
-    floating. It lies over the B.Cu meander of `Sync1` (arms 0.75 mm apart, 0.45 mm gap); a 0.6 mm
-    through via needs 1.0 mm between two arms (0.2 mm clearance), so all 41 candidate sites fail on
-    `Sync1`. A via would need the camera meander moved; removing the piece would need a rule area in
-    the GND pour. Neither is done.
+- **Rev 2 build of the copper** (`tools/rev2/build.sh`). The steps, in order:
+  1. `pcb_edit.py` removes the Rev 1 camera copper. It places R52–R69 with their stubs. It draws
+     `Trigger3` itself (F.Cu, four teeth, 45.8 mm as drawn): the resistor of this line is about
+     12 mm from its buffer pin, and the router cannot make the line longer.
+  2. `uuidfix.py` gives the board file a fixed item order. pcbnew writes random item IDs, and the
+     router result depends on the item order.
+  3. KiCadRoutingTools (commit 8759686, the tool of the Rev 1 EuroCard build) routes the other 17
+     camera lines from the buffer to the resistor. All other copper is locked. The lines are
+     length-matched in each group. The net order was found by a search of about 200 trials.
+  4. A check confirms that the router changed no other copper (91 other nets).
+  5. `jogs.py` merges 59 router staircases on 14 nets: two steps in one direction become one
+     step, so the track length is the same. The choice for each staircase is in
+     `jog_choices.json`; `jogfit.py` fits that file to a new routing.
+  6. `tidy.py` makes 3 hand edits: the `Sync1` pad entry at U2, a kink on `+5V_PD`, and `+12V` at
+     U19.
+  7. `trim.py` makes the lines of each group equal by KiCad's own length reading. It moves
+     meander caps. A line with no meander gets one square bump.
+  8. `spokes.py` adds 4 small pour cut-outs at header GND pins where a camera track leaves only
+     one thermal spoke on F.Cu or B.Cu. These pins keep their full connection to the In1 GND
+     plane.
+  9. `uuidfix.py` runs again. Then the checks run: the DRC gate, the length check (limit 0.1 mm
+     spread in each group), the meander check (0.3 mm) and the plane check.
+
+  The build is repeatable: two runs gave the same router output.
+- **Known residuals** (none is a DRC error):
+  - Seven staircases on camera lines stay as the router made them (`"skip"` in
+    `jog_choices.json`: four on `Sync5`, two on `TDRSTN3`, one on `TDRSTN4`). A merge at these
+    places makes a DRC violation.
+  - The segment density and the number of short segments were not measured again after the new
+    camera routing.
   - Two GND vias carried from Rev 1 have their ring 0.20 mm from their own pad: U13.3 via
-    (236.0, 60.935) and U19.3 via (241.9, 98.435) (hole edge 0.35 mm from the pad). All 45 tap vias
-    are at least 0.25 mm; that 0.25 mm is `taps.py`'s own rule, not a DRC rule. No DRC rule applies
+    (236.0, 60.935) and U19.3 via (241.9, 98.435) (hole edge 0.35 mm from the pad). The tap vias
+    of the Rev 1 build are at least 0.25 mm from their pad; that 0.25 mm is the rule of the Rev 1
+    tool `taps.py`, not a DRC rule. No DRC rule applies
     here: the board's clearance rules (netclass `Default` clearance 0.20 mm, `min_hole_clearance`
     0.20 mm) are checked only between different nets, and KiCad 10 checks no clearance between a
     via and a pad of the same net (test on a copy: the U13.3 via moved until its hole touched the
@@ -698,10 +688,10 @@ J17 USB-C ─ U14 CH224A (asks the charger for 15 V) ─ VBUS_PD (5 V until nego
    └─ U17 LT3065 (adj., 500 mA, 400 mA limit) ─ +12V (11.8 V) ─ U13 VDD (C9, C10, C17), U19 VDD (C21, C22)
         U18 TPS3700 window on +12V (10.6–13.3 V) ─ LASER_PWR_OK ─ U13 and U19 ENA/ENB  (R16 100k pull-up)
 
-Pico 3V3_OUT ─ +3V3 ─┬─ U20 VIN1 ─┐
-                     │            U20 TPS2116 ─ +VCAM ─ U1–U6 (camera buffers), D1
-     U9 ─ +1V8 ──────┼─ U20 VIN2 ─┘   J22 open: +VCAM = +1V8.  J22 fitted: +VCAM = +3V3.
-                     └─ R24, U21–U23 (activity LED monostables)
+     U9 ─ +1V8 ──────── U20 VIN1 ─┐
+                                  U20 TPS2116 ─ +VCAM ─ U1–U6 (camera buffers), D1, R51
+Pico 3V3_OUT ─ +3V3 ─┬─ U20 VIN2 ─┘   J22 open: +VCAM = +1V8.  J22 fitted: +VCAM = +3V3.
+                     └─ U20 MODE, R34 (pull-up of U20 PR1), R24, U21–U23 (activity LED monostables)
 ```
 
 **VBUS_PD.** U14 is a WCH **CH224A** PD sink (chapter 7 of the CH224 datasheet V2.x
@@ -820,17 +810,21 @@ U1/U3/U5). It is 1.8 V or 3.3 V:
 (the NCP718 accepts 2.5–24 V in). Output capacitor C7 (2.2 µF), input capacitor C6 (1 µF).
 
 **The selector is U20, a TI TPS2116 power mux** (1.6–5.5 V, SOT-583-8), not a jumper in the supply
-path. VIN1 = +3V3, VIN2 = +1V8, VOUT = +VCAM (C23, 1 µF). MODE is tied to VIN1. The mux then
-passes VIN1 if its PR1 pin is above 1.0 V (0.92–1.08 V) and VIN2 if PR1 is below it (TI data
-sheet, priority mode with MODE on VIN1). PR1 is the net `VCAM_SEL`:
+path. VIN1 (pin 3) = +1V8, VIN2 (pin 6) = +3V3, VOUT = +VCAM (C23, 1 µF). C24 (1 µF) is the
+capacitor of VIN2 (+3V3). MODE (pin 5) is tied to +3V3. With MODE high, the mux passes VIN1 if
+its PR1 pin (pin 4) is above 1.0 V (0.92–1.08 V) and VIN2 if PR1 is below it (TI data sheet).
+PR1 is the net `VCAM_SEL`. R34 (10 kΩ) pulls PR1 up to +3V3. J22 pin 2 connects to PR1 through
+R35 (1 kΩ). J22 pin 1 is GND. In Rev 2 the two inputs are in this order for safety: the default
+and the fault cases below give 1.8 V.
 
-- **J22 open:** R34 (10 kΩ) holds PR1 at 0 V. The mux passes VIN2: **+VCAM = 1.8 V.** No shunt
+- **J22 open:** R34 holds PR1 at 3.3 V. The mux passes VIN1: **+VCAM = 1.8 V.** No shunt
   is necessary for IDS cameras, and a lost shunt gives 1.8 V.
-- **J22 fitted:** R35 (1 kΩ, from +3V3) and R34 put 3.0 V on PR1. The mux passes VIN1:
-  **+VCAM = 3.3 V.** Both pins of J22 are behind a resistor, so a short of a J22 pin to ground
-  takes 3.3 mA at most.
-- **Pico not fitted or +3V3 absent:** MODE and PR1 are low and VIN1 is 0 V; the mux passes the
-  higher input, which is +1V8.
+- **J22 fitted:** R35 and R34 put 0.3 V on PR1 (1 kΩ / 11 kΩ of 3.3 V). The mux passes VIN2:
+  **+VCAM = 3.3 V.**
+- **Pico not fitted:** there is no +3V3, so +VCAM cannot be 3.3 V.
+- **R51 (4.7 kΩ)** from +VCAM to GND discharges +VCAM when the level changes from 3.3 V to
+  1.8 V.
+- **PR1 has no capacitor.**
 - **ST (pin 8)** is not connected.
 
 **3.3 V destroys the 1.8 V pins of an IDS camera.** J22 sets the level of all six camera ports
@@ -838,16 +832,22 @@ together. Fit J22 only when no IDS camera is connected, and look at D1 before yo
 camera: D1 lit = 3.3 V. D1 is a blue LED on +VCAM through R33 (100 Ω): a blue LED needs more than
 about 2.5 V, so it is dark at 1.8 V and takes about 4 mA at 3.3 V. Do not replace it with a red,
 yellow or yellow-green LED (those light at 1.8 V). Change J22 with the power off: the mux
-switches break-before-make, but the cameras see the level change.
+switches break-before-make, but the cameras see the level change. Before you connect an IDS
+camera, measure +VCAM at TP8 with a meter: it must be 1.8 V with J22 open
+([first-board check 7](#first-board-checks)).
 
-**Faults that give the wrong level** (found by the [first-board checks](#first-board-checks)):
-R34 missing or open (PR1 floats: level not defined), a solder bridge from PR1 (U20 pin 4) to
-VIN1 (pin 3) (3.3 V always), U9 output shorted high.
+**Faults** (found by the [first-board checks](#first-board-checks)):
+- A solder bridge from PR1 (U20 pin 4) to pin 3 (+1V8) or to pin 5 (+3V3) keeps PR1 high, so
+  the output stays 1.8 V.
+- With the Pico not fitted there is no +3V3, so the output cannot be 3.3 V.
+- R34 missing or open leaves PR1 floating (level not defined). This fault can give the wrong
+  level: check for it.
 
 **Load.** Six IDS cameras: CMOS inputs, no DC current. Six EVK4 cameras: each Sync and Trigger
-input is an opto-coupler LED that takes about 4–5 mA while the line is high, so at most about
-58 mA with all twelve lines high (simulation `tools/signal_sim/rev2_sim.py`, case 3), about half
-of that on average. The Pico's 3V3_OUT pin can supply it (Raspberry Pi recommends a load below
+input is an opto-coupler LED that takes 3.7–4.6 mA while the line is high (with the on-board
+47 Ω resistors; `tools/signal_sim/rev2_sim.py`, case 2). The supply budget (`rev2_sim.py`, case 3) gives at most 58 mA for six cameras
+while Sync and Trigger are both high, and about half of that on average. The budget calculation
+does not include the 47 Ω resistors, so 58 mA is an upper limit. The Pico's 3V3_OUT pin can supply it (Raspberry Pi recommends a load below
 300 mA on that pin). U20 drops less than 6 mV.
 
 > **Why 1.8 V.** The IDS UE-39B0XCP-E documents its I/O pins as 1.8 V sensor-level signals (see
@@ -859,17 +859,33 @@ of that on average. The Pico's 3V3_OUT pin can supply it (Raspberry Pi recommend
 > 1.65–5.5 V, and both have 5.5 V-tolerant inputs at any supply, so at 1.8 V and at 3.3 V they
 > accept the Pico's 3.3 V GPIOs directly.
 >
-> **Series resistors in the camera harness (Rev 2 finding).** The board has no series resistors
-> in the camera lines. The Rev 1 text said that the drivers' output impedance at 1.8 V (60–113 Ω)
-> matches the ribbon cable. Rev 2 adds the cable to the simulation (`rev2_sim.py`, case 2). With
-> the output resistance at its estimated fast and typical values (30 and 50 Ω at 1.8 V, 15 and
-> 25 Ω at 3.3 V) an open-ended cable overshoots at the camera: up to 3.0 V and −1.2 V on a 1.8 V
-> IDS line, up to 5.7 V and −3.0 V on a 3.3 V EVK4 line. A resistor in series with each signal
-> wire **at the board end of the harness** removes most of it: 47 Ω for the IDS harness (peak
-> 2.2 V, −0.3 V), 68 Ω for the EVK4 harness (peak 3.5 V, −0.5 V; the EVK4 harness has them). The
-> fast and typical output resistances are estimates, not data-sheet values: measure the overshoot
-> at the camera end ([first-board check 3](#first-board-checks)) and fit the resistors if it is
-> more than the camera input allows.
+> **Series resistors in the camera lines (Rev 2).** Each camera line has a 47 Ω resistor (1 %,
+> 0805, LCSC C17714) on the board, between the buffer output and the camera header pin:
+>
+> | Resistors | Lines | From | To |
+> |---|---|---|---|
+> | R52–R57 | `Sync1`–`Sync6` | U2 | J1–J6 pin 5 |
+> | R58–R63 | `Trigger1`–`Trigger6` | U6 | J1–J6 pin 4 |
+> | R64–R69 | `TDRSTN1`–`TDRSTN6` | U4 | J1–J6 pin 3 |
+>
+> The net on the buffer side keeps its name (`Sync1` … `TDRSTN6`). The net on the header side is
+> `Sync1_C` … `TDRSTN6_C`. The resistor is the source termination of the camera cable. The cable
+> is a line of about 105 Ω. The buffer output resistance is lower, so an edge with no termination
+> overshoots at the camera. One value (47 Ω) is used for IDS and EVK4 cameras. Simulation
+> (`rev2_sim.py`, case 2; `tools/signal_sim/results_rev2.md`), at the camera end of the cable:
+>
+> | Camera, +VCAM | Series resistor | Steady high level | Peak | After a falling edge | Lowest level after a rising edge |
+> |---|---|---|---|---|---|
+> | IDS, 1.8 V | none (Rev 1) | – | 3.02 V | −1.22 V | – |
+> | IDS, 1.8 V | 47 Ω | – | 2.18 V | −0.34 V | – |
+> | EVK4, 3.3 V | none | 2.98–3.32 V | 5.56 V | −2.92 V | 2.20 V |
+> | EVK4, 3.3 V | 47 Ω | 2.83–3.11 V (2.5 V needed) | 3.78 V | −0.88 V | 2.69 V |
+>
+> With 47 Ω the edge at an IDS camera is at most 0.3 ns later. The EVK4 input current is
+> 3.7–4.6 mA (2.7 mA needed). A wrong J22 setting (3.3 V into an IDS camera) gives 3.20–3.40 V
+> steady and 4.43 V peak at the 1.8 V pin. The
+> fast and typical output resistances of the buffers are estimates, not data-sheet values: measure the overshoot
+> at the camera end ([first-board check 3](#first-board-checks)).
 >
 > Specify the **fixed 1.8 V** part (e.g. NCP718BSN180T1G, as ordered, or NCP718ASN180T1G; ±2 % at VOUT ≥ 1.8 V). A 1.65 V or
 > 1.7 V version eats into the camera's already modest input margin.
@@ -877,8 +893,9 @@ of that on average. The Pico's 3V3_OUT pin can supply it (Raspberry Pi recommend
 ### +3.3 V
 
 From the Pico's 3V3_OUT (pin 36), on the +3V3 island of In2.Cu. Loads: R24, the 10 k pull-up on
-`PIXRST_GATE` (0.33 mA while the gate is low); U20 VIN1 and MODE, with C24 (1 µF) at U20, and through
-U20 the camera buffers when J22 is fitted; R35 (the J22 pull-up); U21–U23 and their LEDs D4–D6
+`PIXRST_GATE` (0.33 mA while the gate is low); U20 VIN2 and MODE, with C24 (1 µF) at U20, and through
+U20 the camera buffers when J22 is fitted; R34 (the pull-up of U20 PR1; it carries current only
+while J22 is fitted); U21–U23 and their LEDs D4–D6
 (about 2 mA for each lit LED).
 
 **Power-up order.** Because U9 runs from +5 V, the 1.8 V rail can come up a millisecond or so before
@@ -899,23 +916,29 @@ directly if the pad is a through-hole pad. The outlines are in `tools/rev2/pcb_e
 | Island | Where | Copper area | Taps | Parts on it |
 |---|---|---|---|---|
 | +5V | the left and centre of the board: Pico, bottom left (U16), the logic between the Pico and the output drivers | 6443 mm² | 13 vias, J15.2 | Pico VSYS, U16, U7, U8, U10, U9 (input), C4–C6, R2, R3, R36, TP5 |
-| +3V3 | a band along the top edge from J15.5 to x = 265, wider under U21–U23 | 1347 mm² | 8 vias, J15.5 | R24, R35, U20 (VIN1, MODE), C24, U21–U23, TP6 |
-| +1V8 | a patch under the U9 output track | 11 mm² | 1 via | U9 output, C7, U20 (VIN2), TP7 (connected by the top-layer track; the via ties the patch to it) |
-| +VCAM | under U1–U6 and all camera lines down to J1–J6, with a 4.5 mm corridor up to U20 | 3138 mm² | 5 vias | U20 (VOUT), C23, U1–U6, C1–C3, D1, TP8 |
-| +12V | under U13 and U17, with a lobe down to C22 / U19 | 684 mm² | 7 vias | U13, U19, U17 output, C9, C10, C17, C21, C22, R12, R16, TP4 |
-| GND | the rest of the layer (mainly the right side, under the output block) | 2985 mm² | – | – |
+| +3V3 | a band along the top edge from J15.5 to x = 265, wider under U21–U23. The tab at the J15.5 socket pad is 3.1 mm wide (x 141.0–144.1). | 1345 mm² | 7 vias, J15.5 | R24, R34, U20 (VIN2, MODE), C24, U21–U23, TP6 |
+| +1V8 | from the U9 output tap via, below U20, to a second via east of U20 | 24 mm² | 2 vias | U9 output, C7 and TP7 at the first via; U20 (VIN1) at the second via. +1V8 reaches U20 through the island, not through a top-layer track. |
+| +VCAM | under U1–U6 and all camera lines down to J1–J6, with a 4.5 mm corridor up to U20 | 3136 mm² | 5 vias | U20 (VOUT), C23, R51, U1–U6, C1–C3, D1, TP8 |
+| +12V | under U13 and U17, with a lobe down to C22 / U19 | 683 mm² | 7 vias | U13, U19, U17 output, C9, C10, C17, C21, C22, R12, R16, TP4 |
+| GND | the rest of the layer (mainly the right side, under the output block) | 2974 mm² | – | – |
+
+The areas and the tap counts are from `tools/rev2/plane_check.py` (`tools/rev2/work/final/plane.txt`
+after a build).
 
 - **Gaps.** Two islands are 0.5 mm apart. The GND fill stays 0.25 mm from the islands.
 - **Fed by tracks, not by the plane:** the +12V supply of U18, C20 and R21 (the power-good
   window). Their two +12V vias, at (225.5, 82.4) and (221.4, 73.3), pass through the +5V island
-  with clearance; `plane_check.py` lists them.
+  with clearance; `plane_check.py` lists them. With these two the board has 9 +12V vias.
 - **Reference planes of B.Cu tracks** (`tools/rev2/plane_check.py`). B.Cu tracks have In2.Cu
-  0.21 mm above them. All B.Cu camera copper (`Sync1`–`Sync6`, `TDRSTN2`–`TDRSTN6`, `Trigger6`)
-  is over the +VCAM island from the via to the header pin: no camera line crosses a gap.
+  0.21 mm above them. Every B.Cu camera track (Sync, Trigger, TDRSTN)
+  is over the +VCAM island: no camera line crosses a gap.
   `PWM_1MHz` crosses one gap at (195.0, 86.3) and `PWM_TRIG_TAP` one at (227.6, 74.6), both from
-  +5V to +VCAM. `PIXRST_GATE` and `PWM_Trig` stay over +5V. The other B.Cu tracks that change
-  island carry DC or LED signals (`LASER_PWR_OK`, `CH2_SENSE`, `SYNC_SENSE`, the D2 cathode
-  link, `+12V`).
+  +5V to +VCAM. `PIXRST_GATE` and `PWM_Trig` stay over +5V. `CH2_SENSE` runs over GND fill
+  only. `SYNC_SENSE` crosses two island gaps, at (256.7, 86.8) and (260.0, 46.5). It carries the
+  External Sync pulse to U23; the monostable input is not timing-critical. The other B.Cu
+  tracks that change island carry DC or LED signals (`LASER_PWR_OK`, the D2 cathode link,
+  `+12V`). The plane check tests the zone outlines. DRC (0 unconnected items) covers the fill
+  connections.
 - **Effect of a gap crossing** (`rev2_sim.py`, case 5). Over the gap the track impedance goes
   from 54 Ω to about 79 Ω (0.3 mm track) or from 41 Ω to 69 Ω (0.5 mm track) for about 1 mm,
   because the B.Cu GND fill beside the track and the In1 plane carry the return current there.
@@ -939,20 +962,20 @@ Each camera signal passes through two inversions, so it arrives the right way up
 dedicated gate per camera.
 
 **Sync (1 MHz)**
-`GP15` (clk_gpout1) → U1.2 (74LVC1G04) → `SYNC_N` → U2 ×6 (SN74LVC04AD hex) → `Sync1..6` → J1–J6 pin 5
+`GP15` (clk_gpout1) → U1.2 (74LVC1G04) → `SYNC_N` → U2 ×6 (SN74LVC04AD hex) → `Sync1..6` → R52–R57 (47 Ω) → `Sync1_C..6_C` → J1–J6 pin 5
 (U1 and U2 on `+VCAM`)
 (TP3 taps `PWM_1MHz`). On the board, `PWM_1MHz` is 83.7 mm of 0.5 mm track, nearly all on B.Cu,
 with 1 via. `PWM_1MHz` and `SYNC_N` stay at least 21.70 mm from the laser pulse lanes. Gaps of
-`PWM_1MHz` (edge to edge on one layer, tracks and vias; `tools/eurocard/netgap.py`): 0.65 mm to
-the Sync6 via at (197.4, 91.5), 1.43 mm to Sync5 and 1.90 mm to `SYNC_N`, which carry the same
-1 MHz sync; 3.55 mm to `TDRSTN1`, the nearest net that does not carry it; 0.232 mm to a GND via
-on In2.Cu at (194.84, 87.25), 0.888 mm to a +1V8 track, 2.03 mm to a +5V via. Counting pads too:
-0.28 mm to U1's unused pin 1 (next to its input, pin 2), 0.872 mm to C1.1 (+1V8), 1.58 mm from
-the J14.20 pad to a `PWM_Trig` track and 2.20 mm to J20.1 (`CLK_SEL_JMP`).
+`PWM_1MHz` (edge to edge on one layer, tracks and vias; `tools/eurocard/netgap.py`): 1.90 mm to
+`SYNC_N`, which carries the same 1 MHz sync; 0.232 mm to a GND via
+on In2.Cu at (194.84, 87.25), 0.888 mm to a +VCAM track (the buffer supply copper), 2.03 mm to a +5V via. Counting pads too:
+0.28 mm to U1's unused pin 1 (next to its input, pin 2), 0.872 mm to C1.1 (+VCAM), 1.58 mm from
+the J14.20 pad to a `PWM_Trig` track and 2.20 mm to J20.1 (`CLK_SEL_JMP`). The gaps from
+`PWM_1MHz` to the camera lines were not measured again after the new camera routing.
 
 **Trigger**
 `GP11` → J10.3 → *[J10 jumper]* → `PWM_TRIG_TAP` → U5.2 → `TRIG_N` → U6 ×6 → `Trigger1..6` →
-J1–J6 pin 4. `PWM_TRIG_TAP` also drives U19.2, the [External Sync Out](#external-sync-out-j12)
+R58–R63 (47 Ω) → `Trigger1_C..6_C` → J1–J6 pin 4. `PWM_TRIG_TAP` also drives U19.2, the [External Sync Out](#external-sync-out-j12)
 channel to J12.
 
 ### Trigger source (J10)
@@ -998,7 +1021,7 @@ selected GPIO by only 330 µA.
 ### Pixel reset (Pico only)
 
 `GP16` → `PIXRST_GATE` → U3.1 and U3.2 (**74LVC1G00** NAND, on `+VCAM`, both inputs joined) →
-`PIXRST_N` → U4 ×6 (`+VCAM`) → `TDRSTN1..6` → J1–J6 pin 3. R24 (10 k) pulls `PIXRST_GATE` up to +3V3.
+`PIXRST_N` → U4 ×6 (`+VCAM`) → `TDRSTN1..6` → R64–R69 (47 Ω) → `TDRSTN1_C..6_C` → J1–J6 pin 3. R24 (10 k) pulls `PIXRST_GATE` up to +3V3.
 
 **The Pico is the only source.** With both inputs on `PIXRST_GATE`, U3 is an inverter, so after U4
 the cameras get TDRSTN = `PIXRST_GATE` (active low at the camera: `0 = pixels in reset`). The gate
@@ -1158,9 +1181,9 @@ trigger lines are high, and low while `PWM_TRIG_TAP` is low, including with no s
 
   | Path | Rising edge | Falling edge |
   |---|---|---|
-  | GP11 → J12 (U19 + R30/J21 + ~4 ns of GP11 edge to U19's threshold) | 10.2 / 21.6 / 33.7 ns | 9.7 / 20.9 / 32.2 ns |
-  | GP11 → Trigger1–6 at J1–J6 pin 4 (U5 + U6, mean of the six) | 6.7 / 10.8 / 19.1 ns | 7.2 / 11.1 / 19.6 ns |
-  | **J12 minus camera trigger** | **−8.2 / +10.8 / +26.5 ns** | **−9.1 / +9.8 / +24.2 ns** |
+  | GP11 → J12 (U19 + R30/J21 + ~4 ns of GP11 edge to U19's threshold) | 10.3 / 21.5 / 33.7 ns | 9.7 / 20.9 / 32.2 ns |
+  | GP11 → Trigger1–6 at J1–J6 pin 4 (U5 + U6, mean of the six) | 7.0 / 11.0 / 19.4 ns | 7.4 / 11.4 / 19.9 ns |
+  | **J12 minus camera trigger** | **−8.5 / +10.5 / +26.3 ns** | **−9.4 / +9.5 / +24.1 ns** |
 
   The offset limits are not the difference of the rows above: both paths share the GP11 corner, and
   the extremes pair a fast U19 with slow U5/U6 or the reverse. The range is wide because U19
@@ -1168,14 +1191,15 @@ trigger lines are high, and low while `PWM_TRIG_TAP` is low, including with no s
   independently. The typical value uses U19's 17 ns, which TI specifies at TJ = 125 °C; TI's 25 °C
   curves read 16–16.5 ns rising and 18–19 ns falling, so the typical offset may be about 1 ns less
   on the rising edge and up to 2 ns more on the falling edge. With an older-die U19 (13 ns typical)
-  the typical offset is +6.9 ns rising, +5.7 ns falling. If the GP11 pad sits at its datasheet
+  the typical offset is +6.6 ns rising, +5.4 ns falling. If the GP11 pad sits at its datasheet
   VOH/VOL limit, J12 can reach 38.6 ns (39 ns on the 126 mm layout, where the offset then spanned
   −10.9 to +31 ns; that span was not re-computed). On one board the offset is fixed: measured once ([first-board check 4](#first-board-checks)),
   it holds to about 0.5 ns, plus 1–2 ns over temperature (estimates). It depends on the jumpers:
   J10 on 1-2 adds about +0.83 ns (rising edge; −0.20 ns falling), and J21 in Hi-Z mode about
   +0.65 ns rising / +0.63 ns falling, so measure each
-  setting you use. The six trigger lines are length-matched from U6's outputs to the headers
-  (42.46–43.60 mm; the `TRIG_N` fan-out to U6's inputs is not matched) and arrive within
+  setting you use. The six trigger lines are length-matched from U6's outputs to the series
+  resistors R58–R63 (45.144 mm each, then 9.77 mm from each resistor to its header pin; the
+  `TRIG_N` fan-out to U6's inputs is not matched) and arrive within
   0.04–0.06 ns of each other in the simulation (up to 0.3 ns on the 126 mm layout).
 
 - **Duty and loads.** J12 is high at most 50 % of the time, the firmware's MARKERWIDTH limit (67 %
@@ -1184,7 +1208,7 @@ trigger lines are high, and low while `PWM_TRIG_TAP` is low, including with no s
 - **Layout.** J21, R31 and R32 copy the Laser 1 block 40 mm lower, on J12's centre-pin row, and
   U19, C21, C22 and R30 copy U13's layout. These parts are in the rigid output block (see the
   laser [Output mode](#output-mode) layout). The +12V and `LASER_PWR_OK` runs to U19 are autorouted
-  (`LASER_PWR_OK` is 86.4 mm of track). The silkscreen reads `EXT SYNC OUT`, with `50Ω` and
+  (`LASER_PWR_OK` has 88.2 mm of track on B.Cu). The silkscreen reads `EXT SYNC OUT`, with `50Ω` and
   `HiZ` beside J21. The `J12-TRIG OFFSET (MEASURED)` field (boxes for RISE and FALL in ns, and the
   J10/J21 setting) is in the left area of the board, below TP3 (no longer below J12). It takes the
   hand-written result of [first-board check 4](#first-board-checks).
@@ -1239,8 +1263,8 @@ the cameras are undefined. That is a nuisance, not a hazard: fit the Pico before
 
 ## Status LEDs
 
-Six LEDs on the top side, in a row 4.8 mm below the top edge (y = 34.8), each with its name on
-the silkscreen above it. From left to right:
+Six LEDs on the top side, each with its name on the silkscreen. D2–D6 are in a row 4.8 mm below
+the top edge (y = 34.8). D1 stands vertical at (235.5, 35.7).
 
 | LED | Silkscreen | Colour | Lit when | Circuit |
 |---|---|---|---|---|
@@ -1267,11 +1291,13 @@ the camera trigger (the marker, or CH1 with J10 on 1-2), and is dark without the
 because U19 is then disabled.
 
 The trigger input of each monostable is a compensated divider on the 12 V driver output:
-10 kΩ with 12 pF (C0G) to the pin, 4.7 kΩ with 18 pF (C0G) to GND (R39/C31/R40/C32 for Laser 1,
-R43/C33/R44/C34 for Laser 2, R47/C35/R48/C36 for External Sync Out). The pin gets 3.7–3.9 V
-(threshold 2.0 V, input rated to 5.5 V). The capacitors make the divider ratio the same for fast
-edges as for DC, so the 50 mm track to U23 does not slow the edge: a 10 ns pulse holds the pin
-above 2.0 V for 9 ns or more, and the monostable needs 3 ns (`rev2_sim.py`, case 4). Keep the
+10 kΩ with 12 pF (C0G) to the pin, 4.7 kΩ with 22 pF (C0G) to GND (R39/C31/R40/C32 for Laser 1,
+R43/C33/R44/C34 for Laser 2, R47/C35/R48/C36 for External Sync Out). The settled level at the pin
+is 3.18–3.76 V and the highest peak is 4.14 V
+(threshold 2.0 V, input rated to 5.5 V). The capacitors keep the divider ratio for fast
+edges near the ratio for DC, so the track to U23 (about 56 mm: 49.0 mm on B.Cu and 6.9 mm on
+F.Cu) does not slow the edge: a 10 ns pulse holds the pin
+above 2.0 V for 8.7 ns or more, and the monostable needs 3 ns (`rev2_sim.py`, case 4). Keep the
 ratio C_top / C_bot near R_bot / R_top if you change a value; the input and track add 6–10 pF
 to C_bot. The divider takes 0.8 mA from the driver and lowers the output level by 2.4 mV at most
 (see [Amplitude budget](#amplitude-budget)).
@@ -1304,9 +1330,19 @@ I/O connector of the **IDS uEye UE-39B0XCP-E** (IDS part 1011378) for pins 1–8
 | 9, 10 | NC | (no counterpart) |
 
 Source: IDS UE-39B0XCP-E-GL datasheet, rev 2026-01-09. **All three signals are 1.8 V** (J22 open), driven by
-U2/U4/U6 on `+VCAM`. Delivered levels: VOH ≥ 1.5 V and VOL ≤ 0.2 V at light load over
+U2/U4/U6 on `+VCAM`, each through its 47 Ω series resistor (R52–R69). Delivered levels: VOH ≥ 1.5 V and VOL ≤ 0.2 V at light load over
 temperature, against a 1.8 V CMOS input's typical VIH of ~1.17–1.26 V and VIL of ~0.63 V. IDS
 doesn't publish the camera's own thresholds or input pull, so confirm on the bench.
+
+**Series resistors R52–R69 at the headers.** The resistors stand in the 2 mm gaps between the
+courtyards of the camera headers, in one column for each gap. The column is at
+x = (pin 1 of the header on its right) − 4.73 mm. In each column, from the top (board
+coordinates, mm): the Trigger resistor of the header on the left (`Trigger(k−1)`) at y 108.0,
+the TDRSTN resistor of the header on the right (`TDRSTN(k)`) at y 113.9, and its Sync resistor
+(`Sync(k)`) at y 117.88. The stubs from the resistor to the header pin are on F.Cu and are the
+same for all six headers: Sync 4.43 mm, TDRSTN 5.09 mm, Trigger 9.77 mm. The resistor references
+are not on the silkscreen. For hand assembly, solder R52–R69 before the headers J1–J6: the
+header bodies then stand on both sides of each resistor column.
 
 > **Pins 1, 6 and 8 are unconnected on the board** (so are 9 and 10): bare plated holes with no
 > copper to any net, so the board can never short the camera's own supplies (pin 8 is its USB 5 V
@@ -1320,9 +1356,9 @@ doesn't publish the camera's own thresholds or input pull, so confirm on the ben
 
 **Prophesee EVK4 (Rev 2).** With J22 fitted the same headers drive EVK4 cameras at 3.3 V through
 the harness of [docs/EVK4_HARNESS.md](docs/EVK4_HARNESS.md): pin 5 (Sync) to SYNC_IN_P, pin 4
-(Trigger) to TRIG_IN_P, pins 7 and 2 (GND) to SYNC_IN_N and TRIG_IN_N, each signal through a 68 Ω
-resistor at the board end. Pin 3 (TDRSTN) is not used: the EVK4 has no pixel-reset input. The EVK4
-inputs are opto-coupled (2.5–5.5 V high, about 5 mA), which is why they need 3.3 V and not 1.8 V.
+(Trigger) to TRIG_IN_P, pins 7 and 2 (GND) to SYNC_IN_N and TRIG_IN_N. The harness has no
+resistors: the series resistors are on the board (R52–R63). Pin 3 (TDRSTN) is not used: the EVK4 has no pixel-reset input. The EVK4
+inputs are opto-coupled (2.5–5.5 V high; 3.7–4.6 mA for each input in the simulation), which is why they need 3.3 V and not 1.8 V.
 Do not use IDS and EVK4 cameras together: J22 sets the level of all six ports.
 
 ### BNCs (50 Ω)
@@ -1358,7 +1394,7 @@ USB port.
 | J21 | 1×3 vertical, External Sync Out mode (pin 1 at the top) | 1 `EXT_SYNC_DRIVE` · 2 `EXT_SYNC_OUT` (J12) · 3 `EXT_SYNC_TERM` → R32 |
 | TP3 | 1×2 right-angle, left edge below the Pico | 1 `PWM_1MHz` · 2 GND |
 | J20 | 1×2 vertical, clock jumper, right of the Pico's GPIO end, below the J14 row (pin 1 at the bottom) | 1 `CLK_SEL_JMP` (R29 1 kΩ to GP10) · 2 GND. Shunt = 300 MHz, open = 150 MHz ([clock jumper](#clock-jumper-j20-300-mhz-overclock)) |
-| J22 | 1×2 vertical, camera I/O level, top centre (pin 1 at the top) | 1 +3V3 through R35 (1 kΩ) · 2 `VCAM_SEL` (U20 PR1, R34 10 kΩ to GND). Open = 1.8 V, shunt = 3.3 V ([+VCAM](#vcam-the-camera-signal-supply)) |
+| J22 | 1×2 vertical, camera I/O level, top centre (pin 1 at the top) | 1 GND · 2 through R35 (1 kΩ) to `VCAM_SEL` (U20 PR1, R34 10 kΩ to +3V3). Open = 1.8 V, shunt = 3.3 V ([+VCAM](#vcam-the-camera-signal-supply)) |
 | TP4–TP9 | bare test pads | +12V, +5V, +3V3, +1V8, +VCAM, GND ([Rail test pads](#rail-test-pads)) |
 
 The camera trigger leaves the board on J12, and J11 is the only user interlock. TP3 sits at the left
@@ -1414,9 +1450,11 @@ Ordered by what would bite hardest.
    If it does not, VBUS_PD stays at 5 V: lasers off, logic still running.
 3. **Bench-confirm the camera I/O before plugging in six cameras.** First do check 7 (`+VCAM`).
    Then, with a fast probe and a short ground at the camera end of the harness, look at the
-   overshoot of each edge: the simulation predicts up to 3.0 V and −1.2 V on a 1.8 V line with no
-   series resistor ([+VCAM](#vcam-the-camera-signal-supply)). If you see more than the camera
-   allows, fit 47 Ω in series with each signal wire at the board end of the harness.
+   overshoot of each edge. The series resistors (R52–R69, 47 Ω) are on the board, so this check
+   is a measurement only: there is no resistor to fit. The simulation predicts a peak of 2.18 V
+   and −0.34 V after a falling edge on a 1.8 V line
+   ([+VCAM](#vcam-the-camera-signal-supply)). Compare the measured values with what the camera
+   allows.
    IDS documents the pins as 1.8 V
    but publishes no VIH/VIL, input pull or absolute maximum. With one camera, measure TDRSTN,
    Trigger and Sync at the camera end of the harness, and confirm pin 5 is not being driven by the
@@ -1437,7 +1475,7 @@ Ordered by what would bite hardest.
    alone (J17 unplugged), J12 must stay at 0 V. With
    `PIXGATE 0`, TDRSTN at every camera port must stay high (no other source of pixel reset).
 5. **Before the first USB-C PD power-up, check the fine-pitch parts for solder bridges.** J17's pads are
-   as little as 0.27 mm apart and U16's and U17's leads 0.65 mm pitch, on lead-free HASL. With no power applied, check
+   as little as 0.27 mm apart, U20's leads have 0.5 mm pitch (SOT-583) and U16's and U17's leads 0.65 mm pitch, on lead-free HASL. Look at U20 for bridges between adjacent pins (check 7 measures its function). With no power applied, check
    that VBUS_PD is not shorted to GND, CC1 or CC2 (at J17 and U14 pins), and that +5V_PD and +5V are
    not shorted to GND (at U16). U14's CC pins are rated to 32 V, but a VBUS-to-CC bridge would put
    VBUS_PD on the cable's CC line. U14 pins 1 (VHV) and 8 (VBUS) sit directly on VBUS_PD, so also
@@ -1455,12 +1493,13 @@ Ordered by what would bite hardest.
    [Clock jumper](#clock-jumper-j20-300-mhz-overclock) for each Pico before you rely on it.
 
 7. **Camera I/O level `+VCAM` (Rev 2), before any camera is connected.** With the Pico fitted and
-   J22 **open**: TP8 (`VCAM`) must be 1.76–1.84 V and D1 dark; TP7 (`1V8`) the same; TP6 (`3V3`)
-   3.2–3.4 V. Measure U20 pin 4 (PR1, also J22 pin 2): 0 V. Then fit J22: TP8 must go to TP6 less
-   a few mV, D1 must light, PR1 must be about 3.0 V. Remove J22: TP8 must return to 1.8 V. Also
-   check TP8 with the Pico removed and J17 powered: 1.8 V. If TP8 is not 1.8 V with J22 open,
-   do not connect an IDS camera: check R34 (10 kΩ, PR1 to GND) and U20 for solder bridges
-   (0.5 mm pitch).
+   J22 **open**, measure TP8 (`VCAM`) with a meter: it must be 1.76–1.84 V, and D1 must be dark.
+   TP7 (`1V8`) must be the same. TP6 (`3V3`) must be 3.2–3.4 V. Measure U20 pin 4 (PR1): it must
+   be at the level of TP6 (R34 pulls it up). Then fit J22: TP8 must go to TP6 less
+   a few mV, D1 must light, PR1 must be about 0.3 V. Remove J22: TP8 must return to 1.8 V.
+   If TP8 is not 1.8 V with J22 open,
+   do not connect an IDS camera: check R34 (10 kΩ, PR1 to +3V3) and U20 for solder bridges
+   (0.5 mm pitch). Do this measurement again each time before you connect an IDS camera.
 8. **Status LEDs (Rev 2).** With J17 on a 15 V charger, D2 (`12V OK`) must light when `LASER_PWR_OK`
    goes high, and stay dark on a 5 V-only supply. D3 (`ARMED`) must light only with all three of:
    `ARM` sent, J11 on 1-2, D2 lit. Check each one alone: `DISARM`, J11 on 2-3, J17 unplugged must
@@ -1471,6 +1510,7 @@ Ordered by what would bite hardest.
 9. **EVK4 harness (Rev 2), if you use EVK4 cameras.** Do the continuity table and the powered
    check of [docs/EVK4_HARNESS.md](docs/EVK4_HARNESS.md) before you connect a camera. With the
    camera connected, the level between SYNC_IN_P and SYNC_IN_N must be 2.5 V or more when high.
+   The harness has no resistors: the series resistors are on the board (R52–R63).
 
 **Not an open item: Wi-Fi / Bluetooth.** The firmware doesn't use the radio; the Pico 2 W is fitted
 only because it is easier to buy than the plain Pico 2. The In1 GND plane and the In2 +5V and +3V3 islands run
@@ -1489,8 +1529,9 @@ antenna keep-out is needed.
   option on 4-layer boards) is not needed. On the JLC order form choose *Tented*, not *Plugged*.
 - **No controlled impedance is needed.** The longest critical run (U13 to J7/J8 through the
   output-mode block, ~50 mm, Z0 ≈ 55 Ω; unchanged in the EuroCard re-layout) is electrically short
-  compared with the driver's edges. The camera lines are 42–83 mm, length-matched in each group
-  from the buffer output to the header. Order *Impedance control: No*.
+  compared with the driver's edges. The camera lines are 45–78 mm from the buffer output to the
+  series resistor, equal in each group, and 4.4–9.8 mm from the resistor to the
+  header. Order *Impedance control: No*.
 - **Copper keep-outs:** zone copper stays 0.5 mm from the board edge on all four layers, and a
   3 mm-radius keep-out keeps all copper (including the In2 islands) away from each M3 hole, so a
   metal screw or standoff can't touch a plane in the hole wall. No parts are within 2.5 mm of the
@@ -1498,8 +1539,8 @@ antenna keep-out is needed.
   there still goes to 0.5 mm from the edge, under solder mask.
 - **Ground stitching:** edge-fence vias at 10 mm pitch (two gaps on the left edge where parts
   intrude), 1.5 mm in from the outline, plus a tap via at every SMD GND pad and at the pads of
-  each power rail. The Rev 2 board has 216 vias in total: GND 133, +5V 13, +3V3 8, +1V8 1, +VCAM 5,
-  +12V 9, signals 47 (`tools/rev2/stats.py`). The Rev 1 EuroCard board had 173; the interior
+  each power rail. The Rev 2 board has 223 vias in total: GND 133, +5V 13, +3V3 7, +1V8 2, +VCAM 5,
+  +12V 9, other nets 54 (`tools/rev2/stats.py`). The Rev 1 EuroCard board had 173; the interior
   stitching lattice was removed on 2026-11-07, and the count of 194 in earlier text was from
   before that.
 - **Silkscreen** shows the Pico outline, the `CONTROL / PROGRAM` and `POWER ONLY` port labels, and a
@@ -1507,7 +1548,7 @@ antenna keep-out is needed.
   pins). J10, J11, J18, J19, J20 and J21 are labelled as described above. Rev 2 adds the LED names
   (`12V OK`, `ARMED`, `3V3`, `L1`, `L2`, `SYNC`), `J22` with `CAMERA I/O LEVEL (J22)` /
   `OPEN = 1V8  IDS` / `SHUNT = 3V3  EVK4`, and the rail names at TP4–TP9. The reference
-  designators of the new parts are on F.Fab only (the row is too dense for silkscreen text),
+  designators of the new parts (R52–R69 included) are on F.Fab only, not on the silkscreen,
   except U9, C6 and C7. The
   `J12-TRIG OFFSET (MEASURED)` write-in field is in the left area, below TP3. Board text is 0.7 mm high or more (the new Rev 2 text is 0.8 mm).
 
@@ -1519,9 +1560,9 @@ flash the firmware, fit J10, wire the E-stop to J11), and enclosure notes. The J
 LCSC number on every line; through-hole parts sit in the placement file at their pad centre,
 because their footprint origins are on pin 1. The placement file was regenerated for the EuroCard
 layout: each part's JLC rotation and centre correction was carried to its new position, so check
-JLC's placement preview as before. Rev 2 adds 45 placed parts to the BOM and the placement file;
+JLC's placement preview as before. Rev 2 adds 64 placed parts to the BOM and the placement file (148 rows);
 the rows of the new polarised parts (D1–D6, Q1, Q2, U20–U23) have the KiCad rotation, not a
-rotation checked against JLC's footprints (see `fab/jlc/JLC_ORDER.md`). The back silkscreen carries JLC's
+rotation checked against JLC's footprints: check them in JLC's placement preview, or with `tools/jlc_cpl`, before an order (see `fab/jlc/JLC_ORDER.md`). R51–R69 are two-pad parts and need no rotation check. The back silkscreen carries JLC's
 `JLCJLCJLCJLC` order-number placeholder.
 
 ### Hot-plate assembly
@@ -1533,25 +1574,30 @@ The layout also lets you assemble the board by hand with a hot plate.
 - **Order:** apply paste and place all SMD parts, reflow on the plate, then hand-solder every
   through-hole part (sockets, headers, BNCs and J17's shell legs) with an iron. There are no parts on
   the bottom side, so the board lies flat on the plate. The exposed pads of U14 and U17 reflow on the
-  plate; this flow needs no hot air.
-- **Paste: use a stencil.** U16 and U17 have 0.65 mm pitch (pads 0.35 and 0.40 mm wide, so gaps of
+  plate; this flow needs no hot air. If you solder with an iron only, solder R52–R69 before the
+  camera headers J1–J6: the header bodies then stand on both sides of each resistor column.
+- **Paste: use a stencil.** U20 has 0.5 mm pitch (SOT-583, pads 0.3 mm wide). U16 and U17 have 0.65 mm pitch (pads 0.35 and 0.40 mm wide, so gaps of
   0.30 and 0.25 mm), and J17's pads are as little as 0.27 mm apart. Paste from a syringe is hard to meter
   for these gaps. Order a steel stencil, 0.12 mm thick, cut from
   `fab/gerbers/PiEBV_Pico-F_Paste.gbr` (apertures equal to the pads; at 0.12 mm every U16/U17 lead
-  aperture has an area ratio of 1.09 or more, above the 0.66 minimum of IPC-7525), and use type 4
+  aperture has an area ratio of 1.09 or more, above the 0.66 minimum of IPC-7525; the area ratio of the U20 apertures was not calculated), and use type 4
   paste. Print the whole board in one pass. The exposed pads get reduced paste so that solder does not
   wick into their thermal vias: U14's paste is an "H" that keeps its two via holes clear,
   and U17's is four small windows (they still cover about 35 % of its via holes).
   Without a stencil, dispense paste only on the exposed pads of U14 and U17 and on the coarser
-  parts, reflow, then drag-solder the U16, U17 and J17 leads with an iron and flux, and remove
+  parts, reflow, then drag-solder the U16, U17, U20 and J17 leads with an iron and flux, and remove
   bridges with braid.
-- **Spacing for tweezers:** every pair of parts is at least 0.5 mm apart, courtyard to courtyard
-  (pads at least 1 mm apart). Five pairs in the carried output block stay as designed: U13–C9 and
+- **Spacing for tweezers:** the Rev 1 layout put the parts at least 0.5 mm apart, courtyard to courtyard
+  (pads at least 1 mm apart), with these exceptions. Five pairs in the carried output block stay as designed: U13–C9 and
   U19–C21 (0.03 mm, the VDD bypass capacitors right at the pins), and J18–R27, J19–R28 and J21–R32
   (0.23 mm). Two buck pairs keep their hand spacing for the shortest hot loop: C13–L1 (0.08 mm) and
-  C12–U15 (0.36 mm). The parts around U17/U18, C14/C15/U16 and U9 are spread out around their ICs.
-- **Thermal relief** on every plane-connected pad (0.5 mm gap, 0.5 mm spokes), so you can
-  hand-solder the through-hole GND pins.
+  C12–U15 (0.36 mm). The parts around U17/U18 and C14/C15/U16 are spread out around their ICs.
+  The Rev 2 additions (the status LED cells, the sense dividers, the resistor columns between
+  the camera headers) are closer than 0.5 mm in places. The smallest courtyard gap is about
+  0.15 mm (C31–C32). DRC shows no courtyard overlap.
+- **Thermal relief** on the plane-connected pads (0.5 mm gap, 0.5 mm spokes), so you can
+  hand-solder the through-hole GND pins. Exception: pins 1 and 4 (GND) of U21, U22 and U23 have
+  a solid zone connection.
 
 ---
 
@@ -1560,17 +1606,17 @@ The layout also lets you assemble the board by hand with a hot plate.
 | Path | What |
 |---|---|
 | `PiEBV_Pico.kicad_sch` | schematic |
-| `PiEBV_Pico.kicad_pcb` | board, Rev 2. Copper fingerprint (`tools/rev2/stats.py`: SHA-256 of the sorted track and via lines, first 16 digits) `@@FP@@`: 1149 segments / 2884.6 mm / 216 vias / 0 duplicates. The Rev 1 EuroCard board (`4381eab`) gives `27ee9924ec2199bf` with this tool: 1015 segments / 2489.2 mm / 173 vias. (Rev 1 text quoted `98a60c3b4332d6e9` from a tool `fp.py` that is not in the repository, and 194 vias from before the stitching lattice was removed.) |
+| `PiEBV_Pico.kicad_pcb` | board, Rev 2. Copper fingerprint (`tools/rev2/stats.py`: SHA-256 of the sorted track and via lines, first 16 digits) `e49b4e784743a369`: 1496 segments / 2998.5 mm / 223 vias / 0 duplicates. The Rev 1 EuroCard board (`4381eab`) gives `27ee9924ec2199bf` with this tool: 1015 segments / 2489.2 mm / 173 vias. (Rev 1 text quoted `98a60c3b4332d6e9` from a tool `fp.py` that is not in the repository, and 194 vias from before the stitching lattice was removed.) |
 | `fab/PiEBV_Pico_BOM.csv` | master parts list with the design-constraint NOTE rows (hand-maintained; KiCad's `export_bom` ignores DNP attributes). The JLC BOM in `fab/jlc/` is derived from it. |
-| `fab/jlc/PiEBV_Pico_JLC_BOM.csv`, `fab/jlc/PiEBV_Pico_JLC_CPL.csv`, `fab/jlc/JLC_ORDER.md` | JLCPCB full-assembly upload files (all 129 placed parts, LCSC numbers) and the order checklist |
-| `fab/gerbers/`, `fab/PiEBV_Pico_Gerbers.zip` | gerbers, Excellon drill files (plated and unplated), drill maps and job file of the Rev 2 board, from the board's stored plot settings, made by `tools/rev2/fab.sh`. Zip: 14 files (no drill maps), sha256 `@@ZIP@@`. The script writes fixed time stamps into the zip, so the same board gives the same zip. Note on Rev 1: the fab package and the placement file in the repository before Rev 2 were exported before the last Rev 1 layout change (C6 moved by 2.2 mm, stitching vias removed) and did not match the Rev 1 board. |
+| `fab/jlc/PiEBV_Pico_JLC_BOM.csv`, `fab/jlc/PiEBV_Pico_JLC_CPL.csv`, `fab/jlc/JLC_ORDER.md` | JLCPCB full-assembly upload files (all 148 placed parts, LCSC numbers) and the order checklist |
+| `fab/gerbers/`, `fab/PiEBV_Pico_Gerbers.zip` | gerbers, Excellon drill files (plated and unplated), drill maps and job file of the Rev 2 board, from the board's stored plot settings, made by `tools/rev2/fab.sh`. Zip: 14 files (no drill maps). The committed zip has sha256 `4c5b152c9b420281c33568880f69b1b4163a1f90f33c0b8130f683e3ed06fe90`. The gerber files contain their creation date, so a new run of `tools/rev2/fab.sh` gives another check sum for the same board. `fab.sh` does not write the board file. Note on Rev 1: the fab package and the placement file in the repository before Rev 2 were exported before the last Rev 1 layout change (C6 moved by 2.2 mm, stitching vias removed) and did not match the Rev 1 board. |
 | `libs/PiEBV_Local.kicad_sym` | Pico 2 W, UCC27524, LT3065 and TPS3700 symbols |
 | `libs/PiEBV_Local.pretty/` | `*_EdgeTrim` footprint variants (see below) and the J7/J8/J12 BNC footprint (see [BNCs](#bncs-50-ω)) |
 | `src/` | firmware: `board.h` (pin map), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `laser_gate.*` (CH1/CH2 gate, start-up hook), `protocol.*` (serial commands), `main.cpp` (arming, hold-off, watchdog) |
 | `platformio.ini` | build configuration: platform pinned to an exact commit; `pico2w` (default) and `pico2` builds |
 | `tools/timing_check/` | checks `pulse_timing.h` against a cycle-level PIO model (see its README) |
 | `tools/signal_sim/` | transmission-line simulation (ngspice, routed geometry) of the trigger, laser and J12 nets: R19 skew, J12 delay and offset, output levels (see its README) |
-| `tools/rev2/` | Rev 2 board tools: schematic edit, board build (`build.sh`), staircase clean-up, reference-plane check, fab export, placement file, documentation images (see its README) |
+| `tools/rev2/` | Rev 2 board tools: schematic edit, board build (`build.sh`: parts, camera routing, staircase clean-up, length trim, checks), reference-plane check, fab export, placement file, documentation images (see its README) |
 | `docs/EVK4_HARNESS.md`, `docs/img/` | EVK4 camera harness design; board images used in this document |
 
 **The `*_EdgeTrim` footprints.** J17's face is flush with the left edge, so its stock silkscreen
@@ -1584,7 +1630,7 @@ carries the stock package names for that reason. To trim the silkscreen on anoth
 connector, make a variant the same way rather than editing the footprint on the board, or you will
 trade a `silk_edge_clearance` warning for a `lib_footprint_mismatch` one.
 
-**Re-running the checks.** `bash tools/rev2/build.sh` makes the board again and runs all checks. DRC alone: from Pcbnew, or
+**Re-running the checks.** `bash tools/rev2/build.sh` makes the board again and runs all checks. It needs KiCad 10 with its Python (with `shapely`), Node, and KiCadRoutingTools at commit 8759686 (set `KRT_DIR` and `KRT_PY`; setup as in `tools/eurocard/README.md`). DRC alone: from Pcbnew, or
 `kicad-cli pcb drc --schematic-parity --refill-zones PiEBV_Pico.kicad_pcb`; ERC with
 `kicad-cli sch erc --format json PiEBV_Pico.kicad_sch`. The ERC JSON reports every coordinate and
 length at 1/100 of the true mm value despite declaring `"coordinate_units": "mm"`: multiply by 100.

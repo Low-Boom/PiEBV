@@ -21,17 +21,17 @@ This document specifies the wire harness that connects one camera port of the Pi
 
 | Board J1–J6 pin | Board signal | Harness | EVK4 pin | EVK4 signal |
 |---|---|---|---|---|
-| 5 | `Syncn`, 1 MHz | R1 (68 Ω) in series, pair 1 | 3 | SYNC_IN_P |
-| 7 | GND | pair 1 | 4 | SYNC_IN_N |
-| 4 | `Triggern` | R2 (68 Ω) in series, pair 2 | 5 | TRIG_IN_P |
-| 2 | GND | pair 2 | 6 | TRIG_IN_N |
+| 5 | `Syncn`, 1 MHz (through R52–R57, 47 Ω, on the board) | pair 1, signal wire | 3 | SYNC_IN_P |
+| 7 | GND | pair 1, return wire | 4 | SYNC_IN_N |
+| 4 | `Triggern` (through R58–R63, 47 Ω, on the board) | pair 2, signal wire | 5 | TRIG_IN_P |
+| 2 | GND | pair 2, return wire | 6 | TRIG_IN_N |
 | 3 | `TDRSTNn` | not connected | – | (no pixel-reset input) |
 | 1, 6, 8, 9, 10 | not connected on the board | not connected | 1, 2 | SYNC_OUT_P / SYNC_OUT_N: not connected |
 | – | – | – | 7–10 | not connected |
 
 The EVK4 inputs are opto-coupled. Each input is a pair of pins (P and N) with no connection to the
 camera ground, so each signal has its own return wire. The harness makes no connection between the
-board ground and the camera ground.
+board ground and the camera ground. The harness contains wires only: it has no resistors.
 
 ## Electrical data
 
@@ -41,9 +41,9 @@ reported it. The manual could not be opened from the machine that made this desi
 
 | Parameter | EVK4 (manual) | PiEBV Rev 2 at J1–J6, J22 fitted |
 |---|---|---|
-| Input high level, Sync In / Trigger In | 2.5 V to 5.5 V, 3.3 V typical | 2.78–3.04 V at the camera with R1/R2 = 68 Ω (simulation, 0.5 m and 2 m) |
+| Input high level, Sync In / Trigger In | 2.5 V to 5.5 V, 3.3 V typical | 2.83–3.11 V at the camera with the on-board 47 Ω resistors (simulation, 0.5 m and 2 m) |
 | Input low level | 0 V to 2 V | below 0.1 V |
-| Input current when high | 2.7 mA; 5.4 mA at 3.3 V | 3.6–4.4 mA with R1/R2 = 68 Ω |
+| Input current when high | 2.7 mA; 5.4 mA at 3.3 V | 3.7–4.6 mA with the on-board 47 Ω resistors (simulation) |
 | Sync clock | 1 MHz pulse train (camera in slave mode) | 1 MHz, 50 % duty |
 
 The simulation is `tools/signal_sim/rev2_sim.py`, case 2 and case 3
@@ -52,15 +52,22 @@ an LED. This model is an estimate that fits the two currents in the manual.
 
 ### Why the series resistors
 
-The cable is a transmission line of about 100 Ω. At 3.3 V the output resistance of the board's
-buffers (SN74LVC04A) is 15–50 Ω, which is less than the cable impedance. Without a series resistor
-the edge overshoots at the camera end: the simulation gives a peak of up to 5.7 V (the EVK4 limit is
-5.5 V), −3.0 V after a falling edge, and a fall back to 2.2 V after a rising edge (below the 2.5 V
-high level). With 68 Ω in each signal wire at the board end the peak is 3.5 V or less, the level
-after a falling edge is −0.5 V or more, and the lowest level after a rising edge is 2.58 V.
+The series resistors are on the board, not in the harness. R52–R57 (47 Ω) are in the Sync lines and
+R58–R63 (47 Ω) are in the Trigger lines, each between the buffer output and the pin of J1–J6.
 
-The resistors must be at the **board end** (within about 30 mm of P1). A resistor at the camera
-end does not stop the overshoot.
+The cable is a transmission line of about 105 Ω. The output resistance of the board's buffers
+(SN74LVC04A) is lower than the cable impedance. Without a series resistor the edge overshoots at
+the camera end. Simulated levels at the camera, with +VCAM = 3.3 V:
+
+| | No resistor | On-board 47 Ω |
+|---|---|---|
+| Steady high level | 2.98–3.32 V | 2.83–3.11 V (2.5 V needed) |
+| Input current when high | 4.2–5.3 mA | 3.7–4.6 mA (2.7 mA needed) |
+| Peak | 5.56 V (the EVK4 limit is 5.5 V) | 3.78 V |
+| Level after a falling edge | −2.92 V | −0.88 V |
+| Lowest level after a rising edge | 2.20 V (below the 2.5 V high level) | 2.69 V |
+
+Do not add resistors to the harness.
 
 ## Parts
 
@@ -68,24 +75,21 @@ end does not stop the overshoot.
 |---|---|---|---|
 | P1 | 2 × 5 receptacle, 2.54 mm pitch, crimp or solder contacts | 1 | It must go into the shrouded box header J1–J6 (LCSC C5665). If the housing has no polarising key, mark pin 1 on it. Pin 1 of J1–J6 has the square pad and the triangle mark on the header. |
 | P2 | Hirose ix Industrial plug, key B, 10 positions: `IX30G-B-10S-CV(7.0)` or `IX31G-B-10S-CV(7.0)` | 1 | Part numbers as given in the EVK4 manual for the mating plug (camera receptacle: `IX80G-B-10P`). `(7.0)` is the cable diameter that the plug accepts. Read the Hirose data sheet for the difference between IX30G and IX31G (termination type) before you order. |
-| R1, R2 | 68 Ω, 5 % or better, 0.125 W or more | 2 | Axial or SMD part in line with the signal wire, under heat-shrink sleeving. Dissipation is less than 2 mW. |
 | W1 | Cable with 2 twisted pairs and an overall shield, AWG 26–28, outer diameter 7 mm or less | 2 m or less | One pair for each signal with its return. Longer cables were not simulated. |
-| – | Heat-shrink sleeving | as necessary | Over R1, R2 and over the cable end at P1. |
+| – | Heat-shrink sleeving | as necessary | Over the cable end at P1. |
 
 ## Assembly
 
 1. Cut the cable to length (2 m or less). Remove 40 mm of the jacket at the P1 end and the length
    that the Hirose assembly instruction gives at the P2 end.
 2. P1 end: cut the shield back to the jacket and insulate it. Do not connect it to P1.
-3. P1 end: solder R1 in line with the signal wire of pair 1 and R2 in line with the signal wire
-   of pair 2. Keep each resistor within 30 mm of P1. Put heat-shrink sleeving on each resistor.
-4. P1 end: terminate the four wires: pair 1 signal (through R1) to pin 5, pair 1 return to pin 7,
-   pair 2 signal (through R2) to pin 4, pair 2 return to pin 2. Leave pins 1, 3, 6, 8, 9 and 10
+3. P1 end: terminate the four wires: pair 1 signal to pin 5, pair 1 return to pin 7,
+   pair 2 signal to pin 4, pair 2 return to pin 2. Leave pins 1, 3, 6, 8, 9 and 10
    empty.
-5. P2 end: terminate pair 1 signal to pin 3, pair 1 return to pin 4, pair 2 signal to pin 5 and
+4. P2 end: terminate pair 1 signal to pin 3, pair 1 return to pin 4, pair 2 signal to pin 5 and
    pair 2 return to pin 6. Clamp the shield in the plug shell as the Hirose instruction shows.
    Leave pins 1, 2 and 7–10 empty.
-6. Put a label on the harness: `EVK4 / 3V3 / J22 FITTED`.
+5. Put a label on the harness: `EVK4 / 3V3 / J22 FITTED`.
 
 ## Test before you connect a camera
 
@@ -93,8 +97,8 @@ Do these checks with a multimeter, with the harness disconnected at both ends.
 
 | Check | Result |
 |---|---|
-| P1.5 to P2.3 | 68 Ω ± 5 % (plus less than 1 Ω of wire) |
-| P1.4 to P2.5 | 68 Ω ± 5 % |
+| P1.5 to P2.3 | less than 1 Ω |
+| P1.4 to P2.5 | less than 1 Ω |
 | P1.7 to P2.4, P1.2 to P2.6 | less than 1 Ω |
 | P1.2 to P1.7 | open circuit (the two returns join only on the board) |
 | Each of P2.3, P2.4, P2.5, P2.6 to the P2 shell | open circuit |
@@ -121,6 +125,6 @@ pulse. Connect the camera after that.
    the Hirose ix Industrial data sheet.
 3. **Input model.** The 296 Ω + LED model is an estimate. On the first harness, measure the level
    between P2.3 and P2.4 with the camera connected: it must be 2.5 V or more when high. If it is
-   lower, decrease R1/R2 (47 Ω gives about 0.1 V more).
+   lower, the remedy is a lower value for R52–R63 on the board. The harness has no part to change.
 4. **Cable length.** 0.5 m and 2 m were simulated. For a longer cable, do the simulation again
    (`lengths_m` in `tools/signal_sim/devices.json`).

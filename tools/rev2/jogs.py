@@ -9,8 +9,8 @@ match) stay exactly as they were.
 
 For each staircase there are two ways to merge: both steps at the start of the middle run
 ("A") or both at its end ("B"). The tool draws A, unless the choice file lists the merge as
-"B" (drawn the other way) or "skip" (left as routed). The choice file is edited by hand: after
-a build, a merge that makes a DRC violation is set to "B", and to "skip" if B also fails.
+"B" (drawn the other way) or "skip" (left as routed). tools/rev2/jogfit.py fits the choice
+file: a merge that makes a DRC violation is set to "B", and to "skip" if B also fails.
 
 Not touched: meander combs (their arms alternate direction, so they are not staircases), the
 laser pulse lanes, the carried output-block copper, joints at a via, at a pad or at a branch.
