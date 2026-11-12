@@ -63,9 +63,18 @@ the camera end. Simulated levels at the camera, with +VCAM = 3.3 V:
 |---|---|---|
 | Steady high level | 2.98–3.32 V | 2.83–3.11 V (2.5 V needed) |
 | Input current when high | 4.2–5.3 mA | 3.7–4.6 mA (2.7 mA needed) |
-| Peak | 5.56 V (the EVK4 limit is 5.5 V) | 3.78 V |
-| Level after a falling edge | −2.92 V | −0.88 V |
+| Peak | 5.58 V (the EVK4 limit is 5.5 V) | 3.78 V |
+| Level after a falling edge | −2.94 V | −0.88 V |
 | Lowest level after a rising edge | 2.20 V (below the 2.5 V high level) | 2.69 V |
+
+The table is for one line (`Trigger3`). The simulation also runs each Sync line and each Trigger
+line with its own routed copper and resistor (`results_rev2.md`, "All camera lines"; fast corner,
+2 m cable):
+
+| Lines | Steady high level | Highest peak | Lowest level after a falling edge | Lowest level after a rising edge |
+|---|---|---|---|---|
+| `Sync1`–`Sync6` | 3.11 V | 3.82 V | −0.92 V | 2.96 V |
+| `Trigger1`–`Trigger6` | 3.11 V | 3.77 V | −0.88 V | 2.96 V |
 
 Do not add resistors to the harness.
 

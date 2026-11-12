@@ -545,7 +545,7 @@
     "typ": 0.05,
     "max": 0.1
    },
-   "mux_src": "TPS2116: 40 mohm class switch (KiCad library description 'Ron 40 mOhm'); 0.05 / 0.1 ohm used for 1.8-3.3 V, est"
+   "mux_src": "TPS2116 data sheet SLVSFG1A: on-resistance 41 mohm typ / 66 mohm max at 1.8 V, 40 / 59 mohm at 3.3 V. The model uses 0.05 / 0.1 ohm, which is above the data sheet maximum (an upper bound for the drop)"
   },
   "harness": {
    "est": true,

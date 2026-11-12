@@ -43,7 +43,7 @@ python3 signal_sim.py
 python3 rev2_sim.py
 ```
 
-The run takes about 1.5 to 4 min (169 ngspice runs); `rev2_sim.py` takes about 1 min (124 runs). The script prints `results.md` and then the number
+The run takes about 1.5 to 4 min (169 ngspice runs); `rev2_sim.py` takes about 1 min (154 runs). The script prints `results.md` and then the number
 of runs and the time. Set `KICAD_BIN` to use a KiCad `bin` folder in a different location. If ngspice
 stops with an error, the script writes the netlist to `failed_netlist.cir` and stops.
 
@@ -148,7 +148,7 @@ than a few ps shows a numerical problem.
 | Case | Question | Result (see `results_rev2.md` for the tables) |
 |---|---|---|
 | 1 | Camera trigger delay and J12-minus-camera offset at `+VCAM` = 1.8 V and 3.3 V | At 3.3 V the camera gates are faster: the camera edge is 2.5 ns (typ) to 8 ns (max corner) earlier, so J12 is later relative to the camera by that amount. |
-| 2 | Level and overshoot at the camera end of the cable (ribbon or twisted pair, 0.5 m and 2 m), IDS input at 1.8 V and EVK4 opto input at 3.3 V, with the on-board 47 ohm series resistors (R52-R69) and without them | Without a resistor the edge overshoots (fast corner: 3.02 V and -1.22 V on a 1.8 V line, 5.56 V and -2.92 V on a 3.3 V line). With the on-board 47 ohm: 2.18 V and -0.34 V (IDS), 3.78 V and -0.88 V (EVK4). EVK4 steady level 2.83-3.11 V, LED current 3.7-4.6 mA. Wrong J22 setting (3.3 V into an IDS camera): 3.20-3.40 V steady, 4.43 V peak. |
+| 2 | Level and overshoot at the camera end of the cable (ribbon or twisted pair, 0.5 m and 2 m), IDS input at 1.8 V and EVK4 opto input at 3.3 V, with the on-board 47 ohm series resistors (R52-R69) and without them | Without a resistor the edge overshoots (fast corner: 3.02 V and -1.22 V on a 1.8 V line, 5.58 V and -2.94 V on a 3.3 V line). With the on-board 47 ohm: 2.18 V and -0.34 V (IDS), 3.78 V and -0.88 V (EVK4). EVK4 steady level 2.83-3.11 V, LED current 3.7-4.6 mA. Wrong J22 setting (3.3 V into an IDS camera): 3.20-3.40 V steady, 4.43 V peak. These values are for one line (`Trigger3`). The case also runs all 18 camera lines (Sync, Trigger, TDRSTN), each with its own routed geometry and resistor, at the fast corner with a 2 m cable ("All camera lines" in `results_rev2.md`): IDS peak 2.16-2.17 V and -0.32 to -0.33 V; EVK4 Sync peak 3.82 V and -0.92 V; EVK4 Trigger peak 3.77 V and -0.88 V. |
 | 3 | `+VCAM` budget with six EVK4 cameras | At most 58 mA from the Pico's 3V3_OUT while Sync and Trigger are both high. This DC calculation does not include the on-board 47 ohm resistors (2.98 V or more at the EVK4 input), so 58 mA is an upper limit. Case 2 gives the level with the resistors (2.83 V or more). |
 | 4 | Activity-LED sense dividers (10 kohm with 12 pF, 4.7 kohm with 22 pF): level at the monostable input, shortest pulse, load on the output | A 10 ns pulse holds the input above its threshold for 8.7 ns or more (3 ns needed). The output level changes by 2.4 mV at most. |
 | 5 | Gap between two In2 islands under a B.Cu track | 2 ps and 11 mV or less at the receiver with the GND fill beside the track. |

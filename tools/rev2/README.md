@@ -26,7 +26,7 @@ pulse lanes and the output block keep their Rev 1 copper.
 | `jog_choices.json` | For each staircase: `"B"` = merge at the other end, `"skip"` = leave it. No entry = merge at the first end. |
 | `jogfit.py` | Fits `jog_choices.json` to a new routing. Run it by hand after the camera routing changes. It runs `jogs.py` and DRC in a loop: a merge with a DRC violation goes to `"B"`, then to `"skip"`. |
 | `tidy.py` | Hand clean-up of three router squiggles after `jogs.py`: the `Sync1` pad entry at U2, `+5V_PD`, and `+12V` at U19. |
-| `viafix.py` | Camera vias: 0.6 mm pad where the clearance permits (the router makes 0.5 mm); track ends that are off a via centre move to the centre. |
+| `viafix.py` | Camera vias: a track end that is within 0.2 mm of its via moves to the via centre. The tool stops the build if a camera via is not 0.6 mm with a 0.3 mm hole (the board's via size, which the router makes). |
 | `trim.py` | Fine length trim of the camera lines by KiCad's own length reading. It moves meander caps; a line with no meander gets one square bump. |
 | `spokes.py` | Adds a small pour cut-out at each pad that DRC reports with too few thermal spokes (header GND pins beside a camera track). The In1.Cu connection of the pad does not change. |
 | `plane_check.py` | Lists the In2 island under each B.Cu track, the points where a track changes island, and the plane taps of each rail. |
@@ -79,13 +79,15 @@ as in `tools/eurocard/build.sh`.
    router cannot make that line longer.
 2. `uuidfix.py` gives the board file a fixed item order.
 3. KiCadRoutingTools routes the other 17 camera lines from the buffer to the resistor. All other
-   copper is locked. The lines are length-matched in each group. The net order in the script was
-   found by a search of about 200 trials.
+   copper is locked. The lines are length-matched in each group. The router makes 0.6 mm vias
+   with a 0.3 mm hole (via cost 225). The net order in the script was searched again for these
+   vias (about 230 router trials in total).
 4. A check confirms that the router changed no other copper (91 other nets).
-5. `jogs.py` merges 59 router staircases on 14 nets. The length of each line stays the same.
-6. `tidy.py` makes 3 hand edits.
-7. `trim.py` makes the lines of each group equal by KiCad's own length reading (three passes). `viafix.py` runs before it.
-8. `spokes.py` adds 4 pour cut-outs at header GND pins where a camera track leaves only one
+5. `jogs.py` merges 59 router staircases on 13 nets. The length of each line stays the same.
+   12 staircases stay as routed (`"skip"` in `jog_choices.json`); 16 are drawn the other way (`"B"`).
+6. `tidy.py` makes 2 hand edits (a kink on `+5V_PD`, and `+12V` at U19).
+7. `trim.py` makes the lines of each group equal by KiCad's own length reading (three passes). `viafix.py` runs before it (0 track ends moved on this routing). `Trigger3` is trimmed with the other lines.
+8. `spokes.py` adds 5 pour cut-outs at header GND pins where a camera track leaves only one
    thermal spoke on F.Cu or B.Cu. These pins keep their full connection to the In1 GND plane.
 9. `uuidfix.py` runs again. Then the checks below run.
 
@@ -109,13 +111,17 @@ Result on the committed board:
   copy; Rev 1 has this warning also).
 - Schematic parity: 225 notes (199 net-name notes, 22 field notes, 4 mounting holes that are not
   in the schematic). `Hardware.md`, section Files, explains them.
-- `Sync1`–`Sync6` 78.142–78.168 mm (spread 0.025 mm); `Trigger1`–`Trigger6` 45.144 mm (spread
-  0.000 mm); `TDRSTN1`–`TDRSTN6` 53.924 mm (spread 0.000 mm). The Rev 1 spreads were 1.18 / 2.47 /
-  1.37 mm.
+- `Sync1`–`Sync6` 74.082 mm; `Trigger1`–`Trigger6` 43.584 mm; `TDRSTN1`–`TDRSTN6` 51.472 mm.
+  The spread in each group is 0.000 mm (below 0.001 mm). The Rev 1 spreads were 1.18 / 2.47 /
+  1.37 mm. These are KiCad's readings: KiCad cuts each track at the pad outline, and the path
+  from pad centre to pad centre can differ by about 1 mm in a group. KiCad's reading is the
+  reference for the design (owner's decision).
 - The stubs from the resistors to the header pins are the same for all six headers: Sync
   4.85 mm, TDRSTN 5.09 mm, Trigger 9.77 mm.
-- 1496 track segments, 2998.7 mm of track (F.Cu 2108.2 mm, B.Cu 890.6 mm), 223 vias, no
-  duplicate segments. Copper fingerprint (`stats.py`): `eab3d9100c38dee0`.
+- 1453 track segments, 2966.9 mm of track (F.Cu 2066.5 mm, B.Cu 900.5 mm), 221 vias (all
+  0.6 mm with a 0.3 mm hole; 20 on camera lines), no duplicate segments. Copper fingerprint
+  (`stats.py`): `e7a5f9db42935959`.
+- 159 footprints: 149 placed parts (129 SMD, 20 through-hole), 6 test pads, 4 mounting holes.
 
 ## Notes
 
@@ -134,5 +140,7 @@ Result on the committed board:
   gives a zip with another check sum for the same board.
 - **JLC rotations.** `cpl.py` does not have the JLC footprints of the new polarised parts
   (D1–D6, Q1, Q2, U20–U23). Their rows have the KiCad rotation, which is not verified against
-  JLC's footprints. Check them in JLC's placement preview, or run `tools/jlc_cpl`, before an
-  order. R51–R69 are two-pad parts and need no rotation check.
+  JLC's footprints. `tools/jlc_cpl` was run in the cloud build session. It could not download
+  JLC's footprints: the network policy of that environment denies the host `pro.easyeda.com`.
+  Run `tools/jlc_cpl` and check these parts in JLC's placement preview before an order.
+  R51–R70 are two-pad parts and need no rotation check.

@@ -50,13 +50,14 @@ pio run
 - Every signal to the cameras is **1.8 V** (IDS cameras, J22 open) or **3.3 V** (Prophesee EVK4
   cameras, J22 fitted). The laser outputs and External Sync Out are **5 V**.
 - The camera signal level comes from a power mux (U20). Its default input is 1.8 V: with J22 open,
-  a pull-up resistor (R34) selects 1.8 V. A shunt on J22 pulls the select pin low and selects
+  two pull-up resistors in parallel (R34 and R70) select 1.8 V. A shunt on J22 pulls the select pin low and selects
   3.3 V.
 - Each camera line has a **47 Ω series resistor on the board** (R52–R69), between the buffer and
   the camera port. It terminates the camera cable at the source. The camera cables need no
   resistors.
 - The camera lines of each group have **equal length** on the board, from the buffer to the series
-  resistor: Sync 78.142–78.168 mm (spread 0.025 mm), Trigger 45.144 mm, pixel reset 53.924 mm.
+  resistor: Sync 74.082 mm, Trigger 43.584 mm, pixel reset 51.472 mm (spread below 0.001 mm in
+  each group, KiCad's length reading).
 - Times are set in steps of **6.667 ns** (one tick of the Pico's 150 MHz clock), or **3.333 ns**
   with a shunt on the clock jumper J20 (a 300 MHz overclock; see [Jumpers](#jumpers)).
   Every reply shows the exact value the hardware will produce, so you never have to correct for the
