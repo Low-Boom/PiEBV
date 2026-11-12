@@ -3,15 +3,15 @@
     "GenerationSoftware": {
       "Vendor": "KiCad",
       "Application": "Pcbnew",
-      "Version": "10.0.6"
+      "Version": "10.0.6+dfsg-1"
     },
-    "CreationDate": "2026-11-07T00:27:51+09:00"
+    "CreationDate": "2026-11-12T15:47:15+00:00"
   },
   "GeneralSpecs": {
     "ProjectId": {
       "Name": "PiEBV_Pico",
       "GUID": "50694542-565f-4506-9963-6f2e6b696361",
-      "Revision": "1"
+      "Revision": "2"
     },
     "Size": {
       "X": 160.1,
@@ -27,7 +27,7 @@
       "PadToPad": 0.2,
       "PadToTrack": 0.2,
       "TrackToTrack": 0.2,
-      "MinLineWidth": 0.25,
+      "MinLineWidth": 0.2,
       "TrackToRegion": 0.3,
       "RegionToRegion": 0.3
     },

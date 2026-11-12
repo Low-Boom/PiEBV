@@ -19,10 +19,13 @@
 //                                                                at boot (clock_mode.cpp): fitted = 300 MHz, open = 150 MHz.
 //                                                                Internal pull-up only; no capacitor on the net. R29
 //                                                                limits the current if GP10 is driven with the shunt fitted.
+//   kPinArmedLed GP17      22    J15 pad 19 ARMED_LED         Q2 gate (R38 100k to GND) -> D3 "ARMED" (Rev 2 board). HIGH while
+//                                                                ARMED. D3 lights only if J11 is closed and +12 V is good as
+//                                                                well (LASER_EN -> D3 -> Q2 -> Q1). Status only: it gates nothing.
 //
 // CH1 is the HIGHER GPIO and CH2 the lower. The order is deliberate, so do not
 // "tidy" these into ascending order.
-// GP2-GP5 are not connected on this board. GP10 (SYNC before it moved to the clock generator)
+// GP2-GP5 are not connected on this board. GP17 is not connected on the Rev 1 board (driving it there is harmless). GP10 (SYNC before it moved to the clock generator)
 // is now the clock jumper input.
 
 constexpr unsigned kPinMarker = 11;
@@ -31,5 +34,6 @@ constexpr unsigned kPinCh1 = 13;
 constexpr unsigned kPinSync = 15;
 constexpr unsigned kPinPixGate = 16;
 constexpr unsigned kPinClockSel = 10;
+constexpr unsigned kPinArmedLed = 17;
 
 constexpr unsigned kLaserPinMask = (1u << kPinCh1) | (1u << kPinCh2);

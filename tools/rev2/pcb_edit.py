@@ -188,6 +188,8 @@ def place(ref, x, y, angle, rdx=None, rdy=None, rang=0):
         n = PADNET.get((ref, p.GetNumber()))
         if n:
             p.SetNet(net(n))
+    if ref.startswith("TP"):                            # bare test pad: no part, not in the BOM or the placement file
+        fp.SetAttributes(fp.GetAttributes() | pcbnew.FP_EXCLUDE_FROM_BOM | pcbnew.FP_EXCLUDE_FROM_POS_FILES)
     b.Add(fp)
     ref_text(fp, rdx or 0, rdy or 0, show=rdx is not None, angle=rang)
     return fp
