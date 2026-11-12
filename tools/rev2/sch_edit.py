@@ -244,8 +244,9 @@ o += wire((xl, Y + 5.08), (xl - 5.08, Y + 5.08)) + power("+1V8", xl - 5.08, Y + 
 vx = xr + 10.16
 o += wire((xr, Y - 5.08), (vx, Y - 5.08), (vx + 10.16, Y - 5.08)) + junction(vx, Y - 5.08) + power("+VCAM", vx, Y - 5.08, 0)
 o += cap("C23", "1uF", vx, Y - 1.27, "+VCAM output capacitor of U20") + power("GND", vx, Y + G)
-o += led("D1", "Blue", vx + 13.97, Y - 5.08, "3.3 V indicator on +VCAM: a blue LED (Vf > 2.5 V) is dark at 1.8 V and lit at 3.3 V")
-o += res_v("R33", "100", vx + 17.78, Y - G, "D1 series resistor") + power("GND", vx + 17.78, Y)
+o += res_h("R33", "100", vx + 12.7, Y - 5.08, "D1 series resistor")
+o += led("D1", "Blue", vx + 19.05, Y - 5.08, "3.3 V indicator on +VCAM: a blue LED (Vf > 2.5 V) is dark at 1.8 V and lit at 3.3 V")
+o += power("GND", vx + 22.86, Y - 5.08)
 o += noconn(xr, Y + 5.08) + power("GND", X, Y + 10.16)
 # J22 and the PR1 network
 jx, jy = 27.94, 363.22
