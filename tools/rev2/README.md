@@ -139,8 +139,6 @@ Result on the committed board:
 - **Gerber check sum.** The gerber files contain their creation date. A new run of `fab.sh`
   gives a zip with another check sum for the same board.
 - **JLC rotations.** `cpl.py` does not have the JLC footprints of the new polarised parts
-  (D1–D6, Q1, Q2, U20–U23). Their rows have the KiCad rotation, which is not verified against
-  JLC's footprints. `tools/jlc_cpl` was run in the cloud build session. It could not download
-  JLC's footprints: the network policy of that environment denies the host `pro.easyeda.com`.
-  Run `tools/jlc_cpl` and check these parts in JLC's placement preview before an order.
+  (D1–D6, Q1, Q2, U20–U23). It writes the KiCad rotation for them. Run `tools/jlc_cpl` after `cpl.py` and
+  copy its `cpl_new.csv` over the placement file. This was done for the committed file.
   R51–R70 are two-pad parts and need no rotation check.

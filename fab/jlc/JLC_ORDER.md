@@ -14,7 +14,7 @@ order.
 |---|---|
 | PCB | `../PiEBV_Pico_Gerbers.zip` (the 14 files of `../gerbers/` without the drill-map PDFs; made by `tools/rev2/fab.sh` from the Rev 2 board) |
 | BOM (parts list) | `PiEBV_Pico_JLC_BOM.csv`: 52 lines (the header line and 51 part lines), every part line with an LCSC part number |
-| CPL (placement file) | `PiEBV_Pico_JLC_CPL.csv`: 149 rows, all 149 placed parts. The 84 Rev 1 parts have the rotation and centre corrections of `tools/jlc_cpl`, carried to their Rev 2 positions by `tools/rev2/cpl.py`. **The 12 new polarised parts (D1–D6, Q1, Q2, U20–U23) have the KiCad rotation: not verified against JLC's footprints. Run `tools/jlc_cpl` and check them in JLC's placement preview before an order.** The new two-pad parts (R33–R70, C23–C36) need no rotation check. The bare test pads TP4–TP9 are not in the file. |
+| CPL (placement file) | `PiEBV_Pico_JLC_CPL.csv`: 149 rows, all 149 placed parts. All rows have the rotation and centre corrections of `tools/jlc_cpl`, run on the final Rev 2 board (this includes the 12 new polarised parts D1–D6, Q1, Q2, U20–U23). The new two-pad parts (R33–R70, C23–C36) need no rotation check. The bare test pads TP4–TP9 are not in the file. |
 
 ## PCB options
 
@@ -51,12 +51,11 @@ order.
 
 ## Rev 2: do before ordering
 
-1. **Run `tools/jlc_cpl`** (it needs internet access to JLC's footprint library) on the Rev 2
-   board and copy its `cpl_new.csv` over `PiEBV_Pico_JLC_CPL.csv`. The tool was run in the cloud
-   build session. It could not download JLC's footprints: the network policy of that environment
-   denies the host `pro.easyeda.com`. Run it on a machine that can reach that host. Until then the rotations of
-   D1–D6, Q1, Q2 and U20–U23 are the KiCad rotations and are not verified. A wrong rotation puts an LED in backwards
-   or an IC on the wrong pins. Then check these parts one by one in JLC's placement preview:
+1. **Placement rotations.** `tools/jlc_cpl` was run on the final Rev 2 board and its result is the committed placement file. It read JLC's footprint of every one of the 149 parts. It changed the rotation of D1 (270 to 90), D2 (180 to 0), D6 (0 to 180), Q1 and Q2 (90 to 270), U20 (180 to 90) and U21–U23 (180 to 0). D3, D4 and D5 need no correction. The rows of the 84 Rev 1 parts did not change. The pad fit of the new parts is 0.10 mm or better (`tools/jlc_cpl/rot_report.txt`).
+   If the layout changes, run `tools/rev2/cpl.py` and then `tools/jlc_cpl` again (`cpl.py` alone
+   writes the KiCad rotation for the new polarised parts), and copy `cpl_new.csv` over
+   `PiEBV_Pico_JLC_CPL.csv`. A wrong rotation puts an LED in backwards or an IC on the wrong
+   pins, so check these parts one by one in JLC's placement preview also:
    the cathode marks of D1–D6 (seen from the top side with the BNCs on the right: the cathode of
    D3, D4, D5 and D6 is the left pad, the cathode of D2 is the right pad, the cathode of D1 is the
    top pad), pin 1 of U20 (lower right of the part) and of U21–U23 (lower right), and the
@@ -118,10 +117,7 @@ line (C1804), whose type was not checked.
 The CPL rotations and centres of the 84 Rev 1 parts are corrected to JLC's own LCSC footprints (`tools/jlc_cpl`,
 see its README; re-run it after any layout change). For the EuroCard layout the CPL was regenerated
 by carrying each part's correction to its new position; `tools/jlc_cpl` run on the Rev 1 EuroCard board gave
-the same CPL for all 84 Rev 1 parts. The rotations of the new polarised parts (D1–D6, Q1, Q2, U20–U23) are KiCad
-rotations. They are not verified against JLC's footprints: `tools/jlc_cpl` could not download JLC's
-footprints in the cloud build session (the network policy denies the host `pro.easyeda.com`). Run
-`tools/jlc_cpl` and check these parts in the placement preview before an order. R51–R70 are two-pad parts and need no rotation check. Check these in the preview against the
+the same CPL for all 84 Rev 1 parts. `tools/jlc_cpl` was run on the final Rev 2 board and its result is the committed placement file. It read JLC's footprint of every one of the 149 parts. It changed the rotation of D1 (270 to 90), D2 (180 to 0), D6 (0 to 180), Q1 and Q2 (90 to 270), U20 (180 to 90) and U21–U23 (180 to 0). D3, D4 and D5 need no correction. The rows of the 84 Rev 1 parts did not change. The pad fit of the new parts is 0.10 mm or better (`tools/jlc_cpl/rot_report.txt`). R51–R70 are two-pad parts and need no rotation check. Check these in the preview against the
 board's pin-1 marks before approving:
 
 - SOT-23-5: U1, U3, U5, U7, U8, U9, U10 · TSOT-23-6: U15 · SOT-23-6: U18 · SC-70-6: U16

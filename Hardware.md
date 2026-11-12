@@ -1613,8 +1613,7 @@ LCSC number on every line; through-hole parts sit in the placement file at their
 because their footprint origins are on pin 1. The placement file was regenerated for the EuroCard
 layout: each part's JLC rotation and centre correction was carried to its new position, so check
 JLC's placement preview as before. Rev 2 adds 65 placed parts to the BOM and the placement file (149 rows);
-the rows of the new polarised parts (D1–D6, Q1, Q2, U20–U23) have the KiCad rotation, not a
-rotation checked against JLC's footprints. `tools/jlc_cpl` was run in the cloud build session. It could not download JLC's footprints: the network policy of that environment denies the host `pro.easyeda.com`. Run `tools/jlc_cpl` and check these parts in JLC's placement preview before an order (see `fab/jlc/JLC_ORDER.md`). R51–R70 are two-pad parts and need no rotation check. The back silkscreen carries JLC's
+`tools/jlc_cpl` was run on the final Rev 2 board and its result is the committed placement file. It read JLC's footprint of every one of the 149 parts. It changed the rotation of D1 (270 to 90), D2 (180 to 0), D6 (0 to 180), Q1 and Q2 (90 to 270), U20 (180 to 90) and U21–U23 (180 to 0). D3, D4 and D5 need no correction. The rows of the 84 Rev 1 parts did not change. The pad fit of the new parts is 0.10 mm or better (`tools/jlc_cpl/rot_report.txt`). Check these parts in JLC's placement preview also (see `fab/jlc/JLC_ORDER.md`). R51–R70 are two-pad parts and need no rotation check. The back silkscreen carries JLC's
 `JLCJLCJLCJLC` order-number placeholder.
 
 ### Hot-plate assembly
