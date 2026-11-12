@@ -385,7 +385,8 @@ def cell(k, cx):
     check_pad(u, "5", X(-1.7), Y(-0.975))               # Q upper left, VCC (8) lower left, B (2) right
     check_pad(u, "2", X(1.7), Y(0.325))
     nq, nrc, nce, nla = PADNET[(u, "5")], PADNET[(u, "7")], PADNET[(u, "6")], PADNET[(d, "2")]
-    sense = PADNET[(u, "2")]
+    sense, vcc = PADNET[(u, "2")], PADNET[(u, "8")]
+    assert vcc == "+3V3" and PADNET[(u, "3")] == vcc
     # Q -> R_led -> LED -> GND
     place(rled, X(-0.7), Y(-3.1), 0, None)
     track(nq, [(X(-1.7), Y(-0.975)), (X(-1.7), Y(-3.1))], 0.25)
@@ -394,7 +395,7 @@ def cell(k, cx):
     track(nla, [(X(0.3), Y(-3.1)), (X(0.3), Y(-5.3))], 0.3)
     track("GND", [(X(-1.75), Y(-5.3)), (X(-3.25), Y(-5.3))], 0.3)
     via("GND", X(-3.25), Y(-5.3))
-    # timing: Cext between pins 6 and 7, Rext from pin 7 to +5V
+    # timing: Cext between pins 6 and 7, Rext from pin 7 to the supply (+3V3)
     place(cext, X(-4.0), Y(0.0), 90, None)
     check_pad(cext, "2", X(-4.0), Y(-1.0375))
     assert PADNET[(cext, "2")] == nce and PADNET[(cext, "1")] == nrc
@@ -402,16 +403,16 @@ def cell(k, cx):
     track(nrc, [(X(-1.7), Y(0.325)), (X(-3.0), Y(0.325)), (X(-3.375), Y(0.7))], 0.25)
     place(rext, X(-4.0), Y(3.9), 90, None)
     check_pad(rext, "2", X(-4.0), Y(2.9))
-    assert PADNET[(rext, "2")] == nrc and PADNET[(rext, "1")] == "+5V"
+    assert PADNET[(rext, "2")] == nrc and PADNET[(rext, "1")] == vcc
     track(nrc, [(X(-4.0), Y(1.0375)), (X(-4.0), Y(2.9))], 0.3)
-    # supply: VCC (8) and /CLR (3) to +5V, decoupling
+    # supply: VCC (8) and /CLR (3) to +3V3, decoupling
     place(cdec, X(-0.7), Y(3.1), 0, None)
-    assert PADNET[(cdec, "1")] == "+5V"
-    track("+5V", [(X(-1.7), Y(0.975)), (X(-1.7), Y(3.1))], 0.25)
-    track("+5V", [(X(1.7), Y(-0.325)), (X(0.0), Y(-0.325)), (X(0.0), Y(0.975)), (X(-1.7), Y(0.975))], 0.2)
-    track("+5V", [(X(-1.7375), Y(3.1)), (X(-1.7375), Y(4.9))], 0.4)
-    via("+5V", X(-1.7375), Y(4.9))
-    track("+5V", [(X(-1.7375), Y(4.9)), (X(-4.0), Y(4.9))], 0.3)
+    assert PADNET[(cdec, "1")] == vcc
+    track(vcc, [(X(-1.7), Y(0.975)), (X(-1.7), Y(3.1))], 0.25)
+    track(vcc, [(X(1.7), Y(-0.325)), (X(0.0), Y(-0.325)), (X(0.0), Y(0.975)), (X(-1.7), Y(0.975))], 0.2)
+    track(vcc, [(X(-1.7375), Y(3.1)), (X(-1.7375), Y(4.9))], 0.4)
+    via(vcc, X(-1.7375), Y(4.9))
+    track(vcc, [(X(-1.7375), Y(4.9)), (X(-4.0), Y(4.9))], 0.3)
     # grounds: pin 4, pin 1 (/A) and the decoupling capacitor
     track("GND", [(X(1.7), Y(-0.975)), (X(2.9), Y(-0.975)), (X(2.9), Y(-2.3))], 0.25)
     via("GND", X(2.9), Y(-2.3))
@@ -426,40 +427,64 @@ def cell(k, cx):
 e1 = cell(0, 241.8)
 e2 = cell(1, 250.8)
 e3 = cell(2, 259.8)
-# Laser 1: divider R39 / R40 above R6.1
-place("R39", 247.1, 55.2, 90, None)
-check_pad("R39", "1", 247.1, 56.2)
+for r in ("R6", "R7"):                                  # their reference texts move from above the part to its body
+    ref_text(b.FindFootprintByReference(r), 0, 0, size=1.0)
+# Sense dividers at the driver outputs: R_top 10k with C_top 12 pF, R_bot 4.7k with C_bot 18 pF.
+# Laser 1: R40, R39, C31, C32 in a row above R6.1 (top pads = CH1_SENSE)
 place("R40", 245.0, 55.2, 270, None)
 check_pad("R40", "1", 245.0, 54.2)
-track("CH1_DRIVE_RAW", [(247.1, 56.2), (247.1, 59.2)], 0.3)
-track("CH1_SENSE", [(245.0, 54.2), (247.1, 54.2)], 0.3)
+place("R39", 247.1, 55.2, 90, None)
+check_pad("R39", "1", 247.1, 56.2)
+place("C31", 249.2, 55.2, 90, None)
+check_pad("C31", "1", 249.2, 56.2375)
+place("C32", 251.3, 55.2, 270, None)
+check_pad("C32", "1", 251.3, 54.1625)
+assert PADNET[("C31", "1")] == "CH1_DRIVE_RAW" and PADNET[("C32", "2")] == "GND" and PADNET[("R40", "1")] == "CH1_SENSE"
+track("CH1_DRIVE_RAW", [(247.1, 59.2), (247.1, 56.2), (249.2, 56.2)], 0.3)
+track("CH1_SENSE", [(245.0, 54.2), (247.1, 54.2), (249.2, 54.2), (251.3, 54.2)], 0.3)
 track("GND", [(245.0, 56.2), (245.0, 57.7)], 0.3)
 via("GND", 245.0, 57.7)
+track("GND", [(251.3, 56.2375), (252.9, 56.2375)], 0.3)
+via("GND", 252.9, 56.2375)
 track("CH1_SENSE", [(247.1, 54.2), (247.1, 49.0), (e1[0], 49.0 - (247.1 - e1[0])), e1], 0.3)
-# Laser 2: divider R43 / R44 below R7.1, B.Cu link to the cell
-place("R43", 247.1, 68.3, 270, None)
-check_pad("R43", "1", 247.1, 67.3)
+# Laser 2: C34, R44, R43, C33 in a row below R7.1 (bottom pads = CH2_SENSE), B.Cu link to the cell
+place("C34", 242.7, 68.3, 90, None)
+check_pad("C34", "1", 242.7, 69.3375)
 place("R44", 244.9, 68.3, 90, None)
 check_pad("R44", "1", 244.9, 69.3)
-track("CH2_DRIVE_RAW", [(247.1, 64.2), (247.1, 67.3)], 0.3)
-track("CH2_SENSE", [(244.9, 69.3), (247.1, 69.3), (248.7, 69.3)], 0.3)
-via("CH2_SENSE", 248.7, 69.3)
-track("GND", [(244.9, 67.3), (243.4, 67.3)], 0.3)
-via("GND", 243.4, 67.3)
-track("CH2_SENSE", [(248.7, 69.3), (248.7, 53.0), (e2[0], 53.0 - (e2[0] - 248.7))], 0.3, B)
-via("CH2_SENSE", e2[0], 53.0 - (e2[0] - 248.7))
-track("CH2_SENSE", [(e2[0], 53.0 - (e2[0] - 248.7)), e2], 0.3)
-# External Sync Out: divider R47 / R48 above R30.1, B.Cu link to the cell
+place("R43", 247.1, 68.3, 270, None)
+check_pad("R43", "1", 247.1, 67.3)
+place("C33", 249.2, 68.3, 270, None)
+check_pad("C33", "1", 249.2, 67.2625)
+assert PADNET[("C33", "1")] == "CH2_DRIVE_RAW" and PADNET[("C34", "2")] == "GND" and PADNET[("R44", "1")] == "CH2_SENSE"
+track("CH2_DRIVE_RAW", [(247.1, 64.2), (247.1, 67.3), (249.2, 67.3)], 0.3)
+track("CH2_SENSE", [(242.7, 69.3), (244.9, 69.3), (247.1, 69.3), (249.2, 69.3), (250.8, 69.3)], 0.3)
+via("CH2_SENSE", 250.8, 69.3)
+track("GND", [(242.7, 67.3), (243.8, 67.3), (244.9, 67.3)], 0.3)
+track("GND", [(243.8, 67.3), (243.8, 66.2)], 0.3)
+via("GND", 243.8, 66.2)
+v2 = (e2[0], 50.9 - (e2[0] - 250.8))
+track("CH2_SENSE", [(250.8, 69.3), (250.8, 50.9), v2], 0.3, B)
+via("CH2_SENSE", *v2)
+track("CH2_SENSE", [v2, e2], 0.3)
+# External Sync Out: R47 + C35 above R30.1, R48 + C36 above them (pads between the rows = SYNC_SENSE), B.Cu link
 place("R47", 252.9, 92.7, 90, None)
 check_pad("R47", "1", 252.9, 93.7)
-place("R48", 255.1, 92.7, 270, None)
-check_pad("R48", "1", 255.1, 91.7)
-track("EXT_SYNC_DRIVE_RAW", [(252.9, 93.7), (252.9, 96.7)], 0.3)
-track("SYNC_SENSE", [(255.1, 91.7), (252.9, 91.7), (252.9, 90.2)], 0.3)
-via("SYNC_SENSE", 252.9, 90.2)
-track("GND", [(255.1, 93.7), (256.6, 93.7)], 0.3)
-via("GND", 256.6, 93.7)
-track("SYNC_SENSE", [(252.9, 90.2), (252.9, 53.6), (260.3, 46.2), (e3[0], 46.2)], 0.3, B)
+place("C35", 255.0, 92.7, 90, None)
+check_pad("C35", "1", 255.0, 93.7375)
+place("R48", 252.9, 88.6, 90, None)
+check_pad("R48", "1", 252.9, 89.6)
+place("C36", 255.0, 88.6, 90, None)
+check_pad("C36", "1", 255.0, 89.6375)
+assert PADNET[("C35", "1")] == "EXT_SYNC_DRIVE_RAW" and PADNET[("C36", "2")] == "GND" and PADNET[("R48", "1")] == "SYNC_SENSE"
+track("EXT_SYNC_DRIVE_RAW", [(252.9, 96.7), (252.9, 93.7), (255.0, 93.7)], 0.3)
+track("SYNC_SENSE", [(252.9, 91.7), (252.9, 89.6)], 0.3)
+track("SYNC_SENSE", [(255.0, 91.7), (255.0, 89.6)], 0.3)
+track("SYNC_SENSE", [(252.9, 90.65), (255.0, 90.65), (256.7, 90.65)], 0.3)
+via("SYNC_SENSE", 256.7, 90.65)
+track("GND", [(255.0, 87.6), (252.9, 87.6), (251.2, 87.6)], 0.3)
+via("GND", 251.2, 87.6)
+track("SYNC_SENSE", [(256.7, 90.65), (256.7, 49.8), (260.3, 46.2), (e3[0], 46.2)], 0.3, B)
 via("SYNC_SENSE", e3[0], 46.2)
 track("SYNC_SENSE", [(e3[0], 46.2), e3], 0.3)
 
@@ -480,7 +505,8 @@ from shapely.geometry import box, Polygon
 from shapely.ops import unary_union
 
 GAP = 0.5                                               # copper gap between two islands
-I33 = unary_union([box(138.9, 30.5, 234.4, 39.9),       # +3V3: band along the top edge, from J15.5 to U20
+I33 = unary_union([box(138.9, 30.5, 265.0, 39.9),       # +3V3: band along the top edge, from J15.5 to U20 and on
+                   box(236.6, 39.9, 265.0, 46.5),       #   under the activity-LED monostables U21-U23
                    box(141.35, 39.9, 143.75, 42.9),     #   tab down to the J15.5 socket pad
                    box(231.2, 39.5, 233.9, 41.7)])      #   lobe: U20 VIN1 via and C24 via
 I18 = box(223.0, 40.45, 227.3, 42.9)                    # +1V8: patch under the U9 output track (tap via, C7)
@@ -492,8 +518,8 @@ IVC = unary_union([box(183.2, 86.8, 260.0, 129.5),      # +VCAM: under U1-U6 and
                    box(228.05, 81.0, 244.1, 87.5),
                    box(232.5, 77.0, 236.5, 81.5)])      #   under the PWM_TRIG_TAP run past the +12V corner
 IVC = IVC.difference(I12.buffer(GAP, join_style=2))
-I5 = Polygon([(130.5, 30.5), (265.0, 30.5), (265.0, 46.5), (227.55, 46.5), (227.55, 86.3), (182.7, 86.3),
-              (182.7, 129.5), (130.5, 129.5)])          # +5V: Pico VSYS, U16, logic, status LED strip
+I5 = Polygon([(130.5, 30.5), (227.55, 30.5), (227.55, 86.3), (182.7, 86.3),
+              (182.7, 129.5), (130.5, 129.5)])          # +5V: Pico VSYS, U16, U9, logic
 I5 = I5.difference(unary_union([I33, I18, IVC, I12]).buffer(GAP, join_style=2))
 ISLANDS = (("+5V", I5), ("+3V3", I33), ("+1V8", I18), ("+VCAM", IVC), ("+12V", I12))
 

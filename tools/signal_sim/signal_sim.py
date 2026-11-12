@@ -197,6 +197,7 @@ DRVC = DRV["_common"]
 OC = DEV["output_corners"]
 BP = DEV["board_parts"]
 AMP = {"min": "high", "typ": "typ", "max": "low"}    # timing corner -> amplitude corner
+SENSE = DEV.get("rev2", {}).get("sense")              # Rev 2 sense dividers (None for a Rev 1 device file)
 
 
 def gpio_scale(drive, strength):
@@ -447,11 +448,12 @@ class Model:
     def stage_b(self, corner):
         """U5 output start -> U6 input crossings (B1); U6 output start -> J1..J6 pin 4 0.9 V (B2).
         Times relative to the ramp start, for the GP11 rise and fall."""
-        key = ("B", corner)
+        g5, g6 = GATES["SN74LVC1G04"], GATES["SN74LVC04A"]
+        key = ("B", corner, g6["vcc"])
         if key in self.cache:
             return self.cache[key]
         ta, tb, te = 5.0, 45.0, 85.0
-        g5, g6 = GATES["SN74LVC1G04"], GATES["SN74LVC04A"]
+        vm = g6["vcc"] / 2          # camera pin reference level: half the camera I/O supply (0.9 V at 1.8 V)
         c = self.ckt(f"stage B1 {corner}")
         r = g5["rout"][corner]
         add_switch_out(c, "u5", node("U5.4"), g5["vcc"], r, r, g5["ramp_ns_est"][corner], ta, tb, start_high=True)
@@ -480,7 +482,7 @@ class Model:
         b2 = {}
         for i in range(1, 7):
             v = w[node(f"J{i}.4")]
-            b2[i] = {"rise": cross(t, v, 0.9, True, ta, tb) - ta, "fall": cross(t, v, 0.9, False, tb, te) - tb,
+            b2[i] = {"rise": cross(t, v, vm, True, ta, tb) - ta, "fall": cross(t, v, vm, False, tb, te) - tb,
                      "vmax": float(v.max()), "vmin": float(v.min())}
         res = {"b1": b1, "b2": b2, "map": ins}
         self.cache[key] = res
@@ -508,6 +510,15 @@ class Model:
             "rs": add_r(c, k["rs"] + ".1", k["rs"] + ".2", OC["r68"][amp], "2512"),
             "rx": add_r(c, k["rx"] + ".1", k["rx"] + ".2", OC["r47"][amp], "2512"),
             "rp": add_r(c, k["rp"] + ".1", "0", OC["r82"][amp], "2512")}
+        sn = SENSE and SENSE["parts"].get(ch)
+        if sn and f"{sn[0]}.1" in {e["b"] for e in GEOM["nets"][k["raw"]]["edges"]}:
+            # Rev 2: activity-LED sense divider on the driver output (R_top || C_top to the monostable input,
+            # R_bot || C_bot to GND)
+            s_node = f"{ch}_sense"
+            add_r(c, sn[0] + ".1", s_node, SENSE["r_top"], "0805")
+            add_r(c, s_node, "0", SENSE["r_bot"], "0805")
+            c.C(node(sn[0] + ".1"), SENSE.get("c_top_pF", 0.0), node(s_node))
+            c.C(node(s_node), SENSE.get("c_bot_pF", 0.0) + SENSE["ci_pF"] + SENSE["trace_pF"][ch])
         for p in (1, 2, 3):
             c.C(node(f"{k['jp']}.{p}"), BP["header_pin_pF_est"])
         if mode == "50":

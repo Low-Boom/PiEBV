@@ -11,8 +11,8 @@ Reads the Rev 1 schematic and writes the Rev 2 schematic. Changes:
   * D2 (green) "12 V good": Q1 on LASER_PWR_OK; D3 (red) "ARMED": LASER_EN -> R37 -> D3 -> Q2
     (gate = ARMED_LED, GP17) -> Q1. D3 is lit only if the firmware is ARMED, J11 is closed
     and the +12 V rail is in its window;
-  * D4-D6 output activity: U21-U23 (74LVC1G123 monostables, about 15 ms) triggered from the
-    driver outputs CH1/CH2/EXT_SYNC_DRIVE_RAW through 1.2k / 750R dividers;
+  * D4-D6 output activity: U21-U23 (74LVC1G123 monostables on +3V3, about 15 ms) triggered from the
+    driver outputs CH1/CH2/EXT_SYNC_DRIVE_RAW through compensated 10k / 4.7k dividers (12 pF / 18 pF);
   * TP4-TP9: test pads on +12V, +5V, +3V3, +1V8, +VCAM and GND;
   * paper A3 -> A2 (the new circuits are below the Rev 1 drawing).
 The edit is text-level (the file layout of KiCad 10 is kept), and it is not idempotent:
@@ -293,12 +293,12 @@ for k, (src, sense, what, colour) in enumerate((("CH1_DRIVE_RAW", "CH1_SENSE", "
     ux, uy = 281.94 + 119.38 * k, 345.44
     u, r0, c0 = "U%d" % (21 + k), 39 + 4 * k, 25 + 2 * k
     o += symbol("74xGxx:74LVC1G123", u, "74LVC1G123", ux, uy, 0, ["1", "2", "3", "5", "6", "7"], fp="Package_SO:SSOP-8_2.95x2.8mm_P0.65mm",
-                desc="Pulse stretcher for the %s activity LED: each pulse of 2.5 ns or more gives about 15 ms" % what,
+                desc="Pulse stretcher for the %s activity LED: each pulse of 3 ns or more gives about 15 ms" % what,
                 ref_at=(ux - 7.62, uy - 9.144, 0, "left"), val_at=(ux + 1.27, uy - 9.144, 0, "left"))
     pl = ux - 12.7
     # RCext: R to +5V, C to Cext
     o += wire((pl, uy - 5.08), (pl - 7.62, uy - 5.08), (pl - 12.7, uy - 5.08)) + junction(pl - 7.62, uy - 5.08)
-    o += res_v("R%d" % (r0 + 2), "150k", pl - 7.62, uy - 7.62, "Timing resistor (with C%d: about 15 ms)" % c0) + power("+5V", pl - 7.62, uy - 10.16, 0)
+    o += res_v("R%d" % (r0 + 2), "150k", pl - 7.62, uy - 7.62, "Timing resistor (with C%d: about 15 ms)" % c0) + power("+3V3", pl - 7.62, uy - 10.16, 0)
     o += cap("C%d" % c0, "0.1uF", pl - 12.7, uy - 1.27, "Timing capacitor of %s" % u, -1)
     o += wire((pl, uy - G), (pl - 10.16, uy - G), (pl - 10.16, uy + G), (pl - 12.7, uy + G))
     # /A low (global GND label, as at the Pico pins), B = sense, /CLR high
@@ -307,27 +307,35 @@ for k, (src, sense, what, colour) in enumerate((("CH1_DRIVE_RAW", "CH1_SENSE", "
           '\t\t\t(hide yes)\n\t\t\t(show_name no)\n\t\t\t(do_not_autoplace no)\n\t\t\t(effects\n\t\t\t\t(font\n\t\t\t\t\t(size 1.27 1.27)\n'
           '\t\t\t\t)\n\t\t\t)\n\t\t)\n\t)\n' % (n(pl), n(uy + G), uid(), n(pl), n(uy + G)))
     by = uy + 5.08
-    o += wire((pl, by), (pl - 17.78, by), (pl - 20.32, by)) + junction(pl - 17.78, by) + label(sense, pl - 15.24, by, "left")
-    o += res_v("R%d" % (r0 + 1), "750", pl - 17.78, by + G, "Sense divider, lower resistor") + power("GND", pl - 17.78, by + 5.08)
-    o += res_h("R%d" % r0, "1.2k", pl - 22.86, by, "Sense divider, upper resistor: 12 V driver output to 4.4-4.6 V at %s pin B" % u)
-    o += wire((pl - 25.4, by), (pl - 27.94, by)) + label(src, pl - 27.94, by, "right")
-    o += power("+5V", ux, uy + 12.7, 180)
+    o += wire((pl, by), (pl - 10.16, by), (pl - 17.78, by), (pl - 19.05, by), (pl - 20.32, by))
+    o += junction(pl - 17.78, by) + junction(pl - 10.16, by) + junction(pl - 19.05, by) + label(sense, pl - 8.89, by, "left")
+    o += res_v("R%d" % (r0 + 1), "4.7k", pl - 17.78, by + G, "Sense divider, lower resistor") + power("GND", pl - 17.78, by + 5.08)
+    o += res_h("R%d" % r0, "10k", pl - 22.86, by, "Sense divider, upper resistor: 12 V driver output to 3.7-3.9 V at %s pin B" % u)
+    o += wire((pl - 25.4, by), (pl - 26.67, by), (pl - 27.94, by)) + junction(pl - 26.67, by) + label(src, pl - 27.94, by, "right")
+    # compensation: C_top across the upper resistor, C_bot across the lower one (C_top / C_bot = R_bot / R_top)
+    ct, cb = "C%d" % (31 + 2 * k), "C%d" % (32 + 2 * k)
+    o += symbol("Device:C", ct, "12pF", pl - 22.86, by - 5.08, 90, ["1", "2"], fp=C0805,
+                desc="Sense divider compensation, across the upper resistor (C0G)",
+                ref_at=(pl - 22.86, by - 9.652, 90), val_at=(pl - 22.86, by - 7.874, 90))
+    o += wire((pl - 26.67, by), (pl - 26.67, by - 5.08)) + wire((pl - 19.05, by), (pl - 19.05, by - 5.08))
+    o += cap(cb, "18pF", pl - 10.16, by + 3.81, "Sense divider compensation, across the lower resistor (C0G)") + power("GND", pl - 10.16, by + 7.62)
+    o += power("+3V3", ux, uy + 12.7, 180)
     # Q -> R -> LED -> GND
     qy2 = uy - 5.08
-    o += wire((ux + 12.7, qy2), (ux + 15.24, qy2)) + res_h("R%d" % (r0 + 3), "1k", ux + 17.78, qy2, "Activity LED series resistor")
+    o += wire((ux + 12.7, qy2), (ux + 15.24, qy2)) + res_h("R%d" % (r0 + 3), "750", ux + 17.78, qy2, "Activity LED series resistor")
     o += led("D%d" % (4 + k), colour, ux + 24.13, qy2, "Activity: flashes for each pulse at the %s driver output" % what)
     o += power("GND", ux + 27.94, qy2)
     # supply unit and decoupling
     sx, sy = ux + 35.56, uy + 12.7
     o += symbol("74xGxx:74LVC1G123", u, "74LVC1G123", sx, sy, 0, ["4", "8"], fp="Package_SO:SSOP-8_2.95x2.8mm_P0.65mm",
-                desc="Pulse stretcher for the %s activity LED: each pulse of 2.5 ns or more gives about 15 ms" % what,
+                desc="Pulse stretcher for the %s activity LED: each pulse of 3 ns or more gives about 15 ms" % what,
                 ref_at=(sx + 6.35, sy + 3.81, 0, "left"), val_at=(sx + 6.35, sy + 6.35, 0, "left"), unit=2)
-    o += power("+5V", sx, sy - 12.7, 0) + power("GND", sx, sy + 12.7)
+    o += power("+3V3", sx, sy - 12.7, 0) + power("GND", sx, sy + 12.7)
     o += wire((sx, sy - 12.7), (sx + 10.16, sy - 12.7), (sx + 10.16, sy - 10.16))
     o += cap("C%d" % (c0 + 1), "0.1uF", sx + 10.16, sy - 6.35, "Decoupling of %s" % u) + power("GND", sx + 10.16, sy - G)
-o += text("Output activity LEDs. Each monostable is triggered by the rising edge at its 12 V driver output (after all three\n"
-          "laser gates), divided to about 4.5 V. One pulse gives a flash of about 15 ms; above about 70 Hz the LED is on continuously.\n"
-          "The 1.2k / 750R dividers load each driver with 6 mA while its output is high.", 243.84, 322.58)
+o += text("Output activity LEDs. Each monostable (VCC = +3V3, VIH 2.0 V) is triggered by the rising edge at its 12 V driver output\n"
+          "(after all three laser gates), divided to about 3.8 V by a compensated divider: 10k / 4.7k with 12 pF / 18 pF.\n"
+          "One pulse gives a flash of about 15 ms; above about 70 Hz the LED is on continuously. Load on each driver: 0.8 mA.", 243.84, 322.58)
 
 # -- 4d. rail test pads (top-layer taps of the In2 power islands) --
 TX, TY = 304.8, 248.92
@@ -359,4 +367,4 @@ if LOCAL_LIB:
         v = "\n".join(l[1:] if l.startswith("\t") else l for l in v.split("\n"))
         L = L.rstrip()[:-1].rstrip() + "\n\t" + v + "\n)\n"
         open(LOCAL_LIB, "w", encoding="utf-8", newline="\n").write(L)
-print("sch_edit: %d supply symbols moved to +VCAM; U20-U23, Q1, Q2, D1-D6, J22, C23-C30, R33-R50, TP4-TP9 added" % moved)
+print("sch_edit: %d supply symbols moved to +VCAM; U20-U23, Q1, Q2, D1-D6, J22, C23-C36, R33-R50, TP4-TP9 added" % moved)

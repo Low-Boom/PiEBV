@@ -23,17 +23,27 @@ value in `devices.json`. The last results are in `results.md`.
 | `fd_cache.json` | Cache of the field-solver results that `extract_geometry.py` uses. |
 | `results.md` | Output. The tables for all cases, the hand-calculation checks and the gate calibration. |
 | `results.json` | Output. The same results as numbers, for other scripts. |
+| `rev2_sim.py` | The Rev 2 cases (see [Rev 2 cases](#rev-2-cases)). Uses the models of `signal_sim.py` and the block `rev2` of `devices.json`. Writes `results_rev2.md` and `results_rev2.json`. |
 
 ## Run
 
 Use KiCad 10's Python. It contains numpy and `pcbnew`. The tools need no other packages.
+On Linux, use `python3` with numpy, KiCad's `pcbnew` module and the shared ngspice library
+(`libngspice.so.0`, Debian / Ubuntu package `libngspice0`; `NGSPICE_LIB` sets another path). The
+Linux run gives the same `results.md` as the Windows run (checked on the Rev 1 geometry: only the
+run time in the header line differs).
 
 ```
 cd tools/signal_sim
 "%LOCALAPPDATA%\Programs\KiCad\10.0\bin\python.exe" signal_sim.py
 ```
 
-The run takes about 1.5 min (169 ngspice runs). The script prints `results.md` and then the number
+```
+python3 signal_sim.py
+python3 rev2_sim.py
+```
+
+The run takes about 1.5 to 4 min (169 ngspice runs); `rev2_sim.py` takes about 1 min (124 runs). The script prints `results.md` and then the number
 of runs and the time. Set `KICAD_BIN` to use a KiCad `bin` folder in a different location. If ngspice
 stops with an error, the script writes the netlist to `failed_netlist.cir` and stops.
 
@@ -71,8 +81,8 @@ Each lumped L has 1 mΩ in series, so that a loop of lumped sections (the overla
 autorouted meander) does not make the matrix singular; on the 126 mm geometry this changes no result
 by more than 0.001 ns. `extract_geometry.py` joins a pad to a track that overlaps the pad without
 ending in it (once per separate piece of copper), as autorouted tracks often do. All simulated nets
-are on F.Cu or B.Cu, so they are microstrip: F.Cu over In1 (GND), B.Cu over In2 (+5V plane, AC
-reference only). For a 0.3 mm trace, Z0 is 54.5 ohm and the delay is 6.06 ps/mm.
+are on F.Cu or B.Cu, so they are microstrip: F.Cu over In1 (GND), B.Cu over In2 (a power island,
+AC reference only; on the Rev 2 board the islands have gaps, see case 5 of `rev2_sim.py`). For a 0.3 mm trace, Z0 is 54.5 ohm and the delay is 6.06 ps/mm.
 
 **GPIO.** The RP2350 pad is a current source with a tanh V-I shape, switched by an internal ramp.
 The slope is from the typical V-I curves (RP2350 datasheet Figure 154). The "floor" corner puts the
@@ -128,3 +138,31 @@ than a few ps shows a numerical problem.
 - TI SLUSBQ0C (UCC27517A): sections 8.5, 8.6.
 - E. Hammerstad and O. Jensen, microstrip formulas (1980); IPC-2141A; H. Johnson, High-Speed
   Digital Design (1993), section 7.3 (via L and C).
+
+## Rev 2 cases
+
+`rev2_sim.py` answers the questions that the Rev 2 board adds. The last results are in
+`results_rev2.md`.
+
+| Case | Question | Result (see `results_rev2.md` for the tables) |
+|---|---|---|
+| 1 | Camera trigger delay and J12-minus-camera offset at `+VCAM` = 1.8 V and 3.3 V | At 3.3 V the camera gates are faster: the camera edge is 2.5 ns (typ) to 8 ns (max corner) earlier, so J12 is later relative to the camera by that amount. |
+| 2 | Level and overshoot at the camera end of the harness (ribbon or twisted pair, 0.5 m and 2 m), IDS input at 1.8 V and EVK4 opto input at 3.3 V, with and without a series resistor at the board end | Without a resistor the edge overshoots (fast corner: 3.0 V on a 1.8 V line, 5.7 V on a 3.3 V line). 47 ohm (IDS) or 68 ohm (EVK4) at the board end removes most of it. |
+| 3 | `+VCAM` budget with six EVK4 cameras | 2.98 V or more at the EVK4 input without series resistor (2.78 V with 68 ohm); 58 mA peak from the Pico's 3V3_OUT. |
+| 4 | Activity-LED sense dividers: level at the monostable input, shortest pulse, load on the output | A 10 ns pulse holds the input above its threshold for 9 ns or more (3 ns needed). The output level changes by 2.4 mV at most. |
+| 5 | Gap between two In2 islands under a B.Cu track | 2 ps and 11 mV or less at the receiver with the GND fill beside the track. |
+
+**Harness model.** The cable is a lossless line (`harness` in `devices.json`: Z0, delay, wire
+resistance; estimates). The IDS input is a capacitor. The EVK4 input is a resistor in series with a
+diode, fitted to the two currents in the EVK4 manual (`evk4_input`; estimate).
+
+**Gap model.** Case 5 gets the impedance of a B.Cu track that has no In2 copper above it from the
+field solver of `extract_geometry.py`, with and without the B.Cu GND fill beside the track, and
+puts 1 mm of that line into a line of the net's length.
+
+**Estimates.** The 3.3 V gate values (`gates_3v3`), the fast and typical output resistances, the
+EVK4 input model and the cable values are estimates; `devices.json` marks each one and gives its
+source. The overshoot results of case 2 depend on them. Measure before you rely on them.
+
+**The sense dividers are also in `signal_sim.py`:** `add_chain()` puts R_top, C_top, R_bot and
+C_bot of `rev2.sense` on each driver output, so `results.md` has the Rev 2 output levels.
