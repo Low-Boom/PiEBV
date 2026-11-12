@@ -3,16 +3,19 @@
 
 Reads the Rev 1 schematic and writes the Rev 2 schematic. Changes:
   * the supply of U1-U6 and C1-C3 moves from +1V8 to the new net +VCAM;
-  * U20 (TPS2116 power mux) makes +VCAM from +1V8 (U9, VIN2) or +3V3 (Pico 3V3_OUT, VIN1).
-    MODE is tied to VIN1; PR1 (net VCAM_SEL) has R34 (10k) to GND, so with J22 open the mux
-    passes +1V8. A shunt on J22 pulls PR1 to 3.0 V through R35 (1k) and the mux passes +3V3;
+  * U20 (TPS2116 power mux) makes +VCAM from +1V8 (U9, VIN1) or +3V3 (Pico 3V3_OUT, VIN2).
+    MODE is on +3V3 (manual mode); PR1 (net VCAM_SEL) has R34 (10k) to +3V3, so with J22 open
+    the mux passes VIN1 = +1V8. A shunt on J22 pulls PR1 to 0.3 V through R35 (1k) and the mux
+    passes VIN2 = +3V3. R51 (4.7k) discharges +VCAM;
+  * R52-R69 (47R, 0805): one series resistor in each camera line at the camera header
+    (source termination for the camera cable). The header-side nets are Sync1_C ... TDRSTN6_C;
   * C23 (1 uF, +VCAM) and C24 (1 uF, +3V3) at U20;
   * D1 + R33: blue LED from +VCAM to GND (Vf > 2.5 V: dark at 1.8 V, lit at 3.3 V);
   * D2 (green) "12 V good": Q1 on LASER_PWR_OK; D3 (red) "ARMED": LASER_EN -> R37 -> D3 -> Q2
     (gate = ARMED_LED, GP17) -> Q1. D3 is lit only if the firmware is ARMED, J11 is closed
     and the +12 V rail is in its window;
   * D4-D6 output activity: U21-U23 (74LVC1G123 monostables on +3V3, about 15 ms) triggered from the
-    driver outputs CH1/CH2/EXT_SYNC_DRIVE_RAW through compensated 10k / 4.7k dividers (12 pF / 18 pF);
+    driver outputs CH1/CH2/EXT_SYNC_DRIVE_RAW through compensated 10k / 4.7k dividers (12 pF / 22 pF);
   * TP4-TP9: test pads on +12V, +5V, +3V3, +1V8, +VCAM and GND;
   * paper A3 -> A2 (the new circuits are below the Rev 1 drawing).
 The edit is text-level (the file layout of KiCad 10 is kept), and it is not idempotent:
@@ -185,6 +188,62 @@ for (x, y, just) in ((157.48, 229.87, "left"), (224.79, 273.05, "right")):
     m = re.search(r'\t\(no_connect\n\t\t\(at %s %s\)\n\t\t\(uuid "[^"]+"\)\n\t\)\n' % (n(x), n(y)), s)
     s = s[:m.start()] + label("ARMED_LED", x, y, just) + s[m.end():]
 
+# ---- 3b. series resistors R52-R69 in the camera lines, at the header pins ---------------------------
+R0603 = "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"   # same footprint as the other resistors
+WIRE = re.compile(r'\t\(wire\n\t\t\(pts\n\t\t\t\(xy ([-\d.]+) ([-\d.]+)\) \(xy ([-\d.]+) ([-\d.]+)\)\n')
+ser, rn = "", 52
+for sig, pin, side in (("Sync", 5, -1), ("Trigger", 4, 1), ("TDRSTN", 3, -1)):
+    for k in range(1, 7):
+        m = re.search(r'\(property "Reference" "J%d"' % k, s)
+        a0 = s.rfind("\n\t(symbol", 0, m.start())
+        jx0, jy0 = map(float, re.search(r"\(at ([-\d.]+) ([-\d.]+) 0\)", s[a0:a0 + 200]).groups())
+        px = jx0 + (-5.08 if side < 0 else 7.62)                      # pin end (odd pins left, even pins right)
+        py = jy0 - {3: 2.54, 4: 2.54, 5: 0.0}[pin]
+        qx = px + side * 5.08                                         # new end of the buffer-side wire
+        hit = [w for w in WIRE.finditer(s) if (abs(float(w.group(1)) - px) < 1e-6 and abs(float(w.group(2)) - py) < 1e-6)
+               or (abs(float(w.group(3)) - px) < 1e-6 and abs(float(w.group(4)) - py) < 1e-6)]
+        assert len(hit) == 1, (sig, k, len(hit))
+        w = hit[0]
+        x1, y1, x2, y2 = map(float, w.groups())
+        assert abs(y1 - y2) < 1e-6, (sig, k, w.groups())              # horizontal
+        name = "%s%d" % (sig, k)
+        if abs(x1 - x2) < 5.08 - 1e-6:
+            # Short wire to a vertical run: the resistor goes into the top of the vertical run.
+            fx = x2 if abs(x1 - px) < 1e-6 else x1                    # corner of the horizontal and the vertical wire
+            vh = [v for v in WIRE.finditer(s) if v.start() != w.start() and abs(float(v.group(1)) - float(v.group(3))) < 1e-6
+                  and abs(float(v.group(1)) - fx) < 1e-6 and min(abs(float(v.group(2)) - py), abs(float(v.group(4)) - py)) < 1e-6]
+            assert len(vh) == 1, (sig, k, len(vh))
+            v = vh[0]
+            assert abs(float(v.group(2)) - float(v.group(4))) >= 7.62 and max(float(v.group(2)), float(v.group(4))) > py
+            if abs(float(v.group(2)) - py) < 1e-6:
+                nv = v.group(0).replace("(xy %s %s) (xy" % (v.group(1), v.group(2)), "(xy %s %s) (xy" % (n(fx), n(py + 5.08)))
+            else:
+                nv = v.group(0).replace(") (xy %s %s)" % (v.group(3), v.group(4)), ") (xy %s %s)" % (n(fx), n(py + 5.08)))
+            s = s[:v.start()] + nv + s[v.end():]
+            lab = re.search(r'\t\(label "%s"\n\t\t\(at %s %s (\d+)\)' % (name, n(px), n(py)), s)
+            assert lab, name                                          # the label at the pin becomes the header-side name
+            s = s[:lab.start()] + lab.group(0).replace('"%s"' % name, '"%s_C"' % name) + s[lab.end():]
+            ser += symbol("Device:R_Small", "R%d" % rn, "47", fx, py + 2.54, 0, ["1", "2"], fp=R0603,
+                          desc="Series termination of %s at J%d (camera cable source termination)" % (name, k),
+                          ref_at=(fx + 2.0, py + 1.9, 0), val_at=(fx + 2.0, py + 3.4, 0))
+            ser += label(name, fx, py + 5.08, "left")
+            rn += 1
+            continue
+        if abs(x1 - px) < 1e-6:
+            nw = w.group(0).replace("(xy %s %s) (xy" % (w.group(1), w.group(2)), "(xy %s %s) (xy" % (n(qx), n(py)))
+        else:
+            nw = w.group(0).replace(") (xy %s %s)" % (w.group(3), w.group(4)), ") (xy %s %s)" % (n(qx), n(py)))
+        s = s[:w.start()] + nw + s[w.end():]
+        lab = re.search(r'\t\(label "%s"\n\t\t\(at %s %s (\d+)\)' % (name, n(px), n(py)), s)
+        if lab:                                                       # a label at the pin end moves to the new wire end
+            s = s[:lab.start()] + lab.group(0).replace("(at %s %s" % (n(px), n(py)), "(at %s %s" % (n(qx), n(py))) + s[lab.end():]
+        ser += symbol("Device:R_Small", "R%d" % rn, "47", (px + qx) / 2, py, 90, ["1", "2"], fp=R0603,
+                      desc="Series termination of %s at J%d (camera cable source termination)" % (name, k),
+                      ref_at=((px + qx) / 2, py - 1.5, 90), val_at=((px + qx) / 2, py + 1.5, 90))
+        ser += label(name + "_C", px, py, "left" if side > 0 else "right")
+        rn += 1
+assert rn == 70
+
 # ---- 4. new parts ----------------------------------------------------------------------------------
 C0805 = "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder"
 R0805 = "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
@@ -231,19 +290,21 @@ o += symbol("Power_Management:TPS2116DRL", "U20", "TPS2116DRL", X, Y, 0, [str(k)
             desc="Power mux for +VCAM: VIN2 (+1V8) with J22 open, VIN1 (+3V3) with J22 fitted. MODE = VIN1, PR1 threshold 1.0 V.",
             ref_at=(X - 7.62, Y - 9.144, 0, "left"), val_at=(X, Y - 9.144, 0, "left"))
 xl, xr = X - 10.16, X + 10.16
-# VIN1 = +3V3 (Pico 3V3_OUT), with C24; MODE tied to VIN1
-o += wire((xl, Y - 5.08), (xl - G, Y - 5.08), (xl - 22.86, Y - 5.08)) + junction(xl - G, Y - 5.08)
-o += wire((xl, Y + G), (xl - G, Y + G), (xl - G, Y - 5.08))
-o += power("+3V3", xl - 22.86, Y - 5.08, 0) + cap("C24", "1uF", xl - 22.86, Y - 1.27, "+3V3 input capacitor of U20 (VIN1)", -1)
-o += power("GND", xl - 22.86, Y + G)
+# VIN1 = +1V8 (U9; its output capacitor C7 is the VIN1 capacitor)
+o += wire((xl, Y - 5.08), (xl - 5.08, Y - 5.08)) + power("+1V8", xl - 5.08, Y - 5.08, 0)
 # PR1 = VCAM_SEL
-o += wire((xl, Y - G), (xl - 5.08, Y - G)) + label("VCAM_SEL", xl - 5.08, Y - G, "right")
-# VIN2 = +1V8 (U9; its output capacitor C7 is the VIN2 capacitor)
-o += wire((xl, Y + 5.08), (xl - 5.08, Y + 5.08)) + power("+1V8", xl - 5.08, Y + 5.08, 180)
+o += wire((xl, Y - G), (xl - 10.16, Y - G)) + label("VCAM_SEL", xl - 10.16, Y - G, "right")
+# MODE and VIN2 = +3V3 (Pico 3V3_OUT), with C24
+o += wire((xl, Y + G), (xl - G, Y + G), (xl - G, Y + 5.08))
+o += wire((xl, Y + 5.08), (xl - G, Y + 5.08), (xl - 22.86, Y + 5.08), (xl - 22.86, Y + 2.54)) + junction(xl - G, Y + 5.08)
+o += power("+3V3", xl - 22.86, Y + 2.54, 0) + junction(xl - 15.24, Y + 5.08)
+o += cap("C24", "1uF", xl - 15.24, Y + 8.89, "+3V3 input capacitor of U20 (VIN2)", -1) + power("GND", xl - 15.24, Y + 12.7)
 # VOUT = +VCAM, C23, D1 + R33
 vx = xr + 10.16
 o += wire((xr, Y - 5.08), (vx, Y - 5.08), (vx + 10.16, Y - 5.08)) + junction(vx, Y - 5.08) + power("+VCAM", vx, Y - 5.08, 0)
 o += cap("C23", "1uF", vx, Y - 1.27, "+VCAM output capacitor of U20") + power("GND", vx, Y + G)
+o += wire((vx, Y - 5.08), (vx + 5.08, Y - 5.08))                         # R51: bleed, discharges +VCAM when J22 is removed
+o += junction(vx + 5.08, Y - 5.08) + res_v("R51", "4.7k", vx + 5.08, Y - G, "+VCAM bleed resistor: 6 ms discharge after a change from 3.3 V to 1.8 V") + power("GND", vx + 5.08, Y)
 o += res_h("R33", "100", vx + 12.7, Y - 5.08, "D1 series resistor")
 o += led("D1", "Blue", vx + 19.05, Y - 5.08, "3.3 V indicator on +VCAM: a blue LED (Vf > 2.5 V) is dark at 1.8 V and lit at 3.3 V")
 o += power("GND", vx + 22.86, Y - 5.08)
@@ -254,13 +315,15 @@ o += symbol("Connector:Conn_01x02_Pin", "J22", "3V3 camera I/O", jx, jy, 0, ["1"
             fp="Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical",
             desc="Camera I/O voltage: open = 1.8 V (IDS), shunt = 3.3 V (Prophesee EVK4). Fit the shunt only with no 1.8 V camera connected.",
             ref_at=(jx - 3.556, jy - 2.286, 0), val_at=(jx - 1.27, jy + 5.842, 0))
-o += wire((jx + 5.08, jy), (jx + 10.16, jy), (jx + 10.16, jy - G))
-o += res_v("R35", "1k", jx + 10.16, jy - 5.08, "J22 series resistor: both J22 pins are current-limited") + power("+3V3", jx + 10.16, jy - 7.62, 0)
-o += wire((jx + 5.08, jy + G), (jx + 17.78, jy + G), (jx + 25.4, jy + G)) + junction(jx + 17.78, jy + G)
-o += label("VCAM_SEL", jx + 25.4, jy + G, "left")
-o += res_v("R34", "10k", jx + 17.78, jy + 5.08, "PR1 pull-down: with J22 open the mux passes +1V8") + power("GND", jx + 17.78, jy + 7.62)
+o += wire((jx + 5.08, jy), (jx + 10.16, jy)) + power("GND", jx + 10.16, jy)
+o += wire((jx + 5.08, jy + G), (jx + 7.62, jy + G), (jx + 7.62, jy + 7.62), (jx + 12.7, jy + 7.62))
+o += res_h("R35", "1k", jx + 15.24, jy + 7.62, "Series resistor between J22 and PR1 of U20")
+o += wire((jx + 17.78, jy + 7.62), (jx + 22.86, jy + 7.62), (jx + 30.48, jy + 7.62)) + junction(jx + 22.86, jy + 7.62)
+o += label("VCAM_SEL", jx + 30.48, jy + 7.62, "left")
+o += res_v("R34", "10k", jx + 22.86, jy + 5.08, "PR1 pull-up: with J22 open the mux passes VIN1 = +1V8") + power("+3V3", jx + 22.86, jy + G, 0)
 o += text("Camera I/O supply +VCAM (U1-U6). J22 open: 1.8 V (IDS uEye EVS). J22 fitted: 3.3 V (Prophesee EVK4).\n"
-          "U20 passes VIN1 (+3V3) if PR1 > 1.0 V, else VIN2 (+1V8). R34 holds PR1 low with J22 open.\n"
+          "U20 (MODE high): PR1 high = VIN1 (+1V8), PR1 low = VIN2 (+3V3). R34 holds PR1 high with J22 open.\n"
+          "A bridge from PR1 to pin 3 or pin 5, an open MODE pin or a missing Pico cannot give 3.3 V.\n"
           "D1 (blue) lights at 3.3 V only. Do not fit J22 with an IDS camera connected.", 20.32, 322.58)
 
 # -- 4b. status LEDs: D2 "12 V good", D3 "ARMED" --
@@ -318,7 +381,7 @@ for k, (src, sense, what, colour) in enumerate((("CH1_DRIVE_RAW", "CH1_SENSE", "
                 desc="Sense divider compensation, across the upper resistor (C0G)",
                 ref_at=(pl - 22.86, by - 9.652, 90), val_at=(pl - 22.86, by - 7.874, 90))
     o += wire((pl - 26.67, by), (pl - 26.67, by - 5.08)) + wire((pl - 19.05, by), (pl - 19.05, by - 5.08))
-    o += cap(cb, "18pF", pl - 10.16, by + 3.81, "Sense divider compensation, across the lower resistor (C0G)") + power("GND", pl - 10.16, by + 7.62)
+    o += cap(cb, "22pF", pl - 10.16, by + 3.81, "Sense divider compensation, across the lower resistor (C0G)") + power("GND", pl - 10.16, by + 7.62)
     o += power("+3V3", ux, uy + 12.7, 180)
     # Q -> R -> LED -> GND
     qy2 = uy - 5.08
@@ -334,7 +397,7 @@ for k, (src, sense, what, colour) in enumerate((("CH1_DRIVE_RAW", "CH1_SENSE", "
     o += wire((sx, sy - 12.7), (sx + 10.16, sy - 12.7), (sx + 10.16, sy - 10.16))
     o += cap("C%d" % (c0 + 1), "0.1uF", sx + 10.16, sy - 6.35, "Decoupling of %s" % u) + power("GND", sx + 10.16, sy - G)
 o += text("Output activity LEDs. Each monostable (VCC = +3V3, VIH 2.0 V) is triggered by the rising edge at its 12 V driver output\n"
-          "(after all three laser gates), divided to about 3.8 V by a compensated divider: 10k / 4.7k with 12 pF / 18 pF.\n"
+          "(after all three laser gates), divided to about 3.8 V by a compensated divider: 10k / 4.7k with 12 pF / 22 pF.\n"
           "One pulse gives a flash of about 15 ms; above about 70 Hz the LED is on continuously. Load on each driver: 0.8 mA.", 243.84, 322.58)
 
 # -- 4d. rail test pads (top-layer taps of the In2 power islands) --
@@ -348,7 +411,7 @@ for k, (ref, net) in enumerate((("TP4", "+12V"), ("TP5", "+5V"), ("TP6", "+3V3")
 o += text("Rail test pads TP4-TP9 (bare 1.5 mm pads, no part): one tap on each In2 power island and on GND.", TX - 5.08, TY - 10.16)
 
 i1 = s.rindex("\t(sheet_instances")
-s = s[:i1] + o + s[i1:]
+s = s[:i1] + ser + o + s[i1:]
 
 # ---- 5. paper and title block -----------------------------------------------------------------------
 s = s.replace('(paper "A3")', '(paper "A2")', 1)
@@ -367,4 +430,4 @@ if LOCAL_LIB:
         v = "\n".join(l[1:] if l.startswith("\t") else l for l in v.split("\n"))
         L = L.rstrip()[:-1].rstrip() + "\n\t" + v + "\n)\n"
         open(LOCAL_LIB, "w", encoding="utf-8", newline="\n").write(L)
-print("sch_edit: %d supply symbols moved to +VCAM; U20-U23, Q1, Q2, D1-D6, J22, C23-C36, R33-R50, TP4-TP9 added" % moved)
+print("sch_edit: %d supply symbols moved to +VCAM; U20-U23, Q1, Q2, D1-D6, J22, C23-C36, R33-R69, TP4-TP9 added" % moved)

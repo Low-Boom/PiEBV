@@ -220,7 +220,8 @@ for fp in b.GetFootprints():
     for p in fp.Pads():
         n = PADNET.get((fp.GetReference(), p.GetNumber()))
         if n and not n.startswith("unconnected-") and p.GetNetname() != n:
-            assert (p.GetNetname(), n) in (("+1V8", "+VCAM"), ("", "ARMED_LED")), (fp.GetReference(), p.GetNumber(), p.GetNetname(), n)
+            assert (p.GetNetname(), n) in (("+1V8", "+VCAM"), ("", "ARMED_LED")) or n == p.GetNetname() + "_C", \
+                (fp.GetReference(), p.GetNumber(), p.GetNetname(), n)
             p.SetNet(net(n))
 
 # ---- 2. U9 / C6 / C7 leave their Rev 1 site ------------------------------------------------------------------
@@ -262,41 +263,42 @@ track("GND", [(221.8, 43.8375), (221.8, 45.3)], 0.4)
 via("GND", 221.8, 45.3)
 
 place("U20", 229.6, 42.0, 180, None)
-check_pad("U20", "5", 228.86, 41.25)
-check_pad("U20", "3", 230.34, 41.75)
-# +1V8: U9.5 -> C7.1 -> U20.6 (VIN2), with the tap via into the +1V8 island and TP7
-track("+1V8", [(218.55, 41.75), (221.8, 41.75), (227.6, 41.75)], 0.4)
-track("+1V8", [(227.6, 41.75), (228.86, 41.75)], 0.25)
+check_pad("U20", "5", 228.86, 41.25)                    # west: 5 MODE, 6 VIN2, 7 VOUT, 8 ST (top to bottom)
+check_pad("U20", "3", 230.34, 41.75)                    # east: 4 PR1, 3 VIN1, 2 VOUT, 1 GND (top to bottom)
+assert PADNET[("U20", "3")] == "+1V8" and PADNET[("U20", "6")] == "+3V3" and PADNET[("U20", "5")] == "+3V3"
+# +1V8: U9.5 -> C7.1 -> tap via into the +1V8 island (TP7 on the same track). The island goes below U20 to a
+# second via east of U20, which feeds VIN1 (pin 3).
+track("+1V8", [(218.55, 41.75), (221.8, 41.75), (225.0, 41.75)], 0.4)
 via("+1V8", 223.7, 41.75)
 place("TP7", 225.0, 43.75, 0, None)
 track("+1V8", [(225.0, 41.75), (225.0, 43.75)], 0.4)
-# +3V3: MODE (pin 5) and VIN1 (pin 3), each to its own via into the +3V3 island
-track("+3V3", [(228.86, 41.25), (228.1, 41.25), (228.1, 39.3)], 0.25)
+track("+1V8", [(230.34, 41.75), (231.3, 41.75), (232.0, 41.05)], 0.25)
+via("+1V8", 232.0, 41.05)
+# +3V3: MODE (pin 5) and VIN2 (pin 6) joined at the pads, one via into the +3V3 island
+track("+3V3", [(228.86, 41.75), (228.86, 41.25), (228.1, 41.25), (228.1, 39.3)], 0.25)
 via("+3V3", 228.1, 39.3)
-track("+3V3", [(230.34, 41.75), (231.15, 41.75), (231.9, 41.0)], 0.25)
-via("+3V3", 231.9, 41.0)
-place("C24", 233.2, 37.5, 90, None)
-check_pad("C24", "1", 233.2, 38.5375)                   # +3V3 pad down
-track("+3V3", [(233.2, 38.5375), (233.2, 40.0)], 0.4)
-via("+3V3", 233.2, 40.0)
-track("GND", [(233.2, 36.4625), (233.2, 35.0)], 0.4)
-via("GND", 233.2, 35.0)
-# PR1 (pin 4) = VCAM_SEL -> J22.2, R34 to GND; J22.1 -> R35 -> +3V3
+place("C24", 233.2, 37.5, 270, None)
+check_pad("C24", "1", 233.2, 36.4625)                   # +3V3 pad up
+track("+3V3", [(233.2, 36.4625), (233.2, 35.0)], 0.4)
+via("+3V3", 233.2, 35.0)
+track("GND", [(233.2, 38.5375), (233.2, 40.0)], 0.4)
+via("GND", 233.2, 40.0)
+# PR1 (pin 4) = VCAM_SEL: R34 pulls it up to +3V3 (J22 open: 1.8 V); J22.2 pulls it down through R35; J22.1 = GND
 place("J22", 229.6, 35.3, 0, None)
 check_pad("J22", "2", 229.6, 37.84)
-track("VCAM_SEL", [(230.34, 41.25), (230.34, 40.3), (229.6, 39.56), (229.6, 37.84)], 0.25)
-place("R34", 225.7, 37.84, 180, None)
-check_pad("R34", "1", 226.7, 37.84)
-track("VCAM_SEL", [(226.7, 37.84), (229.6, 37.84)], 0.3)
-track("GND", [(224.7, 37.84), (223.3, 37.84)], 0.4)
-via("GND", 223.3, 37.84)
-place("R35", 225.7, 35.3, 0, None)
-check_pad("R35", "2", 226.7, 35.3)
-track("Net-(J22-Pin_1)", [(226.7, 35.3), (229.6, 35.3)], 0.3)
+assert PADNET[("J22", "1")] == "GND" and PADNET[("R35", "1")] == PADNET[("J22", "2")] and PADNET[("R34", "1")] == "+3V3"
+place("R35", 225.7, 37.84, 180, None)
+check_pad("R35", "1", 226.7, 37.84)
+track(PADNET[("J22", "2")], [(226.7, 37.84), (229.6, 37.84)], 0.3)
+place("R34", 225.7, 35.3, 0, None)
+check_pad("R34", "2", 226.7, 35.3)
 track("+3V3", [(224.7, 35.3), (223.3, 35.3)], 0.4)
 via("+3V3", 223.3, 35.3)
 place("TP6", 220.9, 36.6, 0, None)
 track("+3V3", [(220.9, 36.6), (222.2, 35.3), (223.3, 35.3)], 0.4)
+# VCAM_SEL: R35.2 and R34.2 join on the lane between the two resistors; the lane goes between the J22 pads to U20.4
+track("VCAM_SEL", [(224.7, 37.84), (224.7, 36.57), (226.7, 36.57), (231.2, 36.57), (231.2, 40.39), (230.34, 41.25)], 0.25)
+track("VCAM_SEL", [(226.7, 35.3), (226.7, 36.57)], 0.25)
 # VOUT (pins 2 + 7) = +VCAM: bridge under the body, C23, two vias into the corridor of the +VCAM island, TP8
 track("+VCAM", [(228.86, 42.25), (230.34, 42.25)], 0.25)
 track("+VCAM", [(230.34, 42.25), (232.415, 42.25)], 0.25)
@@ -312,6 +314,13 @@ track("+VCAM", [(231.9, 47.9), (230.5, 47.9)], 0.4)
 via("+VCAM", 230.5, 47.9)
 place("TP8", 230.5, 50.3, 0, None)
 track("+VCAM", [(230.5, 47.9), (230.5, 50.3)], 0.4)
+# R51 (bleed): +VCAM via -> R51 -> GND via
+place("R51", 234.0, 47.9, 0, None)
+check_pad("R51", "1", 233.0, 47.9)
+assert PADNET[("R51", "1")] == "+VCAM"
+track("+VCAM", [(231.9, 47.9), (233.0, 47.9)], 0.4)
+track("GND", [(235.0, 47.9), (236.3, 47.9)], 0.4)
+via("GND", 236.3, 47.9)
 # D1 (3.3 V indicator): +VCAM -> R33 -> D1 -> GND
 place("R33", 235.5, 39.7, 90, None)
 check_pad("R33", "1", 235.5, 40.7)                      # +VCAM pad down
@@ -500,6 +509,60 @@ via("+VCAM", 231.5, 88.46)                              # U5 / U6 / C3 group: ta
 via("+12V", 235.6, 76.9)                                # U17 output: second tap into the +12V island (C17.1 / R12.1)
 track("+12V", [(236.41, 75.75), (235.6, 76.9)], 0.4)
 
+# ---- 3b. camera lines: Rev 1 copper removed, series resistors R52-R69 at the headers ---------------------------
+# The autorouter (tools/rev2/build.sh) draws buffer -> resistor again, length-matched in each group. The
+# resistor -> header pin stubs are drawn here; they are the same for all six headers, so the match holds.
+CAM = re.compile(r"^(Sync|Trigger|TDRSTN)[1-6]$")
+for t in list(OLD):
+    if CAM.match(t.GetNetname()):
+        b.Remove(t)
+        OLD.remove(t)
+        GONE.append(t)
+# One GND stitch via is in the way of the Trigger4 stub: it moves 0.9 mm
+drop_via("GND", 233.74, 111.4)
+via("GND", 234.64, 111.4)
+# The resistors stand in the 2 mm gaps between the header courtyards (x = pin 1 - 4.73 mm), one column per gap:
+#   Trigger(k-1) at y 108.0, TDRSTN(k) at y 113.9 (clear of the pin 1 mark), Sync(k) at y 117.88.
+GX = -4.73                                              # gap centre from pin 1 of the header on its right
+for k in range(1, 7):
+    hx, hy = pad_xy("J%d" % k, "1")
+    assert abs(hy - 111.5) < 0.01
+    # (signal, header pin, resistor centre, header-side pad, stub way points after the pad)
+    for sig, pin, cx, cy, pady in (("TDRSTN", "3", hx + GX, 113.9, 114.9), ("Sync", "5", hx + GX, 117.88, 116.88),
+                                   ("Trigger", "4", hx + 12.0 + GX, 108.0, 109.0)):
+        cnet = "%s%d_C" % (sig, k)
+        assert PADNET[("J%d" % k, pin)] == cnet
+        ref = [r for (r, num), nn in PADNET.items() if nn == cnet and r.startswith("R")]
+        assert len(ref) == 1, cnet
+        ref = ref[0]
+        num = [num for (r, num), nn in PADNET.items() if r == ref and nn == cnet][0]
+        down = pady > cy                                # header-side pad below the centre
+        place(ref, cx, cy, (90 if num == "1" else 270) if down else (270 if num == "1" else 90), None)
+        check_pad(ref, num, cx, pady)
+        px, py = pad_xy("J%d" % k, pin)
+        if sig == "Trigger":                            # west, then down beside the pin column, then into pin 4
+            track(cnet, [(cx, pady), (hx + 4.5, pady), (hx + 4.5, py), (px, py)], 0.3)
+        else:                                           # 45 degrees up to the pin row, then east into the pin
+            track(cnet, [(cx, pady), (cx + pady - py, py), (px, py)], 0.3)
+
+# Trigger3 is drawn here: its resistor is 12 mm below its buffer pin, so the autorouter cannot lengthen it to
+# the other Trigger lines. F.Cu only: west of the U6 GND via, down, four teeth to the east, 45 degrees into R60.
+T3_LEN = float(sys.argv[5]) if len(sys.argv) > 5 else 45.8      # mm, pad centre to pad centre: the shortest Trigger1 route
+sx, sy = pad_xy("U6", "6")
+r3 = [r for (r, num), nn in PADNET.items() if nn == "Trigger3" and r.startswith("R")][0]
+ex, ey = pad_xy(r3, [num for (r, num), nn in PADNET.items() if r == r3 and nn == "Trigger3"][0])
+SPX, Y0, NT, PT = 221.6, 98.0, 4, 0.75                  # spine x, first tooth y, teeth, tooth pitch
+yd = ey - (ex - SPX)                                    # start of the 45 degree run into the pad
+fixed = (sx - SPX) + (Y0 - sy) + NT * 2 * PT + (yd - (Y0 + NT * 2 * PT)) + (ex - SPX) * math.sqrt(2)
+AT = (T3_LEN - fixed) / (2 * NT)                        # tooth length for the wanted total
+assert 1.0 < AT < 4.2, AT
+pts = [(sx, sy), (SPX, sy), (SPX, Y0)]
+for i in range(NT):
+    y = Y0 + i * 2 * PT
+    pts += [(SPX + AT, y), (SPX + AT, y + PT), (SPX, y + PT), (SPX, y + 2 * PT)]
+pts += [(SPX, yd), (ex, ey)]
+track("Trigger3", pts, 0.3)
+
 # ---- 4. In2.Cu: power islands in a GND fill ----------------------------------------------------------------
 from shapely.geometry import box, Polygon
 from shapely.ops import unary_union
@@ -507,9 +570,9 @@ from shapely.ops import unary_union
 GAP = 0.5                                               # copper gap between two islands
 I33 = unary_union([box(138.9, 30.5, 265.0, 39.9),       # +3V3: band along the top edge, from J15.5 to U20 and on
                    box(236.6, 39.9, 265.0, 46.5),       #   under the activity-LED monostables U21-U23
-                   box(141.35, 39.9, 143.75, 42.9),     #   tab down to the J15.5 socket pad
-                   box(231.2, 39.5, 233.9, 41.7)])      #   lobe: U20 VIN1 via and C24 via
-I18 = box(223.0, 40.45, 227.3, 42.9)                    # +1V8: patch under the U9 output track (tap via, C7)
+                   box(141.0, 39.9, 144.1, 42.9),       #   tab down to the J15.5 socket pad
+                   ])
+I18 = box(223.0, 40.45, 232.8, 42.9)                    # +1V8: from the U9 tap via, below U20, to the VIN1 via
 I12 = unary_union([box(233.05, 47.0, 250.4, 80.5),      # +12V: U13, U17 and the U17 output capacitors
                    box(244.6, 80.0, 250.4, 101.5)])     #   lobe to C22 / C21 / U19
 I12 = I12.difference(Polygon([(233.0, 78.0), (233.0, 80.6), (235.6, 80.6)]))   # corner cut: PWM_TRIG_TAP (B.Cu) stays over +VCAM

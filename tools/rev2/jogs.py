@@ -8,9 +8,9 @@ because the same vectors are added in another order. So the camera line lengths 
 match) stay exactly as they were.
 
 For each staircase there are two ways to merge: both steps at the start of the middle run
-("A") or both at its end ("B"). The tool tries A first. A merge listed in the choice file as B
-is drawn the other way; a merge listed as "skip" is left as routed. tools/rev2/build.sh runs
-this tool, then DRC, and moves every merge that is near a DRC violation from A to B to skip.
+("A") or both at its end ("B"). The tool draws A, unless the choice file lists the merge as
+"B" (drawn the other way) or "skip" (left as routed). The choice file is edited by hand: after
+a build, a merge that makes a DRC violation is set to "B", and to "skip" if B also fails.
 
 Not touched: meander combs (their arms alternate direction, so they are not staircases), the
 laser pulse lanes, the carried output-block copper, joints at a via, at a pad or at a branch.
@@ -44,10 +44,6 @@ def at_pad(net, layer, q):
         if p.GetNetname() == net and p.IsOnLayer(layer) and p.HitTest(q):
             return True
     return False
-
-
-def length(net):
-    return sum(t.GetLength() for t in segs_now if t.GetNetname() == net)
 
 
 segs_now = list(segs)

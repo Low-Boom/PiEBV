@@ -2,9 +2,8 @@
 """Hand clean-up of router squiggles (Rev 2), after jogs.py.
 
 Each entry replaces a chain of track vertices by a cleaner chain between the same two end
-points. The length change of each edit is printed. Camera-line edits either keep the length
-(TDRSTN6) or shorten the longest line of a group (Trigger4), so no length-match group gets a
-larger spread; tools/rev2/build.sh checks that with KiCad's own length reading.
+points. The length change of each edit is printed. No camera line is edited here: the camera
+lines are routed again in Rev 2 (tools/rev2/build.sh) and only jogs.py changes them.
 
 usage (KiCad 10 Python): tidy.py IN.kicad_pcb OUT.kicad_pcb
 """
@@ -19,20 +18,6 @@ OLD = [t for t in b.Tracks() if t.Type() != pcbnew.PCB_VIA_T]
 GONE = []                                               # removed items stay referenced (see pcb_edit.py)
 
 EDITS = [
-    # Trigger4 (F.Cu): length bump in a straight 45 deg run -> straight. Trigger4 is the longest Trigger line.
-    ("Trigger4", "F.Cu",
-     [(231.6, 107.6), (232.661, 108.661), (232.661, 109.191), (232.201, 109.651), (232.201, 110.181), (232.731, 110.181),
-      (233.191, 109.721), (233.721, 109.721), (235.45, 111.45)],
-     [(231.6, 107.6), (235.45, 111.45)]),
-    # TDRSTN6 (B.Cu): six-segment bump in a straight 45 deg run -> one square step of the same length (0.822 mm extra).
-    ("TDRSTN6", "B.Cu",
-     [(241.9, 104.4), (248.279, 110.779), (248.809, 110.779), (248.88, 110.708), (249.41, 110.708), (249.41, 111.238),
-      (249.339, 111.309), (249.339, 111.839), (251.39, 113.89)],
-     [(241.9, 104.4), (248.0, 110.5), (249.403, 110.5), (249.403, 111.903), (251.39, 113.89)]),
-    # TDRSTN2 (B.Cu): right-left zigzag below its via -> one vertical and one 45 deg run.
-    ("TDRSTN2", "B.Cu",
-     [(206.8, 95.1), (207.1, 94.8), (207.1, 94.7), (206.1, 93.7)],
-     [(206.8, 95.1), (206.8, 94.4), (206.1, 93.7)]),
     # +5V_PD (F.Cu): two small steps with a 0.2 mm flat between them -> one 45 deg run.
     ("+5V_PD", "F.Cu",
      [(167.0, 113.8), (167.6, 113.2), (167.8, 113.2), (167.98, 113.02), (168.72, 113.02)],
