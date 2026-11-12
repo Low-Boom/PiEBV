@@ -1,5 +1,12 @@
 # EuroCard re-layout (160 x 100 mm)
 
+**Note (Rev 2).** These scripts make the Rev 1 EuroCard board. The board in the repository root is
+Rev 2: `tools/rev2/build.sh` makes it from the Rev 1 EuroCard board (commit `4381eab`). That
+script removes the Rev 1 camera copper and routes the camera lines again, with the
+KiCadRoutingTools setup of this folder. The Rev 1 EuroCard build is still made from commit
+`4381eab`. Run `build.sh` here on a checkout of `4381eab`: it reads the schematic of the checkout, and the Rev 2
+schematic has parts that the Rev 1 board does not have. It writes to `work/final/` only.
+
 These scripts turn the hand-routed 126 x 126 mm Rev 1 board (main at `3883378`) into the EuroCard
 board on this branch. The schematic, netlist and footprints do not change; only placement, routing,
 outline and silkscreen do. `bash build.sh` gives the same copper as the committed board.

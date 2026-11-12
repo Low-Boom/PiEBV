@@ -892,9 +892,9 @@
   },
   "CH1_DRIVE_RAW": {
    "root": "U13.7",
-   "total_len_mm": 7.525,
+   "total_len_mm": 12.625,
    "via_count": 0,
-   "segment_count": 2,
+   "segment_count": 4,
    "components": 1,
    "independent_loops": 0,
    "unreached_pads": [],
@@ -913,9 +913,65 @@
        "len_mm": 7.525
       }
      ]
+    },
+    {
+     "a": "R6.1",
+     "b": "R39.1",
+     "len_mm": 3.0,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 3.0
+      }
+     ]
+    },
+    {
+     "a": "R39.1",
+     "b": "C31.1",
+     "len_mm": 2.1,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 2.1
+      }
+     ]
     }
    ],
    "pads": [
+    {
+     "pad": "C31.1",
+     "ref": "C31",
+     "value": "12pF",
+     "footprint": "C_0805_2012Metric_Pad1.18x1.45mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 249.2,
+     "y_mm": 56.2375,
+     "path_len_from_root_mm": 12.625,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R39.1",
+     "ref": "R39",
+     "value": "10k",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 247.1,
+     "y_mm": 56.2,
+     "path_len_from_root_mm": 10.525,
+     "path_vias_from_root": 0
+    },
     {
      "pad": "R6.1",
      "ref": "R6",
@@ -946,13 +1002,13 @@
    "pad_internal_copper": [],
    "duplicate_overlap_pieces_removed": 0,
    "pad_internal_len_mm": 0,
-   "kicad_pad_count": 2,
+   "kicad_pad_count": 4,
    "branch_points": {},
    "gnd_pour_edge_gap": {
     "F.Cu": {
-     "len_mm": 7.52,
-     "frac_gap_lt_0p35mm": 0.755,
-     "frac_gap_lt_0p6mm": 0.877,
+     "len_mm": 12.62,
+     "frac_gap_lt_0p35mm": 0.45,
+     "frac_gap_lt_0p6mm": 0.707,
      "frac_gap_lt_1mm": 1.0
     }
    }
@@ -1223,9 +1279,9 @@
   },
   "CH2_DRIVE_RAW": {
    "root": "U13.5",
-   "total_len_mm": 7.9392,
+   "total_len_mm": 13.1392,
    "via_count": 0,
-   "segment_count": 4,
+   "segment_count": 6,
    "components": 1,
    "independent_loops": 0,
    "unreached_pads": [],
@@ -1244,9 +1300,65 @@
        "len_mm": 7.9392
       }
      ]
+    },
+    {
+     "a": "R7.1",
+     "b": "R43.1",
+     "len_mm": 3.1,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 3.1
+      }
+     ]
+    },
+    {
+     "a": "R43.1",
+     "b": "C33.1",
+     "len_mm": 2.1,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 2.1
+      }
+     ]
     }
    ],
    "pads": [
+    {
+     "pad": "C33.1",
+     "ref": "C33",
+     "value": "12pF",
+     "footprint": "C_0805_2012Metric_Pad1.18x1.45mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 249.2,
+     "y_mm": 67.2625,
+     "path_len_from_root_mm": 13.1392,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R43.1",
+     "ref": "R43",
+     "value": "10k",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 247.1,
+     "y_mm": 67.3,
+     "path_len_from_root_mm": 11.0392,
+     "path_vias_from_root": 0
+    },
     {
      "pad": "R7.1",
      "ref": "R7",
@@ -1284,13 +1396,13 @@
    ],
    "duplicate_overlap_pieces_removed": 0,
    "pad_internal_len_mm": 0.995,
-   "kicad_pad_count": 2,
+   "kicad_pad_count": 4,
    "branch_points": {},
    "gnd_pour_edge_gap": {
     "F.Cu": {
-     "len_mm": 8.93,
-     "frac_gap_lt_0p35mm": 0.698,
-     "frac_gap_lt_0p6mm": 0.862,
+     "len_mm": 14.13,
+     "frac_gap_lt_0p35mm": 0.475,
+     "frac_gap_lt_0p6mm": 0.729,
      "frac_gap_lt_1mm": 1.0
     }
    }
@@ -1554,9 +1666,9 @@
   },
   "EXT_SYNC_DRIVE_RAW": {
    "root": "U19.7",
-   "total_len_mm": 7.525,
+   "total_len_mm": 12.625,
    "via_count": 0,
-   "segment_count": 2,
+   "segment_count": 4,
    "components": 1,
    "independent_loops": 0,
    "unreached_pads": [],
@@ -1575,9 +1687,52 @@
        "len_mm": 7.525
       }
      ]
+    },
+    {
+     "a": "R30.1",
+     "b": "R47.1",
+     "len_mm": 3.0,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 3.0
+      }
+     ]
+    },
+    {
+     "a": "R47.1",
+     "b": "C35.1",
+     "len_mm": 2.1,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 2.1
+      }
+     ]
     }
    ],
    "pads": [
+    {
+     "pad": "C35.1",
+     "ref": "C35",
+     "value": "12pF",
+     "footprint": "C_0805_2012Metric_Pad1.18x1.45mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 255.0,
+     "y_mm": 93.7375,
+     "path_len_from_root_mm": 12.625,
+     "path_vias_from_root": 0
+    },
     {
      "pad": "R30.1",
      "ref": "R30",
@@ -1589,6 +1744,19 @@
      "x_mm": 252.9,
      "y_mm": 96.7,
      "path_len_from_root_mm": 7.525,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R47.1",
+     "ref": "R47",
+     "value": "10k",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 252.9,
+     "y_mm": 93.7,
+     "path_len_from_root_mm": 10.525,
      "path_vias_from_root": 0
     },
     {
@@ -1608,13 +1776,13 @@
    "pad_internal_copper": [],
    "duplicate_overlap_pieces_removed": 0,
    "pad_internal_len_mm": 0,
-   "kicad_pad_count": 2,
+   "kicad_pad_count": 4,
    "branch_points": {},
    "gnd_pour_edge_gap": {
     "F.Cu": {
-     "len_mm": 7.52,
-     "frac_gap_lt_0p35mm": 0.755,
-     "frac_gap_lt_0p6mm": 0.877,
+     "len_mm": 12.62,
+     "frac_gap_lt_0p35mm": 0.45,
+     "frac_gap_lt_0p6mm": 0.688,
      "frac_gap_lt_1mm": 1.0
     }
    }
@@ -2199,25 +2367,25 @@
    "gnd_pour_edge_gap": {
     "F.Cu": {
      "len_mm": 24.7,
-     "frac_gap_lt_0p35mm": 0.407,
-     "frac_gap_lt_0p6mm": 0.478,
+     "frac_gap_lt_0p35mm": 0.398,
+     "frac_gap_lt_0p6mm": 0.468,
      "frac_gap_lt_1mm": 0.528
     }
    }
   },
   "Trigger1": {
    "root": "U6.2",
-   "total_len_mm": 42.4132,
+   "total_len_mm": 43.284,
    "via_count": 0,
-   "segment_count": 21,
+   "segment_count": 40,
    "components": 1,
    "independent_loops": 0,
    "unreached_pads": [],
    "edges": [
     {
      "a": "U6.2",
-     "b": "J1.4",
-     "len_mm": 42.4132,
+     "b": "R58.2",
+     "len_mm": 43.284,
      "layer": "F.Cu",
      "width_mm": 0.3,
      "vias": 0,
@@ -2225,23 +2393,23 @@
       {
        "layer": "F.Cu",
        "width_mm": 0.3,
-       "len_mm": 42.4132
+       "len_mm": 43.284
       }
      ]
     }
    ],
    "pads": [
     {
-     "pad": "J1.4",
-     "ref": "J1",
-     "value": "Conn_02x05_Odd_Even",
-     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
-     "pin": "4",
-     "function": "Pin_4",
-     "smd": false,
-     "x_mm": 195.58,
-     "y_mm": 114.04,
-     "path_len_from_root_mm": 42.4132,
+     "pad": "R58.2",
+     "ref": "R58",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "2",
+     "function": "",
+     "smd": true,
+     "x_mm": 200.31,
+     "y_mm": 107.0,
+     "path_len_from_root_mm": 43.284,
      "path_vias_from_root": 0
     },
     {
@@ -2258,46 +2426,33 @@
      "path_vias_from_root": 0
     }
    ],
-   "pad_internal_copper": [
-    {
-     "pad": "J1.4",
-     "len_mm": 0.05,
-     "layer": "F.Cu",
-     "width_mm": 0.3
-    },
-    {
-     "pad": "J1.4",
-     "len_mm": 0.1,
-     "layer": "F.Cu",
-     "width_mm": 0.3
-    }
-   ],
+   "pad_internal_copper": [],
    "duplicate_overlap_pieces_removed": 0,
-   "pad_internal_len_mm": 0.15,
+   "pad_internal_len_mm": 0,
    "kicad_pad_count": 2,
    "branch_points": {},
    "gnd_pour_edge_gap": {
     "F.Cu": {
-     "len_mm": 42.56,
-     "frac_gap_lt_0p35mm": 0.812,
-     "frac_gap_lt_0p6mm": 0.84,
-     "frac_gap_lt_1mm": 0.852
+     "len_mm": 43.58,
+     "frac_gap_lt_0p35mm": 0.644,
+     "frac_gap_lt_0p6mm": 0.772,
+     "frac_gap_lt_1mm": 0.847
     }
    }
   },
   "Trigger2": {
    "root": "U6.4",
-   "total_len_mm": 43.3233,
+   "total_len_mm": 43.584,
    "via_count": 0,
-   "segment_count": 21,
+   "segment_count": 31,
    "components": 1,
    "independent_loops": 0,
    "unreached_pads": [],
    "edges": [
     {
      "a": "U6.4",
-     "b": "J2.4",
-     "len_mm": 43.3233,
+     "b": "R59.2",
+     "len_mm": 43.584,
      "layer": "F.Cu",
      "width_mm": 0.3,
      "vias": 0,
@@ -2305,23 +2460,23 @@
       {
        "layer": "F.Cu",
        "width_mm": 0.3,
-       "len_mm": 43.3233
+       "len_mm": 43.584
       }
      ]
     }
    ],
    "pads": [
     {
-     "pad": "J2.4",
-     "ref": "J2",
-     "value": "Conn_02x05_Odd_Even",
-     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
-     "pin": "4",
-     "function": "Pin_4",
-     "smd": false,
-     "x_mm": 207.58,
-     "y_mm": 114.04,
-     "path_len_from_root_mm": 43.3233,
+     "pad": "R59.2",
+     "ref": "R59",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "2",
+     "function": "",
+     "smd": true,
+     "x_mm": 212.31,
+     "y_mm": 107.0,
+     "path_len_from_root_mm": 43.584,
      "path_vias_from_root": 0
     },
     {
@@ -2345,26 +2500,26 @@
    "branch_points": {},
    "gnd_pour_edge_gap": {
     "F.Cu": {
-     "len_mm": 43.32,
-     "frac_gap_lt_0p35mm": 0.738,
-     "frac_gap_lt_0p6mm": 0.84,
-     "frac_gap_lt_1mm": 0.904
+     "len_mm": 43.58,
+     "frac_gap_lt_0p35mm": 0.562,
+     "frac_gap_lt_0p6mm": 0.671,
+     "frac_gap_lt_1mm": 0.797
     }
    }
   },
   "Trigger3": {
    "root": "U6.6",
-   "total_len_mm": 42.6163,
+   "total_len_mm": 43.584,
    "via_count": 0,
-   "segment_count": 21,
+   "segment_count": 20,
    "components": 1,
    "independent_loops": 0,
    "unreached_pads": [],
    "edges": [
     {
      "a": "U6.6",
-     "b": "J3.4",
-     "len_mm": 42.6163,
+     "b": "R60.2",
+     "len_mm": 43.584,
      "layer": "F.Cu",
      "width_mm": 0.3,
      "vias": 0,
@@ -2372,23 +2527,23 @@
       {
        "layer": "F.Cu",
        "width_mm": 0.3,
-       "len_mm": 42.6163
+       "len_mm": 43.584
       }
      ]
     }
    ],
    "pads": [
     {
-     "pad": "J3.4",
-     "ref": "J3",
-     "value": "Conn_02x05_Odd_Even",
-     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
-     "pin": "4",
-     "function": "Pin_4",
-     "smd": false,
-     "x_mm": 219.58,
-     "y_mm": 114.04,
-     "path_len_from_root_mm": 42.6163,
+     "pad": "R60.2",
+     "ref": "R60",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "2",
+     "function": "",
+     "smd": true,
+     "x_mm": 224.31,
+     "y_mm": 107.0,
+     "path_len_from_root_mm": 43.584,
      "path_vias_from_root": 0
     },
     {
@@ -2412,26 +2567,26 @@
    "branch_points": {},
    "gnd_pour_edge_gap": {
     "F.Cu": {
-     "len_mm": 42.72,
-     "frac_gap_lt_0p35mm": 0.745,
-     "frac_gap_lt_0p6mm": 0.796,
-     "frac_gap_lt_1mm": 0.858
+     "len_mm": 43.58,
+     "frac_gap_lt_0p35mm": 0.463,
+     "frac_gap_lt_0p6mm": 0.621,
+     "frac_gap_lt_1mm": 0.724
     }
    }
   },
   "Trigger4": {
    "root": "U6.8",
-   "total_len_mm": 43.5187,
+   "total_len_mm": 43.584,
    "via_count": 0,
-   "segment_count": 34,
+   "segment_count": 30,
    "components": 1,
    "independent_loops": 0,
    "unreached_pads": [],
    "edges": [
     {
      "a": "U6.8",
-     "b": "J4.4",
-     "len_mm": 43.5187,
+     "b": "R61.2",
+     "len_mm": 43.584,
      "layer": "F.Cu",
      "width_mm": 0.3,
      "vias": 0,
@@ -2439,23 +2594,23 @@
       {
        "layer": "F.Cu",
        "width_mm": 0.3,
-       "len_mm": 43.5187
+       "len_mm": 43.584
       }
      ]
     }
    ],
    "pads": [
     {
-     "pad": "J4.4",
-     "ref": "J4",
-     "value": "Conn_02x05_Odd_Even",
-     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
-     "pin": "4",
-     "function": "Pin_4",
-     "smd": false,
-     "x_mm": 231.58,
-     "y_mm": 114.04,
-     "path_len_from_root_mm": 43.5187,
+     "pad": "R61.2",
+     "ref": "R61",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "2",
+     "function": "",
+     "smd": true,
+     "x_mm": 236.31,
+     "y_mm": 107.0,
+     "path_len_from_root_mm": 43.584,
      "path_vias_from_root": 0
     },
     {
@@ -2472,40 +2627,33 @@
      "path_vias_from_root": 0
     }
    ],
-   "pad_internal_copper": [
-    {
-     "pad": "J4.4",
-     "len_mm": 0.0791,
-     "layer": "F.Cu",
-     "width_mm": 0.3
-    }
-   ],
+   "pad_internal_copper": [],
    "duplicate_overlap_pieces_removed": 0,
-   "pad_internal_len_mm": 0.0791,
+   "pad_internal_len_mm": 0,
    "kicad_pad_count": 2,
    "branch_points": {},
    "gnd_pour_edge_gap": {
     "F.Cu": {
-     "len_mm": 43.6,
-     "frac_gap_lt_0p35mm": 0.66,
-     "frac_gap_lt_0p6mm": 0.789,
-     "frac_gap_lt_1mm": 0.863
+     "len_mm": 43.58,
+     "frac_gap_lt_0p35mm": 0.429,
+     "frac_gap_lt_0p6mm": 0.535,
+     "frac_gap_lt_1mm": 0.66
     }
    }
   },
   "Trigger5": {
    "root": "U6.10",
-   "total_len_mm": 42.8968,
+   "total_len_mm": 43.584,
    "via_count": 0,
-   "segment_count": 23,
+   "segment_count": 40,
    "components": 1,
    "independent_loops": 0,
    "unreached_pads": [],
    "edges": [
     {
      "a": "U6.10",
-     "b": "J5.4",
-     "len_mm": 42.8968,
+     "b": "R62.2",
+     "len_mm": 43.584,
      "layer": "F.Cu",
      "width_mm": 0.3,
      "vias": 0,
@@ -2513,23 +2661,23 @@
       {
        "layer": "F.Cu",
        "width_mm": 0.3,
-       "len_mm": 42.8968
+       "len_mm": 43.584
       }
      ]
     }
    ],
    "pads": [
     {
-     "pad": "J5.4",
-     "ref": "J5",
-     "value": "Conn_02x05_Odd_Even",
-     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
-     "pin": "4",
-     "function": "Pin_4",
-     "smd": false,
-     "x_mm": 243.58,
-     "y_mm": 114.04,
-     "path_len_from_root_mm": 42.8968,
+     "pad": "R62.2",
+     "ref": "R62",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "2",
+     "function": "",
+     "smd": true,
+     "x_mm": 248.31,
+     "y_mm": 107.0,
+     "path_len_from_root_mm": 43.584,
      "path_vias_from_root": 0
     },
     {
@@ -2553,26 +2701,41 @@
    "branch_points": {},
    "gnd_pour_edge_gap": {
     "F.Cu": {
-     "len_mm": 42.9,
-     "frac_gap_lt_0p35mm": 0.742,
-     "frac_gap_lt_0p6mm": 0.816,
-     "frac_gap_lt_1mm": 0.919
+     "len_mm": 43.58,
+     "frac_gap_lt_0p35mm": 0.523,
+     "frac_gap_lt_0p6mm": 0.641,
+     "frac_gap_lt_1mm": 0.783
     }
    }
   },
   "Trigger6": {
    "root": "U6.12",
-   "total_len_mm": 37.6751,
+   "total_len_mm": 41.3944,
    "via_count": 2,
-   "segment_count": 12,
+   "segment_count": 21,
    "components": 1,
-   "independent_loops": 0,
+   "independent_loops": 1,
    "unreached_pads": [],
    "edges": [
     {
      "a": "U6.12",
-     "b": "J6.4",
-     "len_mm": 37.6751,
+     "b": "U6.12",
+     "len_mm": 0.5657,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 0.5657
+      }
+     ]
+    },
+    {
+     "a": "U6.12",
+     "b": "R63.2",
+     "len_mm": 40.8287,
      "layer": "B.Cu+F.Cu",
      "width_mm": 0.3,
      "vias": 2,
@@ -2580,33 +2743,33 @@
       {
        "layer": "F.Cu",
        "width_mm": 0.3,
-       "len_mm": 0.6273
+       "len_mm": 3.1
       },
       {
        "layer": "B.Cu",
        "width_mm": 0.3,
-       "len_mm": 15.6007
+       "len_mm": 4.9255
       },
       {
        "layer": "F.Cu",
        "width_mm": 0.3,
-       "len_mm": 21.4471
+       "len_mm": 32.8032
       }
      ]
     }
    ],
    "pads": [
     {
-     "pad": "J6.4",
-     "ref": "J6",
-     "value": "Conn_02x05_Odd_Even",
-     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
-     "pin": "4",
-     "function": "Pin_4",
-     "smd": false,
-     "x_mm": 255.58,
-     "y_mm": 114.04,
-     "path_len_from_root_mm": 37.6751,
+     "pad": "R63.2",
+     "ref": "R63",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "2",
+     "function": "",
+     "smd": true,
+     "x_mm": 260.31,
+     "y_mm": 107.0,
+     "path_len_from_root_mm": 40.8287,
      "path_vias_from_root": 2
     },
     {
@@ -2630,14 +2793,14 @@
    "branch_points": {},
    "gnd_pour_edge_gap": {
     "F.Cu": {
-     "len_mm": 22.07,
-     "frac_gap_lt_0p35mm": 0.89,
-     "frac_gap_lt_0p6mm": 0.955,
-     "frac_gap_lt_1mm": 0.989
+     "len_mm": 36.85,
+     "frac_gap_lt_0p35mm": 0.929,
+     "frac_gap_lt_0p6mm": 0.965,
+     "frac_gap_lt_1mm": 0.995
     },
     "B.Cu": {
-     "len_mm": 15.88,
-     "frac_gap_lt_0p35mm": 0.976,
+     "len_mm": 4.93,
+     "frac_gap_lt_0p35mm": 0.952,
      "frac_gap_lt_0p6mm": 1.0,
      "frac_gap_lt_1mm": 1.0
     }
@@ -3000,25 +3163,70 @@
    "gnd_pour_edge_gap": {
     "F.Cu": {
      "len_mm": 25.59,
-     "frac_gap_lt_0p35mm": 0.593,
-     "frac_gap_lt_0p6mm": 0.756,
-     "frac_gap_lt_1mm": 0.879
+     "frac_gap_lt_0p35mm": 0.249,
+     "frac_gap_lt_0p6mm": 0.383,
+     "frac_gap_lt_1mm": 0.463
     }
    }
   },
   "Sync1": {
    "root": "U2.2",
-   "total_len_mm": 80.003,
-   "via_count": 1,
-   "segment_count": 44,
+   "total_len_mm": 72.0548,
+   "via_count": 2,
+   "segment_count": 54,
    "components": 1,
-   "independent_loops": 0,
+   "independent_loops": 2,
    "unreached_pads": [],
    "edges": [
     {
+     "a": "VIA1@(189.50,118.60)",
+     "b": "R52.1",
+     "len_mm": 0.5657,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 0.5657
+      }
+     ]
+    },
+    {
+     "a": "VIA1@(189.50,118.60)",
+     "b": "R52.1",
+     "len_mm": 0.0,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 0.0
+      }
+     ]
+    },
+    {
+     "a": "VIA1@(189.50,118.60)",
+     "b": "R52.1",
+     "len_mm": 0.1172,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 0.1172
+      }
+     ]
+    },
+    {
      "a": "U2.2",
-     "b": "J1.5",
-     "len_mm": 80.003,
+     "b": "VIA1@(189.50,118.60)",
+     "len_mm": 71.3719,
      "layer": "B.Cu+F.Cu",
      "width_mm": 0.3,
      "vias": 1,
@@ -3026,28 +3234,28 @@
       {
        "layer": "F.Cu",
        "width_mm": 0.3,
-       "len_mm": 0.3073
+       "len_mm": 36.7125
       },
       {
        "layer": "B.Cu",
        "width_mm": 0.3,
-       "len_mm": 79.6957
+       "len_mm": 34.6594
       }
      ]
     }
    ],
    "pads": [
     {
-     "pad": "J1.5",
-     "ref": "J1",
-     "value": "Conn_02x05_Odd_Even",
-     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
-     "pin": "5",
-     "function": "Pin_5",
-     "smd": false,
-     "x_mm": 193.04,
-     "y_mm": 116.58,
-     "path_len_from_root_mm": 80.003,
+     "pad": "R52.1",
+     "ref": "R52",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 188.31,
+     "y_mm": 118.88,
+     "path_len_from_root_mm": 71.9376,
      "path_vias_from_root": 1
     },
     {
@@ -3071,62 +3279,82 @@
    "branch_points": {},
    "gnd_pour_edge_gap": {
     "F.Cu": {
-     "len_mm": 0.59,
-     "frac_gap_lt_0p35mm": 0.0,
-     "frac_gap_lt_0p6mm": 0.0,
-     "frac_gap_lt_1mm": 0.0
+     "len_mm": 37.54,
+     "frac_gap_lt_0p35mm": 0.676,
+     "frac_gap_lt_0p6mm": 0.784,
+     "frac_gap_lt_1mm": 0.845
     },
     "B.Cu": {
-     "len_mm": 79.7,
-     "frac_gap_lt_0p35mm": 0.431,
-     "frac_gap_lt_0p6mm": 0.538,
-     "frac_gap_lt_1mm": 0.716
+     "len_mm": 34.66,
+     "frac_gap_lt_0p35mm": 0.552,
+     "frac_gap_lt_0p6mm": 0.682,
+     "frac_gap_lt_1mm": 0.779
     }
    }
   },
   "Sync2": {
    "root": "U2.4",
-   "total_len_mm": 80.6155,
-   "via_count": 1,
-   "segment_count": 35,
+   "total_len_mm": 69.4443,
+   "via_count": 2,
+   "segment_count": 73,
    "components": 1,
-   "independent_loops": 0,
+   "independent_loops": 1,
    "unreached_pads": [],
    "edges": [
     {
      "a": "U2.4",
-     "b": "J2.5",
-     "len_mm": 80.6155,
+     "b": "R53.1",
+     "len_mm": 69.2443,
      "layer": "B.Cu+F.Cu",
      "width_mm": 0.3,
-     "vias": 1,
+     "vias": 2,
      "runs": [
       {
        "layer": "F.Cu",
        "width_mm": 0.3,
-       "len_mm": 0.6414
+       "len_mm": 0.5657
       },
       {
        "layer": "B.Cu",
        "width_mm": 0.3,
-       "len_mm": 79.9741
+       "len_mm": 66.5781
+      },
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 2.1005
+      }
+     ]
+    },
+    {
+     "a": "R53.1",
+     "b": "R53.1",
+     "len_mm": 0.2,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 0.2
       }
      ]
     }
    ],
    "pads": [
     {
-     "pad": "J2.5",
-     "ref": "J2",
-     "value": "Conn_02x05_Odd_Even",
-     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
-     "pin": "5",
-     "function": "Pin_5",
-     "smd": false,
-     "x_mm": 205.04,
-     "y_mm": 116.58,
-     "path_len_from_root_mm": 80.6155,
-     "path_vias_from_root": 1
+     "pad": "R53.1",
+     "ref": "R53",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 200.31,
+     "y_mm": 118.88,
+     "path_len_from_root_mm": 69.2443,
+     "path_vias_from_root": 2
     },
     {
      "pad": "U2.4",
@@ -3142,74 +3370,71 @@
      "path_vias_from_root": 0
     }
    ],
-   "pad_internal_copper": [],
+   "pad_internal_copper": [
+    {
+     "pad": "U2.4",
+     "len_mm": 0.1,
+     "layer": "F.Cu",
+     "width_mm": 0.3
+    }
+   ],
    "duplicate_overlap_pieces_removed": 0,
-   "pad_internal_len_mm": 0,
+   "pad_internal_len_mm": 0.1,
    "kicad_pad_count": 2,
    "branch_points": {},
    "gnd_pour_edge_gap": {
     "F.Cu": {
-     "len_mm": 0.64,
-     "frac_gap_lt_0p35mm": 0.667,
+     "len_mm": 2.97,
+     "frac_gap_lt_0p35mm": 0.886,
      "frac_gap_lt_0p6mm": 1.0,
      "frac_gap_lt_1mm": 1.0
     },
     "B.Cu": {
-     "len_mm": 80.36,
-     "frac_gap_lt_0p35mm": 0.725,
-     "frac_gap_lt_0p6mm": 0.821,
-     "frac_gap_lt_1mm": 0.874
+     "len_mm": 67.64,
+     "frac_gap_lt_0p35mm": 0.47,
+     "frac_gap_lt_0p6mm": 0.548,
+     "frac_gap_lt_1mm": 0.65
     }
    }
   },
   "Sync3": {
    "root": "U2.6",
-   "total_len_mm": 78.8024,
-   "via_count": 2,
-   "segment_count": 36,
+   "total_len_mm": 72.3339,
+   "via_count": 0,
+   "segment_count": 71,
    "components": 1,
    "independent_loops": 0,
    "unreached_pads": [],
    "edges": [
     {
      "a": "U2.6",
-     "b": "J3.5",
-     "len_mm": 78.8024,
-     "layer": "B.Cu+F.Cu",
+     "b": "R54.1",
+     "len_mm": 72.3339,
+     "layer": "F.Cu",
      "width_mm": 0.3,
-     "vias": 2,
+     "vias": 0,
      "runs": [
       {
        "layer": "F.Cu",
        "width_mm": 0.3,
-       "len_mm": 11.2768
-      },
-      {
-       "layer": "B.Cu",
-       "width_mm": 0.3,
-       "len_mm": 43.0843
-      },
-      {
-       "layer": "F.Cu",
-       "width_mm": 0.3,
-       "len_mm": 24.4414
+       "len_mm": 72.3339
       }
      ]
     }
    ],
    "pads": [
     {
-     "pad": "J3.5",
-     "ref": "J3",
-     "value": "Conn_02x05_Odd_Even",
-     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
-     "pin": "5",
-     "function": "Pin_5",
-     "smd": false,
-     "x_mm": 217.04,
-     "y_mm": 116.58,
-     "path_len_from_root_mm": 78.8024,
-     "path_vias_from_root": 2
+     "pad": "R54.1",
+     "ref": "R54",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 212.31,
+     "y_mm": 118.88,
+     "path_len_from_root_mm": 72.3339,
+     "path_vias_from_root": 0
     },
     {
      "pad": "U2.6",
@@ -3232,62 +3457,61 @@
    "branch_points": {},
    "gnd_pour_edge_gap": {
     "F.Cu": {
-     "len_mm": 35.72,
-     "frac_gap_lt_0p35mm": 0.987,
-     "frac_gap_lt_0p6mm": 1.0,
-     "frac_gap_lt_1mm": 1.0
-    },
-    "B.Cu": {
-     "len_mm": 43.08,
-     "frac_gap_lt_0p35mm": 0.473,
-     "frac_gap_lt_0p6mm": 0.667,
-     "frac_gap_lt_1mm": 0.765
+     "len_mm": 74.08,
+     "frac_gap_lt_0p35mm": 0.601,
+     "frac_gap_lt_0p6mm": 0.746,
+     "frac_gap_lt_1mm": 0.888
     }
    }
   },
   "Sync4": {
    "root": "U2.8",
-   "total_len_mm": 80.2931,
-   "via_count": 1,
-   "segment_count": 32,
+   "total_len_mm": 70.0858,
+   "via_count": 2,
+   "segment_count": 57,
    "components": 1,
    "independent_loops": 0,
    "unreached_pads": [],
    "edges": [
     {
      "a": "U2.8",
-     "b": "J4.5",
-     "len_mm": 80.2931,
+     "b": "R55.1",
+     "len_mm": 70.0858,
      "layer": "B.Cu+F.Cu",
      "width_mm": 0.3,
-     "vias": 1,
+     "vias": 2,
      "runs": [
       {
        "layer": "F.Cu",
        "width_mm": 0.3,
-       "len_mm": 18.7317
+       "len_mm": 6.4669
       },
       {
        "layer": "B.Cu",
        "width_mm": 0.3,
-       "len_mm": 61.5614
+       "len_mm": 62.2046
+      },
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 1.4142
       }
      ]
     }
    ],
    "pads": [
     {
-     "pad": "J4.5",
-     "ref": "J4",
-     "value": "Conn_02x05_Odd_Even",
-     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
-     "pin": "5",
-     "function": "Pin_5",
-     "smd": false,
-     "x_mm": 229.04,
-     "y_mm": 116.58,
-     "path_len_from_root_mm": 80.2931,
-     "path_vias_from_root": 1
+     "pad": "R55.1",
+     "ref": "R55",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 224.31,
+     "y_mm": 118.88,
+     "path_len_from_root_mm": 70.0858,
+     "path_vias_from_root": 2
     },
     {
      "pad": "U2.8",
@@ -3310,62 +3534,67 @@
    "branch_points": {},
    "gnd_pour_edge_gap": {
     "F.Cu": {
-     "len_mm": 18.96,
-     "frac_gap_lt_0p35mm": 0.994,
-     "frac_gap_lt_0p6mm": 1.0,
-     "frac_gap_lt_1mm": 1.0
+     "len_mm": 8.02,
+     "frac_gap_lt_0p35mm": 0.059,
+     "frac_gap_lt_0p6mm": 0.147,
+     "frac_gap_lt_1mm": 0.176
     },
     "B.Cu": {
-     "len_mm": 61.56,
-     "frac_gap_lt_0p35mm": 0.679,
-     "frac_gap_lt_0p6mm": 0.76,
-     "frac_gap_lt_1mm": 0.847
+     "len_mm": 62.73,
+     "frac_gap_lt_0p35mm": 0.614,
+     "frac_gap_lt_0p6mm": 0.779,
+     "frac_gap_lt_1mm": 0.892
     }
    }
   },
   "Sync5": {
    "root": "U2.10",
-   "total_len_mm": 81.1148,
-   "via_count": 1,
-   "segment_count": 46,
+   "total_len_mm": 69.3266,
+   "via_count": 2,
+   "segment_count": 65,
    "components": 1,
    "independent_loops": 0,
    "unreached_pads": [],
    "edges": [
     {
      "a": "U2.10",
-     "b": "J5.5",
-     "len_mm": 81.1148,
+     "b": "R56.1",
+     "len_mm": 69.3266,
      "layer": "B.Cu+F.Cu",
      "width_mm": 0.3,
-     "vias": 1,
+     "vias": 2,
      "runs": [
       {
        "layer": "F.Cu",
        "width_mm": 0.3,
-       "len_mm": 1.2267
+       "len_mm": 0.7
       },
       {
        "layer": "B.Cu",
        "width_mm": 0.3,
-       "len_mm": 79.8881
+       "len_mm": 49.2874
+      },
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 19.3392
       }
      ]
     }
    ],
    "pads": [
     {
-     "pad": "J5.5",
-     "ref": "J5",
-     "value": "Conn_02x05_Odd_Even",
-     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
-     "pin": "5",
-     "function": "Pin_5",
-     "smd": false,
-     "x_mm": 241.04,
-     "y_mm": 116.58,
-     "path_len_from_root_mm": 81.1148,
-     "path_vias_from_root": 1
+     "pad": "R56.1",
+     "ref": "R56",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 236.31,
+     "y_mm": 118.88,
+     "path_len_from_root_mm": 69.3266,
+     "path_vias_from_root": 2
     },
     {
      "pad": "U2.10",
@@ -3388,32 +3617,32 @@
    "branch_points": {},
    "gnd_pour_edge_gap": {
     "F.Cu": {
-     "len_mm": 1.23,
-     "frac_gap_lt_0p35mm": 0.0,
-     "frac_gap_lt_0p6mm": 0.35,
-     "frac_gap_lt_1mm": 1.0
+     "len_mm": 20.86,
+     "frac_gap_lt_0p35mm": 0.715,
+     "frac_gap_lt_0p6mm": 0.891,
+     "frac_gap_lt_1mm": 0.956
     },
     "B.Cu": {
-     "len_mm": 80.23,
-     "frac_gap_lt_0p35mm": 0.702,
-     "frac_gap_lt_0p6mm": 0.756,
-     "frac_gap_lt_1mm": 0.803
+     "len_mm": 49.77,
+     "frac_gap_lt_0p35mm": 0.626,
+     "frac_gap_lt_0p6mm": 0.716,
+     "frac_gap_lt_1mm": 0.813
     }
    }
   },
   "Sync6": {
    "root": "U2.12",
-   "total_len_mm": 78.5026,
+   "total_len_mm": 69.62,
    "via_count": 2,
-   "segment_count": 32,
+   "segment_count": 56,
    "components": 1,
    "independent_loops": 0,
    "unreached_pads": [],
    "edges": [
     {
      "a": "U2.12",
-     "b": "J6.5",
-     "len_mm": 78.5026,
+     "b": "R57.1",
+     "len_mm": 69.62,
      "layer": "B.Cu+F.Cu",
      "width_mm": 0.3,
      "vias": 2,
@@ -3421,33 +3650,33 @@
       {
        "layer": "F.Cu",
        "width_mm": 0.3,
-       "len_mm": 1.2018
+       "len_mm": 1.6971
       },
       {
        "layer": "B.Cu",
        "width_mm": 0.3,
-       "len_mm": 68.34
+       "len_mm": 50.3092
       },
       {
        "layer": "F.Cu",
        "width_mm": 0.3,
-       "len_mm": 8.9608
+       "len_mm": 17.6137
       }
      ]
     }
    ],
    "pads": [
     {
-     "pad": "J6.5",
-     "ref": "J6",
-     "value": "Conn_02x05_Odd_Even",
-     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
-     "pin": "5",
-     "function": "Pin_5",
-     "smd": false,
-     "x_mm": 253.04,
-     "y_mm": 116.58,
-     "path_len_from_root_mm": 78.5026,
+     "pad": "R57.1",
+     "ref": "R57",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 248.31,
+     "y_mm": 118.88,
+     "path_len_from_root_mm": 69.62,
      "path_vias_from_root": 2
     },
     {
@@ -3471,15 +3700,1843 @@
    "branch_points": {},
    "gnd_pour_edge_gap": {
     "F.Cu": {
-     "len_mm": 10.16,
-     "frac_gap_lt_0p35mm": 0.86,
-     "frac_gap_lt_0p6mm": 0.927,
+     "len_mm": 19.59,
+     "frac_gap_lt_0p35mm": 0.739,
+     "frac_gap_lt_0p6mm": 0.951,
      "frac_gap_lt_1mm": 1.0
     },
     "B.Cu": {
-     "len_mm": 68.94,
-     "frac_gap_lt_0p35mm": 0.994,
+     "len_mm": 51.32,
+     "frac_gap_lt_0p35mm": 0.918,
+     "frac_gap_lt_0p6mm": 0.991,
+     "frac_gap_lt_1mm": 1.0
+    }
+   }
+  },
+  "Trigger1_C": {
+   "root": "R58.1",
+   "total_len_mm": 9.77,
+   "via_count": 0,
+   "segment_count": 3,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "R58.1",
+     "b": "J1.4",
+     "len_mm": 9.77,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 9.77
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "J1.4",
+     "ref": "J1",
+     "value": "Conn_02x05_Odd_Even",
+     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
+     "pin": "4",
+     "function": "Pin_4",
+     "smd": false,
+     "x_mm": 195.58,
+     "y_mm": 114.04,
+     "path_len_from_root_mm": 9.77,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R58.1",
+     "ref": "R58",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 200.31,
+     "y_mm": 109.0,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 9.77,
+     "frac_gap_lt_0p35mm": 0.756,
+     "frac_gap_lt_0p6mm": 0.903,
+     "frac_gap_lt_1mm": 1.0
+    }
+   }
+  },
+  "Trigger2_C": {
+   "root": "R59.1",
+   "total_len_mm": 9.77,
+   "via_count": 0,
+   "segment_count": 3,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "R59.1",
+     "b": "J2.4",
+     "len_mm": 9.77,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 9.77
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "J2.4",
+     "ref": "J2",
+     "value": "Conn_02x05_Odd_Even",
+     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
+     "pin": "4",
+     "function": "Pin_4",
+     "smd": false,
+     "x_mm": 207.58,
+     "y_mm": 114.04,
+     "path_len_from_root_mm": 9.77,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R59.1",
+     "ref": "R59",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 212.31,
+     "y_mm": 109.0,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 9.77,
+     "frac_gap_lt_0p35mm": 0.756,
+     "frac_gap_lt_0p6mm": 0.903,
+     "frac_gap_lt_1mm": 1.0
+    }
+   }
+  },
+  "Trigger3_C": {
+   "root": "R60.1",
+   "total_len_mm": 9.77,
+   "via_count": 0,
+   "segment_count": 3,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "R60.1",
+     "b": "J3.4",
+     "len_mm": 9.77,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 9.77
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "J3.4",
+     "ref": "J3",
+     "value": "Conn_02x05_Odd_Even",
+     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
+     "pin": "4",
+     "function": "Pin_4",
+     "smd": false,
+     "x_mm": 219.58,
+     "y_mm": 114.04,
+     "path_len_from_root_mm": 9.77,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R60.1",
+     "ref": "R60",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 224.31,
+     "y_mm": 109.0,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 9.77,
+     "frac_gap_lt_0p35mm": 0.805,
+     "frac_gap_lt_0p6mm": 0.903,
+     "frac_gap_lt_1mm": 1.0
+    }
+   }
+  },
+  "Trigger4_C": {
+   "root": "R61.1",
+   "total_len_mm": 9.77,
+   "via_count": 0,
+   "segment_count": 3,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "R61.1",
+     "b": "J4.4",
+     "len_mm": 9.77,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 9.77
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "J4.4",
+     "ref": "J4",
+     "value": "Conn_02x05_Odd_Even",
+     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
+     "pin": "4",
+     "function": "Pin_4",
+     "smd": false,
+     "x_mm": 231.58,
+     "y_mm": 114.04,
+     "path_len_from_root_mm": 9.77,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R61.1",
+     "ref": "R61",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 236.31,
+     "y_mm": 109.0,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 9.77,
+     "frac_gap_lt_0p35mm": 0.756,
+     "frac_gap_lt_0p6mm": 0.903,
+     "frac_gap_lt_1mm": 1.0
+    }
+   }
+  },
+  "Trigger5_C": {
+   "root": "R62.1",
+   "total_len_mm": 9.77,
+   "via_count": 0,
+   "segment_count": 3,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "R62.1",
+     "b": "J5.4",
+     "len_mm": 9.77,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 9.77
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "J5.4",
+     "ref": "J5",
+     "value": "Conn_02x05_Odd_Even",
+     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
+     "pin": "4",
+     "function": "Pin_4",
+     "smd": false,
+     "x_mm": 243.58,
+     "y_mm": 114.04,
+     "path_len_from_root_mm": 9.77,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R62.1",
+     "ref": "R62",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 248.31,
+     "y_mm": 109.0,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 9.77,
+     "frac_gap_lt_0p35mm": 0.805,
+     "frac_gap_lt_0p6mm": 0.903,
+     "frac_gap_lt_1mm": 1.0
+    }
+   }
+  },
+  "Trigger6_C": {
+   "root": "R63.1",
+   "total_len_mm": 9.77,
+   "via_count": 0,
+   "segment_count": 3,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "R63.1",
+     "b": "J6.4",
+     "len_mm": 9.77,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 9.77
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "J6.4",
+     "ref": "J6",
+     "value": "Conn_02x05_Odd_Even",
+     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
+     "pin": "4",
+     "function": "Pin_4",
+     "smd": false,
+     "x_mm": 255.58,
+     "y_mm": 114.04,
+     "path_len_from_root_mm": 9.77,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R63.1",
+     "ref": "R63",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 260.31,
+     "y_mm": 109.0,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 9.77,
+     "frac_gap_lt_0p35mm": 0.805,
+     "frac_gap_lt_0p6mm": 0.903,
+     "frac_gap_lt_1mm": 1.0
+    }
+   }
+  },
+  "Sync1_C": {
+   "root": "R52.2",
+   "total_len_mm": 4.43,
+   "via_count": 0,
+   "segment_count": 2,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "R52.2",
+     "b": "J1.5",
+     "len_mm": 4.43,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 4.43
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "J1.5",
+     "ref": "J1",
+     "value": "Conn_02x05_Odd_Even",
+     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
+     "pin": "5",
+     "function": "Pin_5",
+     "smd": false,
+     "x_mm": 193.04,
+     "y_mm": 116.58,
+     "path_len_from_root_mm": 4.43,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R52.2",
+     "ref": "R52",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "2",
+     "function": "",
+     "smd": true,
+     "x_mm": 188.31,
+     "y_mm": 116.88,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [
+    {
+     "pad": "R52.2",
+     "len_mm": 0.4243,
+     "layer": "F.Cu",
+     "width_mm": 0.3
+    }
+   ],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0.4243,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 4.85,
+     "frac_gap_lt_0p35mm": 0.659,
+     "frac_gap_lt_0p6mm": 0.855,
+     "frac_gap_lt_1mm": 1.0
+    }
+   }
+  },
+  "Sync2_C": {
+   "root": "R53.2",
+   "total_len_mm": 4.43,
+   "via_count": 0,
+   "segment_count": 2,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "R53.2",
+     "b": "J2.5",
+     "len_mm": 4.43,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 4.43
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "J2.5",
+     "ref": "J2",
+     "value": "Conn_02x05_Odd_Even",
+     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
+     "pin": "5",
+     "function": "Pin_5",
+     "smd": false,
+     "x_mm": 205.04,
+     "y_mm": 116.58,
+     "path_len_from_root_mm": 4.43,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R53.2",
+     "ref": "R53",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "2",
+     "function": "",
+     "smd": true,
+     "x_mm": 200.31,
+     "y_mm": 116.88,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [
+    {
+     "pad": "R53.2",
+     "len_mm": 0.4243,
+     "layer": "F.Cu",
+     "width_mm": 0.3
+    }
+   ],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0.4243,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 4.85,
+     "frac_gap_lt_0p35mm": 0.659,
+     "frac_gap_lt_0p6mm": 0.855,
+     "frac_gap_lt_1mm": 1.0
+    }
+   }
+  },
+  "Sync3_C": {
+   "root": "R54.2",
+   "total_len_mm": 4.43,
+   "via_count": 0,
+   "segment_count": 2,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "R54.2",
+     "b": "J3.5",
+     "len_mm": 4.43,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 4.43
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "J3.5",
+     "ref": "J3",
+     "value": "Conn_02x05_Odd_Even",
+     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
+     "pin": "5",
+     "function": "Pin_5",
+     "smd": false,
+     "x_mm": 217.04,
+     "y_mm": 116.58,
+     "path_len_from_root_mm": 4.43,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R54.2",
+     "ref": "R54",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "2",
+     "function": "",
+     "smd": true,
+     "x_mm": 212.31,
+     "y_mm": 116.88,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [
+    {
+     "pad": "R54.2",
+     "len_mm": 0.4243,
+     "layer": "F.Cu",
+     "width_mm": 0.3
+    }
+   ],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0.4243,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 4.85,
+     "frac_gap_lt_0p35mm": 0.659,
+     "frac_gap_lt_0p6mm": 0.855,
+     "frac_gap_lt_1mm": 1.0
+    }
+   }
+  },
+  "Sync4_C": {
+   "root": "R55.2",
+   "total_len_mm": 4.43,
+   "via_count": 0,
+   "segment_count": 2,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "R55.2",
+     "b": "J4.5",
+     "len_mm": 4.43,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 4.43
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "J4.5",
+     "ref": "J4",
+     "value": "Conn_02x05_Odd_Even",
+     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
+     "pin": "5",
+     "function": "Pin_5",
+     "smd": false,
+     "x_mm": 229.04,
+     "y_mm": 116.58,
+     "path_len_from_root_mm": 4.43,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R55.2",
+     "ref": "R55",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "2",
+     "function": "",
+     "smd": true,
+     "x_mm": 224.31,
+     "y_mm": 116.88,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [
+    {
+     "pad": "R55.2",
+     "len_mm": 0.4243,
+     "layer": "F.Cu",
+     "width_mm": 0.3
+    }
+   ],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0.4243,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 4.85,
+     "frac_gap_lt_0p35mm": 0.659,
+     "frac_gap_lt_0p6mm": 0.855,
+     "frac_gap_lt_1mm": 1.0
+    }
+   }
+  },
+  "Sync5_C": {
+   "root": "R56.2",
+   "total_len_mm": 4.43,
+   "via_count": 0,
+   "segment_count": 2,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "R56.2",
+     "b": "J5.5",
+     "len_mm": 4.43,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 4.43
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "J5.5",
+     "ref": "J5",
+     "value": "Conn_02x05_Odd_Even",
+     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
+     "pin": "5",
+     "function": "Pin_5",
+     "smd": false,
+     "x_mm": 241.04,
+     "y_mm": 116.58,
+     "path_len_from_root_mm": 4.43,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R56.2",
+     "ref": "R56",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "2",
+     "function": "",
+     "smd": true,
+     "x_mm": 236.31,
+     "y_mm": 116.88,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [
+    {
+     "pad": "R56.2",
+     "len_mm": 0.4243,
+     "layer": "F.Cu",
+     "width_mm": 0.3
+    }
+   ],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0.4243,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 4.85,
+     "frac_gap_lt_0p35mm": 0.659,
+     "frac_gap_lt_0p6mm": 0.855,
+     "frac_gap_lt_1mm": 1.0
+    }
+   }
+  },
+  "Sync6_C": {
+   "root": "R57.2",
+   "total_len_mm": 4.43,
+   "via_count": 0,
+   "segment_count": 2,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "R57.2",
+     "b": "J6.5",
+     "len_mm": 4.43,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 4.43
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "J6.5",
+     "ref": "J6",
+     "value": "Conn_02x05_Odd_Even",
+     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
+     "pin": "5",
+     "function": "Pin_5",
+     "smd": false,
+     "x_mm": 253.04,
+     "y_mm": 116.58,
+     "path_len_from_root_mm": 4.43,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R57.2",
+     "ref": "R57",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "2",
+     "function": "",
+     "smd": true,
+     "x_mm": 248.31,
+     "y_mm": 116.88,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [
+    {
+     "pad": "R57.2",
+     "len_mm": 0.4243,
+     "layer": "F.Cu",
+     "width_mm": 0.3
+    }
+   ],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0.4243,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 4.85,
+     "frac_gap_lt_0p35mm": 0.659,
+     "frac_gap_lt_0p6mm": 0.855,
+     "frac_gap_lt_1mm": 1.0
+    }
+   }
+  },
+  "TDRSTN1": {
+   "root": "U4.2",
+   "total_len_mm": 50.5068,
+   "via_count": 0,
+   "segment_count": 51,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "U4.2",
+     "b": "R64.1",
+     "len_mm": 50.5068,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 50.5068
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "R64.1",
+     "ref": "R64",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 188.31,
+     "y_mm": 112.9,
+     "path_len_from_root_mm": 50.5068,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "U4.2",
+     "ref": "U4",
+     "value": "SN74LVC04AD",
+     "footprint": "SOIC127P600X175-14N",
+     "pin": "2",
+     "function": "1Y",
+     "smd": true,
+     "x_mm": 207.565,
+     "y_mm": 89.7325,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 51.47,
+     "frac_gap_lt_0p35mm": 0.099,
+     "frac_gap_lt_0p6mm": 0.129,
+     "frac_gap_lt_1mm": 0.139
+    }
+   }
+  },
+  "TDRSTN2": {
+   "root": "U4.4",
+   "total_len_mm": 49.4657,
+   "via_count": 2,
+   "segment_count": 29,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "U4.4",
+     "b": "R65.1",
+     "len_mm": 49.4657,
+     "layer": "B.Cu+F.Cu",
+     "width_mm": 0.3,
+     "vias": 2,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 0.6172
+      },
+      {
+       "layer": "B.Cu",
+       "width_mm": 0.3,
+       "len_mm": 47.7172
+      },
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 1.1314
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "R65.1",
+     "ref": "R65",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 200.31,
+     "y_mm": 112.9,
+     "path_len_from_root_mm": 49.4657,
+     "path_vias_from_root": 2
+    },
+    {
+     "pad": "U4.4",
+     "ref": "U4",
+     "value": "SN74LVC04AD",
+     "footprint": "SOIC127P600X175-14N",
+     "pin": "4",
+     "function": "2Y",
+     "smd": true,
+     "x_mm": 207.565,
+     "y_mm": 92.2725,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 1.75,
+     "frac_gap_lt_0p35mm": 0.0,
+     "frac_gap_lt_0p6mm": 0.0,
+     "frac_gap_lt_1mm": 0.259
+    },
+    "B.Cu": {
+     "len_mm": 47.92,
+     "frac_gap_lt_0p35mm": 0.901,
+     "frac_gap_lt_0p6mm": 0.94,
+     "frac_gap_lt_1mm": 0.949
+    }
+   }
+  },
+  "TDRSTN3": {
+   "root": "U4.6",
+   "total_len_mm": 50.5068,
+   "via_count": 0,
+   "segment_count": 43,
+   "components": 1,
+   "independent_loops": 1,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "U4.6",
+     "b": "R66.1",
+     "len_mm": 49.5997,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 49.5997
+      }
+     ]
+    },
+    {
+     "a": "U4.6",
+     "b": "U4.6",
+     "len_mm": 0.9071,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 0.9071
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "R66.1",
+     "ref": "R66",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 212.31,
+     "y_mm": 112.9,
+     "path_len_from_root_mm": 49.5997,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "U4.6",
+     "ref": "U4",
+     "value": "SN74LVC04AD",
+     "footprint": "SOIC127P600X175-14N",
+     "pin": "6",
+     "function": "3Y",
+     "smd": true,
+     "x_mm": 207.565,
+     "y_mm": 94.8125,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 51.47,
+     "frac_gap_lt_0p35mm": 0.674,
+     "frac_gap_lt_0p6mm": 0.819,
+     "frac_gap_lt_1mm": 0.947
+    }
+   }
+  },
+  "TDRSTN4": {
+   "root": "U4.8",
+   "total_len_mm": 49.2099,
+   "via_count": 2,
+   "segment_count": 41,
+   "components": 1,
+   "independent_loops": 4,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "U4.8",
+     "b": "BP0",
+     "len_mm": 0.7071,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 0.7071
+      }
+     ]
+    },
+    {
+     "a": "U4.8",
+     "b": "BP0",
+     "len_mm": 0.1414,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 0.1414
+      }
+     ]
+    },
+    {
+     "a": "U4.8",
+     "b": "BP0",
+     "len_mm": 0.0,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 0.0
+      }
+     ]
+    },
+    {
+     "a": "U4.8",
+     "b": "BP1",
+     "len_mm": 0.3,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 0.3
+      }
+     ]
+    },
+    {
+     "a": "U4.8",
+     "b": "BP1",
+     "len_mm": 0.1414,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 0.1414
+      }
+     ]
+    },
+    {
+     "a": "U4.8",
+     "b": "BP1",
+     "len_mm": 0.0,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 0.0
+      }
+     ]
+    },
+    {
+     "a": "BP1",
+     "b": "R67.1",
+     "len_mm": 47.92,
+     "layer": "B.Cu+F.Cu",
+     "width_mm": 0.3,
+     "vias": 2,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 0.2
+      },
+      {
+       "layer": "B.Cu",
+       "width_mm": 0.3,
+       "len_mm": 46.8028
+      },
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 0.9172
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "R67.1",
+     "ref": "R67",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 224.31,
+     "y_mm": 112.9,
+     "path_len_from_root_mm": 48.22,
+     "path_vias_from_root": 2
+    },
+    {
+     "pad": "U4.8",
+     "ref": "U4",
+     "value": "SN74LVC04AD",
+     "footprint": "SOIC127P600X175-14N",
+     "pin": "8",
+     "function": "4Y",
+     "smd": true,
+     "x_mm": 212.515,
+     "y_mm": 96.0825,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [],
+   "duplicate_overlap_pieces_removed": 1,
+   "pad_internal_len_mm": 0,
+   "kicad_pad_count": 2,
+   "branch_points": {
+    "BP0": [
+     213.0,
+     95.6
+    ],
+    "BP1": [
+     213.5,
+     95.7
+    ]
+   },
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 2.51,
+     "frac_gap_lt_0p35mm": 0.274,
+     "frac_gap_lt_0p6mm": 0.366,
+     "frac_gap_lt_1mm": 0.366
+    },
+    "B.Cu": {
+     "len_mm": 46.8,
+     "frac_gap_lt_0p35mm": 0.61,
+     "frac_gap_lt_0p6mm": 0.738,
+     "frac_gap_lt_1mm": 0.872
+    }
+   }
+  },
+  "TDRSTN5": {
+   "root": "U4.10",
+   "total_len_mm": 49.4685,
+   "via_count": 2,
+   "segment_count": 32,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "U4.10",
+     "b": "R68.1",
+     "len_mm": 49.4685,
+     "layer": "B.Cu+F.Cu",
+     "width_mm": 0.3,
+     "vias": 2,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 1.2071
+      },
+      {
+       "layer": "B.Cu",
+       "width_mm": 0.3,
+       "len_mm": 28.2962
+      },
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 19.9652
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "R68.1",
+     "ref": "R68",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 236.31,
+     "y_mm": 112.9,
+     "path_len_from_root_mm": 49.4685,
+     "path_vias_from_root": 2
+    },
+    {
+     "pad": "U4.10",
+     "ref": "U4",
+     "value": "SN74LVC04AD",
+     "footprint": "SOIC127P600X175-14N",
+     "pin": "10",
+     "function": "5Y",
+     "smd": true,
+     "x_mm": 212.515,
+     "y_mm": 93.5425,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 21.17,
+     "frac_gap_lt_0p35mm": 0.695,
+     "frac_gap_lt_0p6mm": 0.838,
+     "frac_gap_lt_1mm": 0.977
+    },
+    "B.Cu": {
+     "len_mm": 28.44,
+     "frac_gap_lt_0p35mm": 0.769,
+     "frac_gap_lt_0p6mm": 0.893,
+     "frac_gap_lt_1mm": 0.968
+    }
+   }
+  },
+  "TDRSTN6": {
+   "root": "U4.12",
+   "total_len_mm": 50.9482,
+   "via_count": 2,
+   "segment_count": 25,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "U4.12",
+     "b": "R69.1",
+     "len_mm": 50.9482,
+     "layer": "B.Cu+F.Cu",
+     "width_mm": 0.3,
+     "vias": 2,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 2.4
+      },
+      {
+       "layer": "B.Cu",
+       "width_mm": 0.3,
+       "len_mm": 48.1311
+      },
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 0.4172
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "R69.1",
+     "ref": "R69",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "1",
+     "function": "",
+     "smd": true,
+     "x_mm": 248.31,
+     "y_mm": 112.9,
+     "path_len_from_root_mm": 50.9482,
+     "path_vias_from_root": 2
+    },
+    {
+     "pad": "U4.12",
+     "ref": "U4",
+     "value": "SN74LVC04AD",
+     "footprint": "SOIC127P600X175-14N",
+     "pin": "12",
+     "function": "6Y",
+     "smd": true,
+     "x_mm": 212.515,
+     "y_mm": 91.0025,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 2.96,
+     "frac_gap_lt_0p35mm": 0.713,
      "frac_gap_lt_0p6mm": 1.0,
+     "frac_gap_lt_1mm": 1.0
+    },
+    "B.Cu": {
+     "len_mm": 48.51,
+     "frac_gap_lt_0p35mm": 0.981,
+     "frac_gap_lt_0p6mm": 1.0,
+     "frac_gap_lt_1mm": 1.0
+    }
+   }
+  },
+  "TDRSTN1_C": {
+   "root": "R64.2",
+   "total_len_mm": 5.0862,
+   "via_count": 0,
+   "segment_count": 2,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "R64.2",
+     "b": "J1.3",
+     "len_mm": 5.0862,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 5.0862
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "J1.3",
+     "ref": "J1",
+     "value": "Conn_02x05_Odd_Even",
+     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
+     "pin": "3",
+     "function": "Pin_3",
+     "smd": false,
+     "x_mm": 193.04,
+     "y_mm": 114.04,
+     "path_len_from_root_mm": 5.0862,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R64.2",
+     "ref": "R64",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "2",
+     "function": "",
+     "smd": true,
+     "x_mm": 188.31,
+     "y_mm": 114.9,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 5.09,
+     "frac_gap_lt_0p35mm": 0.666,
+     "frac_gap_lt_0p6mm": 0.857,
+     "frac_gap_lt_1mm": 1.0
+    }
+   }
+  },
+  "TDRSTN2_C": {
+   "root": "R65.2",
+   "total_len_mm": 5.0862,
+   "via_count": 0,
+   "segment_count": 2,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "R65.2",
+     "b": "J2.3",
+     "len_mm": 5.0862,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 5.0862
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "J2.3",
+     "ref": "J2",
+     "value": "Conn_02x05_Odd_Even",
+     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
+     "pin": "3",
+     "function": "Pin_3",
+     "smd": false,
+     "x_mm": 205.04,
+     "y_mm": 114.04,
+     "path_len_from_root_mm": 5.0862,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R65.2",
+     "ref": "R65",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "2",
+     "function": "",
+     "smd": true,
+     "x_mm": 200.31,
+     "y_mm": 114.9,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 5.09,
+     "frac_gap_lt_0p35mm": 0.666,
+     "frac_gap_lt_0p6mm": 0.857,
+     "frac_gap_lt_1mm": 1.0
+    }
+   }
+  },
+  "TDRSTN3_C": {
+   "root": "R66.2",
+   "total_len_mm": 5.0862,
+   "via_count": 0,
+   "segment_count": 2,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "R66.2",
+     "b": "J3.3",
+     "len_mm": 5.0862,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 5.0862
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "J3.3",
+     "ref": "J3",
+     "value": "Conn_02x05_Odd_Even",
+     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
+     "pin": "3",
+     "function": "Pin_3",
+     "smd": false,
+     "x_mm": 217.04,
+     "y_mm": 114.04,
+     "path_len_from_root_mm": 5.0862,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R66.2",
+     "ref": "R66",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "2",
+     "function": "",
+     "smd": true,
+     "x_mm": 212.31,
+     "y_mm": 114.9,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 5.09,
+     "frac_gap_lt_0p35mm": 0.666,
+     "frac_gap_lt_0p6mm": 0.857,
+     "frac_gap_lt_1mm": 1.0
+    }
+   }
+  },
+  "TDRSTN4_C": {
+   "root": "R67.2",
+   "total_len_mm": 5.0862,
+   "via_count": 0,
+   "segment_count": 2,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "R67.2",
+     "b": "J4.3",
+     "len_mm": 5.0862,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 5.0862
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "J4.3",
+     "ref": "J4",
+     "value": "Conn_02x05_Odd_Even",
+     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
+     "pin": "3",
+     "function": "Pin_3",
+     "smd": false,
+     "x_mm": 229.04,
+     "y_mm": 114.04,
+     "path_len_from_root_mm": 5.0862,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R67.2",
+     "ref": "R67",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "2",
+     "function": "",
+     "smd": true,
+     "x_mm": 224.31,
+     "y_mm": 114.9,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 5.09,
+     "frac_gap_lt_0p35mm": 0.666,
+     "frac_gap_lt_0p6mm": 0.857,
+     "frac_gap_lt_1mm": 1.0
+    }
+   }
+  },
+  "TDRSTN5_C": {
+   "root": "R68.2",
+   "total_len_mm": 5.0862,
+   "via_count": 0,
+   "segment_count": 2,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "R68.2",
+     "b": "J5.3",
+     "len_mm": 5.0862,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 5.0862
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "J5.3",
+     "ref": "J5",
+     "value": "Conn_02x05_Odd_Even",
+     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
+     "pin": "3",
+     "function": "Pin_3",
+     "smd": false,
+     "x_mm": 241.04,
+     "y_mm": 114.04,
+     "path_len_from_root_mm": 5.0862,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R68.2",
+     "ref": "R68",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "2",
+     "function": "",
+     "smd": true,
+     "x_mm": 236.31,
+     "y_mm": 114.9,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 5.09,
+     "frac_gap_lt_0p35mm": 0.666,
+     "frac_gap_lt_0p6mm": 0.857,
+     "frac_gap_lt_1mm": 1.0
+    }
+   }
+  },
+  "TDRSTN6_C": {
+   "root": "R69.2",
+   "total_len_mm": 5.0862,
+   "via_count": 0,
+   "segment_count": 2,
+   "components": 1,
+   "independent_loops": 0,
+   "unreached_pads": [],
+   "edges": [
+    {
+     "a": "R69.2",
+     "b": "J6.3",
+     "len_mm": 5.0862,
+     "layer": "F.Cu",
+     "width_mm": 0.3,
+     "vias": 0,
+     "runs": [
+      {
+       "layer": "F.Cu",
+       "width_mm": 0.3,
+       "len_mm": 5.0862
+      }
+     ]
+    }
+   ],
+   "pads": [
+    {
+     "pad": "J6.3",
+     "ref": "J6",
+     "value": "Conn_02x05_Odd_Even",
+     "footprint": "IDC-Header_2x05_P2.54mm_Vertical",
+     "pin": "3",
+     "function": "Pin_3",
+     "smd": false,
+     "x_mm": 253.04,
+     "y_mm": 114.04,
+     "path_len_from_root_mm": 5.0862,
+     "path_vias_from_root": 0
+    },
+    {
+     "pad": "R69.2",
+     "ref": "R69",
+     "value": "47",
+     "footprint": "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder",
+     "pin": "2",
+     "function": "",
+     "smd": true,
+     "x_mm": 248.31,
+     "y_mm": 114.9,
+     "path_len_from_root_mm": 0.0,
+     "path_vias_from_root": 0
+    }
+   ],
+   "pad_internal_copper": [],
+   "duplicate_overlap_pieces_removed": 0,
+   "pad_internal_len_mm": 0,
+   "kicad_pad_count": 2,
+   "branch_points": {},
+   "gnd_pour_edge_gap": {
+    "F.Cu": {
+     "len_mm": 5.09,
+     "frac_gap_lt_0p35mm": 0.666,
+     "frac_gap_lt_0p6mm": 0.857,
      "frac_gap_lt_1mm": 1.0
     }
    }

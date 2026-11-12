@@ -37,15 +37,19 @@ EDGES = ("rise", "fall")
 
 # ----------------------------------------------------------------------------- ngspice
 class Spice:
-    """KiCad's ngspice.dll through ctypes. One circuit at a time; vectors read from memory."""
+    """KiCad's ngspice.dll (Windows) or libngspice.so (Linux) through ctypes. One circuit at a time;
+    vectors read from memory."""
     class _VI(ctypes.Structure):
         _fields_ = [("name", ctypes.c_char_p), ("type", ctypes.c_int), ("flags", ctypes.c_short),
                     ("real", ctypes.POINTER(ctypes.c_double)), ("comp", ctypes.c_void_p),
                     ("length", ctypes.c_int)]
 
     def __init__(self, bindir):
-        os.add_dll_directory(bindir)
-        self.ng = ctypes.CDLL(os.path.join(bindir, "ngspice.dll"))
+        if os.name == "nt":
+            os.add_dll_directory(bindir)
+            self.ng = ctypes.CDLL(os.path.join(bindir, "ngspice.dll"))
+        else:   # Linux / macOS: the shared ngspice library of the system (package libngspice0); NGSPICE_LIB overrides
+            self.ng = ctypes.CDLL(os.environ.get("NGSPICE_LIB") or "libngspice.so.0")
         self.log = []
         pf = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_void_p)
         self._cb = pf(lambda s, i, u: (self.log.append(s.decode(errors="replace")), 0)[1])
@@ -180,6 +184,16 @@ class Ckt:
             nv = self.runs(a, pn(e["b"]), e["runs"])
             assert nv == e["vias"], (name, e["a"], e["b"], nv, e["vias"])
 
+    def cam_net(self, name, rs=None):
+        """Camera line: buffer -> series resistor (Rev 2: R52-R69) -> header. On a Rev 1 geometry it is net(name)."""
+        self.net(name)
+        cn = name + "_C"
+        if cn in GEOM["nets"]:
+            rpad = lambda g: [p for e in g["edges"] for p in (e["a"], e["b"]) if re.match(r"R\d+\.\d$", p)][0]
+            r = DEV["rev2"]["harness"]["series_r_ohm"] if rs is None else rs
+            self.R(node(rpad(GEOM["nets"][name])), node(rpad(GEOM["nets"][cn])), max(r, 1e-3))
+            self.net(cn)
+
     def tran(self, tstop_ns):
         self.add(f".tran {self.tmax * 0.4:.4g}p {tstop_ns}n 0 {self.tmax:.4g}p")
 
@@ -193,6 +207,7 @@ DRVC = DRV["_common"]
 OC = DEV["output_corners"]
 BP = DEV["board_parts"]
 AMP = {"min": "high", "typ": "typ", "max": "low"}    # timing corner -> amplitude corner
+SENSE = DEV.get("rev2", {}).get("sense")              # Rev 2 sense dividers (None for a Rev 1 device file)
 
 
 def gpio_scale(drive, strength):
@@ -443,11 +458,12 @@ class Model:
     def stage_b(self, corner):
         """U5 output start -> U6 input crossings (B1); U6 output start -> J1..J6 pin 4 0.9 V (B2).
         Times relative to the ramp start, for the GP11 rise and fall."""
-        key = ("B", corner)
+        g5, g6 = GATES["SN74LVC1G04"], GATES["SN74LVC04A"]
+        key = ("B", corner, g6["vcc"])
         if key in self.cache:
             return self.cache[key]
         ta, tb, te = 5.0, 45.0, 85.0
-        g5, g6 = GATES["SN74LVC1G04"], GATES["SN74LVC04A"]
+        vm = g6["vcc"] / 2          # camera pin reference level: half the camera I/O supply (0.9 V at 1.8 V)
         c = self.ckt(f"stage B1 {corner}")
         r = g5["rout"][corner]
         add_switch_out(c, "u5", node("U5.4"), g5["vcc"], r, r, g5["ramp_ns_est"][corner], ta, tb, start_high=True)
@@ -469,14 +485,14 @@ class Model:
         r = g6["rout"][corner]
         for i, (p, q) in enumerate(ins.items()):
             add_switch_out(c, f"u6y{q}", node(f"U6.{q}"), g6["vcc"], r, r, g6["ramp_ns_est"][corner], ta, tb, start_high=False)
-            c.net(f"Trigger{i + 1}")
+            c.cam_net(f"Trigger{i + 1}")
             c.C(node(f"J{i + 1}.4"), DEV["loads"]["camera_pF_est"])
         c.tran(te)
         t, w = self.sp.run(c.lines, [node(f"J{i}.4") for i in range(1, 7)])
         b2 = {}
         for i in range(1, 7):
             v = w[node(f"J{i}.4")]
-            b2[i] = {"rise": cross(t, v, 0.9, True, ta, tb) - ta, "fall": cross(t, v, 0.9, False, tb, te) - tb,
+            b2[i] = {"rise": cross(t, v, vm, True, ta, tb) - ta, "fall": cross(t, v, vm, False, tb, te) - tb,
                      "vmax": float(v.max()), "vmin": float(v.min())}
         res = {"b1": b1, "b2": b2, "map": ins}
         self.cache[key] = res
@@ -504,6 +520,15 @@ class Model:
             "rs": add_r(c, k["rs"] + ".1", k["rs"] + ".2", OC["r68"][amp], "2512"),
             "rx": add_r(c, k["rx"] + ".1", k["rx"] + ".2", OC["r47"][amp], "2512"),
             "rp": add_r(c, k["rp"] + ".1", "0", OC["r82"][amp], "2512")}
+        sn = SENSE and SENSE["parts"].get(ch)
+        if sn and f"{sn[0]}.1" in {e["b"] for e in GEOM["nets"][k["raw"]]["edges"]}:
+            # Rev 2: activity-LED sense divider on the driver output (R_top || C_top to the monostable input,
+            # R_bot || C_bot to GND)
+            s_node = f"{ch}_sense"
+            add_r(c, sn[0] + ".1", s_node, SENSE["r_top"], "0805")
+            add_r(c, s_node, "0", SENSE["r_bot"], "0805")
+            c.C(node(sn[0] + ".1"), SENSE.get("c_top_pF", 0.0), node(s_node))
+            c.C(node(s_node), SENSE.get("c_bot_pF", 0.0) + SENSE["ci_pF"] + SENSE["trace_pF"][ch])
         for p in (1, 2, 3):
             c.C(node(f"{k['jp']}.{p}"), BP["header_pin_pF_est"])
         if mode == "50":

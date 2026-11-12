@@ -47,8 +47,17 @@ pio run
 | **Pixel reset** | Camera ports J1–J6 | Holds the camera sensors blank between flash pairs. Controlled only by PiEBV (`PIXGATE`) |
 | **External Sync Out** | BNC J12 | A copy of the camera trigger (the marker, or Laser 1 with J10 on 1-2) for other equipment: a 5 V pulse, with J21 set to match the input |
 
-- Every signal to the cameras is **1.8 V**, the level they are built for. The laser outputs and
-  External Sync Out are **5 V**.
+- Every signal to the cameras is **1.8 V** (IDS cameras, J22 open) or **3.3 V** (Prophesee EVK4
+  cameras, J22 fitted). The laser outputs and External Sync Out are **5 V**.
+- The camera signal level comes from a power mux (U20). Its default input is 1.8 V: with J22 open,
+  two pull-up resistors in parallel (R34 and R70) select 1.8 V. A shunt on J22 pulls the select pin low and selects
+  3.3 V.
+- Each camera line has a **47 Ω series resistor on the board** (R52–R69), between the buffer and
+  the camera port. It terminates the camera cable at the source. The camera cables need no
+  resistors.
+- The camera lines of each group have **equal length** on the board, from the buffer to the series
+  resistor: Sync 74.082 mm, Trigger 43.584 mm, pixel reset 51.472 mm (spread below 0.001 mm in
+  each group, KiCad's length reading).
 - Times are set in steps of **6.667 ns** (one tick of the Pico's 150 MHz clock), or **3.333 ns**
   with a shunt on the clock jumper J20 (a 300 MHz overclock; see [Jumpers](#jumpers)).
   Every reply shows the exact value the hardware will produce, so you never have to correct for the
@@ -58,7 +67,8 @@ pio run
   rated for. It only stops the pulses from running into each other.
 
 PiEBV was designed for two **PicoLas LDP-V** laser-diode drivers (models 10-70 and 240-100) and six
-**IDS uEye UE-39B0XCP-E** event cameras. Other drivers with a 5 V trigger input should work too, with
+**IDS uEye UE-39B0XCP-E** event cameras. Board revision 2 can also drive six **Prophesee EVK4**
+cameras at 3.3 V (see the [EVK4 harness](docs/EVK4_HARNESS.md)). Other drivers with a 5 V trigger input should work too, with
 the output mode (J18/J19) set to match their input.
 
 ---
@@ -157,13 +167,15 @@ board fits EuroCard card guides and slotted enclosures.
              +------------------------------------------------------------+
 ```
 
-(Not to scale. J18, J19 and J21 are the output-mode jumpers.)
+(Not to scale. J18, J19 and J21 are the output-mode jumpers. J22, at the top centre, sets the camera signal level.
+The status LEDs are near the top edge. Images of the board are in
+[Hardware.md](Hardware.md#board-views).)
 
 ### Connectors
 
 | Ref | What | Connect to | Notes |
 |---|---|---|---|
-| **J1–J6** | Camera ports 1–6 (2×5 IDC headers) | Each camera's 8-pin I/O cable (header pin *n* = camera pin *n*) | Pin 2, 7 ground · 3 pixel reset · 4 trigger · 5 sync · 1, 6, 8, 9, 10 not connected. All signals **1.8 V**. Pin 1 is the top-left pin. |
+| **J1–J6** | Camera ports 1–6 (2×5 IDC headers) | Each camera's 8-pin I/O cable (header pin *n* = camera pin *n*) | Pin 2, 7 ground · 3 pixel reset · 4 trigger · 5 sync · 1, 6, 8, 9, 10 not connected. All signals **1.8 V** (J22 open, IDS cameras) or **3.3 V** (J22 fitted, Prophesee EVK4 with the [EVK4 harness](docs/EVK4_HARNESS.md)). Each signal has a 47 Ω series resistor on the board. Pin 1 is the top-left pin. |
 | **J7** | BNC, Laser 1 (CH1) | First laser driver's trigger input | Mode set by J18 |
 | **J8** | BNC, Laser 2 (CH2) | Second laser driver's trigger input | Mode set by J19 |
 | **J12** | BNC, External Sync Out | Equipment that must follow the camera trigger (50 Ω or Hi-Z input) | Mode set by J21. See [J12](#j12--external-sync-out) below |
@@ -173,6 +185,8 @@ board fits EuroCard card guides and slotted enclosures.
 | **J18**, **J19**, **J21** | Output mode (jumpers; J18 = Laser 1, J19 = Laser 2, J21 = External Sync Out) | A shunt | See [Jumpers](#jumpers) |
 | **J20** | Clock jumper, 2-pin header right of the Pico, below the J14 row | Nothing (150 MHz), or a shunt (300 MHz overclock) | See [Jumpers](#jumpers). Leave it open unless that Pico passed the soak test. |
 | **TP3** | 2-pin header on the left edge, below the Pico | A scope | Pin 1 = the 1 MHz sync straight from the Pico (3.3 V) · pin 2 = ground |
+| **J22** | Camera signal level, 2-pin header at the top centre | Nothing (1.8 V, IDS cameras), or a shunt (3.3 V, Prophesee EVK4) | See [Jumpers](#jumpers). **Never fit it with an IDS camera connected.** |
+| **TP4–TP9** | Bare test pads at the top centre, marked `12V`, `5V`, `3V3`, `1V8`, `VCAM`, `GND` | A multimeter | Supply rails |
 
 #### J12 — External Sync Out
 
@@ -180,12 +194,12 @@ board fits EuroCard card guides and slotted enclosures.
 lines do: with every marker (J10 on 2-3, also while DISARMED), or with every Laser 1 pulse (J10 on
 1-2, only while ARMED). It is built like a laser output, so the levels are the same:
 
-- **J21 on 1-2 (50 Ω mode):** about 4.8 V (4.54–5.14 V) into a 50 Ω input.
+- **J21 on 1-2 (50 Ω mode):** about 4.8 V (4.53–5.14 V) into a 50 Ω input.
 - **J21 on 2-3 (Hi-Z mode):** about 4.8 V (4.55–5.08 V) into a high-impedance input, from a ~50 Ω
   source, so long cables don't overshoot.
 - It needs the 15 V charger on J17; on the Pico's USB alone J12 stays at 0 V.
 - J12 and the cameras' trigger are offset by a fixed delay: J12 passes a 12 V driver, the camera
-  trigger lines pass 1.8 V buffers. It is typically about +10 ns (J12 later), but anywhere from
+  trigger lines pass the camera buffers. It is typically about +10 ns (J12 later), but anywhere from
   −9 to +26 ns from part to part. **Measure it once on each board** and write it in the `J12-TRIG OFFSET (MEASURED)` field on the silkscreen (left area, below TP3), if your
   instrument must line up with the cameras to better than ~30 ns (Hardware.md, First-board checks).
 - One device per output, no BNC tee, and don't short it (see [Safety](#safety)).
@@ -207,12 +221,23 @@ has the square pad.
 | **J19** Laser 2 output mode | as J18 | as J18 | as J18 | as J18 |
 | **J21** External Sync Out mode | as J18 | **50 Ω mode** (normal) | Hi-Z mode | as J18 |
 | **J20** clock jumper (2 pins) | `CLOCK JUMPER` · `OPEN = 150 MHz` · `FIT = 300 MHz (OVERCLOCK)` | Shunt fitted: 300 MHz overclock (soak-test the Pico first) | – | **150 MHz, the rated clock** (normal) |
+| **J22** camera signal level (2 pins) | `CAMERA I/O LEVEL (J22)` · `OPEN = 1V8  IDS` · `SHUNT = 3V3  EVK4` | Shunt fitted: **3.3 V** on all six camera ports (Prophesee EVK4). The blue LED `3V3` is lit. | – | **1.8 V** (IDS cameras; normal) |
 
 **J11 — laser enable and E-stop.** Labelled `LASER INTERLOCK: ON = 1-2` and
 `E-STOP: NC SWITCH ACROSS 1-2`. For an emergency-stop switch, take the shunt off and wire a
 **normally-closed** switch across pins 1 and 2. Closed, the lasers are enabled (if also ARMED and
 powered). Pressing the switch **or** breaking its cable opens the circuit and turns the lasers off,
 so the stop is fail-safe.
+
+**J22 — camera signal level.** J22 sets the level of the Sync, Trigger and pixel-reset lines on
+**all six** camera ports. Open, the level is 1.8 V, which the IDS cameras need. With a shunt, the
+level is 3.3 V, which the Prophesee EVK4 needs. **3.3 V can destroy the 1.8 V inputs of an IDS
+camera:** fit the shunt only when no IDS camera is connected, and do not use IDS and EVK4 cameras
+together. The blue LED marked `3V3` next to J22 is lit when the level is 3.3 V: look at it before
+you connect a camera. Before you connect an IDS camera, also measure the test pad `VCAM` (TP8)
+with a meter: it must be 1.8 V with J22 open. Change J22 with the power off. An EVK4 camera needs the
+[EVK4 harness](docs/EVK4_HARNESS.md); it has no pixel-reset input, so `PIXGATE` has no effect on it.
+The harness has no resistors: the series resistors are on the board.
 
 **J10 — camera trigger source.** Labelled `CH1 TRG MKR` under the pins and
 `CAMERA TRIGGER: TRG-MKR = MARKER / TRG-CH1 = LASER 1` beside them. The middle pin (`TRG`) feeds the
@@ -225,7 +250,7 @@ trigger input of all six cameras and External Sync Out (J12).
 
 **J18 / J19 — laser output mode.** Labelled `LASER 1 OUT` / `LASER 2 OUT`, with `50Ω` and `HiZ`
 next to the pin pairs.
-- **1-2, 50 Ω mode:** about 4.8 V (4.54–5.14 V) into a 50 Ω input. Use it for the PicoLas LDP-V and
+- **1-2, 50 Ω mode:** about 4.8 V (4.53–5.14 V) into a 50 Ω input. Use it for the PicoLas LDP-V and
   anything else with a 50 Ω input.
 - **2-3, Hi-Z mode:** about 4.8 V (4.55–5.08 V) into a high-impedance input. The output is matched
   to 50 Ω coax, so even a long cable to an unterminated input gives a clean edge (at most ~5 %
@@ -246,6 +271,21 @@ runs the Pico at 300 MHz instead of 150 MHz, so every time setting has 3.333 ns 
 rated 150 MHz. After any watchdog restart the Pico stays at 150 MHz until it is power-cycled.
 `STATUS` shows the clock in `CLK` and `CLKMODE`.
 
+### Status LEDs
+
+The LEDs near the top edge show the state of the board.
+
+| LED | Colour | Meaning when lit |
+|---|---|---|
+| `12V OK` | green | The USB-C charger gave 15 V and the 12 V supply of the output drivers is good. Dark: the laser outputs and J12 cannot pulse. |
+| `ARMED` | red | The lasers can fire: the firmware is ARMED, J11 is on 1-2 (or the E-stop switch is closed) and `12V OK` is lit. |
+| `3V3` | blue | The camera ports are at 3.3 V (J22 fitted). Dark: 1.8 V. |
+| `L1`, `L2` | red | A pulse left the Laser 1 / Laser 2 output driver. One flash for each pulse; on continuously above about 70 pulses a second. |
+| `SYNC` | yellow | A pulse left the External Sync Out driver (J12). |
+
+The LEDs are indicators only. Do not use a dark `ARMED` LED as proof that the lasers are off: an
+LED can fail. To make the lasers safe, send `DISARM`, open J11 or unplug J17.
+
 ### Seating the Pico
 
 Fit a **Raspberry Pi Pico 2 W** (or a plain Pico 2, which needs the `pico2` firmware image) with
@@ -263,7 +303,7 @@ undefined.
 | Plugged in | What works |
 |---|---|
 | **J17 (15 V charger) + Pico USB** | Everything. This is the normal set-up. |
-| Pico USB only | Commands, and sync, trigger and pixel reset to the cameras. **The laser outputs stay off** (no 12 V supply for the board's output driver). |
+| Pico USB only | Commands, and sync, trigger and pixel reset to the cameras. **The laser outputs stay off** (no 12 V supply for the board's output driver); the `12V OK`, `ARMED`, `L1`, `L2` and `SYNC` LEDs stay dark. |
 | J17 only | The board runs, DISARMED, with the fixed 1 MHz sync clock and marker running. There is no serial link, so it can't be armed. |
 
 **Charger:** a USB-C PD charger that offers **15 V**. In practice that means any PD charger rated
@@ -334,25 +374,32 @@ list, with exact test points, is under
 [First-board checks in Hardware.md](Hardware.md#first-board-checks).
 
 1. **Before the first power-up on J17,** with nothing plugged in, check with a multimeter for solder
-   bridges on the fine-pitch parts (J17, U16, U17): `VBUS_PD` must not be shorted to GND, CC1
+   bridges on the fine-pitch parts (J17, U16, U17, and U20 with its 0.5 mm pitch): `VBUS_PD` must not be shorted to GND, CC1
    or CC2 (at J17 and U14), +5V_PD and +5V must not be shorted to GND (at U16), and U17's input must
    not be shorted to its output. Also check that J17's four metal shell legs are soldered.
 2. **Supply voltages,** with the charger on J17: `VBUS_PD` at C12 about 15 V (with the charger you
    will actually use), +12V at C17 between 11.54 and 12.05 V, and `LASER_PWR_OK` (U13 pins 1 and 8)
    about 12 V.
 3. **Laser outputs,** J18/J19 on 1-2, into a 50 Ω-terminated scope with no driver connected:
-   - pulses from 0 V to 4.54–5.14 V;
+   - pulses from 0 V to 4.53–5.14 V;
    - CH2 exactly `DELAY` after CH1 (`DELAY 13` should give 13.3 ns);
    - the first pulse after `ARM` is full width;
    - 0 V after `DISARM` and after a full restart; and, while ARMED and pulsing, 0 V once J17 is
      unplugged, with no stray pulse while it is plugged back in;
    - then J18/J19 on 2-3 with the scope at 1 MΩ: 0 V to 4.55–5.08 V, with at most ~5 % overshoot at
      the end of the longest cable you will use. Put the shunts back on the mode you need afterwards.
-   - **External Sync Out (J12),** J21 on 1-2, same 50 Ω scope: a 0 V to 4.54–5.14 V pulse of
+   - **External Sync Out (J12),** J21 on 1-2, same 50 Ω scope: a 0 V to 4.53–5.14 V pulse of
      `MARKERWIDTH` with every period, also while DISARMED (J10 on 2-3); J21 on 2-3 at 1 MΩ:
      4.55–5.08 V.
-4. **Cameras:** with **one** camera connected, measure pixel reset, trigger and sync at the camera
-   end of the harness, and confirm the camera is not driving pin 5 (it must be a sync slave). Only
+4. **Camera signal level, before any camera is connected:** with J22 open, measure the test pad
+   `VCAM` (TP8) with a meter. It must be 1.76–1.84 V and the blue `3V3` LED dark. With a shunt on
+   J22 it must be about 3.3 V and the LED lit. Take the shunt off again for IDS cameras. Do not
+   connect an IDS camera if the pad is not at 1.8 V with J22 open.
+5. **Status LEDs:** `12V OK` lit with the 15 V charger; `ARMED` lit only when ARMED with J11 on 1-2
+   and `12V OK` lit; `L1`, `L2` and `SYNC` flash with the pulses.
+6. **Cameras:** with **one** camera connected, measure pixel reset, trigger and sync at the camera
+   end of the harness, and confirm the camera is not driving pin 5 (it must be a sync slave). The
+   series resistors are on the board (R52–R69), so this check is a measurement only. Only
    then connect all six.
 
 ---
@@ -834,8 +881,11 @@ replace a scope check on the board.
 `tools/signal_sim/` is a transmission-line simulation of the trigger, laser and External Sync Out
 nets, built from the routed board and datasheet values, run through the ngspice in KiCad 10. It
 gives the CH1-to-CH2 skew for each J10 setting, J12's delay and its offset to the camera triggers,
-and the output levels. Run it after changing the routing or a part in these chains; see
-[its README](tools/signal_sim/README.md). The results in Hardware.md are from the EuroCard routing.
+and the output levels. `rev2_sim.py` adds the Rev 2 cases: the camera lines at 1.8 V and 3.3 V, the
+camera cable with IDS and EVK4 inputs and the on-board 47 Ω series resistors, the supply budget of the camera buffers, the activity-LED
+sense dividers and the gaps between the power islands. Run both after changing the routing or a
+part in these chains; see [its README](tools/signal_sim/README.md). It runs with KiCad's ngspice
+on Windows and with libngspice on Linux.
 
 ---
 
@@ -855,7 +905,9 @@ and the output levels. Run it after changing the routing or a part in these chai
 | `fab/` | Manufacturing: master parts list `fab/PiEBV_Pico_BOM.csv` (with the design-constraint notes), gerbers and drill files, and `fab/jlc/` JLCPCB assembly files and [order checklist](fab/jlc/JLC_ORDER.md) |
 | `libs/`, `fp-lib-table`, `sym-lib-table` | Project-local KiCad symbols and footprints |
 | `tools/jlc_cpl/` | Corrects the JLC placement file to JLC's own footprints (see its README) |
-| `tools/eurocard/` | Rebuilds this EuroCard board from the 126 × 126 mm hand layout: placement, KiCadRoutingTools routing, checks (see its README) |
+| `tools/eurocard/` | Builds the Rev 1 EuroCard board from the 126 × 126 mm hand layout: placement, KiCadRoutingTools routing, checks (see its README) |
+| `tools/rev2/` | Builds the current Rev 2 board from the Rev 1 EuroCard board: camera level select, series resistors in the camera lines, new camera routing with equal lengths, status LEDs, power islands, checks, fab export (see its README) |
+| `docs/` | [EVK4 camera harness](docs/EVK4_HARNESS.md) and the board images |
 
 ## License
 

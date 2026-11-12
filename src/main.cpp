@@ -423,6 +423,11 @@ void setup() {
     // The laser pads were already gated LOW by the pre-init hook (laser_gate.cpp);
     // re-assert it before anything else touches the hardware.
     laser::gateClose();
+    // ARMED status LED (Rev 2 board, D3): LOW = off. Until this point the pad is not
+    // driven and R38 holds the gate of Q2 low.
+    gpio_init(kPinArmedLed);
+    gpio_put(kPinArmedLed, false);
+    gpio_set_dir(kPinArmedLed, GPIO_OUT);
     captureResetInfo();  // before wdt_begin() (SCRATCH4)
     g_lastLaserPeriodCycles = clkHz();  // worst case (1 s at FREQ = 1 Hz): covers a reset while armed
 
@@ -485,11 +490,13 @@ void setup() {
 void loop() {
     feedWatchdog();
     servicePendingStart();
+    gpio_put(kPinArmedLed, g_armed);  // status only; every path that changes g_armed returns here
     // One USB call per byte. read() returns -1 when nothing is left, also when the data
     // went away after a check (e.g. a USB bus reset), so -1 is never fed as a character.
     for (int c; (c = Serial.read()) >= 0;) {
         g_protocol.feed((char)c);
         servicePendingStart();
+        gpio_put(kPinArmedLed, g_armed);
         feedWatchdog();  // a long burst of input is still progress
     }
 }
