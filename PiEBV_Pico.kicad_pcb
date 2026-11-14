@@ -32063,6 +32063,30 @@
 			(justify right)
 		)
 	)
+	(gr_text "PiEBV Rev 2  (C) 2026 Louis M. Edelman, Chris Willert"
+		(at 139 92 0)
+		(layer "F.SilkS")
+		(uuid "9d2adb9c-1c71-a983-9663-342861c93084")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+	)
+	(gr_text "GPL-3.0"
+		(at 139 94 0)
+		(layer "F.SilkS")
+		(uuid "b780dfaa-f22e-8b10-2f9c-727296c57aa5")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+	)
 	(gr_text "1MHz Clock"
 		(at 143.6 67 0)
 		(layer "F.SilkS")
