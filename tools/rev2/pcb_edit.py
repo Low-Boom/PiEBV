@@ -621,6 +621,9 @@ LY = ROW - 1.75
 for x, t in ((200.5, "12V OK"), (206.5, "ARMED"), (229.6, "J22"), (235.5, "3V3"), (241.075, "L1"), (250.075, "L2"), (259.075, "SYNC")):
     silk(t, x, LY)
 silk("CAMERA I/O LEVEL (J22)", 212.6, 47.2, just=-1)
+# Copyright and licence mark, front, lower left (below the offset table). "(C)": the stroke font has no copyright sign.
+silk("PiEBV Rev 2  (C) 2026 Louis M. Edelman, Chris Willert", 139.0, 92.0, size=1.0, just=-1)
+silk("GPL-3.0", 139.0, 94.0, size=1.0, just=-1)
 silk("OPEN = 1V8  IDS", 212.6, 48.6, just=-1)
 silk("SHUNT = 3V3  EVK4", 212.6, 50.0, just=-1)
 for x, y, t, j in ((235.6, 50.0, "12V", 1), (199.6, 45.0, "5V", 1), (220.9, 38.2, "3V3", 0), (226.6, 44.3, "1V8", -1),

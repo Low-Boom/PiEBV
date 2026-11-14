@@ -911,4 +911,4 @@ on Windows and with libngspice on Linux.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+GNU General Public License, version 3 (GPL-3.0). See [LICENSE](LICENSE).
