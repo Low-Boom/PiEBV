@@ -71,7 +71,7 @@ allo = [RES["case1"][k][e]["j12"] - c for k in RES["case1"] for e in S.EDGES
 P("\nThe three corners use the same corner for the camera gates and for U19, as signal_sim.py does in its own "
   "offset table; that table also crosses the corners. At 3.3 V the camera gates are faster, so J12 is later "
   "relative to the camera pin than at 1.8 V. Measure the offset for the +VCAM setting in use "
-  "(Hardware.md, first-board check 4).\n")
+  "(docs/FIRST_BOARD_CHECKS.md, check 4).\n")
 
 # ============================================================================ case 2
 P("## 2. Camera harness: level and edge at the camera end\n")

@@ -4,7 +4,7 @@ A USB-controlled pulse-timing box for particle image velocimetry (PIV), built ar
 Pi Pico 2 W. It triggers two laser drivers and synchronizes up to six event cameras.
 
 > **Hardware status:** Firmware timing has not yet been verified on a physical board. Complete the
-> [first-board checks](Hardware.md#first-board-checks) before connecting a laser driver or camera.
+> [first-board checks](docs/FIRST_BOARD_CHECKS.md#first-board-checks) before connecting a laser driver or camera.
 
 ## Quick start
 
@@ -16,7 +16,7 @@ python -m pip install platformio
 pio run
 ```
 
-1. Follow the [first-board checks](Hardware.md#first-board-checks) before applying power or
+1. Follow the [first-board checks](docs/FIRST_BOARD_CHECKS.md#first-board-checks) before applying power or
    connecting equipment.
 2. Flash `.pio/build/pico2w/firmware.uf2`: hold **BOOTSEL** while connecting the Pico's micro-USB
    cable, then copy the UF2 to the `RP2350` drive. Flash with the Pico out of the board or J17
@@ -25,14 +25,36 @@ pio run
    and J21 to **1-2** for the 50 Ω scope checks; leave J11 empty until instructed to check the outputs.
 4. Connect the 15 V charger to J17 and the Pico's micro-USB to the computer. Open the Pico's serial
    port, enable local echo, and send `STATUS`.
-5. Follow [Hardware setup](#hardware-setup) to check the laser outputs with a scope before
+5. Follow [Hardware setup](docs/SETUP.md#hardware-setup) to check the laser outputs with a scope before
    connecting laser drivers or cameras.
 
-**Contents:** [Quick start](#quick-start) · [What it does](#what-it-does) ·
-[Safety](#safety) · [The board](#the-board) · [Hardware setup](#hardware-setup) ·
-[Connecting](#connecting) · [Command reference](#command-reference) ·
-[Troubleshooting](#troubleshooting) · [Building from source](#building-from-source) ·
+**Contents:** [Quick start](#quick-start) · [Documentation](#documentation) ·
+[What it does](#what-it-does) · [Safety](#safety) · [The board](#the-board) ·
+[Connecting](#connecting) · [Most-used commands](#most-used-commands) ·
 [Repository layout](#repository-layout)
+
+---
+
+## Documentation
+
+The README gives the overview. The pages below give the detail.
+
+| Page | What it holds | Who needs it |
+|---|---|---|
+| [docs/SAFETY.md](docs/SAFETY.md) | The safety rules in detail: starting and stopping, laser outputs, cameras and jumpers | Everyone, before the first `ARM` |
+| [docs/SETUP.md](docs/SETUP.md) | Hardware setup step by step, first-board checks, jumpers, J12, seating the Pico, power | Anyone who sets up a board |
+| [docs/CONNECTING.md](docs/CONNECTING.md) | USB serial, web GUI, Python scripting, wireless | Operators and script writers |
+| [docs/COMMANDS.md](docs/COMMANDS.md) | Command reference: rules, commands, timing, errors, `STATUS` | Operators and script writers |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Symptoms, likely causes and fixes | Anyone with a problem |
+| [docs/FIRMWARE_BUILD.md](docs/FIRMWARE_BUILD.md) | Building from source, timing checks, signal simulation | Firmware developers |
+| [Hardware.md](Hardware.md) | Hardware reference: pins, power, signal chains, connectors | Hardware developers |
+| [docs/DESIGN_NOTES.md](docs/DESIGN_NOTES.md) | Rev 2 changes, layout, routing, power islands | Hardware developers |
+| [docs/FIRST_BOARD_CHECKS.md](docs/FIRST_BOARD_CHECKS.md) | The full first-board checks, with exact test points | Anyone who tests a newly assembled board |
+| [docs/MANUFACTURING.md](docs/MANUFACTURING.md) | Fabrication and assembly notes | Anyone who orders or assembles a board |
+| [docs/EVK4_HARNESS.md](docs/EVK4_HARNESS.md) | The EVK4 camera harness | Users of Prophesee EVK4 cameras |
+| [fab/jlc/JLC_ORDER.md](fab/jlc/JLC_ORDER.md) | The JLCPCB order checklist | Anyone who orders a board |
+| [tools/rev2/README.md](tools/rev2/README.md) | The scripts that build the Rev 2 board | Hardware developers |
+| [tools/signal_sim/README.md](tools/signal_sim/README.md) | The transmission-line simulation of the timing nets | Hardware developers |
 
 ---
 
@@ -90,57 +112,7 @@ the output mode (J18/J19) set to match their input.
 7. **Cameras:** build the harness with wires 2, 3, 4, 5 and 7 only, and set every camera to sync
    slave.
 
-### In detail
-
-**Starting and stopping**
-
-- **`DISARM` always works, immediately.** The six letters D-I-S-A-R-M, in any case and anywhere in
-  what you type, disarm the outputs as soon as the last letter reaches the board. You don't need to
-  press Enter, as long as your terminal sends each key as you type it (all the terminals listed
-  under [USB serial](#usb-serial) do). A monitor with a separate input box, such as the Arduino
-  IDE's, sends nothing until you press Enter.
-- **The three gates are independent.** Each one on its own holds both outputs at 0 V. The firmware
-  can only see the first one, so `ARMED=1` does not by itself mean the outputs are live. The third
-  gate (U18) checks that the board's 12 V laser-driver supply is between 10.6 and 13.3 V, which needs
-  the 15 V charger.
-- **Losing the USB link does not disarm.** If the Pico's USB cable is pulled, the PC goes to sleep
-  or a script is killed while ARMED, the board keeps running from J17 and the lasers keep pulsing,
-  with no way to send `DISARM`. Stop them in hardware: take the J11 shunt off 1-2, or unplug J17.
-- **Before uploading new firmware, send `DISARM`.** The upload restarts the Pico, and a restart in
-  the middle of a pulse can stretch that one pulse by an estimated 70–150 ns.
-- **Before using a debugger (SWD), send `DISARM` and remove the J11 shunt** (or unplug J17). A
-  debugger reset can leave a laser output high for milliseconds.
-
-**Laser outputs**
-
-- **Match the output mode to what you connect.** J18 sets the mode for J7 (Laser 1), J19 for J8
-  (Laser 2) and J21 for J12 (External Sync Out) ([details](#jumpers)):
-
-  | Shunt | Mode | Use it for | Into a 50 Ω input | Into a Hi-Z input |
-  |---|---|---|---|---|
-  | **1-2** | 50 Ω | The LDP-V, or any 50 Ω input | **about 4.8 V** (correct) | about 12 V (too high for 5 V logic) |
-  | **2-3** | Hi-Z | TTL or 5 V CMOS inputs, a scope at 1 MΩ | about 2.5 V (too low to fire an LDP-V) | **about 4.8 V** (correct) |
-  | none | — | nothing: always fit a shunt | about 3.5 V | about 12 V |
-
-  To fire **one light source with both pulses**, or **two light sources together with the same
-  double pulse**, use `COMBINE 1` instead ([Combined mode](#combined-mode-combine)): each output
-  then carries both pulses, still one driver per output.
-
-**Cameras and jumpers**
-
-- **Camera pins 1, 6 and 8 are not connected on the board,** so a straight-through ribbon can't
-  short the camera's own supplies at the board (pin 1 is the camera's 1.8 V output, pin 8 its USB
-  5 V). The remaining risk is in the harness: fit only wires 2, 3, 4, 5 and 7 (or cut 1, 6 and 8),
-  and never join pin 1 or 8 to a ground wire. Pin 6 is undocumented: don't assume it is a ground.
-- **Set every camera to sync slave.** PiEBV drives the sync pin, so a camera set as sync master would
-  fight it.
-- **Never fit a shunt across all three pins of J10.**
-- **Don't short J12.** External Sync Out can be high for up to half the period (`MARKERWIDTH` is
-  limited to 50 % for this reason); into a short its 2 W, 68 Ω resistor then takes up to 1.1 W on
-  average (1.45 W with J10 on 1-2 and `COMBINE 1`).
-
-More detail: [Hardware.md](Hardware.md), sections Boot and arming, Laser
-interlock and Connectors.
+The rules in detail are in [docs/SAFETY.md](docs/SAFETY.md).
 
 ---
 
@@ -178,7 +150,7 @@ The status LEDs are near the top edge. Images of the board are in
 | **J1–J6** | Camera ports 1–6 (2×5 IDC headers) | Each camera's 8-pin I/O cable (header pin *n* = camera pin *n*) | Pin 2, 7 ground · 3 pixel reset · 4 trigger · 5 sync · 1, 6, 8, 9, 10 not connected. All signals **1.8 V** (J22 open, IDS cameras) or **3.3 V** (J22 fitted, Prophesee EVK4 with the [EVK4 harness](docs/EVK4_HARNESS.md)). Each signal has a 47 Ω series resistor on the board. Pin 1 is the top-left pin. |
 | **J7** | BNC, Laser 1 (CH1) | First laser driver's trigger input | Mode set by J18 |
 | **J8** | BNC, Laser 2 (CH2) | Second laser driver's trigger input | Mode set by J19 |
-| **J12** | BNC, External Sync Out | Equipment that must follow the camera trigger (50 Ω or Hi-Z input) | Mode set by J21. See [J12](#j12--external-sync-out) below |
+| **J12** | BNC, External Sync Out | Equipment that must follow the camera trigger (50 Ω or Hi-Z input) | Mode set by J21. See [J12](docs/SETUP.md#j12--external-sync-out) |
 | **J17** | USB-C, **power only** | A USB-C PD charger that offers 15 V | No data. Commands and firmware go through the Pico's own micro-USB. |
 | **J10** | Camera trigger source (jumper) | A shunt | See [Jumpers](#jumpers) |
 | **J11** | Laser enable (jumper) | A shunt, or a normally-closed E-stop switch | See [Jumpers](#jumpers) |
@@ -188,88 +160,22 @@ The status LEDs are near the top edge. Images of the board are in
 | **J22** | Camera signal level, 2-pin header at the top centre | Nothing (1.8 V, IDS cameras), or a shunt (3.3 V, Prophesee EVK4) | See [Jumpers](#jumpers). **Never fit it with an IDS camera connected.** |
 | **TP4–TP9** | Bare test pads at the top centre, marked `12V`, `5V`, `3V3`, `1V8`, `VCAM`, `GND` | A multimeter | Supply rails |
 
-#### J12 — External Sync Out
-
-**A copy of the camera trigger, for other equipment.** J12 pulses whenever the cameras' trigger
-lines do: with every marker (J10 on 2-3, also while DISARMED), or with every Laser 1 pulse (J10 on
-1-2, only while ARMED). It is built like a laser output, so the levels are the same:
-
-- **J21 on 1-2 (50 Ω mode):** about 4.8 V (4.53–5.14 V) into a 50 Ω input.
-- **J21 on 2-3 (Hi-Z mode):** about 4.8 V (4.55–5.08 V) into a high-impedance input, from a ~50 Ω
-  source, so long cables don't overshoot.
-- It needs the 15 V charger on J17; on the Pico's USB alone J12 stays at 0 V.
-- J12 and the cameras' trigger are offset by a fixed delay: J12 passes a 12 V driver, the camera
-  trigger lines pass the camera buffers. It is typically about +10 ns (J12 later), but anywhere from
-  −9 to +26 ns from part to part. **Measure it once on each board** and write it in the `J12-TRIG OFFSET (MEASURED)` field on the silkscreen (left area, below TP3), if your
-  instrument must line up with the cameras to better than ~30 ns (Hardware.md, First-board checks).
-- One device per output, no BNC tee, and don't short it (see [Safety](#safety)).
-
-The board has no pixel-reset input any more: PiEBV alone controls the camera pixel reset
-([`PIXGATE`](#pixel-reset-gate-pixgate)).
-
 ### Jumpers
 
-J10 and J11 are numbered 1-2-3 from **left to right**. J18, J19 and J21 stand upright between the
-large resistors and the BNCs: J18's and J21's pin 1 is at the top, J19's at the bottom. Pin 1 always
-has the square pad.
+Pin 1 always has the square pad. Change J22 with the power off.
 
-| Jumper | Board label | Shunt on 1-2 | Shunt on 2-3 | No shunt |
-|---|---|---|---|---|
-| **J11** laser enable | `ON` … `OFF` | **Lasers enabled** (the firmware must also be ARMED) | Lasers off | Lasers off (fail-safe) |
-| **J10** camera trigger | `CH1 TRG MKR` | Cameras triggered by every Laser 1 pulse (only while ARMED) | **Cameras triggered by the marker** (normal) | No camera triggers |
-| **J18** Laser 1 output mode | `50Ω` by pins 1-2, `HiZ` by 2-3 | **50 Ω mode** (normal, for the LDP-V) | Hi-Z mode | Wrong for everything: always fit a shunt |
-| **J19** Laser 2 output mode | as J18 | as J18 | as J18 | as J18 |
-| **J21** External Sync Out mode | as J18 | **50 Ω mode** (normal) | Hi-Z mode | as J18 |
-| **J20** clock jumper (2 pins) | `CLOCK JUMPER` · `OPEN = 150 MHz` · `FIT = 300 MHz (OVERCLOCK)` | Shunt fitted: 300 MHz overclock (soak-test the Pico first) | – | **150 MHz, the rated clock** (normal) |
-| **J22** camera signal level (2 pins) | `CAMERA I/O LEVEL (J22)` · `OPEN = 1V8  IDS` · `SHUNT = 3V3  EVK4` | Shunt fitted: **3.3 V** on all six camera ports (Prophesee EVK4). The blue LED `3V3` is lit. | – | **1.8 V** (IDS cameras; normal) |
+| Jumper | Function | Positions | Default |
+|---|---|---|---|
+| **J10** | Camera trigger source | 1-2: every Laser 1 pulse (only while ARMED) · 2-3: the marker · none: no camera triggers | **2-3** |
+| **J11** | Laser enable | 1-2: lasers enabled (the firmware must also be ARMED) · 2-3 or none: lasers off | **1-2** to run. Leave it empty until you check the outputs. |
+| **J18** | Laser 1 output mode | 1-2: 50 Ω mode · 2-3: Hi-Z mode · none: wrong, always fit a shunt | **1-2** (for the LDP-V) |
+| **J19** | Laser 2 output mode | as J18 | as J18 |
+| **J21** | External Sync Out mode | 1-2: 50 Ω mode · 2-3: Hi-Z mode · none: wrong, always fit a shunt | **1-2** |
+| **J20** | Clock jumper (2 pins) | open: 150 MHz, the rated clock · shunt: 300 MHz overclock | **open** |
+| **J22** | Camera signal level (2 pins) | open: 1.8 V (IDS cameras) · shunt: 3.3 V (Prophesee EVK4) | **open** |
 
-**J11 — laser enable and E-stop.** Labelled `LASER INTERLOCK: ON = 1-2` and
-`E-STOP: NC SWITCH ACROSS 1-2`. For an emergency-stop switch, take the shunt off and wire a
-**normally-closed** switch across pins 1 and 2. Closed, the lasers are enabled (if also ARMED and
-powered). Pressing the switch **or** breaking its cable opens the circuit and turns the lasers off,
-so the stop is fail-safe.
-
-**J22 — camera signal level.** J22 sets the level of the Sync, Trigger and pixel-reset lines on
-**all six** camera ports. Open, the level is 1.8 V, which the IDS cameras need. With a shunt, the
-level is 3.3 V, which the Prophesee EVK4 needs. **3.3 V can destroy the 1.8 V inputs of an IDS
-camera:** fit the shunt only when no IDS camera is connected, and do not use IDS and EVK4 cameras
-together. The blue LED marked `3V3` next to J22 is lit when the level is 3.3 V: look at it before
-you connect a camera. Before you connect an IDS camera, also measure the test pad `VCAM` (TP8)
-with a meter: it must be 1.8 V with J22 open. Change J22 with the power off. An EVK4 camera needs the
-[EVK4 harness](docs/EVK4_HARNESS.md); it has no pixel-reset input, so `PIXGATE` has no effect on it.
-The harness has no resistors: the series resistors are on the board.
-
-**J10 — camera trigger source.** Labelled `CH1 TRG MKR` under the pins and
-`CAMERA TRIGGER: TRG-MKR = MARKER / TRG-CH1 = LASER 1` beside them. The middle pin (`TRG`) feeds the
-trigger input of all six cameras and External Sync Out (J12).
-- `TRG` to `MKR` (2-3, normal): the marker. It rises with every Laser 1 pulse, has its own width
-  (`MARKERWIDTH`, 2 µs by default) and keeps running while DISARMED.
-- `TRG` to `CH1` (1-2): the Laser 1 pulse itself, so only while ARMED. The cameras need a trigger
-  pulse of at least 500 ns, so this is only dependable with `WIDTH` ≥ 500 ns.
-- Never join all three pins.
-
-**J18 / J19 — laser output mode.** Labelled `LASER 1 OUT` / `LASER 2 OUT`, with `50Ω` and `HiZ`
-next to the pin pairs.
-- **1-2, 50 Ω mode:** about 4.8 V (4.53–5.14 V) into a 50 Ω input. Use it for the PicoLas LDP-V and
-  anything else with a 50 Ω input.
-- **2-3, Hi-Z mode:** about 4.8 V (4.55–5.08 V) into a high-impedance input. The output is matched
-  to 50 Ω coax, so even a long cable to an unterminated input gives a clean edge (at most ~5 %
-  overshoot into a scope's 1 MΩ ∥ 15 pF).
-  Use it for TTL or 5 V CMOS inputs, scopes at 1 MΩ and other instruments that don't terminate.
-- **The wrong mode** gives the wrong voltage (see the table under [Safety](#in-detail)): an LDP-V on
-  Hi-Z mode sees 2.3–2.6 V and won't fire, and a 5 V logic input on 50 Ω mode sees ~12 V, which can
-  damage it. Don't use Hi-Z mode as a way to keep a laser off: J11 is the interlock.
-- The two jumpers are independent, so one output can drive an LDP-V and the other a logic input. The
-  firmware can't see them, and the pulse timing is the same in both modes.
-
-**J20 — clock jumper (300 MHz overclock).** A 2-pin header right of the Pico, below the J14 row.
-Pin 1 (square pad, the lower pin) goes to GP10 through R29 (1 kΩ, which protects GP10 if a
-program drives it), pin 2 is GND. A shunt on J20, read at every start (power-up or reset),
-runs the Pico at 300 MHz instead of 150 MHz, so every time setting has 3.333 ns steps instead of
-6.667 ns. That is twice the chip's rated speed: soak-test each Pico first, as described in
-[Hardware.md](Hardware.md#clock-jumper-j20-300-mhz-overclock). No shunt (the default) is the
-rated 150 MHz. After any watchdog restart the Pico stays at 150 MHz until it is power-cycled.
-`STATUS` shows the clock in `CLK` and `CLKMODE`.
+The board labels, the E-stop wiring and the full description of each jumper are in
+[docs/SETUP.md](docs/SETUP.md#jumpers).
 
 ### Status LEDs
 
@@ -286,606 +192,44 @@ The LEDs near the top edge show the state of the board.
 The LEDs are indicators only. Do not use a dark `ARMED` LED as proof that the lasers are off: an
 LED can fail. To make the lasers safe, send `DISARM`, open J11 or unplug J17.
 
-### Seating the Pico
+### Pico and power
 
-Fit a **Raspberry Pi Pico 2 W** (or a plain Pico 2, which needs the `pico2` firmware image) with
-pin headers into the two horizontal sockets, J15 (top row) and J14 (bottom row). Seat it
-**components up, with its micro-USB connector at the left edge**, next to the label
-`CONTROL / PROGRAM — PICO MICRO-USB`. Pico pin 1 then goes into pad 1 of J14: the left end of the
-bottom row, at the pin-1 mark. **Fitted the other way round, it can be
-destroyed** (the board's 5 V would land on one of its signal pins).
-
-Fit the Pico before connecting any camera: without it, the camera sync and reset lines are
-undefined.
-
-### Power
-
-| Plugged in | What works |
-|---|---|
-| **J17 (15 V charger) + Pico USB** | Everything. This is the normal set-up. |
-| Pico USB only | Commands, and sync, trigger and pixel reset to the cameras. **The laser outputs stay off** (no 12 V supply for the board's output driver); the `12V OK`, `ARMED`, `L1`, `L2` and `SYNC` LEDs stay dark. |
-| J17 only | The board runs, DISARMED, with the fixed 1 MHz sync clock and marker running. There is no serial link, so it can't be armed. |
-
-**Charger:** a USB-C PD charger that offers **15 V**. In practice that means any PD charger rated
-30 W or more. With a 5 V or 9 V-only charger the board still runs, but the laser outputs stay off.
-
-**To restart the board,** unplug both J17 and the Pico's USB cable. Unplugging just one doesn't
-restart it, and neither does closing the serial port.
-
----
-
-## Hardware setup
-
-You need: the assembled board, a Pico 2 W, a micro-USB **data** cable (some cables only charge), a
-USB-C PD charger that offers 15 V (30 W or more) with a USB-C cable, jumper shunts, and a scope
-with 50 Ω inputs (or 50 Ω feed-through terminators).
-
-1. **Build and load the firmware** (first time only):
-   ```
-   pio run                       # builds .pio/build/pico2w/firmware.uf2
-   ```
-   Do this with the Pico out of the board (or with J17 unplugged, since J17 also powers the Pico).
-   Hold the **BOOTSEL** button on the Pico while plugging its USB cable into your computer. A drive
-   named `RP2350` appears. Copy `firmware.uf2` onto it: the drive disappears and the Pico starts
-   the firmware. (Later updates can use `pio run -t upload`; see
-   [Building from source](#building-from-source).)
-2. **Seat the Pico,** components up, USB toward the left edge ([details](#seating-the-pico)).
-3. **Set the jumpers:** J10 on **2-3** (cameras triggered by the marker), and J18 and J19 on
-   **1-2** (50 Ω outputs, for the LDP-V). Leave **J11 empty** for now, so the lasers stay off, and
-   **J20 empty** (the rated 150 MHz clock).
-4. **Power up:** the charger into J17, and the Pico's micro-USB into your computer.
-5. **Open a serial terminal** on the Pico's port ([how](#usb-serial)) and turn on local echo,
-   because the firmware does not echo what you type. (Or use the [web GUI](#web-gui): its console
-   takes the same commands.) Type `STATUS` and press Enter. You should see:
-   ```
-   FREQ=1000 (actual 1000.000 Hz, period 150000 cyc)
-   WIDTH=100 (actual 100.000 ns, 15 cyc)
-   DELAY=10000 (actual 10000.000 ns, 1500 cyc)
-   MARKERWIDTH=2000 (actual 2000.000 ns, 300 cyc)
-   COMBINE=0 (CH1 on LASER 1, CH2 on LASER 2)
-   ARMED=0
-   HW=OK
-   ...
-   ```
-6. **Set your timing,** for example 15 pulse pairs per second, 100 ns wide, 10 µs apart:
-   ```
-   FREQ 15        ->  OK FREQ=15 (actual 15.000 Hz, period 10000000 cyc)
-   WIDTH 100      ->  OK WIDTH=100 (actual 100.000 ns, 15 cyc)
-   DELAY 10000    ->  OK DELAY=10000 (actual 10000.000 ns, 1500 cyc)
-   ```
-7. **Check the laser outputs with no laser connected.** With J18 and J19 on 1-2, connect J7 and J8
-   to the scope with **50 Ω termination**. Fit J11 on **1-2**, then type `ARM`. Within one pulse
-   period you should see:
-   - pulses from 0 V to about 4.8 V;
-   - the J8 pulse starting exactly `DELAY` after the J7 pulse.
-
-   Type `DISARM`: both outputs must drop to 0 V.
-8. **Connect the equipment.** Plug in the laser drivers (J7, J8) and the cameras (J1–J6; one camera
-   first, see the [first-board checks](#first-board-checks)). Then `ARM` to run, and `DISARM` when
-   you're done.
-
-Settings are **not saved**. Every restart brings back the defaults (FREQ 1000, WIDTH 100,
-DELAY 10000 and MARKERWIDTH 2000); the 1 MHz sync clock is fixed. The lasers start DISARMED.
-
-### First-board checks
-
-The design hasn't been proven on real hardware yet, so check every newly assembled board. The full
-list, with exact test points, is under
-[First-board checks in Hardware.md](Hardware.md#first-board-checks).
-
-1. **Before the first power-up on J17,** with nothing plugged in, check with a multimeter for solder
-   bridges on the fine-pitch parts (J17, U16, U17, and U20 with its 0.5 mm pitch): `VBUS_PD` must not be shorted to GND, CC1
-   or CC2 (at J17 and U14), +5V_PD and +5V must not be shorted to GND (at U16), and U17's input must
-   not be shorted to its output. Also check that J17's four metal shell legs are soldered.
-2. **Supply voltages,** with the charger on J17: `VBUS_PD` at C12 about 15 V (with the charger you
-   will actually use), +12V at C17 between 11.54 and 12.05 V, and `LASER_PWR_OK` (U13 pins 1 and 8)
-   about 12 V.
-3. **Laser outputs,** J18/J19 on 1-2, into a 50 Ω-terminated scope with no driver connected:
-   - pulses from 0 V to 4.53–5.14 V;
-   - CH2 exactly `DELAY` after CH1 (`DELAY 13` should give 13.3 ns);
-   - the first pulse after `ARM` is full width;
-   - 0 V after `DISARM` and after a full restart; and, while ARMED and pulsing, 0 V once J17 is
-     unplugged, with no stray pulse while it is plugged back in;
-   - then J18/J19 on 2-3 with the scope at 1 MΩ: 0 V to 4.55–5.08 V, with at most ~5 % overshoot at
-     the end of the longest cable you will use. Put the shunts back on the mode you need afterwards.
-   - **External Sync Out (J12),** J21 on 1-2, same 50 Ω scope: a 0 V to 4.53–5.14 V pulse of
-     `MARKERWIDTH` with every period, also while DISARMED (J10 on 2-3); J21 on 2-3 at 1 MΩ:
-     4.55–5.08 V.
-4. **Camera signal level, before any camera is connected:** with J22 open, measure the test pad
-   `VCAM` (TP8) with a meter. It must be 1.76–1.84 V and the blue `3V3` LED dark. With a shunt on
-   J22 it must be about 3.3 V and the LED lit. Take the shunt off again for IDS cameras. Do not
-   connect an IDS camera if the pad is not at 1.8 V with J22 open.
-5. **Status LEDs:** `12V OK` lit with the 15 V charger; `ARMED` lit only when ARMED with J11 on 1-2
-   and `12V OK` lit; `L1`, `L2` and `SYNC` flash with the pulses.
-6. **Cameras:** with **one** camera connected, measure pixel reset, trigger and sync at the camera
-   end of the harness, and confirm the camera is not driving pin 5 (it must be a sync slave). The
-   series resistors are on the board (R52–R69), so this check is a measurement only. Only
-   then connect all six.
+Seat the Pico components up, with its micro-USB connector at the left edge. Connect a USB-C PD
+charger that offers 15 V to J17. Connect the Pico's micro-USB to the computer. The details are in
+[Seating the Pico](docs/SETUP.md#seating-the-pico) and [Power](docs/SETUP.md#power).
 
 ---
 
 ## Connecting
 
-### USB serial
-
-Use the **Pico's micro-USB port**; J17 carries power only. The Pico appears as a standard USB serial
-port and needs no driver on Windows 10/11, macOS or Linux.
-
-| OS | Where to find the port |
-|---|---|
-| Windows | Device Manager → Ports (COM & LPT) → `USB Serial Device (COMn)` |
-| macOS | `/dev/cu.usbmodem*` |
-| Linux | `/dev/ttyACM*` (your user may need to be in the `dialout` group) |
-| Any | `pio device list` |
-
-The port's USB ID is `2E8A:F00F` with the `pico2w` firmware and `2E8A:000F` with the `pico2`
-firmware.
-
-**Terminal settings**
-
-| Setting | Value |
-|---|---|
-| Baud rate | Anything **except 1200**, which restarts the Pico into its bootloader. 115200 is usual. |
-| Line ending | CR, LF or CR+LF: all work |
-| Flow control | None |
-| Local echo | **On**: the firmware does not echo |
-| DTR | On (the default in PuTTY, Tera Term, screen, minicom, `pio device monitor` and pyserial). With DTR off, commands still run but every reply is thrown away. |
-
-Examples:
-
-```
-pio device monitor --echo                 # PlatformIO; add -p COM7 if needed
-screen /dev/ttyACM0 115200                # Linux (macOS: /dev/cu.usbmodem*)
-```
-
-PuTTY: connection type Serial, your COM port, speed 115200; under Connection → Serial set Flow
-control to None; under Terminal set Local echo to Force on.
-
-The firmware prints a one-line greeting only if a terminal is already open in the first 1.5 s after
-a restart. A terminal opened later sees nothing until you type something: try `ID?`.
-
-### Web GUI
-
-[`tools/piebv_gui`](tools/piebv_gui) is a browser page for the same commands. It shows every setting
-with the value the hardware actually produces, and draws the timing of one pulse pair (and of three
-pairs in a row) from the board's own report. It runs a small web server on your computer; the only
-thing to install is pyserial:
-
-```
-python -m pip install pyserial
-python tools/piebv_gui/piebv_gui.py --connect auto        # then open http://127.0.0.1:8765
-```
-
-- It opens the Pico's serial port itself, so close any other terminal first.
-- Esc or the DISARM button disarms from anywhere on the page. Closing the page does not disarm.
-- `--connect sim` runs it against [`tools/piebv_sim`](tools/piebv_sim) instead: the firmware's real
-  command code, built for your computer, with no board needed.
-
-See [its README](tools/piebv_gui/README.md) for the full guide.
-
-### Scripting (Python)
-
-[`tools/piebv_example.py`](tools/piebv_example.py) is a complete example using pyserial
-(`python -m pip install pyserial`). It finds the port, reads `STATUS`, sets the timing, arms, and
-always disarms at the end, however the script stops:
-
-```
-python tools/piebv_example.py --freq 15 --width 100 --delay 10000 --seconds 5
-```
-
-The core of a host script looks like this:
-
-```python
-import serial
-
-ser = serial.Serial("COM7", 115200, timeout=1)       # DTR is on by default
-
-def cmd(line):
-    ser.write((line + "\n").encode())
-    return ser.readline().decode().strip()           # one-line replies
-
-def status():
-    ser.write(b"STATUS\n")
-    out = {}
-    while True:
-        line = ser.readline()
-        if not line:
-            raise TimeoutError("no STATUS reply (wrong port, or DTR off?)")
-        key, _, value = line.decode().strip().partition("=")
-        out[key] = value
-        if key == "TX_DROPPED":                      # always the last STATUS line
-            return out
-
-try:
-    assert status()["HW"] == "OK"
-    for c in ("WIDTH 100", "DELAY 10000", "FREQ 15"):
-        reply = cmd(c)
-        if not reply.startswith("OK "):
-            raise RuntimeError(reply)                # e.g. "ERR DELAY rejected: DELAY must leave ..."
-    print(cmd("ARM"))                                # pulses start after <= 1 s hold-off
-    ...                                              # acquire
-finally:
-    print(cmd("DISARM"))                             # -> "OK ARMED=0"
-```
-
-Rules for host scripts:
-- **Send `ARM` after every restart.** The board always comes back DISARMED. Check `RESET=` in
-  `STATUS` first: if it says `WATCHDOG`, the firmware crashed and restarted itself, so stop and ask
-  the operator before arming again.
-- **Read `STATUS` by key, not by line position.** New keys may be added. `TX_DROPPED` is always the
-  last line.
-- **Closing the port does not disarm.** Always send `DISARM` yourself.
-- Every reply line ends in CR+LF, `HELP` included. (Firmware up to commit `5dfedd5` sent `HELP`'s
-  inner lines with LF only, so a host that also talks to older boards should split on LF and strip
-  any trailing CR.)
-
-### Wireless (Wi-Fi / Bluetooth)
-
-**Not supported by the current firmware.** The board talks over USB only, and the Pico 2 W's radio
-is never switched on. The Pico 2 W is fitted only because it is easier to buy than the plain Pico 2.
-
-Wireless control is possible as a future option, as firmware-only work:
-- switch on the radio;
-- carry the same text commands over the wireless link;
-- add a login;
-- decide whether `ARM` may be sent wirelessly (`DISARM` must always stay reachable).
-
-The [web GUI](#web-gui) would need no change: it already accepts a network address such as
-`socket://piebv.local:4242` wherever it takes a serial port.
-
-The board has solid copper under the module's antenna, which shortens the radio's range. That is
-fine for the intended short range (a few metres, like Bluetooth), so no board change is needed.
-
----
-
-## Command reference
-
-### Rules
-
-- One command per line. Upper or lower case both work; separate words with spaces or tabs.
-- A name on its own **asks** for a value (`DELAY`); a name followed by a number **sets** it
-  (`DELAY 5000`). There is no `NAME?` form, except `ARM?` and `ID?`.
-- `ARM`, `ARM?`, `STATUS`, `ID?` and `HELP` take nothing after them: `STATUS 1` gives
-  `ERR STATUS takes no argument`.
-- Numbers are plain whole numbers (0 … 4294967295): no units, decimal points, signs or hex. Times
-  are in **ns** and frequencies in **Hz**.
-- Backspace and DEL edit the line. Lines can be up to 95 characters.
-- A successful set replies `OK NAME=value (actual …)`; a query replies `NAME=value (actual …)`;
-  errors start with `ERR`.
-- A rejected set changes nothing: the previous settings keep running.
-- Each new value is checked **together with all the current settings**, so the order of changes
-  can matter. For example, to raise `FREQ` a lot, shorten `WIDTH` first.
-
-### Commands
-
-| Command | Unit | Default | Allowed values | What it sets |
-|---|---|---|---|---|
-| `FREQ [n]` | Hz | 1000 | 1 up to where 2 × WIDTH + DELAY still fits in 1/FREQ | How many pulse pairs per second |
-| `WIDTH [n]` | ns | 100 | ≥ 17 (becomes ≥ 20.000 ns), and 2 × WIDTH + DELAY ≤ 1/FREQ. No upper limit. | Length of both laser pulses |
-| `DELAY [n]` | ns | 10000 | 0 up to 1/FREQ − 2 × WIDTH, so pulse pairs stay apart (with `COMBINE 1`, also more than WIDTH); the error message gives the exact limit | Time from the start of the Laser 1 pulse to the start of the Laser 2 pulse. `0` makes them start together. |
-| `MARKERWIDTH [n]` | ns | 2000 | 17 up to half the period (2 × MARKERWIDTH ≤ 1/FREQ) | Length of the camera marker pulse (it starts with every Laser 1 pulse) |
-| `COMBINE [n]` | 0 / 1 | 0 | 0 or 1; change only while DISARMED | 0: Laser 1 gets the CH1 pulse, Laser 2 the CH2 pulse. 1: **both** outputs get **both** pulses ([details](#combined-mode-combine)) |
-| `PIXGATE [n]` | 0 / 1 / 2 | 0 | 0, 1 or 2 | Hold the camera pixels in reset between pulse pairs: 0 off (no pixel reset), 1 while ARMED, 2 always ([details](#pixel-reset-gate-pixgate)) |
-| `PIXLEAD [n]` | ns | 10000 | ≥ 30 (becomes ≥ 5 steps); the window must fit in 1/FREQ | Pixels released this long before each Laser 1 pulse |
-| `PIXLAG [n]` | ns | 100000 | PIXLEAD + DELAY + WIDTH + PIXLAG ≤ 1/FREQ − 3 steps | Pixels reset again this long after the last laser pulse |
-| `ARM` | – | disarmed | exactly `ARM`, nothing after it | Allow the laser pulses |
-| `DISARM` | – | – | – | Stop the laser pulses at once; recognised anywhere in what you type |
-| `ARM?` | – | – | – | Report the arm state: `ARMED=0` or `ARMED=1` |
-| `STATUS` | – | – | – | All settings, the arm state and system information |
-| `ID?` | – | – | – | Board and firmware version (the git commit it was built from) |
-| `HELP` | – | – | – | Command summary |
-
-The camera sync clock is fixed at **1 MHz** and cannot be changed: the RP2350 clock generator divides
-the 150 MHz system clock by exactly 150 (300 MHz: by exactly 300). `SYNC` is not a command, and
-`STATUS` does not list it.
-
-A "step" is one 6.667 ns tick of the 150 MHz clock. With the clock jumper fitted (300 MHz) a step
-is 3.333 ns, and every limit given in steps is half as long in ns. The examples in this README are
-for 150 MHz.
-
-### Examples
-
-```
-DELAY 1003     ->  OK DELAY=1003 (actual 1000.000 ns, 150 cyc)
-DELAY          ->  DELAY=1003 (actual 1000.000 ns, 150 cyc)
-WIDTH 101      ->  OK WIDTH=101 (actual 100.000 ns, 15 cyc)
-ARM            ->  OK ARMED=1 (laser pulses start after a 498 us hold-off)
-DISARM         ->  OK ARMED=0
-ID?            ->  PiEBV delay generator (Pico 2 W), firmware 5dfedd5
-```
-
-- The `ID?` version is `git describe --always --dirty` of the git checkout the firmware was built
-  in. `-dirty` means tracked files had uncommitted changes (new files that were never `git add`-ed
-  do not count); `unknown` means it was built without git.
-
-- The number after `=` is what you asked for; `actual` is what the hardware produces; `cyc` is the
-  same in 6.667 ns steps ("cycles").
-- The `(laser pulses start after …)` part appears only while a start delay (the hold-off, below) is
-  pending; otherwise `ARM` replies just `OK ARMED=1`.
-
-### ARM and DISARM in detail
-
-- **`ARM`** must be the word on its own: `ARM 1` gives `ERR ARM takes no argument`. `ARM` while
-  already armed changes nothing.
-- **The hold-off.** The reply comes at once, but the pulses start only after a wait of one full
-  pulse period (the longer of the old and new periods, at most 1 s), counted from the last laser
-  pulse. After a restart, pulses can't start until 1 s after it. This guarantees that two laser
-  pulses are never closer together than the set period, whatever commands arrive. The marker pauses
-  during the hold-off, so marker-triggered cameras miss triggers for that time. When the pulses
-  start, the CH1, CH2 and marker timing restarts together, and the first pulse is full width.
-  `START_PENDING_US` in `STATUS` shows the time left.
-- Changing `FREQ`, `WIDTH`, `DELAY` or `MARKERWIDTH` while armed goes through the same hold-off and
-  stays armed. A change that ends up at the same step counts (e.g. `WIDTH 100` → `WIDTH 101`)
-  restarts nothing.
-- **`DISARM`** is never refused. The outputs go low the moment the `M` arrives, the rest of that line
-  is ignored, and a pending start is cancelled. It works even when the host is not reading replies,
-  though a host that has stopped reading can delay it by up to about 250 ms. The letters must be on
-  one line: `DIS`, Enter, `ARM`, Enter is two commands and **arms** the board.
-- While DISARMED, **the sync clock and the marker keep running**, so the cameras stay synchronised.
-  The laser outputs are held at 0 V.
-
-### Combined mode (`COMBINE`)
-
-`COMBINE 1` sends the whole double pulse (the CH1 pulse, then the CH2 pulse exactly `DELAY` later)
-to **both** Laser 1 (J7) and Laser 2 (J8). Use it when one light source must make both PIV flashes,
-or to fire two light sources together with the same double pulse. Each output still drives one
-laser driver.
-
-```
-COMBINE 1   ->  OK COMBINE=1 (CH1 + CH2 on LASER 1 and LASER 2)
-COMBINE 0   ->  OK COMBINE=0 (CH1 on LASER 1, CH2 on LASER 2)
-```
-
-- **Change it only while DISARMED.** While armed the reply is
-  `ERR COMBINE rejected: DISARM first: COMBINE changes what both laser outputs carry`.
-- **The pulses must stay apart:**
-  - `DELAY` must be at least one step (6.667 ns) longer than `WIDTH`, e.g. `DELAY` ≥ 106.667 ns at
-    `WIDTH 100`. At exactly `DELAY` = `WIDTH` the second pulse would start as the first ends, and the
-    two would merge into one pulse of twice the width.
-  - `DELAY` ≤ 1/FREQ − 2 × `WIDTH`, as in the normal mode, so each pair is separate from the next.
-  - Each driver now gets two pulses per period: check its own spacing and duty ratings. The firmware
-    does not impose any.
-- The timing is exactly as precise as in the normal mode.
-- The monitor point follows: J10 pin 1 shows the double pulse, and with J10 on 1-2 the cameras are
-  triggered on both pulses.
-
-### Pixel-reset gate (`PIXGATE`)
-
-PiEBV can hold every camera's pixels in reset **between pulse pairs**, like a shutter: the pixels
-are free from `PIXLEAD` before the Laser 1 pulse until `PIXLAG` after the last laser pulse, and
-held in reset for the rest of each period. This cuts out background and noise events between
-pairs, and every pair starts from freshly reset pixels.
-
-```
-            pair k                                        pair k+1
-CH1     ____|‾|______________________________________________|‾|______
-CH2     _________|‾|______________________________________________|‾|_
-TDRSTN  ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾|__________________________|‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾   (low = pixels in reset)
-                   |<------>|                          |<------>|
-                    PIXLAG       pixels in reset         PIXLEAD
-```
-
-(`TDRSTN` is the camera's pixel-reset pin.)
-
-| Setting | Default | Meaning |
-|---|---|---|
-| `PIXGATE 0` | ✓ | Off: the pixels are never held in reset |
-| `PIXGATE 1` | | Reset between pulse pairs **while ARMED**; off while DISARMED |
-| `PIXGATE 2` | | Reset between pulse pairs **always**, even while DISARMED (for bench tests without lasers) |
-| `PIXLEAD n` | 10000 ns | Pixels released this long before each Laser 1 pulse starts (at least 5 steps, 33.333 ns) |
-| `PIXLAG n` | 100000 ns | Pixels reset again this long after the last laser pulse ends |
-
-```
-PIXGATE 1   ->  OK PIXGATE=1 (pixels reset between pulse pairs while ARMED)
-PIXLAG 50000 -> OK PIXLAG=50000 (actual 50000.000 ns, 7500 cyc)
-```
-
-- **PiEBV is the only source of the pixel reset.** The board has no reset input; with `PIXGATE 0`
-  the cameras run freely.
-- **Find PIXLEAD and PIXLAG by experiment.** How long the sensor needs to settle after a reset, and
-  how long after a flash its events keep arriving, are not published. Start generous (the
-  defaults), look at the event stream, then tighten. The window must fit in the period:
-  `PIXLEAD + DELAY + WIDTH + PIXLAG` ≤ 1/FREQ − 3 steps; the error message gives the largest
-  `PIXLAG` that fits.
-- **The first pulse pair after a start has no reset before it;** every later pair does. The gate is
-  timed from the same start as CH1/CH2, to the exact step.
-- `STATUS` shows the result as `PIXRESET=`: reset time per period, when it starts after CH1, and how
-  long the pixels are free around each pair.
-- A pixel reset also puts a timestamp (trigger channel 1) into each camera's event stream, when the
-  camera software's trigger channel is enabled.
-
-### Timing
-
-```
-            |<---------------------- period = 1/FREQ ---------------------->|
-CH1  (J7)  _|‾‾‾‾|______________________________________________________________|‾‾‾‾|_
-             WIDTH
-CH2  (J8)  ____________|‾‾‾‾|__________________________________________________________
-            |<-DELAY-->|
-MARKER     _|‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾|____________________________________________|‾‾‾‾‾‾‾
-             MARKERWIDTH
-SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ ... runs all the time, 1 MHz
-```
-
-- **Rounding:** times round to the nearest 6.667 ns step, and frequencies to the nearest whole
-  number of steps per period. All limits are checked on the rounded values.
-- **The Laser 2 pulse starts exactly `DELAY` after Laser 1,** to the step.
-- **The marker** starts at the same instant as every Laser 1 pulse and repeats at exactly the same
-  rate, so it can never drift away from the pulse it marks. Each camera records it as a timestamp,
-  which gives every pulse pair its own reference time. `MARKERWIDTH` can be at most half the period, so
-  with the default 2 µs `FREQ` can go up to 250 kHz; shorten `MARKERWIDTH` to go higher.
-- **The sync clock** is independent of the laser timing. The IDS uEye EVS cameras (Prophesee IMX636
-  sensor) need it at **1 MHz**: a camera running as sync slave counts its 1 µs event timestamps on
-  this clock, and Prophesee requires Sync In to be "a 1MHz pulse train to correspond to the
-  internally generated 1µs timestamp resolution". Any other frequency stretches or squeezes every
-  camera's timestamps, and an IMX636 slave sends no data at all until the clock arrives. The sync
-  output is fixed at 1 MHz.
-- **No laser-driver limits.** The firmware does not limit pulse width or duty: they depend on the
-  driver you connect, so stay within its ratings. It enforces what the pulse hardware needs, plus one
-  spacing rule of its own:
-  - **pulse pairs stay apart** (the firmware's own rule): `DELAY` ≤ 1/FREQ − 2 × `WIDTH`, so the
-    Laser 2 pulse ends at least one `WIDTH` before the next Laser 1 pulse (this also limits `WIDTH`
-    to half the period);
-  - **the pulse program:** `DELAY` ≤ 1/FREQ − `WIDTH` − 5 steps. This is the tighter limit only for
-    a `WIDTH` of 3 or 4 steps (20.000 or 26.667 ns); the error message names the limit that applies;
-  - **shortest pulse:** 3 steps (20.000 ns) for `WIDTH` and `MARKERWIDTH`;
-  - with `COMBINE 1`, `DELAY` > `WIDTH` ([Combined mode](#combined-mode-combine)).
-- **Slowest rate:** `FREQ` goes down to 1 Hz.
-- **Delay through the hardware:** the board's output driver (U13) adds about 17 ns (up to 27 ns) to
-  both channels alike, so the time between the two pulses at J7/J8 is kept to within 1–2 ns. (Your laser
-  drivers add their own delays.)
-
-### Errors
-
-| Reply | Meaning |
-|---|---|
-| `ERR <word> unknown command` | Not a command. `FREQ?` is not valid; use `FREQ`. `SYNC` is not a command: the sync clock is fixed at 1 MHz. |
-| `ERR <NAME> invalid value` | Not a plain whole number (e.g. `1.5`, `10k`, `-5`), or too large |
-| `ERR <NAME> takes one value` | More than one number |
-| `ERR ARM takes no argument` | Something after `ARM` (the same for `ARM?`, `STATUS`, `ID?` and `HELP`) |
-| `ERR line too long` | More than 95 characters; the whole line is ignored |
-| `ERR <NAME> rejected: value must be > 0` | FREQ set to 0 |
-| `ERR <NAME> rejected: WIDTH realizes below the 3-cycle minimum (20.000 ns)` | WIDTH ≤ 16 ns (the same for MARKERWIDTH) |
-| `ERR <NAME> rejected: DELAY must leave >= WIDTH before the next pulse pair (DELAY <= 1/FREQ - 2 x WIDTH); max DELAY … ns` | DELAY too long for the period at this WIDTH |
-| `ERR <NAME> rejected: WIDTH too long for the period: 2 x WIDTH must fit in 1/FREQ` | WIDTH longer than half the period |
-| `ERR <NAME> rejected: DELAY + WIDTH must fit in the period (DELAY <= 1/FREQ - WIDTH - 5 cycles); max DELAY … ns` | The same as the `DELAY must leave` error, for a WIDTH of 3 or 4 steps, where the pulse program's own limit is the tighter one |
-| `ERR <NAME> rejected: WIDTH does not fit in the period (WIDTH <= 1/FREQ - 5 cycles)` | The period is too short for a WIDTH of 3 or 4 steps |
-| `ERR <NAME> rejected: COMBINE needs DELAY > WIDTH so the two pulses stay separate (min DELAY … ns)` | With `COMBINE 1`, DELAY not longer than WIDTH |
-| `ERR <NAME> rejected: MARKERWIDTH must be <= half the period (2 x MARKERWIDTH <= 1/FREQ); max MARKERWIDTH … ns` | MARKERWIDTH longer than half the period, e.g. after raising FREQ. The 50 % limit protects J12 against a shorted cable. |
-| `ERR <NAME> rejected: MARKERWIDTH must fit in the period (MARKERWIDTH <= 1/FREQ - 5 cycles); max MARKERWIDTH … ns` | The same, for periods under 10 steps, where the pulse program's own limit is the tighter one |
-| `ERR <NAME> rejected: FREQ out of range` | FREQ above 300 MHz |
-| `ERR ARM …` / `ERR <NAME> rejected: pio0 unavailable` | The pulse hardware failed to start (`HW=` in STATUS) |
-| `ERR <NAME> rejected: pulse state machines could not be loaded` | The pulse hardware did not take settings that passed every check. Should never happen: the pulse outputs stop, the lasers are DISARMED, and `ARM` is refused until a later setting loads (`HW=` in STATUS) |
-
-`<NAME>` is the setting you were changing, which is not always the one named in the reason. For
-example, `FREQ 600000` with the default 2 µs `MARKERWIDTH` gives a `MARKERWIDTH` error.
-
-### STATUS
-
-```
-FREQ=15 (actual 15.000 Hz, period 10000000 cyc)
-WIDTH=100 (actual 100.000 ns, 15 cyc)
-DELAY=10000 (actual 10000.000 ns, 1500 cyc)
-MARKERWIDTH=2000 (actual 2000.000 ns, 300 cyc)
-COMBINE=0 (CH1 on LASER 1, CH2 on LASER 2)
-PIXGATE=0 (off: no pixel reset)
-PIXLEAD=10000 (actual 10000.000 ns, 1500 cyc)
-PIXLAG=100000 (actual 100000.000 ns, 15000 cyc)
-PIXRESET=off
-ARMED=1
-HW=OK
-START_PENDING_US=0
-CLK=150000000
-CLKMODE=STANDARD
-VREG_MV=1100
-RESET=POWER_ON
-RESET_RAW=WD:0x0 CHIP:0x0
-WDT_RESETS=0
-WDT_MS=3000
-TX_DROPPED=0
-```
-
-| Key | Meaning |
-|---|---|
-| `FREQ` … `MARKERWIDTH` | Each setting as you asked for it, with the value actually produced |
-| `COMBINE` | 0 = CH1 on Laser 1, CH2 on Laser 2; 1 = both pulses on both outputs |
-| `PIXGATE`, `PIXLEAD`, `PIXLAG` | The pixel-reset gate settings |
-| `PIXRESET` | `off`, or the gate as produced: reset time per period, its start after CH1, and how long the pixels are free around each pair |
-| `ARMED` | The firmware's arm state (1/0). J11 and the 12 V supply are separate gates it can't see. |
-| `HW` | `OK`; `ERR outputs not started: …` if the pulse hardware failed to start; or `ERR outputs stopped: …` if it later failed to load a setting (cleared by the next setting that loads) |
-| `START_PENDING_US` | Microseconds until the pulses start after an `ARM` (0 = none pending) |
-| `CLK` | Processor clock in Hz: 150000000, or 300000000 with the clock jumper |
-| `CLKMODE` | `STANDARD` (150 MHz); `OVERCLOCK (jumper fitted)`; or `STANDARD (jumper fitted, overclock off: …)` with the reason, e.g. a watchdog restart since power-up |
-| `VREG_MV` | Core voltage setting in mV: 1100 at 150 MHz, 1300 at 300 MHz |
-| `RESET` | Why the board last restarted: `POWER_ON`, `WATCHDOG` (the firmware crashed and restarted itself), `SOFT`, `DEBUG`, `BROWNOUT`, `GLITCH`, `RUN_PIN` or `UNKNOWN` |
-| `RESET_RAW` | Raw restart registers (for bug reports) |
-| `WDT_RESETS` | Crash restarts since power-on |
-| `WDT_MS` | Crash-restart timeout (3000 ms). If the firmware ever hangs, it restarts DISARMED after this long. |
-| `TX_DROPPED` | Bytes of replies thrown away because the host was not reading |
-
----
-
-## Troubleshooting
-
-| Symptom | Likely cause | Fix |
-|---|---|---|
-| No serial port appears | Cable in J17 (power only) instead of the Pico's micro-USB; a charge-only cable; or the Pico is in bootloader mode (a drive named `RP2350` appears instead) | Use the Pico's port with a data cable. In bootloader mode, copy `firmware.uf2` to the drive, or unplug both J17 and the Pico's USB. |
-| Port opens but nothing appears | The greeting is only sent in the first 1.5 s, and the firmware does not echo | Type `ID?` or `STATUS`; turn on local echo |
-| Commands work but no replies arrive | The terminal has DTR off | Turn DTR on in the terminal settings |
-| The port vanishes and an `RP2350` drive appears | The port was opened at 1200 baud, which restarts the Pico into its bootloader | Use any other baud rate. Copy `firmware.uf2` to the drive, or unplug both J17 and the Pico's USB. |
-| `ERR … unknown command` for everything | A typo, the `FREQ?` form, or XON/XOFF flow control | Use bare names; set flow control to None |
-| `ERR … rejected: DELAY must leave >= WIDTH …` | DELAY + 2 × WIDTH is longer than 1/FREQ | Shorten DELAY or WIDTH, or lower FREQ; the message gives the longest allowed DELAY |
-| `ERR … MARKERWIDTH must be <= half the period …` at high FREQ | The marker (2 µs by default) is longer than half the period | Shorten MARKERWIDTH first; the message gives the limit |
-| `ERR ARM …`, or `HW=ERR …` in STATUS | The pulse hardware did not start | Load the firmware again; if it keeps happening, report the `STATUS` output |
-| `ARMED=1` but no laser pulses | J11 not on 1-2; J17 unplugged or the charger isn't giving 15 V; or still in the hold-off (`START_PENDING_US` > 0) | Check each gate. Measure `VBUS_PD` at C12 (about 15 V) and +12V at C17 (about 11.8 V; the outputs stay off outside 10.6–13.3 V). |
-| Outputs dead after a restart | The board always restarts DISARMED | Send `ARM` |
-| About 12 V pulses on the scope | J18/J19 on 1-2 (50 Ω mode) into a 1 MΩ scope input | Set the scope to 50 Ω (the laser driver has its own 50 Ω), or move the shunt to 2-3 for a high-impedance load |
-| About 2.5 V pulses at the laser driver | J18/J19 on 2-3 (Hi-Z mode) into the driver's 50 Ω input | Move the shunt to 1-2 |
-| One output gives ~3.5 V into 50 Ω, or ~12 V open | No shunt on that output's J18/J19 | Fit the shunt: 1-2 for 50 Ω, 2-3 for Hi-Z |
-| About 3 V pulses at the laser driver | Two 50 Ω loads on one output (e.g. a tee into both a 50 Ω scope input and the driver) | Watch with a high-impedance scope probe instead, or on J10 pin 1 (CH1, through 100 Ω) / R18 pin 1 (CH2) |
-| Cameras get no trigger | J10 on 1-2 while DISARMED, or no shunt on J10 | J10 on 2-3 |
-| Cameras don't synchronise | A camera set as sync master | Set every camera to sync slave |
-| All cameras stuck in pixel reset | `PIXGATE` 1 or 2 with a window that leaves little free time (`PIXRESET` in STATUS) | Check PIXLEAD/PIXLAG, or set `PIXGATE 0` |
-| No pulses on J12 (External Sync Out) | J17 unplugged or the charger isn't giving 15 V; no camera trigger (J10 empty, or on 1-2 while DISARMED); no shunt on J21 gives ~3.5 V into 50 Ω | Check J17 and +12V, set J10 to 2-3, fit J21 |
-| Cameras see no events around the laser pulses with `PIXGATE` on | PIXLEAD too short for the sensor to settle, or PIXLAG shorter than the sensor's event delay | Increase PIXLEAD and PIXLAG, or set `PIXGATE 0` to compare |
-| `RESET=WATCHDOG` in STATUS | The firmware hung and restarted itself, DISARMED | Note what you were doing and report it; arm again deliberately |
-| `TX_DROPPED` keeps rising | The host is not reading the replies | Read every reply line |
-| `pio run -t upload` can't find the Pico | The automatic restart into the bootloader failed | Unplug J17, then hold BOOTSEL while plugging in the Pico's USB, and upload again or copy the UF2 |
-| First build fails on Windows with git path errors | The PlatformIO folder is on a long path | Keep it at the default `%USERPROFILE%\.platformio` |
-
----
-
-## Building from source
-
-The firmware is Arduino C++ on the [arduino-pico](https://github.com/earlephilhower/arduino-pico)
-core, built with [PlatformIO](https://platformio.org/) (the VS Code "PlatformIO IDE" extension, or
-`python -m pip install platformio`). The exact versions of the platform, core and compiler are
-fixed in `platformio.ini`.
-
-| Command | Builds |
-|---|---|
-| `pio run` | `pico2w` (default): Raspberry Pi Pico 2 W |
-| `pio run -e pico2` | plain Raspberry Pi Pico 2 (same pins and socket) |
-| `pio run -t upload` | builds and uploads to a connected board (send `DISARM` first) |
-
-Output files land in `.pio/build/<env>/`, including `firmware.uf2` for drag-and-drop loading. Load
-the image that matches the fitted module. The first build takes longer because PlatformIO downloads
-the platform and compiler.
-
-**Pin map** (`src/board.h`): GP13 = CH1 → J7, GP12 = CH2 → J8, GP11 = marker → J10 pin 3,
-GP15 = sync → cameras and TP3, GP16 = pixel-reset gate. The laser, marker and gate outputs are
-driven by the RP2350's PIO (a small block of timing hardware beside the processor), and the sync
-clock by its clock generator, so none of the timing depends on the software.
-
-### Timing checks
-
-`tools/timing_check/` checks the timing arithmetic in `src/pulse_timing.h`, step by step, against an
-independent model of the PIO hardware. Run it after changing `pulse_timing.h`:
-
-```
-cd tools/timing_check
-g++ -std=c++17 -O2 -Wall -Wextra -o harness harness.cpp      # harness.exe on Windows
-python check_exhaustive.py
-python check_random.py
-python check_marker_lock.py
-python check_sync.py
-python check_combined.py
-python check_pixgate.py
-```
-
-The expected output is listed in [its README](tools/timing_check/README.md). These checks don't
-replace a scope check on the board.
-
-### Signal simulation
-
-`tools/signal_sim/` is a transmission-line simulation of the trigger, laser and External Sync Out
-nets, built from the routed board and datasheet values, run through the ngspice in KiCad 10. It
-gives the CH1-to-CH2 skew for each J10 setting, J12's delay and its offset to the camera triggers,
-and the output levels. `rev2_sim.py` adds the Rev 2 cases: the camera lines at 1.8 V and 3.3 V, the
-camera cable with IDS and EVK4 inputs and the on-board 47 Ω series resistors, the supply budget of the camera buffers, the activity-LED
-sense dividers and the gaps between the power islands. Run both after changing the routing or a
-part in these chains; see [its README](tools/signal_sim/README.md). It runs with KiCad's ngspice
-on Windows and with libngspice on Linux.
+1. Use the Pico's micro-USB port. J17 carries power only.
+2. Open the Pico's serial port. The port needs no driver.
+   ```
+   pio device monitor --echo                 # PlatformIO; add -p COM7 if needed
+   ```
+3. Turn on local echo. The firmware does not echo.
+4. Do not use 1200 baud. 115200 is usual.
+5. Type `STATUS` and press Enter.
+
+Other terminals, the web GUI and Python scripting are in [docs/CONNECTING.md](docs/CONNECTING.md).
+
+## Most-used commands
+
+| Command | Unit | Default | What it sets |
+|---|---|---|---|
+| `FREQ [n]` | Hz | 1000 | How many pulse pairs per second |
+| `WIDTH [n]` | ns | 100 | Length of both laser pulses |
+| `DELAY [n]` | ns | 10000 | Time from the start of the Laser 1 pulse to the start of the Laser 2 pulse. `0` makes them start together. |
+| `ARM` | – | disarmed | Allow the laser pulses |
+| `DISARM` | – | – | Stop the laser pulses at once; recognised anywhere in what you type |
+| `ARM?` | – | – | Report the arm state: `ARMED=0` or `ARMED=1` |
+| `STATUS` | – | – | All settings, the arm state and system information |
+| `ID?` | – | – | Board and firmware version (the git commit it was built from) |
+| `HELP` | – | – | Command summary |
+
+A name on its own asks for a value (`DELAY`). A name followed by a number sets it (`DELAY 5000`).
+All commands, limits and error replies are in [docs/COMMANDS.md](docs/COMMANDS.md). If something
+does not work, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
 ---
 
@@ -907,7 +251,8 @@ on Windows and with libngspice on Linux.
 | `tools/jlc_cpl/` | Corrects the JLC placement file to JLC's own footprints (see its README) |
 | `tools/eurocard/` | Builds the Rev 1 EuroCard board from the 126 × 126 mm hand layout: placement, KiCadRoutingTools routing, checks (see its README) |
 | `tools/rev2/` | Builds the current Rev 2 board from the Rev 1 EuroCard board: camera level select, series resistors in the camera lines, new camera routing with equal lengths, status LEDs, power islands, checks, fab export (see its README) |
-| `docs/` | [EVK4 camera harness](docs/EVK4_HARNESS.md) and the board images |
+| `docs/` | The documentation pages (see [Documentation](#documentation)), the [EVK4 camera harness](docs/EVK4_HARNESS.md) and the board images (`docs/img/`) |
+| `docs/reports/` | Earlier design review reports |
 
 ## License
 
