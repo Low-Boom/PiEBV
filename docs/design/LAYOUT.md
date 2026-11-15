@@ -92,7 +92,8 @@ uneven enough that J17 is worth inspecting for solder bridges
 (see [first-board check 5](../FIRST_BOARD_CHECKS.md#first-board-checks)). All 0805, 1206 and 2512 passives and the
 SOT-23-5/TSOT-23-6 parts (U1, U3, U5, U7–U10, U15) and the LEDs D1–D6 use `_HandSolder`/`_HandSoldering` footprints.
 The other SMD parts use standard footprints: U18 (SOT-23-6), U16 (SC-70-6), U17 (MSOP-12), U14
-(SSOP-10), the SOICs (U2, U4, U6, U13, U19), L1 and J17.
+(SSOP-10), the SOICs (U2, U4, U6, U13, U19), U24 (TO-252-2), L1 and J17. The tab of U24 is a large
+pad with a solid connection to the GND pour: it needs more heat than the other pads.
 
 ## Board size
 
@@ -239,10 +240,27 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
   via (210.2, 57.2) is R9.1's only connection (R9 is a front SMD part), so it is not a plane jump
   on the J10-to-U5 path. `CH1_J10` needs its via to cross the lane (no via in the R19.2 pad), and
   `PWM_Trig` leaves J10.3 with one 45° run.
-- **Totals (Rev 2):** 1453 track segments, 2966.9 mm of track (F.Cu 2066.5 mm, B.Cu 900.5 mm), 221 vias
-  (`tools/rev2/stats.py`). No two segments are identical. Rev 1: 1015 segments, 2489 mm, 173 vias.
+- **Fan supply (U24, C37, C38, J23).** The parts are in the bottom-left area of the board, below
+  the USB-C power parts (U14, U15, L1), right of mounting hole MH3 and left of camera header J1.
+  `tools/rev2/pcb_edit.py` places them (section "3a. fan supply"). Positions (board coordinates, mm):
+
+  | Part | Position | Notes |
+  |---|---|---|
+  | U24 | (158.0, 124.9) | The tab (GND) has a solid connection to the top-layer GND pour and four GND vias. |
+  | C37 | (148.2, 122.62) | input capacitor |
+  | C38 | (148.2, 127.18) | output capacitor |
+  | J23 | (166.5, 124.9) | Pin 1 (`+12V_FAN`) at the top, at (166.5, 124.9). Pin 2 (GND) below it, at (166.5, 127.44). |
+
+  VBUS_PD comes from the C11 pad track on F.Cu. `+12V_FAN` goes from U24 to J23 on B.Cu (15.6 mm,
+  below U24, over the +5V island), because the GND edge-fence vias block the top-layer path.
+  Silkscreen: `J23  FAN 12V`, `0.2 A MAX`, `+` beside pin 1 and `-` beside pin 2. The camera
+  routing and the camera line lengths did not change.
+- **Totals (Rev 2):** 1466 track segments, 3003.4 mm of track (F.Cu 2087.3 mm, B.Cu 916.1 mm), 228 vias
+  (`tools/rev2/stats.py`): GND 139, +5V 13, +3V3 7, +1V8 2, +VCAM 5, +12V 9, other nets 53. No two
+  segments are identical. Copper fingerprint `20373eccea45c81b`. Rev 1: 1015 segments, 2489 mm, 173 vias.
 - **Rev 2 build of the copper** (`tools/rev2/build.sh`). The steps, in order:
-  1. `pcb_edit.py` removes the Rev 1 camera copper. It places R52–R69 with their stubs. It draws
+  1. `pcb_edit.py` removes the Rev 1 camera copper. It places the fan supply parts with their
+     copper. It places R52–R69 with their stubs. It draws
      `Trigger3` itself (F.Cu, four teeth, 45.8 mm as drawn): the resistor of this line is about
      12 mm from its buffer pin, and the router cannot make the line longer.
   2. `uuidfix.py` gives the board file a fixed item order. pcbnew writes random item IDs, and the
@@ -251,7 +269,7 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
      camera lines from the buffer to the resistor. All other copper is locked. The lines are
      length-matched in each group. The router makes 0.6 mm vias with a 0.3 mm hole (via cost
      225). The net order was searched again for these vias (about 230 router trials in total).
-  4. A check confirms that the router changed no other copper (91 other nets).
+  4. A check confirms that the router changed no other copper (92 other nets).
   5. `jogs.py` merges 59 router staircases on 13 nets: two steps in one direction become one
      step, so the track length is the same. The choice for each staircase is in
      `jog_choices.json`; `jogfit.py` fits that file to a new routing.
@@ -297,7 +315,7 @@ directly if the pad is a through-hole pad. The outlines are in `tools/rev2/pcb_e
 
 | Island | Where | Copper area | Taps | Parts on it |
 |---|---|---|---|---|
-| +5V | the left and centre of the board: Pico, bottom left (U16), the logic between the Pico and the output drivers | 6443 mm² | 13 vias, J15.2 | Pico VSYS, U16, U7, U8, U10, U9 (input), C4–C6, R2, R3, R36, TP5 |
+| +5V | the left and centre of the board: Pico, bottom left (U16), the logic between the Pico and the output drivers | 6427 mm² | 13 vias, J15.2 | Pico VSYS, U16, U7, U8, U10, U9 (input), C4–C6, R2, R3, R36, TP5 |
 | +3V3 | a band along the top edge from J15.5 to x = 265, wider under U21–U23. The tab at the J15.5 socket pad is 3.1 mm wide (x 141.0–144.1). | 1345 mm² | 7 vias, J15.5 | R24, R34, R70, U20 (VIN2, MODE), C24, U21–U23, TP6 |
 | +1V8 | from the U9 output tap via, below U20, to a second via east of U20 | 24 mm² | 2 vias | U9 output, C7 and TP7 at the first via; U20 (VIN1) at the second via. +1V8 reaches U20 through the island, not through a top-layer track. |
 | +VCAM | under U1–U6 and all camera lines down to J1–J6, with a 4.5 mm corridor up to U20 | 3134 mm² | 5 vias | U20 (VOUT), C23, R51, U1–U6, C1–C3, D1, TP8 |

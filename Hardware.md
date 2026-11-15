@@ -18,7 +18,7 @@ In this document:
 |---|---|
 | [docs/DESIGN_NOTES.md](docs/DESIGN_NOTES.md) | index of the design pages; Rev 2 changes |
 | [docs/design/LAYOUT.md](docs/design/LAYOUT.md) | layer images, stackup, EuroCard mechanics, routing, power islands, KiCad checks |
-| [docs/design/POWER.md](docs/design/POWER.md) | rail design, power-good gate, +VCAM mux, budgets, output rating |
+| [docs/design/POWER.md](docs/design/POWER.md) | rail design, power-good gate, fan supply, +VCAM mux, budgets, output rating |
 | [docs/design/SIGNALS.md](docs/design/SIGNALS.md) | signal chains, skew, amplitude budget, output mode, J12 timing, camera lines, interlock, LED circuits |
 | [docs/design/FIRMWARE_HW.md](docs/design/FIRMWARE_HW.md) | timing limits, combined mode, pixel gate, boot and arming, clock jumper |
 | [docs/FIRST_BOARD_CHECKS.md](docs/FIRST_BOARD_CHECKS.md) | the checks for the first boards |
@@ -43,8 +43,9 @@ Images of the Rev 2 board, made by `tools/rev2/images.sh` from `PiEBV_Pico.kicad
 ```
  USB-C charger ──► J17 ──► power section ──┬─► +5 V  (logic, Pico) ◄── also from the Pico's USB
    (15 V)                                   ├─► +VCAM (camera signals): 1.8 V, or 3.3 V with J22 fitted
-                                            └─► +12 V (laser driver), checked by a voltage window (U18)
-                                                (+3.3 V comes from the Pico itself)
+                                            ├─► +12 V (laser driver), checked by a voltage window (U18)
+                                            │   (+3.3 V comes from the Pico itself)
+                                            └─► +12V_FAN (cooling fan header J23), from its own regulator (U24)
 
  PC ──USB──► Pico 2 W ──┬─ CH1, CH2 ──► interlock ──► 12 V driver ──► output resistors ──► J7, J8
                         │             (ARM, J11)      (U13, on only    and mode jumpers      Laser 1, 2
@@ -61,7 +62,7 @@ Images of the Rev 2 board, made by `tools/rev2/images.sh` from `PiEBV_Pico.kicad
 - **The camera path** converts every signal to the camera I/O level `+VCAM`. Each camera cable has its own driver gate and a 47 Ω series resistor (R52–R69). `+VCAM` is 1.8 V (IDS cameras) with J22 open and 3.3 V (Prophesee EVK4) with J22 fitted. The pixel reset comes only from the Pico (`PIXGATE`). The EVK4 has no pixel-reset input.
 - **Status LEDs** show 12 V good (D2), ARMED (D3), a pulse at each output (D4–D6) and a 3.3 V camera level (D1).
 - **External Sync Out (J12)** copies the camera trigger to a BNC through a third channel built like the laser outputs (U19, R30, J21), with the same 50 Ω / Hi-Z choice and the same ~5 V level.
-- **Power** comes from a USB-C charger on J17. The board asks the charger for 15 V. The Pico's own USB can run everything except the laser outputs.
+- **Power** comes from a USB-C charger on J17. The board asks the charger for 15 V. The Pico's own USB can run everything except the laser outputs. A separate regulator (U24) supplies a 12 V cooling fan on J23 from the 15 V input.
 
 ### Reading this document
 
@@ -82,9 +83,9 @@ Images of the Rev 2 board, made by `tools/rev2/images.sh` from `PiEBV_Pico.kicad
 | Board | 160 × 100 mm (EuroCard), 4 copper layers, 1.6 mm FR4 |
 | Processor | Raspberry Pi Pico 2 W, in sockets (not soldered) |
 | Power | **USB-C PD input (J17, 15 V)** for the laser driver and the whole board; the Pico's own USB still powers the logic when J17 is unplugged |
-| Rails | **+VCAM** (camera signals: 1.8 V, or 3.3 V with J22 fitted) · 1.8 V (U9, to U20) · 3.3 V (Pico 3V3_OUT: R24, R34, R70, U20, U21–U23) · 5 V (logic, Pico VSYS) · **12 V** (11.8 V, output drivers U13 and U19, from J17 only) |
+| Rails | **+VCAM** (camera signals: 1.8 V, or 3.3 V with J22 fitted) · 1.8 V (U9, to U20) · 3.3 V (Pico 3V3_OUT: R24, R34, R70, U20, U21–U23) · 5 V (logic, Pico VSYS) · **12 V** (11.8 V, output drivers U13 and U19, from J17 only) · **+12V_FAN** (12 V, fan header J23, from U24, from J17 only) |
 | Design rules | 0.2 mm clearance, 0.2 mm track, 0.6/0.3 mm via, 0.5 mm copper-to-edge |
-| Parts | 149 placed parts (129 SMD, 20 through-hole), 6 bare test pads, 4 unplated mounting holes (159 footprints) |
+| Parts | 153 placed parts (132 SMD, 21 through-hole), 6 bare test pads, 4 unplated mounting holes (163 footprints) |
 | Stackup | symmetric 1.6 mm, JLCPCB standard 4-layer `JLC04161H-7628`; see [Layers and stackup](docs/design/LAYOUT.md#layers-and-stackup) |
 | Finish | **lead-free HASL** (`HAL lead-free`) |
 | Finest pitch | 0.5 mm (U20, TPS2116, SOT-583-8), pads 0.3 mm wide. No BGA and no leadless part. |
@@ -99,7 +100,7 @@ Images of the Rev 2 board, made by `tools/rev2/images.sh` from `PiEBV_Pico.kicad
 In1.Cu and In2.Cu carry no tracks. The fabricated board is **160.0 × 100.0 mm**. The stackup table, the finish, the footprints, the enclosure data and the routing data are in [docs/design/LAYOUT.md](docs/design/LAYOUT.md).
 
 - Confirm the stackup numbers against what your fabricator actually presses.
-- Only the exposed pads of U14 and U17 need hot air or a hot plate (see [Hot-plate assembly](docs/MANUFACTURING.md#hot-plate-assembly)). All ICs have gull-wing leads, so the board can also be assembled by hand.
+- Only the exposed pads of U14 and U17 need hot air or a hot plate (see [Hot-plate assembly](docs/MANUFACTURING.md#hot-plate-assembly)). All ICs have gull-wing leads, so the board can also be assembled by hand. The tab of U24 (TO-252) is a large pad with a solid connection to the GND pour: it needs more heat.
 - Inspect J17 for solder bridges (pad gaps of 0.27–0.38 mm; [first-board check 5](docs/FIRST_BOARD_CHECKS.md#first-board-checks)).
 
 ## Socket pin mapping — read this first
@@ -204,8 +205,9 @@ J17 USB-C ─ U14 CH224A (asks the charger for 15 V) ─ VBUS_PD (5 V until nego
    ├─ U15 AP63205WU buck ─ +5V_PD ─ U16 LM66100 ideal diode ─┐
    │                                                        ├─ +5V island = Pico VSYS ─ U9 (1.8 V) ─┐
    │               Pico USB VBUS ─ Pico's own Schottky (D1 on the Pico module, not the board's LED D1) ───┘
-   └─ U17 LT3065 (adj., 500 mA, 400 mA limit) ─ +12V (11.8 V) ─ U13 VDD (C9, C10, C17), U19 VDD (C21, C22)
-        U18 TPS3700 window on +12V (10.6–13.3 V) ─ LASER_PWR_OK ─ U13 and U19 ENA/ENB  (R16 100k pull-up)
+   ├─ U17 LT3065 (adj., 500 mA, 400 mA limit) ─ +12V (11.8 V) ─ U13 VDD (C9, C10, C17), U19 VDD (C21, C22)
+   │    U18 TPS3700 window on +12V (10.6–13.3 V) ─ LASER_PWR_OK ─ U13 and U19 ENA/ENB  (R16 100k pull-up)
+   └─ U24 CJ78M12 (12 V, 0.5 A part; C37 in, C38 out) ─ +12V_FAN ─ J23 pin 1 (cooling fan, 200 mA maximum)
 
      U9 ─ +1V8 ──────── U20 VIN1 ─┐
                                   U20 TPS2116 ─ +VCAM ─ U1–U6 (camera buffers), D1, R51
@@ -215,10 +217,11 @@ Pico 3V3_OUT ─ +3V3 ─┬─ U20 VIN2 ─┘   J22 open: +VCAM = +1V8.  J22 f
 
 | Rail | Source | Feeds | Test pad | Nominal value |
 |---|---|---|---|---|
-| `VBUS_PD` | J17 through U14 (CH224A) | U15, U17 | – | 5 V until the PD contract completes, then 15 V |
+| `VBUS_PD` | J17 through U14 (CH224A) | U15, U17, U24 | – | 5 V until the PD contract completes, then 15 V |
 | `+5V_PD` | U15 (AP63205WU buck) | U16 | – | 5.00 V ±1 % |
 | `+5V` | U16 from +5V_PD, or the Pico's USB | Pico VSYS (J15.2), U7, U8, U10, U9 input, R2/R3, D2 (R36) | TP5 `5V` (201.0, 45.0) | ~5.0 V from J17 |
 | `+12V` | U17 (LT3065) from VBUS_PD | U13 and U19 VDD, U18, R16 | TP4 `12V` (237.0, 50.0) | 11.8 V (11.54–12.05 V) |
+| `+12V_FAN` | U24 (CJ78M12) from VBUS_PD | J23 pin 1 (cooling fan) | – | 12 V (VBUS_PD at 15 V) |
 | `+1V8` | U9 (NCP718xSN180) from +5V | U20 VIN1 | TP7 `1V8` (225.0, 43.75) | 1.8 V (±2 %) |
 | `+3V3` | Pico 3V3_OUT (pin 36, J15.5) | U20 VIN2 and MODE, R24, R34, R70, U21–U23, D4–D6 | TP6 `3V3` (220.9, 36.6) | 3.3 V |
 | `+VCAM` | U20 (TPS2116), set by J22 | U1–U6 (all camera-facing logic), D1 (R33), R51 | TP8 `VCAM` (230.5, 50.3) | 1.8 V (J22 open) or 3.3 V (J22 fitted) |
@@ -232,6 +235,7 @@ Limits and ratings of the rails:
 | `+5V_PD` | U15 accepts 3.8–32 V in. The rail is ~4.9 V while VBUS_PD is 5 V. |
 | `+5V` | U16 is an LM66100 ideal diode. The Pico's USB feeds the rail through the Pico's own Schottky D1: ~4.7 V typical from the Pico's USB alone (74AHCT is specified from 4.5 V). |
 | `+12V` | U17: 45 V / 500 mA part, R12/R13 0.1 %. Current limit 400 mA ±10 % (R20 = 750 Ω). Power-good window 10.6–13.3 V (undervoltage 10.6 V rising / 10.4 V falling, overvoltage 13.3 V). |
+| `+12V_FAN` | U24: 78M12 type, 12 V, 0.5 A part. Maximum fan current: 200 mA (design limit). No fuse: the 78M12 type has internal current limiting and thermal shutdown (not checked against the CJ78M12 data sheet). The fan does not run on a 5 V-only charger. The fan is always on while VBUS_PD is 15 V: there is no firmware control and no tachometer input. |
 | `+1V8` | U9: fixed 1.8 V, 2.5–24 V in. |
 | `+3V3` | Raspberry Pi recommends a load below 300 mA on the Pico's 3V3_OUT pin (pin 36). |
 | `+VCAM` | U20 is a power mux for 1.6–5.5 V. At most 58 mA for six EVK4 cameras. |
@@ -243,6 +247,7 @@ TP4–TP9 are bare 1.5 mm copper pads on the top side (no part). Each is marked 
   - Without 15 V the outputs stay disabled: U18 holds U13 and U19 off while +12V is outside 10.6–13.3 V.
   - 5 V-only charger: +12V ≈ 4.7 V. 9 V charger: +12V ≈ 8.7 V.
   - On a 12 V charger setting or an overload, U17 cannot regulate and +12V is below ~11 V.
+- **Fan header J23.** Connect a 2-wire 12 V DC cooling fan: pin 1 (`+` on the silkscreen) is +12V_FAN, pin 2 (`-`) is GND. The maximum fan current is 200 mA. Do not connect a fan to the +12V rail of the laser drivers.
 - **With the Pico's USB alone** the logic and the cameras run, and the lasers are off (no 12 V). A host whose USB sags below ~4.8 V puts the 74AHCT gates just outside their rated range.
 - **Pico VBUS (pin 40, J15.1) is deliberately not connected.** Do not tie VBUS to VSYS: with J17 also feeding VSYS it would push current back into the USB host.
 - **Never leave R10 off:** an open CFG1 is outside the CH224A table (6k8 = 9 V, 24k = 12 V, 56k = 15 V, 120k = 20 V, 210k = 28 V).
@@ -477,6 +482,7 @@ HRO TYPE-C-31-M-17, a 6-pin power-only receptacle, at the bottom of the left edg
 | TP3 | 1×2 right-angle, left edge below the Pico | 1 `PWM_1MHz` · 2 GND |
 | J20 | 1×2 vertical, clock jumper, right of the Pico's GPIO end, below the J14 row (pin 1 at the bottom) | 1 `CLK_SEL_JMP` (R29 1 kΩ to GP10) · 2 GND. Shunt = 300 MHz, open = 150 MHz ([clock jumper](#clock-jumper-j20-300-mhz-overclock)) |
 | J22 | 1×2 vertical, camera I/O level, top centre (pin 1 at the top) | 1 GND · 2 through R35 (1 kΩ) to `VCAM_SEL` (U20 PR1; R34 and R70, 10 kΩ each, to +3V3). Open = 1.8 V, shunt = 3.3 V ([+VCAM](#vcam-the-camera-signal-supply)) |
+| J23 | 1×2 vertical, fan supply, bottom left, right of MH3 and left of J1 (pin 1 at the top). Silkscreen `J23  FAN 12V`, `0.2 A MAX`, `+` and `-` | 1 `+12V_FAN` (`+`) · 2 GND (`-`). For a 2-wire 12 V DC fan, 200 mA maximum ([Power](#power)) |
 | TP4–TP9 | bare test pads | +12V, +5V, +3V3, +1V8, +VCAM, GND (positions in the rail table under [Power](#power)) |
 
 The camera trigger leaves the board on J12, and J11 is the only user interlock. TP3 sits at the left edge below the Pico; its pins point at the edge and end 0.96 mm inside it.
@@ -553,9 +559,9 @@ The manufacturing notes, the JLCPCB order notes and the hot-plate assembly are o
 | Path | What |
 |---|---|
 | `PiEBV_Pico.kicad_sch` | schematic |
-| `PiEBV_Pico.kicad_pcb` | board, Rev 2. Copper fingerprint `e7a5f9db42935959` (note 1 below) |
+| `PiEBV_Pico.kicad_pcb` | board, Rev 2. Copper fingerprint `20373eccea45c81b` (note 1 below) |
 | `fab/PiEBV_Pico_BOM.csv` | master parts list with the design-constraint NOTE rows (hand-maintained; KiCad's `export_bom` ignores DNP attributes). The JLC BOM in `fab/jlc/` is derived from it. |
-| `fab/jlc/PiEBV_Pico_JLC_BOM.csv`, `fab/jlc/PiEBV_Pico_JLC_CPL.csv`, `fab/jlc/JLC_ORDER.md` | JLCPCB full-assembly upload files (all 149 placed parts, LCSC numbers) and the order checklist |
+| `fab/jlc/PiEBV_Pico_JLC_BOM.csv`, `fab/jlc/PiEBV_Pico_JLC_CPL.csv`, `fab/jlc/JLC_ORDER.md` | JLCPCB full-assembly upload files (all 153 placed parts, LCSC numbers) and the order checklist |
 | `fab/gerbers/`, `fab/PiEBV_Pico_Gerbers.zip` | gerbers, Excellon drill files (plated and unplated), drill maps and job file of the Rev 2 board, made by `tools/rev2/fab.sh` (note 2 below) |
 | `libs/PiEBV_Local.kicad_sym` | Pico 2 W, UCC27524, LT3065 and TPS3700 symbols |
 | `libs/PiEBV_Local.pretty/` | `*_EdgeTrim` footprint variants (see [Footprint variants and KiCad checks](docs/design/LAYOUT.md#footprint-variants-and-kicad-checks)) and the J7/J8/J12 BNC footprint (see [BNCs](#bncs-50-ω)) |
@@ -574,12 +580,12 @@ The manufacturing notes, the JLCPCB order notes and the hot-plate assembly are o
 Notes on the table:
 
 1. **Copper fingerprint** (`tools/rev2/stats.py`: SHA-256 of the sorted track and via lines, first 16 digits).
-   - Rev 2: `e7a5f9db42935959`: 1453 segments / 2966.9 mm / 221 vias / 0 duplicates.
+   - Rev 2: `20373eccea45c81b`: 1466 segments / 3003.4 mm / 228 vias / 0 duplicates.
    - The Rev 1 EuroCard board (`4381eab`) gives `27ee9924ec2199bf` with this tool: 1015 segments / 2489.2 mm / 173 vias.
    - Rev 1 text quoted `98a60c3b4332d6e9` from a tool `fp.py` that is not in the repository, and 194 vias from before the stitching lattice was removed.
 2. **Gerber package.**
    - The files come from the board's stored plot settings. The zip has 14 files (no drill maps).
-   - The committed zip has sha256 `639e380ce6e39c0e6fe0ac4c7992643c6c2813aca1549f4994f134cca5a05149`.
+   - The committed zip has sha256 `64a25f63c51e9f2411e9282dc19dbff2a8f9ae9669583fe8940eb2c49f6a3212`.
    - The gerber files contain their creation date, so a new run of `tools/rev2/fab.sh` gives another check sum for the same board. `fab.sh` does not write the board file.
    - Note on Rev 1: the fab package and the placement file in the repository before Rev 2 were exported before the last Rev 1 layout change (C6 moved by 2.2 mm, stitching vias removed) and did not match the Rev 1 board.
 
