@@ -10528,6 +10528,194 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Device:D"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "D"
+				(at 0 2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "D"
+				(at 0 -2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Diode"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Sim.Device" "D"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Sim.Pins" "1=K 2=A"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "diode"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "TO-???* *_Diode_* *SingleDiode* D_*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "D_0_1"
+				(polyline
+					(pts
+						(xy -1.27 1.27) (xy -1.27 -1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 1.27) (xy 1.27 -1.27) (xy -1.27 0) (xy 1.27 1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 0) (xy -1.27 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "D_1_1"
+				(pin passive line
+					(at -3.81 0 0)
+					(length 2.54)
+					(name "K"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 3.81 0 180)
+					(length 2.54)
+					(name "A"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 	)
 	(text "USB-C PD input. U14 requests 15 V. U15 buck + U16 ideal diode feed the +5V plane (Pico VSYS).\nU17 makes the 11.8 V +12V rail for U13; U18 gates U13's enables (see the note by U17).\nPico VBUS is NOT on +5V: USB reaches VSYS only through the Pico's own Schottky."
 		(exclude_from_sim no)
@@ -10922,7 +11110,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "16f81bb4-1e94-4c37-8bdd-8e9827fdd09f")
+		(uuid "05c290bf-fa6d-4c11-8719-12fd83b8a293")
 	)
 	(no_connect
 		(at 116.84 229.87)
@@ -10952,7 +11140,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "1ff00b07-1344-4dd1-bab1-67492d25d071")
+		(uuid "5d674d8e-5960-4a6d-bb36-8623ecaf8f8e")
 	)
 	(no_connect
 		(at 224.79 260.35)
@@ -29689,7 +29877,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "fe7b8130-8194-4c5b-992b-221d5fd60a7b")
+		(uuid "695fa29c-87aa-49e2-847c-c1da970a3648")
 		(property "Reference" "R52"
 			(at 118.11 30.25 90)
 			(show_name no)
@@ -29744,10 +29932,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "ac216b8c-55c5-417c-af13-7c40b2f4ffe4")
+			(uuid "a71cffd7-9864-45a2-a2fd-0441ebdb5c1c")
 		)
 		(pin "2"
-			(uuid "8020f898-0775-4f46-ae7e-8daaaeffc8d6")
+			(uuid "54742b89-4f69-4d35-8408-c76ea04f37f6")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -29766,7 +29954,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "7c85f6bc-f222-499e-9705-7852c100d3ea")
+		(uuid "c366e44e-58b2-4919-aa07-24fd01b877fe")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -29778,7 +29966,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "285d7128-d34a-4ff9-a651-1638ec95332e")
+		(uuid "27f20f0e-1d66-4bea-9ea1-3a5885b29c33")
 		(property "Reference" "R53"
 			(at 148.59 30.25 90)
 			(show_name no)
@@ -29833,10 +30021,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "6f58c187-ee07-4359-8d01-84b669a47d52")
+			(uuid "c3ceda9c-b94b-480b-89c2-85019fc6323d")
 		)
 		(pin "2"
-			(uuid "259d5a33-46a2-4d60-a086-f033803aa20c")
+			(uuid "730522e9-4660-4046-bec1-00129f4a1f62")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -29855,7 +30043,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "52836209-5a7c-4738-b41d-a83e834b6f96")
+		(uuid "a14c5f7f-6f29-4ff3-9057-92c48a9134f3")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -29867,7 +30055,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "f5683765-251f-4ea8-8751-c8fc54ea57d2")
+		(uuid "cb46d9a2-242e-4078-8343-e3bbcefc2ef1")
 		(property "Reference" "R54"
 			(at 180.34 30.25 90)
 			(show_name no)
@@ -29922,10 +30110,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "be126b61-669c-464f-a226-0ae133eaf3e6")
+			(uuid "a0bbdb00-7efd-4ca7-a384-c857acaabac7")
 		)
 		(pin "2"
-			(uuid "8a5c8f16-2349-44d3-b197-951933ffda1d")
+			(uuid "18ff6003-46a8-4d61-ac2f-51ebc0dd88f5")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -29944,7 +30132,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "5e372f67-4f3a-4b41-98ca-411be78d008b")
+		(uuid "eb883c9e-1b5a-43f7-9e8a-56d84d226296")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -29956,7 +30144,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "854413ba-445d-483a-80b5-d6fb96d82c23")
+		(uuid "05afc5d5-823d-4ae1-98fd-4d4075277585")
 		(property "Reference" "R55"
 			(at 210.82 30.25 90)
 			(show_name no)
@@ -30011,10 +30199,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "037b196e-fb7d-4c15-90ca-fe2d28400426")
+			(uuid "a9da40e0-297e-45fe-93d1-7ffd23cc661f")
 		)
 		(pin "2"
-			(uuid "0c6e774b-51ad-468e-9eab-8c099218dfa8")
+			(uuid "52c10798-5621-4198-a5d0-0a5bf55d660c")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -30033,7 +30221,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "27d05d75-fbba-4712-b137-1b1c05167750")
+		(uuid "d8963a1c-738c-4f9b-adf1-f69dbd3c6e6b")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -30045,7 +30233,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "1fad38a1-380d-4845-aa63-ed12a431bc47")
+		(uuid "89cbd102-d9a6-400e-be8a-94e5180c18df")
 		(property "Reference" "R56"
 			(at 240.03 30.25 90)
 			(show_name no)
@@ -30100,10 +30288,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "4a0160fd-6ac2-44de-8829-c68f765df165")
+			(uuid "d4804cbd-6844-437c-8635-b8531c1c6b87")
 		)
 		(pin "2"
-			(uuid "03c571b7-6402-4745-9daa-5875dc08265b")
+			(uuid "5aae83dd-9fae-4fd0-a7d7-68b9962e3e86")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -30122,7 +30310,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "f8a5e03f-5b0a-4a7a-9a58-d4727a04b2d3")
+		(uuid "0c57d5a0-9185-4780-b189-206dd95ea9a8")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -30134,7 +30322,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "06c030f5-7f69-404b-8fcb-b58043055eb8")
+		(uuid "377d608e-e198-44aa-bdeb-c6dd0a490a67")
 		(property "Reference" "R57"
 			(at 267.97 30.25 90)
 			(show_name no)
@@ -30189,10 +30377,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "a34b109f-7b1a-4c5a-a367-0503bda19142")
+			(uuid "de890832-1a01-4812-bbe1-9481ea59f053")
 		)
 		(pin "2"
-			(uuid "6dd25de3-6ff0-488a-b6b5-253197c82e0e")
+			(uuid "c7f52ac4-63ee-41d3-95ef-ee1e7785ed14")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -30211,7 +30399,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "1497d772-3a43-4244-bc45-efaad8d468d3")
+		(uuid "617868b4-2874-4e5a-8180-5f1bc6eb8fc9")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -30223,7 +30411,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "9484993c-f90a-4a14-9d9c-770de3395b15")
+		(uuid "7dc4117b-fafb-436f-ae5c-873f9c5e4fd8")
 		(property "Reference" "R58"
 			(at 139.16 31.11 0)
 			(show_name no)
@@ -30278,10 +30466,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "bf11bbf5-0906-4cbd-b39a-f4ab624751d4")
+			(uuid "3e507d4e-3bff-4418-bc66-ed2ac9b60f4f")
 		)
 		(pin "2"
-			(uuid "1473d186-9ee9-475d-8945-55112f4f1b12")
+			(uuid "8fbc775b-5b10-4d65-9eaf-8be16780a2c1")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -30300,7 +30488,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "b7ce1ef7-7d1b-41e8-a8e4-d5a46d6a25d8")
+		(uuid "a94a97a2-8f63-4848-9f93-e3d1606d81a9")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -30312,7 +30500,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "791cfa43-36c0-485c-a3b9-f77c4aa98329")
+		(uuid "790ff86a-edd9-497e-8303-56886d78b4a4")
 		(property "Reference" "R59"
 			(at 169.64 31.11 0)
 			(show_name no)
@@ -30367,10 +30555,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "2eb63f8d-3886-44c8-920c-f6a8dd7fdde8")
+			(uuid "58fcc432-5f6b-43c2-97cb-5aeb95a28fd5")
 		)
 		(pin "2"
-			(uuid "c2577d77-0e81-4a07-9f41-6f2855353ee1")
+			(uuid "07e6ab4b-d35c-4534-abba-6bfa61fa3a2e")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -30389,7 +30577,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "14291ed4-84ac-4dfa-a2f7-bdf53097fb56")
+		(uuid "652e010a-320a-42e8-8183-7f5eb40a1b7c")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -30401,7 +30589,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "5c7dd26b-a8ec-4ce7-9541-5b483b3ef2bd")
+		(uuid "6bbc9c9b-2bf5-4905-91bf-0aa9fa9e426f")
 		(property "Reference" "R60"
 			(at 200.12 31.11 0)
 			(show_name no)
@@ -30456,10 +30644,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "2e6cf2d7-9b40-4330-9b61-232e18b64629")
+			(uuid "cd83bd98-33c0-4b2f-908b-f23f8e3f46c0")
 		)
 		(pin "2"
-			(uuid "db7eab36-a106-42db-83de-889ff6c353a4")
+			(uuid "95be8111-2b3e-43d8-9f7b-f8f1ded1a1d2")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -30478,7 +30666,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "971b70a8-393d-4052-be6d-c8c12d4e0058")
+		(uuid "ef980b00-b89c-444c-a808-5f9e9b4815cc")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -30490,7 +30678,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "3bb5656c-523c-477d-beea-b784b1393a42")
+		(uuid "8565dd06-9c7b-4784-be88-56e441e94837")
 		(property "Reference" "R61"
 			(at 230.6 31.11 0)
 			(show_name no)
@@ -30545,10 +30733,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "0005993a-c5bf-4a5f-96ed-26471df73638")
+			(uuid "1c8c2b1a-963f-476a-88ec-9906e833fd07")
 		)
 		(pin "2"
-			(uuid "0d6da9a7-6279-409f-bffa-228f163578f6")
+			(uuid "e95be24f-4618-4142-97cb-2d5ef1b8849f")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -30567,7 +30755,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "f282873d-714d-4818-948f-7891ef4f87ff")
+		(uuid "322fa24c-b16c-4664-ae9a-5b85fac6937b")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -30579,7 +30767,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "56d4e073-70ff-4cd1-b271-4d4cdd948aa9")
+		(uuid "1cff8abb-95bc-4e0b-b7aa-97734ae84b04")
 		(property "Reference" "R62"
 			(at 259.81 31.11 0)
 			(show_name no)
@@ -30634,10 +30822,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "f6656354-cd32-4292-b6c7-841003fd41dd")
+			(uuid "117f0dd0-0462-4d5d-9a5f-88b14ec4bb58")
 		)
 		(pin "2"
-			(uuid "59fe876a-bbd5-46be-bef6-029b91367e41")
+			(uuid "120088e1-9ebe-4901-b415-c36146742081")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -30656,7 +30844,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "e024044f-a961-47ff-b8a0-a4793c23f371")
+		(uuid "884b31ed-e025-4e9d-9eec-3d36cbbf65c3")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -30668,7 +30856,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "37b81de6-4921-409a-82d6-31ba32852043")
+		(uuid "90f2d9fb-7238-45de-9e83-8dbb5d25fd75")
 		(property "Reference" "R63"
 			(at 287.75 31.11 0)
 			(show_name no)
@@ -30723,10 +30911,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "55bf3b3f-8fe0-4b9a-8db1-28524ca149f6")
+			(uuid "5ec1a01d-0e72-41ee-89ab-6078413b933c")
 		)
 		(pin "2"
-			(uuid "745f00fe-71b5-4232-8a68-fcec277d8762")
+			(uuid "836d5dc0-3ca6-4ebf-a5ef-ca89b6301396")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -30745,7 +30933,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "9576254a-d377-4746-b1bb-34e1893e0be2")
+		(uuid "3a521274-58b6-482a-8bca-1137d35090e9")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -30757,7 +30945,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "7eab0475-e865-4ccb-9067-6b8ff1467ee8")
+		(uuid "c2f55fed-5de0-4ff6-93c5-ea0d6bd6f3c2")
 		(property "Reference" "R64"
 			(at 118.11 27.71 90)
 			(show_name no)
@@ -30812,10 +31000,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "bdcae827-4ac9-45d5-9028-c47bce941597")
+			(uuid "d771836e-0b57-4913-970e-e2ae98f2fb2a")
 		)
 		(pin "2"
-			(uuid "717b65c6-8538-4d7b-b0cc-77ec55a4e00b")
+			(uuid "b43b0b13-81be-4238-9725-e2457d0ef2f7")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -30834,7 +31022,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "87f2b71f-5cbc-4f26-b4be-24a24618073a")
+		(uuid "806555fd-13d9-44f2-b564-eeb0bcc68ed1")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -30846,7 +31034,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "2eb0b577-111f-442f-9fba-e43d1b2ec9ae")
+		(uuid "359c2ed7-82eb-4242-ac24-408887b780cb")
 		(property "Reference" "R65"
 			(at 148.59 27.71 90)
 			(show_name no)
@@ -30901,10 +31089,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "81dde4fd-62c2-40a9-9282-2afd50ae6a81")
+			(uuid "cc0b24b8-be5b-467f-adcc-6ebf62155c13")
 		)
 		(pin "2"
-			(uuid "80077bbf-3a51-4996-9605-d68c386c6256")
+			(uuid "59285410-03d3-4c72-a624-1f47e5694a90")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -30923,7 +31111,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "2fdc7b7a-36f8-4dd9-bca5-f042d2e63fcf")
+		(uuid "dc3941ca-e589-404a-a6cf-abe05a508043")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -30935,7 +31123,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "d59e112f-aa18-4397-bd74-d0b30543ffe5")
+		(uuid "abed1619-3865-48ed-be65-98a9f364902d")
 		(property "Reference" "R66"
 			(at 180.34 27.71 90)
 			(show_name no)
@@ -30990,10 +31178,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "35eaade6-9344-4d89-ae52-eb8cf545b46c")
+			(uuid "e5f532b8-f057-4222-be54-143f3a13ddfe")
 		)
 		(pin "2"
-			(uuid "dcfa21f0-5542-417f-b447-d296a39adfa3")
+			(uuid "16380f08-03d9-4689-bf05-c89a7a590ab6")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -31012,7 +31200,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "fcbe6e31-998d-4257-9e1e-d90336937b1d")
+		(uuid "9d3f510f-de86-4544-aa06-96ff66ca32d5")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -31024,7 +31212,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "818d302e-53af-480a-adcb-ea3f4042eafc")
+		(uuid "597ce57c-0344-4b0c-bf93-1f7f282c105c")
 		(property "Reference" "R67"
 			(at 210.82 27.71 90)
 			(show_name no)
@@ -31079,10 +31267,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "923bfa05-6473-4082-9fbc-1569f2b2a17f")
+			(uuid "fab0458b-5c14-492c-a2c5-cd0051c88ff1")
 		)
 		(pin "2"
-			(uuid "bf372a7a-5a2a-4516-8a1e-5e76eff29b03")
+			(uuid "e5b8d6b6-2d84-4dfe-9ead-a6ae06095141")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -31101,7 +31289,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "a0b66357-abb0-4fae-9ef9-2e452fd6dee1")
+		(uuid "d7a20ab7-31a1-4764-ac7d-79055d06969f")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -31113,7 +31301,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "4a0dcf1b-347f-4031-987f-ec72f12fb36e")
+		(uuid "dacd4371-78c9-4af3-b8d9-225e6c10a00e")
 		(property "Reference" "R68"
 			(at 240.03 27.71 90)
 			(show_name no)
@@ -31168,10 +31356,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "47544d8b-c850-439c-aac9-6bc54828f0e1")
+			(uuid "ea040f22-8200-4fab-ae93-0b49c0e05c20")
 		)
 		(pin "2"
-			(uuid "af8b0661-9746-44eb-adeb-91355e8f1597")
+			(uuid "d606aac4-688a-4033-b2aa-1a96906b038b")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -31190,7 +31378,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "8284f6e6-9247-45c7-8098-a9b5a7768921")
+		(uuid "a8bcb019-ab53-406d-bb5f-2b24364c5121")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -31202,7 +31390,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "77e57d2b-716c-49b1-9717-04d82fe8cd5d")
+		(uuid "92265d69-1f3e-4348-9d4d-8978ae2523d9")
 		(property "Reference" "R69"
 			(at 267.97 27.71 90)
 			(show_name no)
@@ -31257,10 +31445,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "6f2d7933-ec64-44ec-a233-a4eb57c6d3d3")
+			(uuid "80d1e632-4384-4f47-a841-04b3d2924232")
 		)
 		(pin "2"
-			(uuid "0da3a3af-d90d-43ca-a21f-f7d1c64f8c6a")
+			(uuid "1c3d4ea4-c6e6-499a-94ac-b07d1261338c")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -31279,7 +31467,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "fcd3e6d9-b699-45e5-a9f9-7f11e2ffe25a")
+		(uuid "91450aab-6b8c-4ddd-9424-7ed749721922")
 	)
 	(symbol
 		(lib_id "Power_Management:TPS2116DRL")
@@ -31291,7 +31479,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "97f1cb5a-58f9-4f6b-9ce5-a1467756e76e")
+		(uuid "205199fa-77c7-42e4-ba6d-0d2c2cf3190f")
 		(property "Reference" "U20"
 			(at 63.5 331.216 0)
 			(show_name no)
@@ -31348,28 +31536,28 @@
 			)
 		)
 		(pin "1"
-			(uuid "3d6c88b8-fc84-4460-b715-2cecc7fa63e2")
+			(uuid "a6943dda-3bcb-41a0-a563-c321ca4e1b3d")
 		)
 		(pin "2"
-			(uuid "7a893578-4c07-421c-a7ff-efe6bab9fd26")
+			(uuid "84d3ccde-f952-408b-a0e3-7b7c240f9cac")
 		)
 		(pin "3"
-			(uuid "be2375ec-b57c-4b85-9f76-43f24b5d79ab")
+			(uuid "8f07c07c-2cbe-4ec5-af90-f215b4882f0c")
 		)
 		(pin "4"
-			(uuid "3067db71-26a3-4fb5-a916-7bdf0b8eee50")
+			(uuid "dd5bb2bb-d863-4678-8f38-99805dcb14d0")
 		)
 		(pin "5"
-			(uuid "fa6701fb-8ef7-421f-9125-143652c37fab")
+			(uuid "93711ecc-18f7-4c31-b8e3-ad1aa59cede2")
 		)
 		(pin "6"
-			(uuid "a1b7e27b-efa3-4127-abdc-1eb8a54bd071")
+			(uuid "38436c3c-d1ab-4346-a563-c6155f44e85d")
 		)
 		(pin "7"
-			(uuid "82713496-2243-4e42-9d4c-4dd7bca932da")
+			(uuid "12bd97ba-1151-4641-b373-aceb7018055b")
 		)
 		(pin "8"
-			(uuid "146df572-64c4-465f-925e-c6b0b62c0460")
+			(uuid "727d2c5f-8b14-46ce-87f5-aa2b1f0b9c41")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -31388,7 +31576,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "354be16c-2abf-4c1f-bc89-aa1d51363c06")
+		(uuid "6c19b72b-0efe-4184-b27f-c6c93ffba404")
 	)
 	(symbol
 		(lib_id "power:+1V8")
@@ -31400,7 +31588,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "bd8454d5-7843-4eae-93a5-42e1f5f66c8d")
+		(uuid "b95f3757-0ebc-4a32-be0f-b761847007f7")
 		(property "Reference" "#PWR201"
 			(at 55.88 339.09 0)
 			(hide yes)
@@ -31456,7 +31644,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "08e41709-e2d3-4702-8d42-7867eb4f0aa5")
+			(uuid "2e0d8979-37e0-4ac4-adb5-fa8b21946a14")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -31475,7 +31663,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "57071047-53af-42d1-a868-891a621fa1c0")
+		(uuid "76446b89-a6b3-4cbf-b3ae-9f6ac7a623cc")
 	)
 	(label "VCAM_SEL"
 		(at 50.8 337.82 180)
@@ -31485,7 +31673,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "1be54836-e253-4da6-adac-a28213a5d9cc")
+		(uuid "4db7a035-d169-4c66-8c89-efea289162d9")
 	)
 	(wire
 		(pts
@@ -31495,7 +31683,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "a30f2ad0-714b-4fa2-9bdf-6cb0f19f9713")
+		(uuid "3074c9be-9b47-4354-81c3-c8addf5afbae")
 	)
 	(wire
 		(pts
@@ -31505,7 +31693,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "6c918279-f584-4b30-b5c6-2644bcf86b22")
+		(uuid "88c5b24f-ff4e-47b3-886f-f8b1896f0aa7")
 	)
 	(wire
 		(pts
@@ -31515,7 +31703,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "10b59d0f-1812-473a-a460-46fe950f2e4f")
+		(uuid "e8be94a4-2e53-4297-b26d-27a417af363f")
 	)
 	(wire
 		(pts
@@ -31525,7 +31713,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "3bfffd2f-a7cb-492b-a947-8eecbf3ac79c")
+		(uuid "8fa8381c-67ca-4e5f-9cd3-b0764e1e82fa")
 	)
 	(wire
 		(pts
@@ -31535,13 +31723,13 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "9f7a2393-b0d6-4d1a-b16b-0360dd042052")
+		(uuid "cba283c5-eea6-4d2a-9c6c-b2e3e8d9c5cd")
 	)
 	(junction
 		(at 58.42 345.44)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "f31116f3-83b0-4763-b04e-ffe3e79140ce")
+		(uuid "08cd3e9a-1a77-489e-8b32-a6e9a935c8db")
 	)
 	(symbol
 		(lib_id "power:+3V3")
@@ -31553,7 +31741,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "833e35c5-a5d2-464e-808f-f031e62c8d55")
+		(uuid "ef9ab27b-f3cc-408e-9866-2ca56614503a")
 		(property "Reference" "#PWR202"
 			(at 38.1 346.71 0)
 			(hide yes)
@@ -31609,7 +31797,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "0e6a0b07-978c-4e1c-bf40-662ec2b8ff93")
+			(uuid "bae37200-e88a-4ac0-997c-6e1ac38e3cb3")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -31624,7 +31812,7 @@
 		(at 45.72 345.44)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "9a1cc2ad-c9da-4c89-a399-333ea413d2a1")
+		(uuid "9d1dafed-25f9-4b1d-9826-761a8227032b")
 	)
 	(symbol
 		(lib_id "Device:C")
@@ -31636,7 +31824,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "59de819e-ba46-4367-a387-5f3cc321a0ba")
+		(uuid "e5800ba2-eccf-435b-97a2-ca7ae5f39943")
 		(property "Reference" "C24"
 			(at 43.815 347.98 0)
 			(show_name no)
@@ -31693,10 +31881,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "cd89ccfe-faff-45b8-802f-fddb1ff5c051")
+			(uuid "9aabf02a-667f-4e0a-8418-c98fdad9cdd1")
 		)
 		(pin "2"
-			(uuid "f16800d7-3456-483d-95d2-6a5edfa8d3d1")
+			(uuid "4c9502c1-5193-4b0d-8967-9ffe37ad8f33")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -31717,7 +31905,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "c52fe1b6-8e52-4d15-846c-4caefa8329cc")
+		(uuid "54b215b1-4d2d-454a-82af-387c66bd47ff")
 		(property "Reference" "#PWR203"
 			(at 45.72 356.87 0)
 			(hide yes)
@@ -31773,7 +31961,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "13693ee0-0fe2-4ce6-8555-b9ab733b1400")
+			(uuid "b3b94358-8e30-49e4-8c6b-9985845dc497")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -31792,7 +31980,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "bc088caa-ec46-4711-8715-391323b65bf1")
+		(uuid "5a1a1bb9-82a8-489b-82e1-4c7d84c12c7d")
 	)
 	(wire
 		(pts
@@ -31802,13 +31990,13 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "98628647-d479-4ece-9fb8-500b8392b4d1")
+		(uuid "b0089c2b-7f87-453f-b3d3-aeea645fb6b5")
 	)
 	(junction
 		(at 91.44 335.28)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "70bc3b58-1db4-40f5-8d9b-bbbfeb69ba3b")
+		(uuid "f1954307-1ae1-4ae6-b062-8fb54806e21a")
 	)
 	(symbol
 		(lib_id "PiEBV_Local:+VCAM")
@@ -31820,7 +32008,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "417914c1-82e9-4cc8-a636-0dba949231c6")
+		(uuid "0ca44381-08e8-4138-b0a1-7c86694b6378")
 		(property "Reference" "#PWR204"
 			(at 91.44 339.09 0)
 			(hide yes)
@@ -31876,7 +32064,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "c15a28d6-7d62-49d1-8a6d-c76a811dee1b")
+			(uuid "82957703-eba0-4867-a58f-ffa5a9e78d00")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -31897,7 +32085,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "ce35cce8-9e95-49ae-b4ab-f3d95f92a98c")
+		(uuid "bbcbfc7a-a955-4636-be20-23c75e94d17b")
 		(property "Reference" "C23"
 			(at 93.345 337.82 0)
 			(show_name no)
@@ -31954,10 +32142,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "9a90c7de-4321-4209-bc54-24cc8961a8d4")
+			(uuid "d715847a-b666-45aa-b847-2e9334dd834f")
 		)
 		(pin "2"
-			(uuid "c45b0adb-d215-404a-933b-3044b0be4aa8")
+			(uuid "0776b364-c2b8-4f4e-b43c-8e0000ce784f")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -31978,7 +32166,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "eee3e847-b7b8-4a5d-a1b7-75a4f1c90ae1")
+		(uuid "af3c018a-6b61-4e1e-8abc-b49905ec15c0")
 		(property "Reference" "#PWR205"
 			(at 91.44 346.71 0)
 			(hide yes)
@@ -32034,7 +32222,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "613f1270-2a58-4935-9449-0f25c588ee93")
+			(uuid "d0fff253-04c4-4a0e-8c21-7200a0f3f163")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -32053,13 +32241,13 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "d041a510-3ea5-4b8b-bcd6-edb288922b5d")
+		(uuid "b39113c3-6e93-4e6f-ad93-e2900737b71d")
 	)
 	(junction
 		(at 96.52 335.28)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "8105bc5a-c7d5-40ad-b978-0123660e4455")
+		(uuid "33f2a7b7-de4b-4143-bad6-c77908061273")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -32071,7 +32259,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "674c71c5-3fb5-4dcf-8069-5dbdb61f7574")
+		(uuid "1cdd06da-59c2-45fb-8771-ecdde56ed05d")
 		(property "Reference" "R51"
 			(at 97.79 337.185 0)
 			(show_name no)
@@ -32128,10 +32316,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "9088eb9a-468c-442d-bed8-54d7be017440")
+			(uuid "ab96c4bb-4167-462f-970d-f93103fad217")
 		)
 		(pin "2"
-			(uuid "3049822c-cb96-4fe8-8798-b1e653181e83")
+			(uuid "687730fb-7c32-42c7-8aa9-bcf2a82df1b0")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -32152,7 +32340,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "373da050-7bfd-4f30-a8d4-2b0b89750631")
+		(uuid "6f7a5967-eab2-490b-a531-0fea150eb79e")
 		(property "Reference" "#PWR206"
 			(at 96.52 344.17 0)
 			(hide yes)
@@ -32208,7 +32396,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "4c9887e3-d2e9-4147-aeb0-14918de8749b")
+			(uuid "cc0986eb-c706-4e7d-9ff5-2921a7ac9ae7")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -32229,7 +32417,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "a4d59dc8-76d2-4b8f-9998-1939f667f083")
+		(uuid "cbf14957-3366-4fc2-8231-120efc1019c9")
 		(property "Reference" "R33"
 			(at 104.14 332.74 90)
 			(show_name no)
@@ -32284,10 +32472,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "7ec49698-f491-420b-9cc7-b6103fc0bac6")
+			(uuid "bd997d1c-2c00-4e63-84be-fcd19d99820e")
 		)
 		(pin "2"
-			(uuid "aff1f92d-48e8-4e93-8a53-37a9cba84632")
+			(uuid "cafd62d4-e3e5-439a-9db8-11669c12f71d")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -32308,7 +32496,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "7884363b-d847-42c7-a329-9181d17b7c98")
+		(uuid "39b31377-37b7-44fa-8daf-8a87befb1f8f")
 		(property "Reference" "D1"
 			(at 110.49 331.47 0)
 			(show_name no)
@@ -32363,10 +32551,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "483db53d-2286-4204-8d2f-99c2be10df37")
+			(uuid "661dd510-7487-497a-a439-078b3d9e735b")
 		)
 		(pin "2"
-			(uuid "b39731dc-8a9c-4115-981b-b876d04fab3a")
+			(uuid "a434889a-3520-4f11-a149-1bcb9289720b")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -32387,7 +32575,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "9dc05b9d-5842-4997-a634-ced16a9a81d5")
+		(uuid "c69d7fce-03a8-427a-bd8a-21aa4c4d3a52")
 		(property "Reference" "#PWR207"
 			(at 114.3 339.09 0)
 			(hide yes)
@@ -32443,7 +32631,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "ed0a4691-2947-4e05-823f-627e485d4547")
+			(uuid "13bd83a8-20f9-4b66-a54f-56273ba0bc2f")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -32456,7 +32644,7 @@
 	)
 	(no_connect
 		(at 81.28 345.44)
-		(uuid "217a895f-b2ec-42a7-b154-c74376a888e5")
+		(uuid "df56d062-1318-4479-8f3e-f824a1ae4e97")
 	)
 	(symbol
 		(lib_id "power:GND")
@@ -32468,7 +32656,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "d13ea45d-83ad-46fb-8339-0b83766ba168")
+		(uuid "2a1dacc0-fee7-4f24-bea5-59511e9a55de")
 		(property "Reference" "#PWR208"
 			(at 71.12 354.33 0)
 			(hide yes)
@@ -32524,7 +32712,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "bdf3c72a-df7d-497b-b129-35d4d226e46e")
+			(uuid "a1678de4-0dbd-4322-a7e9-391e6547d5f0")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -32545,7 +32733,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "ef0adbea-a0bd-4d39-93b8-1c271c9a83f2")
+		(uuid "cb6ac682-0a15-409a-8d9a-db46435bc1a7")
 		(property "Reference" "U24"
 			(at 67.31 389.89 0)
 			(show_name no)
@@ -32556,7 +32744,7 @@
 				)
 			)
 		)
-		(property "Value" "CJ78M12"
+		(property "Value" "L78M12ABDT-TR"
 			(at 71.12 389.89 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -32589,7 +32777,7 @@
 				)
 			)
 		)
-		(property "Description" "12 V 0.5 A linear regulator (78M12, TO-252) for the cooling fan header J23. Input VBUS_PD (15 V)."
+		(property "Description" "12 V 0.5 A linear regulator (ST L78M12AB, DPAK; thermal and short-circuit protection) for the cooling fan header J23. Input VBUS_PD (15 V)."
 			(at 71.12 396.24 0)
 			(hide yes)
 			(show_name no)
@@ -32601,13 +32789,13 @@
 			)
 		)
 		(pin "1"
-			(uuid "1e776a40-21ba-47b8-af6e-28fe2d01d9ca")
+			(uuid "152f82e1-15e3-4518-a084-29938ce420fb")
 		)
 		(pin "2"
-			(uuid "de383409-0b59-4f3f-8bc9-defb3604654e")
+			(uuid "0b5c5f80-3c16-4d5d-ae14-b66043a4893a")
 		)
 		(pin "3"
-			(uuid "5e3544dd-e50d-4921-98b8-954264c9af8f")
+			(uuid "55aa58bc-1c4f-4bc5-a4e2-9a0912c86989")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -32626,7 +32814,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "205fb585-6ed4-4b23-97ee-86b86bca3167")
+		(uuid "a3931161-644f-4b0a-afa0-27ba8e58f354")
 	)
 	(wire
 		(pts
@@ -32636,13 +32824,13 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "40fb5583-2cee-43fd-ab4d-b80b48f82d37")
+		(uuid "1b3c3f75-9543-4f77-aa1a-7599257cdc1d")
 	)
 	(junction
 		(at 55.88 396.24)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "b0adb021-b53d-4a1b-a903-56d5b91786a5")
+		(uuid "283c9e93-d2dc-4309-b492-813780506d92")
 	)
 	(label "VBUS_PD"
 		(at 45.72 396.24 180)
@@ -32652,7 +32840,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "fcf68d62-e9c3-40d0-9da0-99683bc97436")
+		(uuid "49db3f12-efac-495b-906d-1ade2487c81c")
 	)
 	(symbol
 		(lib_id "Device:C")
@@ -32664,7 +32852,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "65c23e72-41f2-481a-b509-fdc33fb92686")
+		(uuid "9a61af12-98af-49fe-b2d1-d10e850d36b0")
 		(property "Reference" "C37"
 			(at 53.975 398.78 0)
 			(show_name no)
@@ -32721,10 +32909,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "2d4f6926-d25c-4d28-90b4-dad632d4c134")
+			(uuid "a0979ef6-9bb7-4252-b839-39b0ce350fd9")
 		)
 		(pin "2"
-			(uuid "5534d2d7-6836-45d5-bd15-33908168a2c5")
+			(uuid "a9128800-df24-4c16-af1c-f8e49647fa03")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -32745,7 +32933,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "0107ea47-8702-46a0-9153-818a301be4d9")
+		(uuid "42d21300-7166-4b87-a135-0aa4f7b19873")
 		(property "Reference" "#PWR209"
 			(at 55.88 407.67 0)
 			(hide yes)
@@ -32801,7 +32989,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "cc6cff9a-23b6-4a71-ab7b-bc708f8848bd")
+			(uuid "6d02bc8d-5bb2-46ea-8e88-04d66f9b3cdf")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -32822,7 +33010,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "fdec5cb6-ba07-4411-b5e1-a1fafbd48a61")
+		(uuid "a111118a-3e22-4cfd-95c5-ecd74b8013d6")
 		(property "Reference" "#PWR210"
 			(at 71.12 407.67 0)
 			(hide yes)
@@ -32878,7 +33066,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "c97e02c7-2b56-42c9-9348-4a1db7414caa")
+			(uuid "44762487-13a2-4081-8455-f468f5f3b83f")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -32897,7 +33085,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "2d469bee-35b0-49e9-a11e-5a1ac3a5d784")
+		(uuid "2dab3005-9379-413e-b3d7-2c75cfcaa119")
 	)
 	(wire
 		(pts
@@ -32907,13 +33095,13 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "f2837da0-5dd2-400c-be99-8bf09a63b270")
+		(uuid "b8a574a5-b78b-4d9e-8b1d-bd64679a4d4f")
 	)
 	(junction
 		(at 86.36 396.24)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "c83600c8-1620-4664-b85d-88320bec1ea0")
+		(uuid "d6438e04-a31c-487d-a412-a219761f926d")
 	)
 	(label "+12V_FAN"
 		(at 88.9 396.24 0)
@@ -32923,7 +33111,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "dd109369-25ad-44aa-9052-fe89d163fe9d")
+		(uuid "8dac3c28-93c0-4f23-a6fd-06e13238d4df")
 	)
 	(symbol
 		(lib_id "Device:C")
@@ -32935,7 +33123,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "12fc8fe1-f5fd-4157-b827-b9781a88552f")
+		(uuid "3f7b2b76-e466-4e81-9e34-5d43683063e8")
 		(property "Reference" "C38"
 			(at 88.265 398.78 0)
 			(show_name no)
@@ -32992,10 +33180,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "6a77bff9-58f2-4f99-a1b3-05eb00336db3")
+			(uuid "635542f3-a3f4-4888-aafb-9643ab459023")
 		)
 		(pin "2"
-			(uuid "1b880163-0f8d-47d8-bddf-48b791d1038d")
+			(uuid "21c5f4f3-5924-4022-af54-15a3e1d94ea3")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -33016,7 +33204,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "42e84637-f3a4-493a-8001-cb7cb481b72c")
+		(uuid "604d92fe-864d-4052-b34c-69d5a2d7c999")
 		(property "Reference" "#PWR211"
 			(at 86.36 407.67 0)
 			(hide yes)
@@ -33072,7 +33260,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "331cd402-9ffe-405a-8611-457beb2c99dc")
+			(uuid "17abc0e5-b374-4e3b-abd0-58df27ab3c49")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -33093,7 +33281,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "9cb81a55-04a0-43ca-b6c6-f8fbbbe55faf")
+		(uuid "926f3e0d-ab78-41b1-94c7-7e13f328c4bf")
 		(property "Reference" "J23"
 			(at 107.95 392.43 0)
 			(show_name no)
@@ -33148,10 +33336,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "2ef085f9-551b-4043-90a7-dd5921961220")
+			(uuid "3583ff75-51af-428b-ba98-65a682086125")
 		)
 		(pin "2"
-			(uuid "3de4585c-3c4e-4dd0-8a54-579167148571")
+			(uuid "7272bdde-69f7-4b76-baa1-ace56b9622e6")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -33170,7 +33358,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "eb295925-1bcc-41f8-8b75-8dc2f398e2f8")
+		(uuid "ffd512f4-5b2c-4ab5-b83b-2a511b3cc761")
 	)
 	(wire
 		(pts
@@ -33180,7 +33368,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "e0a66fab-6bc0-446c-8ee8-96d6545d78ff")
+		(uuid "fbce5239-7ed8-4d86-9e21-b160c8214670")
 	)
 	(symbol
 		(lib_id "power:GND")
@@ -33192,7 +33380,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "27c7b80c-740c-468c-860a-0cca813e14b0")
+		(uuid "fafd042b-4f0e-464b-85ce-583203cf003c")
 		(property "Reference" "#PWR212"
 			(at 96.52 405.13 0)
 			(hide yes)
@@ -33248,7 +33436,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "eb4877d0-6cce-47f3-b9e6-7d199bea222f")
+			(uuid "627a9067-ec4c-4c46-a102-7067b4a8bf91")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -33259,16 +33447,147 @@
 			)
 		)
 	)
-	(text "Cooling fan supply. U24 makes 12 V from VBUS_PD (15 V) for a 2-wire 12 V DC fan on J23, 200 mA maximum.\nThe fan supply does not use the +12V rail of the laser drivers. With a 5 V-only charger the fan does not run."
+	(symbol
+		(lib_id "Device:D")
+		(at 71.12 386.08 0)
+		(unit 1)
+		(body_style 1)
 		(exclude_from_sim no)
-		(at 45.72 383.54 0)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "38a24d45-5bbd-4d51-a856-7b6226f297ea")
+		(property "Reference" "D7"
+			(at 71.12 382.27 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "1N4148W"
+			(at 71.12 383.54 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Diode_SMD:D_SOD-123"
+			(at 71.12 386.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 71.12 386.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Reverse protection of U24: cathode on VBUS_PD, anode on +12V_FAN"
+			(at 71.12 386.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "7526ee53-915a-45a4-b91e-66d97826674e")
+		)
+		(pin "2"
+			(uuid "c8663670-563d-43a3-98fa-28ce0947dd51")
+		)
+		(instances
+			(project "PiEBV_Pico"
+				(path "/e63e39d7-6ac0-4ffd-8aa3-1841a4541b55"
+					(reference "D7")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 67.31 386.08) (xy 60.96 386.08)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7255945a-5602-4d7e-b05d-cddef1692894")
+	)
+	(wire
+		(pts
+			(xy 60.96 386.08) (xy 60.96 396.24)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "045ff1fe-84b3-4654-9202-c302ed1c986e")
+	)
+	(junction
+		(at 60.96 396.24)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "5822ffb9-e4e8-4c4c-b87a-ac738549ef95")
+	)
+	(wire
+		(pts
+			(xy 74.93 386.08) (xy 81.28 386.08)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "470ea363-ef7b-4352-928c-13ec7c6e018c")
+	)
+	(wire
+		(pts
+			(xy 81.28 386.08) (xy 81.28 396.24)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "227bf956-5a74-4876-9c27-5e68e9686a62")
+	)
+	(junction
+		(at 81.28 396.24)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "ca268aed-e1da-4dc3-acc7-a6a556820cbe")
+	)
+	(text "Cooling fan supply. U24 makes 12 V from VBUS_PD (15 V) for a 2-wire 12 V DC fan on J23, 200 mA maximum.\nThe fan supply does not use the +12V rail of the laser drivers. With a 5 V-only charger the fan does not run.\nJ23 is not a jumper: do not fit a shunt."
+		(exclude_from_sim no)
+		(at 45.72 375.92 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left bottom)
 		)
-		(uuid "258ea41c-04ee-4287-bf6f-6ea3780a79f9")
+		(uuid "7e1f1040-cbe4-4373-a478-510fee9d26f2")
 	)
 	(symbol
 		(lib_id "Connector:Conn_01x02_Pin")
@@ -33280,7 +33599,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "0f0f76a5-5792-4662-af7a-b92abe638807")
+		(uuid "e4ae3503-cede-4a19-a699-b30df5618359")
 		(property "Reference" "J22"
 			(at 24.384 360.934 0)
 			(show_name no)
@@ -33335,10 +33654,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "c959c02c-3541-4d33-a0cd-265395f3fc9b")
+			(uuid "89de09d1-e973-4ee5-a7a7-382a4ae52006")
 		)
 		(pin "2"
-			(uuid "d3c991be-58f8-4b9d-962b-4246d9dd6054")
+			(uuid "c0f848c6-dbf2-434a-be97-2cb21569fa3a")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -33357,7 +33676,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "9396ed06-3784-4a61-b620-b7a830fe7fd1")
+		(uuid "d308d27f-356b-4591-8835-17cc5279b819")
 	)
 	(symbol
 		(lib_id "power:GND")
@@ -33369,7 +33688,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "1f80baec-3d33-47fe-b782-9a0c8bea520e")
+		(uuid "39773236-ae8e-4f19-9d5c-0cd8beae1f4d")
 		(property "Reference" "#PWR213"
 			(at 38.1 367.03 0)
 			(hide yes)
@@ -33425,7 +33744,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "84ad5429-3adb-4baa-ba78-d767cc925c6b")
+			(uuid "134eb93e-b640-4c31-a30f-a7ee775264f1")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -33444,7 +33763,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "2ba45a00-e40f-4fba-aee2-b6314826c989")
+		(uuid "45e43622-76d4-450b-ace0-9e424718c262")
 	)
 	(wire
 		(pts
@@ -33454,7 +33773,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "bdfa68fe-5201-4429-b775-fbffec532986")
+		(uuid "a7b6e7f4-785f-4641-a434-a566cb848304")
 	)
 	(wire
 		(pts
@@ -33464,7 +33783,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "1f2c1ac0-2b95-4cf3-a72a-52d43ba432c2")
+		(uuid "90551ad4-eaef-43cd-b36a-8622bb71f468")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -33476,7 +33795,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "2d503d45-c7f0-499c-afc5-3731fd3fe7df")
+		(uuid "dbbd47a9-5594-44cd-95fd-e395787bd684")
 		(property "Reference" "R35"
 			(at 43.18 368.3 90)
 			(show_name no)
@@ -33531,10 +33850,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "0d3d6691-fde7-43c3-bf6d-c5c85026fc85")
+			(uuid "afac6559-8cda-4a1c-88bd-4f01a4e3627b")
 		)
 		(pin "2"
-			(uuid "8ac232e2-ac22-4e79-a87b-69e758512e19")
+			(uuid "1da20d62-5948-4ea6-8e88-e3dd423edafd")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -33553,7 +33872,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "c7f7383b-99e5-4e7d-8ac5-e6d629b665d7")
+		(uuid "8f5a10de-b8dd-4f81-a958-528eb5ed4106")
 	)
 	(wire
 		(pts
@@ -33563,13 +33882,13 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "2bd9ec79-fbf5-42fb-ad68-0ccfbbaf9ca5")
+		(uuid "7c7d1438-3e9d-4021-8ee6-30c962a4d425")
 	)
 	(junction
 		(at 50.8 370.84)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "5d1f1ab3-f1aa-4031-943a-930e2164565e")
+		(uuid "88e6293f-8fe2-4b95-a13d-7a78c2cf05e8")
 	)
 	(label "VCAM_SEL"
 		(at 58.42 370.84 0)
@@ -33579,7 +33898,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "5f2a5e11-95ef-465f-9363-c4347315d6b1")
+		(uuid "ab092a4d-00e8-4788-991a-27cf1d05cfff")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -33591,7 +33910,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "8262cc8d-3477-4c93-b6bb-138c01348dd6")
+		(uuid "d1c17b57-02df-49f0-996b-2736ebdcdc78")
 		(property "Reference" "R34"
 			(at 52.07 367.665 0)
 			(show_name no)
@@ -33648,10 +33967,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "7c670b59-9a5f-4f0a-ae10-acd156af4820")
+			(uuid "bc01e50d-9cb3-45b7-a8e4-7bcf9771e8d7")
 		)
 		(pin "2"
-			(uuid "3b4603ff-9282-43f1-ac48-54143d73be0d")
+			(uuid "f0f42a33-c2dd-4941-b407-c57250dc2bc0")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -33672,7 +33991,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "030e85a5-6a5c-4646-aed0-32b88e3542fe")
+		(uuid "0b827118-0166-4990-a4fd-f20b1893823c")
 		(property "Reference" "#PWR214"
 			(at 50.8 369.57 0)
 			(hide yes)
@@ -33728,7 +34047,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "fc319d61-e274-400b-acd1-c1dad2115a13")
+			(uuid "01d87676-cfbd-411f-afac-705dd41f1850")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -33743,7 +34062,7 @@
 		(at 55.88 370.84)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "bbab9d69-fc91-4bfb-9b9c-06c01a4bbac3")
+		(uuid "38feab8d-b2dc-4daa-80d9-19dca46f0edf")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -33755,7 +34074,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "bc22cd7c-82cc-484f-a4a3-6bce85d42485")
+		(uuid "2a8c5a2b-0dc7-4683-bd6f-58127b285064")
 		(property "Reference" "R70"
 			(at 57.15 367.665 0)
 			(show_name no)
@@ -33812,10 +34131,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "6c3a3e6d-a5f3-48b3-a07f-120251f82243")
+			(uuid "4d3e1e76-42e5-4b88-b3b9-2624f8cedeef")
 		)
 		(pin "2"
-			(uuid "d58b4e63-3e69-4f35-97eb-8ce00aa45c67")
+			(uuid "48dfbfb5-9918-4ce3-b055-1beda6b4d6d8")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -33836,7 +34155,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "527984c3-b7ba-40ab-8458-13c074e7cb2a")
+		(uuid "eb496a50-9c32-4de2-a0c7-0ea782b8c6fd")
 		(property "Reference" "#PWR215"
 			(at 55.88 369.57 0)
 			(hide yes)
@@ -33892,7 +34211,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "5ffca540-d22e-485a-87e1-6ae60d94b63c")
+			(uuid "6ff5971e-e86c-4425-89a1-0ed4cb98a55b")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -33912,7 +34231,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "a81e6285-806f-40d3-919c-7d1f82a17ee6")
+		(uuid "ebac3d52-b79c-4e5e-a7d6-ce42809475ca")
 	)
 	(symbol
 		(lib_id "Transistor_FET:2N7002")
@@ -33924,7 +34243,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "c29294b5-5e5b-437a-9bb1-235bd52c3c43")
+		(uuid "650cea53-d89e-437f-8fff-ec7d43d76bc4")
 		(property "Reference" "Q1"
 			(at 165.1 351.79 0)
 			(show_name no)
@@ -33981,13 +34300,13 @@
 			)
 		)
 		(pin "1"
-			(uuid "c208676f-0d24-4783-8d99-3dd4a5567dfb")
+			(uuid "71106185-8196-4100-a035-0a5c9dc61a94")
 		)
 		(pin "2"
-			(uuid "223ac660-4c26-4d3a-b39b-0ca90d205d06")
+			(uuid "c2f6a8dc-e84c-47c6-9134-039b896a1186")
 		)
 		(pin "3"
-			(uuid "e1ee891e-e098-460b-bc6f-2c84bd13099f")
+			(uuid "e8963c0e-0ea2-4dc9-bea5-8695f8669b0c")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -34006,7 +34325,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "b634021f-a3ca-4d9e-927c-4682ebab119a")
+		(uuid "774a2476-c6ff-464b-b7be-58ad7d59e4fa")
 	)
 	(label "LASER_PWR_OK"
 		(at 149.86 353.06 180)
@@ -34016,7 +34335,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "60a10d17-1b01-4e9b-bcd0-38f71e85b1fc")
+		(uuid "bf030640-87f0-4983-ac32-62863558bbcc")
 	)
 	(symbol
 		(lib_id "power:GND")
@@ -34028,7 +34347,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "4343caa7-a21b-41ac-ae19-6720307c632f")
+		(uuid "1398b43c-f902-47a5-b2c8-6a3df6b08b1e")
 		(property "Reference" "#PWR216"
 			(at 162.56 361.95 0)
 			(hide yes)
@@ -34084,7 +34403,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "62aa720c-496a-42bb-9fae-dad4c4ae3510")
+			(uuid "75382822-d3d0-4737-8aa8-eef9c73bc0b5")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -34105,7 +34424,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "3c4e6724-f499-4afe-b3a7-918e4b624c6b")
+		(uuid "b265b16b-fff1-450c-9377-7ecf1f569940")
 		(property "Reference" "#PWR217"
 			(at 139.7 346.71 0)
 			(hide yes)
@@ -34161,7 +34480,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "e38ea09e-562a-4d12-bb48-dd90f60b1103")
+			(uuid "ea86010b-7732-41b1-90ef-6e07648ab4f9")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -34180,7 +34499,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "4411d5e7-27d5-4f3e-b309-d8dcbb0e62c1")
+		(uuid "f3103136-5677-455d-88b4-4bba6b532feb")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -34192,7 +34511,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "16d16d98-cc40-4e85-91c5-8f7cc2da6fb6")
+		(uuid "6707a935-f8f2-41d3-9acb-a30f8c879c98")
 		(property "Reference" "R36"
 			(at 144.78 340.36 90)
 			(show_name no)
@@ -34247,10 +34566,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "1db709d4-9cc5-44e2-83cb-f0788dc9a3cc")
+			(uuid "87b907e1-2658-4ad5-9365-7fa0a2db61aa")
 		)
 		(pin "2"
-			(uuid "1cebd761-5ffd-412d-86dd-13aeb52cbf79")
+			(uuid "0a5affaa-d3df-48ff-9dda-02d3c5b69477")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -34271,7 +34590,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "691c25a7-1893-4bee-9354-a20c9307e116")
+		(uuid "46b9a68b-8d77-4512-b360-52732461d961")
 		(property "Reference" "D2"
 			(at 151.13 339.09 0)
 			(show_name no)
@@ -34326,10 +34645,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "78bd8c91-9801-45cb-a83c-f74823e0c357")
+			(uuid "85b0af9a-07d5-4196-8df1-77374848a8bb")
 		)
 		(pin "2"
-			(uuid "21c945b8-1aa1-43c2-8985-49ec95266a05")
+			(uuid "bb9e645e-9f73-4f19-85b4-ce5164322347")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -34348,7 +34667,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "20db15d1-6a77-43b4-8849-c9df14f312da")
+		(uuid "5b8e04b9-81e7-415d-b9e2-87036ef4bd51")
 	)
 	(wire
 		(pts
@@ -34358,7 +34677,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "59e12f60-3a47-46b0-a22a-b986d0d9520f")
+		(uuid "630fe75a-3397-4cbb-baa4-800ec0113633")
 	)
 	(symbol
 		(lib_id "Transistor_FET:2N7002")
@@ -34370,7 +34689,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "48283f83-786a-46fb-975c-bcbf13d818da")
+		(uuid "d0fbb119-b738-4c40-a3a0-311e8bbbf471")
 		(property "Reference" "Q2"
 			(at 185.42 336.55 0)
 			(show_name no)
@@ -34427,13 +34746,13 @@
 			)
 		)
 		(pin "1"
-			(uuid "ea53742d-0927-4e70-a186-0e296340ae3c")
+			(uuid "92eeef84-ae3e-4b8c-af5d-0d189aaa1001")
 		)
 		(pin "2"
-			(uuid "b1b5e154-8454-4baa-a6ec-9f6d4026c02b")
+			(uuid "c533a5fe-2b8f-47a2-9a27-e10d4c8a4b57")
 		)
 		(pin "3"
-			(uuid "7b240a3e-d48e-4bef-84cf-a5a23626d872")
+			(uuid "98d867a6-9ef9-46cc-9df8-7a0b3656fb9d")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -34452,7 +34771,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "0092e5c9-183b-4792-8152-fcf9c27b09ea")
+		(uuid "aadc5776-0eee-4de2-bf95-d61468b3ec15")
 	)
 	(wire
 		(pts
@@ -34462,13 +34781,13 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "02369eed-30ab-4697-8549-376f7c7c4dca")
+		(uuid "c93bce6b-545b-4b41-9c01-a6a3740ec15b")
 	)
 	(junction
 		(at 162.56 347.98)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "255c02cb-7efe-4879-bf43-af77a06b744f")
+		(uuid "45102de2-50bb-4090-91b9-21388d01e130")
 	)
 	(wire
 		(pts
@@ -34478,7 +34797,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "3c052e82-1c3f-4f75-8567-d8dc91b78013")
+		(uuid "51500e2e-28c3-4d70-9008-6a1a37e277fb")
 	)
 	(wire
 		(pts
@@ -34488,13 +34807,13 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "cfd5cb7f-2bda-4989-bb63-3c9f2e41e679")
+		(uuid "683829c9-cefc-47ce-9140-ff112a3a3bb9")
 	)
 	(junction
 		(at 170.18 337.82)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "0baa14de-4812-4e2d-9f87-ce2c5c3a585a")
+		(uuid "53aeb278-9a60-4d5b-8579-f440cec38d84")
 	)
 	(label "ARMED_LED"
 		(at 167.64 337.82 180)
@@ -34504,7 +34823,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "397fbe44-a0c0-43cd-a9fa-b77fdcb6e52f")
+		(uuid "43316771-c3d9-44bf-b8d3-cf2d1a245957")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -34516,7 +34835,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "65764f97-2b58-4abd-b5d3-9128023a0c87")
+		(uuid "924cc96a-4ad6-45d8-8ce3-3d7d88afbd29")
 		(property "Reference" "R38"
 			(at 171.45 339.725 0)
 			(show_name no)
@@ -34573,10 +34892,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "d57ec3c8-74ec-4265-b25d-8491c8f01b33")
+			(uuid "ff4919f7-373c-429c-b6bf-b80218ceec11")
 		)
 		(pin "2"
-			(uuid "62d7c1e5-637e-4301-82f6-74ee98b7222e")
+			(uuid "f5ed5f08-7c68-41cd-92af-2a6f4da16093")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -34597,7 +34916,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "cb38dc13-29cf-4493-835e-8643dec4c52d")
+		(uuid "6acf01e5-3611-436c-b8b2-218d68a5bd70")
 		(property "Reference" "#PWR218"
 			(at 170.18 346.71 0)
 			(hide yes)
@@ -34653,7 +34972,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "1edf4a24-0e86-4282-8e7b-2655e175f4fc")
+			(uuid "2b786cdd-5068-4c4c-84ac-85660d0ed354")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -34672,7 +34991,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "cf1f9d1d-fc4d-4567-82d1-3395f09a24bb")
+		(uuid "5cb65419-2441-446f-83ce-36a40b9dcd48")
 	)
 	(wire
 		(pts
@@ -34682,7 +35001,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "b8a23218-adb9-4f8b-8751-e8f654bf45af")
+		(uuid "8b0f30a2-8a01-40d1-ba83-7cb5e7381098")
 	)
 	(symbol
 		(lib_id "Device:LED")
@@ -34694,7 +35013,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "13718226-e868-45f0-bd4e-fd3ca6a68320")
+		(uuid "6e335731-2bb0-4c2b-87d1-9f957a6fefaa")
 		(property "Reference" "D3"
 			(at 176.53 323.85 0)
 			(show_name no)
@@ -34749,10 +35068,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "64717d51-63bd-46ec-9cd5-8b8151535d9b")
+			(uuid "b730b811-2e61-4393-b981-0f8dc941d754")
 		)
 		(pin "2"
-			(uuid "77adac7b-a02e-4f6a-90a3-ffe00948bf57")
+			(uuid "be515ba0-b54b-4992-a872-ef0e33674fda")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -34773,7 +35092,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "77d7a10d-c097-401b-91f6-bc211a2ab3d9")
+		(uuid "df205cca-f07a-454f-bc75-08d5f76e92f8")
 		(property "Reference" "R37"
 			(at 170.18 325.12 90)
 			(show_name no)
@@ -34828,10 +35147,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "cbd3855e-ecd6-4dd3-a174-7b46b0e22788")
+			(uuid "02ca3b25-33b8-4f1f-b492-381ed4fd9795")
 		)
 		(pin "2"
-			(uuid "0e58fb84-6ce2-495f-b452-1581099b766f")
+			(uuid "6aa1e307-37a8-466f-9464-2e945de9b47c")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -34850,7 +35169,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "09a96caf-8433-4e02-9570-72a3c9cf48a3")
+		(uuid "b0de1a74-d1d5-4167-a428-a9e1c7ded266")
 	)
 	(label "LASER_EN"
 		(at 165.1 327.66 180)
@@ -34860,7 +35179,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "c57f6887-552c-4a44-98d2-02e08018d76f")
+		(uuid "99b1fee3-918b-4f63-8fdd-0bc43e7b29dd")
 	)
 	(text "Status LEDs. D2 (green): +12 V in its window (LASER_PWR_OK).\nD3 (red) ARMED: current flows LASER_EN -> D3 -> Q2 -> Q1, so D3 is lit only if\nJ11 is closed (LASER_EN), the firmware is ARMED (GP17 high) and +12 V is good."
 		(exclude_from_sim no)
@@ -34871,7 +35190,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "2e0306a7-a65a-4afc-bee3-3f2b942cc9e2")
+		(uuid "701b5f6b-df35-4c7e-bc76-3a18dc9c133f")
 	)
 	(symbol
 		(lib_id "74xGxx:74LVC1G123")
@@ -34883,7 +35202,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "60ff0818-0788-4c8f-acd5-29e569a4c5a3")
+		(uuid "a536ad13-8ae3-413f-a21b-a114fa2805c1")
 		(property "Reference" "U21"
 			(at 274.32 336.296 0)
 			(show_name no)
@@ -34940,22 +35259,22 @@
 			)
 		)
 		(pin "1"
-			(uuid "8feea0ca-ffec-4d56-9203-feaa1487a7e5")
+			(uuid "aead4e50-386a-48ed-9641-af66771f056e")
 		)
 		(pin "2"
-			(uuid "62c98208-c3a4-4d41-8188-90b40eab429a")
+			(uuid "d6010845-041e-4913-ad2b-9fe74f1b9877")
 		)
 		(pin "3"
-			(uuid "8fc8f733-c01a-42b8-9bed-35f75dc1656b")
+			(uuid "b82990ff-9a6f-447c-9d0d-4621e7b9e22a")
 		)
 		(pin "5"
-			(uuid "1d843f5a-9671-48e1-b575-2895e3a94b1f")
+			(uuid "c7d30004-225a-48c8-b138-f3717d0f8a6a")
 		)
 		(pin "6"
-			(uuid "3d2156cd-de15-4464-b35c-a6a9b345ad79")
+			(uuid "8ee203c5-a9ba-43b5-aa92-1ffc15f29542")
 		)
 		(pin "7"
-			(uuid "2b725d41-d0a5-43d0-ba10-70907b21d91f")
+			(uuid "dd5140e1-bc3b-436a-90e6-79279f66efe7")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -34974,7 +35293,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "0b8a2345-4304-474b-97ec-cd319705305d")
+		(uuid "6326601b-0e83-40e6-8ebe-c242e145db38")
 	)
 	(wire
 		(pts
@@ -34984,13 +35303,13 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "f64947c0-3a3c-4225-8408-3dd1012830a6")
+		(uuid "cb46dfba-2303-4735-9cb0-612d839b6e74")
 	)
 	(junction
 		(at 261.62 340.36)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "8c5c1a50-5fdb-4cf6-998d-c391acc21378")
+		(uuid "7f404086-7a42-4307-877d-2caee915bb6f")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -35002,7 +35321,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "20b49556-666a-4da3-9eda-079e5f289042")
+		(uuid "7c2117f5-aa23-4d5b-83e4-2a5594168968")
 		(property "Reference" "R41"
 			(at 262.89 337.185 0)
 			(show_name no)
@@ -35059,10 +35378,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "5e4a81f7-a415-4bbd-b223-8ab9807b54b9")
+			(uuid "97c23c20-e0b4-4a91-ad5e-e13e641b22ce")
 		)
 		(pin "2"
-			(uuid "32ae1510-e564-4125-8c66-51f13e4bc1ea")
+			(uuid "1bd3226a-ba2f-4263-a7d9-1296beef8ad9")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -35083,7 +35402,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "39ce5fc9-1a5c-4108-95a4-7f5ca5c2b106")
+		(uuid "6d174f99-71d9-472b-8a19-6237b66af4d9")
 		(property "Reference" "#PWR219"
 			(at 261.62 339.09 0)
 			(hide yes)
@@ -35139,7 +35458,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "ef3ab10c-bd51-4707-9f73-7cc83f65b32c")
+			(uuid "e97e0fcd-ccc4-464b-a9ee-63e8be65911a")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -35160,7 +35479,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "47dbc2f8-68f7-433d-a416-8596ecf0ae32")
+		(uuid "a759600e-157b-4e92-859f-f8c5089013b9")
 		(property "Reference" "C25"
 			(at 254.635 342.9 0)
 			(show_name no)
@@ -35217,10 +35536,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "f9dd044b-ca17-49eb-85ae-51a48b334c19")
+			(uuid "7ea5947b-7503-46b2-a932-748476ae2dae")
 		)
 		(pin "2"
-			(uuid "01503d30-897d-4138-9b34-fe84b508e138")
+			(uuid "378c84eb-0f67-4f6f-91fa-ae8094524af5")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -35239,7 +35558,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "3558d894-0085-427e-bf0c-aa5f77bbcde6")
+		(uuid "3a906fc1-6585-443b-a24c-6baabe0f72ea")
 	)
 	(wire
 		(pts
@@ -35249,7 +35568,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "15149c38-e6bf-43c8-8cad-57244592fa63")
+		(uuid "c6928fe3-54bf-4917-9ba0-82b06bbcbf3b")
 	)
 	(wire
 		(pts
@@ -35259,7 +35578,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "60271574-e85d-476d-a312-5e64d29bf7a1")
+		(uuid "9faaacc3-c598-4f27-9b9e-0ce7eb0c5bca")
 	)
 	(global_label "GND"
 		(shape bidirectional)
@@ -35270,7 +35589,7 @@
 			)
 			(justify right)
 		)
-		(uuid "bf742231-43fa-4c3f-a9a0-0986b61c5c5a")
+		(uuid "c2fc55f6-98d8-4f1d-8ecf-383b3c473703")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
 			(at 269.24 347.98 0)
 			(hide yes)
@@ -35291,7 +35610,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "997e6521-8006-4a15-a43a-543e6c7bfe94")
+		(uuid "9cf99e6a-d7db-48d9-9108-093697a6c4fd")
 	)
 	(wire
 		(pts
@@ -35301,7 +35620,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "c63e8c66-f461-4110-ade7-309079247a71")
+		(uuid "d615d0f9-a709-4f07-8a52-11312deb3274")
 	)
 	(wire
 		(pts
@@ -35311,7 +35630,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "d4eaa6a3-74d8-46aa-84a6-844f2076a3f4")
+		(uuid "8900b19d-9f47-4dba-8649-cdcd4c91ddbb")
 	)
 	(wire
 		(pts
@@ -35321,25 +35640,25 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "bbd3ac39-17b0-4164-9a89-e875601059fe")
+		(uuid "fa89d359-34da-4948-85a6-5a621dc948f6")
 	)
 	(junction
 		(at 251.46 350.52)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "b50e903d-6b97-448b-bedf-6a0db6bdd2ea")
+		(uuid "d2c5e54f-a26b-45d2-b8a7-60b5a366f3d5")
 	)
 	(junction
 		(at 259.08 350.52)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "ccc6020b-127b-4d34-a869-6e2c9a4eb5be")
+		(uuid "517b694c-fd5e-4bfd-81d3-91562c96398e")
 	)
 	(junction
 		(at 250.19 350.52)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "a4871bb2-b65f-4615-8133-52a1b12142cd")
+		(uuid "e6da0c2d-ba20-49d2-bc5b-965bfa3669bb")
 	)
 	(label "CH1_SENSE"
 		(at 260.35 350.52 0)
@@ -35349,7 +35668,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "5209e15a-cbea-4bcd-aa57-9a4dfecedf47")
+		(uuid "406e5be4-381a-4a9c-a3d2-f7ea5648ae6c")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -35361,7 +35680,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "499df175-b017-4df9-adc7-b75713e66d1c")
+		(uuid "6f5af4be-5623-4fab-bf73-56ae6ccf497f")
 		(property "Reference" "R40"
 			(at 252.73 352.425 0)
 			(show_name no)
@@ -35418,10 +35737,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "90c78990-cd34-4a3b-8587-8c4f70442bb7")
+			(uuid "ea2376e2-4980-4611-81a7-33b87e73f001")
 		)
 		(pin "2"
-			(uuid "ecc892ed-4e7e-4a91-9fb6-d979c3adfed0")
+			(uuid "5836067e-c88c-450b-8c00-f29b53e8ca43")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -35442,7 +35761,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "6ae91da3-7efe-4842-9631-1e49d3907d23")
+		(uuid "aa8d5362-7651-4fae-95ce-4e90cc288e97")
 		(property "Reference" "#PWR220"
 			(at 251.46 359.41 0)
 			(hide yes)
@@ -35498,7 +35817,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "5246f952-cc2d-4d1d-99fe-4cc0e69d9b98")
+			(uuid "3e1274aa-ce10-4a23-936a-403b4bbc4761")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -35519,7 +35838,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "7f4848ae-cb63-4b43-ac02-e6951c1a379e")
+		(uuid "2e988601-5f2c-48b6-be36-bb5ca3b6182a")
 		(property "Reference" "R39"
 			(at 246.38 347.98 90)
 			(show_name no)
@@ -35574,10 +35893,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "e31bf900-a215-4309-b28e-c9bd5f299b98")
+			(uuid "d6adaf52-3c3c-414c-a85b-fee1d051adfc")
 		)
 		(pin "2"
-			(uuid "f02d8e03-ea15-4c11-89e1-f58a042016c1")
+			(uuid "892d30ae-b4cb-4973-b69b-dfcc560f1141")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -35596,7 +35915,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "7ca20162-43bf-4c08-8975-dffedc0b1626")
+		(uuid "1c9a2fac-0c5a-4ad3-ab00-977e55f8eb6d")
 	)
 	(wire
 		(pts
@@ -35606,13 +35925,13 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "d7bc4c79-ca14-40ba-8d05-e7ed9a7fcad9")
+		(uuid "007ea3a4-27aa-420d-87d1-f173d3c46b6f")
 	)
 	(junction
 		(at 242.57 350.52)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "b89d0782-fdac-44b2-b6e6-b3124cb6c5c1")
+		(uuid "545da6d4-0eca-49bd-9c79-f0a0a7d6db21")
 	)
 	(label "CH1_DRIVE_RAW"
 		(at 241.3 350.52 180)
@@ -35622,7 +35941,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "4fbd8205-8732-49b3-8514-45738c5610c4")
+		(uuid "f54844c2-d1a3-4b77-a47f-a723b5965c81")
 	)
 	(symbol
 		(lib_id "Device:C")
@@ -35634,7 +35953,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "7013cd20-41f6-4e40-9b7e-99584c97c171")
+		(uuid "f88959ac-c481-417c-bf55-64fba4b4b2bb")
 		(property "Reference" "C31"
 			(at 246.38 340.868 90)
 			(show_name no)
@@ -35689,10 +36008,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "576ef171-0ff5-4c50-92d8-756a11e4f232")
+			(uuid "9faf6e63-237a-4c74-b771-1f1c54689527")
 		)
 		(pin "2"
-			(uuid "024b7dfa-62fb-4cc1-bb9b-2172e47b8b2b")
+			(uuid "c0b2989c-76bf-4b02-8419-03c9258befb8")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -35711,7 +36030,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "e9689fe0-8639-40a7-bf22-caff63277ccc")
+		(uuid "0dec3000-7330-44bc-b828-a89a8fb9c8a2")
 	)
 	(wire
 		(pts
@@ -35721,7 +36040,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "4a12bd47-b92f-426c-9de2-09aebc80dbe8")
+		(uuid "33c466b9-03eb-490e-805e-6219f7840546")
 	)
 	(symbol
 		(lib_id "Device:C")
@@ -35733,7 +36052,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "e6344c66-2ccc-4a9f-a219-76b8ca940252")
+		(uuid "f3894c11-e44c-4f18-b9e4-ca3f998a7990")
 		(property "Reference" "C32"
 			(at 260.985 353.06 0)
 			(show_name no)
@@ -35790,10 +36109,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "f60d7c29-d74b-4ded-abf7-c708d778b143")
+			(uuid "4e3de463-40cd-4620-a4d6-ec31f2c7fbed")
 		)
 		(pin "2"
-			(uuid "8d0b5295-ac35-49a4-996c-d2063158971a")
+			(uuid "980dbdc8-7ec4-49c0-b426-febc376b7e5a")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -35814,7 +36133,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "08d3b337-168f-4252-aab4-ad464fb49b2a")
+		(uuid "974c5f0c-3f86-41a2-80c9-6742ec9b05ff")
 		(property "Reference" "#PWR221"
 			(at 259.08 361.95 0)
 			(hide yes)
@@ -35870,7 +36189,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "0c151deb-6b82-4b4f-996c-77d90b2d7ffc")
+			(uuid "ba157adb-1fbd-4b60-963b-b0fca6a5175b")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -35891,7 +36210,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "cb0d4ca3-4fad-46cc-a98a-2817d6885d18")
+		(uuid "0f86e7c7-ff85-41b4-96bf-4c18a3c91111")
 		(property "Reference" "#PWR222"
 			(at 281.94 361.95 0)
 			(hide yes)
@@ -35947,7 +36266,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "8ef39080-50c7-4472-af77-9ddd8e6d431e")
+			(uuid "8613af4b-81d0-4d58-bfe7-e97486c203b5")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -35966,7 +36285,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "beb7dab5-7a00-4c6c-9a01-fec9346963f3")
+		(uuid "c18b1b22-dcf0-4070-ac41-f59f0d03c273")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -35978,7 +36297,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "3ffe1fb0-c0e1-4494-b1a0-124b71eccabd")
+		(uuid "5b508532-0ab6-452a-9c6e-9ebf6cf30875")
 		(property "Reference" "R42"
 			(at 299.72 337.82 90)
 			(show_name no)
@@ -36033,10 +36352,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "de40f32e-3df2-4b3c-a571-100c97c84b6c")
+			(uuid "80a1272b-789c-4ad4-8dcd-417dbb1b0552")
 		)
 		(pin "2"
-			(uuid "b34232f2-d20c-4098-8bde-a6bdaf23598d")
+			(uuid "cebe028c-df87-4e49-a1fc-3db01212f32a")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -36057,7 +36376,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "86003634-6b08-4f22-8016-2228c3fff77d")
+		(uuid "8d85ce54-feea-4b53-9ee1-7491115fca05")
 		(property "Reference" "D4"
 			(at 306.07 336.55 0)
 			(show_name no)
@@ -36112,10 +36431,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "6127e7ec-010a-4182-b9ff-81044960305f")
+			(uuid "651cd9e0-2a9c-4cf0-bdb5-f82538959892")
 		)
 		(pin "2"
-			(uuid "1f3637c3-b653-437c-8cfe-a8946cdabfad")
+			(uuid "5dca2ca7-4a58-4c5a-8e62-cb7bb38e57e1")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -36136,7 +36455,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "546a85d8-5794-4e93-8350-5e69143f7919")
+		(uuid "fc5ce795-f166-4483-bbfa-48ad5aa5a4e5")
 		(property "Reference" "#PWR223"
 			(at 309.88 344.17 0)
 			(hide yes)
@@ -36192,7 +36511,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "96ad2b69-f591-498e-9be7-570ca380e922")
+			(uuid "7d563cd5-8f81-4e7c-9127-646d8d718343")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -36213,7 +36532,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "e3e7a747-57e2-4d20-b0f0-293afb6b218b")
+		(uuid "e0fb1b4b-9872-412a-a930-c96ae89f5bab")
 		(property "Reference" "U21"
 			(at 323.85 361.95 0)
 			(show_name no)
@@ -36270,10 +36589,10 @@
 			)
 		)
 		(pin "4"
-			(uuid "10bea9db-f6b2-4411-9a79-8434e33fb842")
+			(uuid "6a54c260-50aa-42e5-a4e7-7518c831d52f")
 		)
 		(pin "8"
-			(uuid "460e5797-5a96-4987-a859-c1336338ced3")
+			(uuid "c0bba774-b637-43e1-97da-32b4a52c879a")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -36294,7 +36613,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "61766933-5aba-45f7-8a30-283c20d5469d")
+		(uuid "d29ff690-cf2f-4c3d-b8b2-b1a9cbad7605")
 		(property "Reference" "#PWR224"
 			(at 317.5 349.25 0)
 			(hide yes)
@@ -36350,7 +36669,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "5c495a0d-d381-40e0-84fe-3bb7f57c4732")
+			(uuid "f17bc1c8-0cba-4795-82a1-7b2054f280b6")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -36371,7 +36690,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "82d9f3ba-cd90-43ce-bf06-d0c52899d793")
+		(uuid "6dc8c83e-6e84-4cfb-9809-4ee2a193102b")
 		(property "Reference" "#PWR225"
 			(at 317.5 374.65 0)
 			(hide yes)
@@ -36427,7 +36746,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "2e49e786-0206-418c-978a-3290f99a9855")
+			(uuid "fc2e73b7-2a5d-42aa-a8c1-1e4a39da18bc")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -36446,7 +36765,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "616fe314-1914-4b54-9ad5-2c24a31f637e")
+		(uuid "583f7c56-c8e0-4d2c-88ac-aed6a5e4a990")
 	)
 	(wire
 		(pts
@@ -36456,7 +36775,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "5a415322-6857-4b00-b903-2ed6082be3b2")
+		(uuid "37bdc009-6a46-4ade-870d-16e9a1176c3b")
 	)
 	(symbol
 		(lib_id "Device:C")
@@ -36468,7 +36787,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "1e418a08-724b-4d6b-8a95-eaaf335de5e4")
+		(uuid "8d001c16-95df-48e7-90ba-852051cf3cc7")
 		(property "Reference" "C26"
 			(at 329.565 350.52 0)
 			(show_name no)
@@ -36525,10 +36844,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "cf6dae24-3a3f-4345-93d3-194f5528c2ea")
+			(uuid "1fc43593-9046-4937-a8b5-5e6e39707ae4")
 		)
 		(pin "2"
-			(uuid "1cd68176-96dd-45e7-8d47-ae17f6169ac2")
+			(uuid "46ba9352-65c8-4343-add0-0a86410c727a")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -36549,7 +36868,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "b9bd67be-904d-423c-b633-bc1028a9f643")
+		(uuid "867cd46b-300a-4acf-bb2a-92f092209f73")
 		(property "Reference" "#PWR226"
 			(at 327.66 359.41 0)
 			(hide yes)
@@ -36605,7 +36924,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "9dcdc2e4-2860-456a-803d-535fd8532645")
+			(uuid "6fcfcac5-1148-404d-9143-62e20e4b8074")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -36626,7 +36945,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "b7e423b2-ae69-4deb-bfb2-da327f692696")
+		(uuid "53691ca0-e74c-4c14-ac7e-68739750b992")
 		(property "Reference" "U22"
 			(at 393.7 336.296 0)
 			(show_name no)
@@ -36683,22 +37002,22 @@
 			)
 		)
 		(pin "1"
-			(uuid "d84261c4-a82b-4e8f-99f9-dcecd7e0bcb5")
+			(uuid "574fb341-7f5e-48f4-a021-15edfd7408bf")
 		)
 		(pin "2"
-			(uuid "f25573a2-f7ac-4561-aada-116f60f82ec7")
+			(uuid "376f1d22-28ee-48cf-860e-377f98fd5f65")
 		)
 		(pin "3"
-			(uuid "483bf6e5-6abb-4efd-8c0e-6a6f72cf4e1b")
+			(uuid "235cbd92-4c4a-445a-9692-e54957a80247")
 		)
 		(pin "5"
-			(uuid "5a74761a-58a5-4884-9044-43d441a1b9e1")
+			(uuid "56524cd1-a77c-4b53-9e6e-b2f1761314dc")
 		)
 		(pin "6"
-			(uuid "3ce94ff7-6779-4bc0-b314-962907423703")
+			(uuid "b4384e86-cded-47e9-9cf3-d4d284f33347")
 		)
 		(pin "7"
-			(uuid "e3315dfb-dead-4de2-a66c-143fe997738e")
+			(uuid "246d77bb-6217-4027-8324-de262ece274c")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -36717,7 +37036,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "5d0d8c0f-4bd3-4b20-bd3e-1eacad40698a")
+		(uuid "4e87479c-c5ac-4f00-8f93-ede534f8eb9f")
 	)
 	(wire
 		(pts
@@ -36727,13 +37046,13 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "e16df64a-cd0f-4253-9f59-c33b6e4c9d37")
+		(uuid "69c9b09f-6ab3-4974-b530-cf6fc45115eb")
 	)
 	(junction
 		(at 381 340.36)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "2c008e76-de8b-4be8-aed9-1787f94befea")
+		(uuid "df695f4f-0165-486b-8d4b-2a9c9af9fb77")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -36745,7 +37064,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "409726d5-9441-4679-b039-32a37a25524f")
+		(uuid "03c0c1b7-af7d-45fb-99dc-fda4ad73df40")
 		(property "Reference" "R45"
 			(at 382.27 337.185 0)
 			(show_name no)
@@ -36802,10 +37121,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "f4922831-af73-40ca-8e81-5dddd460b77b")
+			(uuid "fef40b4b-6cd9-43ce-9c89-2f88ede7baf3")
 		)
 		(pin "2"
-			(uuid "57f30e56-a7fe-4f63-adae-7ac4d24811c3")
+			(uuid "0af7a228-63de-441f-87c6-2ecfd04b8bc0")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -36826,7 +37145,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "4e48591e-c160-4051-b93f-03efcb9cd2d2")
+		(uuid "8c7217e0-3771-42ec-b48e-d4f1ba1a0cc9")
 		(property "Reference" "#PWR227"
 			(at 381 339.09 0)
 			(hide yes)
@@ -36882,7 +37201,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "c46c1a88-a6d6-42a0-bba3-5323c42da7bd")
+			(uuid "742dfa2e-3998-4efe-a17b-a8d743e30f32")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -36903,7 +37222,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "227fe7af-cb32-4fcc-82d8-e38f85ffccb3")
+		(uuid "839d8288-3b4d-475f-a8b2-c273a0cd5f0a")
 		(property "Reference" "C27"
 			(at 374.015 342.9 0)
 			(show_name no)
@@ -36960,10 +37279,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "b232cd9f-564f-4b59-90b6-55e6c48f4b53")
+			(uuid "0f01a55c-d472-4e8b-b830-ed3e21faa6a3")
 		)
 		(pin "2"
-			(uuid "a7a1ef68-c632-49ef-8365-319d7ef9b534")
+			(uuid "3cd1a578-1133-4101-b15e-e6fc0e8b4d91")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -36982,7 +37301,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "69c67937-1e1c-45a1-b0f7-13a176376756")
+		(uuid "406ee1eb-7f78-4566-ba0d-0fad70a282d7")
 	)
 	(wire
 		(pts
@@ -36992,7 +37311,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "ef4d2d60-788f-4f98-8d5c-f43f8cc29e4c")
+		(uuid "e3ca137a-a21b-49d0-867a-cbcbb5965b13")
 	)
 	(wire
 		(pts
@@ -37002,7 +37321,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "f65d5d25-9feb-4896-a6ef-cb1195219778")
+		(uuid "5bca688d-69bf-4058-b454-67703d39f582")
 	)
 	(global_label "GND"
 		(shape bidirectional)
@@ -37013,7 +37332,7 @@
 			)
 			(justify right)
 		)
-		(uuid "4d743478-ee92-48f2-a555-2aed0c7a7701")
+		(uuid "7fdf4ee6-3b08-47a5-a9ac-1257c899eaaf")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
 			(at 388.62 347.98 0)
 			(hide yes)
@@ -37034,7 +37353,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "78845958-b0e2-43b2-8e4a-cca342efcc09")
+		(uuid "de32e358-90df-43d0-b963-47f854b119c9")
 	)
 	(wire
 		(pts
@@ -37044,7 +37363,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "3e4fd6d3-9232-4406-9c32-471055bea017")
+		(uuid "8799f51a-28a9-415c-8da9-6e573b8c62a6")
 	)
 	(wire
 		(pts
@@ -37054,7 +37373,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "ad92a9ad-48e7-4042-afc2-ae50db2935e2")
+		(uuid "c967f233-d0d0-41bd-8fc2-e3f70d4b5eda")
 	)
 	(wire
 		(pts
@@ -37064,25 +37383,25 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "e8b67cdd-eb59-4c72-8fc2-f569d980c18c")
+		(uuid "a675f4ce-b264-4a0f-b8d6-56594c519a77")
 	)
 	(junction
 		(at 370.84 350.52)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "5fb3853b-3a5c-4bf4-86ed-2217251365c6")
+		(uuid "260a9915-5b9a-4bf5-9615-f67502011a7e")
 	)
 	(junction
 		(at 378.46 350.52)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "fce72b08-d76b-44d1-a852-2b1a803b2d5f")
+		(uuid "e821330e-1ec9-4af4-9364-a6ddb7b2c669")
 	)
 	(junction
 		(at 369.57 350.52)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "4487cd60-9736-41f3-a64c-07fe017da9e8")
+		(uuid "90767204-8be9-4554-8a3a-ff82b24abb15")
 	)
 	(label "CH2_SENSE"
 		(at 379.73 350.52 0)
@@ -37092,7 +37411,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "3e7185ca-7f52-452a-9387-c9d38b88676c")
+		(uuid "32337295-e74a-491d-8d6c-1bb87d793181")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -37104,7 +37423,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "5240f03c-a61b-456b-a9dc-4de6ab533136")
+		(uuid "b00a18ba-b4c2-4117-9477-28e6b65cba9d")
 		(property "Reference" "R44"
 			(at 372.11 352.425 0)
 			(show_name no)
@@ -37161,10 +37480,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "c4036865-3707-4505-b27d-9ea9f9872206")
+			(uuid "0e1181bc-653f-4aaa-8f34-1c7efb6c5580")
 		)
 		(pin "2"
-			(uuid "72097bf3-7c47-466e-99b2-de493ac9e48f")
+			(uuid "aa730f89-bafa-4122-9ac2-422704ec89be")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -37185,7 +37504,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "c1ec07cd-d614-47d6-975b-68ed998d6de4")
+		(uuid "efd428c7-db04-471a-abab-c173dd4df762")
 		(property "Reference" "#PWR228"
 			(at 370.84 359.41 0)
 			(hide yes)
@@ -37241,7 +37560,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "16e544b8-479e-4909-8e0d-ca8167451594")
+			(uuid "8f9c2ec3-7d00-4cc0-aecd-e00cef31e2d0")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -37262,7 +37581,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "2f0f2322-7478-4da3-a011-3de1ecb33eb0")
+		(uuid "b6fb1f10-89b1-40bc-af91-9620725f66a4")
 		(property "Reference" "R43"
 			(at 365.76 347.98 90)
 			(show_name no)
@@ -37317,10 +37636,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "1e426423-9068-47fa-b1fc-07b904289c37")
+			(uuid "20432641-7dde-462b-b3de-3af94da9dd12")
 		)
 		(pin "2"
-			(uuid "30f8c498-6880-406e-b6ff-862f672c9b60")
+			(uuid "929d42ed-f487-4c08-b2a9-05d8fa54ebaa")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -37339,7 +37658,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "5155a613-b213-4a6e-850e-7e25453af72d")
+		(uuid "94f45292-d77a-42fd-8105-edac04c862b8")
 	)
 	(wire
 		(pts
@@ -37349,13 +37668,13 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "a855ea97-fbb7-4046-8c56-bffb4d92d8de")
+		(uuid "7045c118-2340-47fe-a82e-f9563d0703ae")
 	)
 	(junction
 		(at 361.95 350.52)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "ef63c2c2-626e-4f3c-bf9c-13c4384ee622")
+		(uuid "d8fa30f8-fe2a-4797-99fc-804124f7eb59")
 	)
 	(label "CH2_DRIVE_RAW"
 		(at 360.68 350.52 180)
@@ -37365,7 +37684,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "4a420f03-3ca2-4f6f-a320-64f186e1d2a8")
+		(uuid "527dba8f-c4c5-4f01-905a-bfb3eeb222fa")
 	)
 	(symbol
 		(lib_id "Device:C")
@@ -37377,7 +37696,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "937c54bd-5165-42a7-99e0-f4e604bba57d")
+		(uuid "79806d64-4f1b-4d4b-8e27-53ba4acc368f")
 		(property "Reference" "C33"
 			(at 365.76 340.868 90)
 			(show_name no)
@@ -37432,10 +37751,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "faad5a29-5ec2-4c29-93ef-02890dc4b1e5")
+			(uuid "61e8e1d4-f9b1-43f5-8dff-3a727a551440")
 		)
 		(pin "2"
-			(uuid "e683e2fb-de93-464d-b487-80c25bd8a690")
+			(uuid "8470b6f6-1a5d-4b8f-9647-a7406487a3e0")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -37454,7 +37773,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "e82e847f-93c7-496c-ac9f-a27c87e344ff")
+		(uuid "aedac39d-ba95-47bc-a7e0-ef3f02bd831e")
 	)
 	(wire
 		(pts
@@ -37464,7 +37783,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "2747b298-9e58-4ac0-8adf-09bca01c650d")
+		(uuid "5872ad0c-577b-482f-b93e-a2c0cf750056")
 	)
 	(symbol
 		(lib_id "Device:C")
@@ -37476,7 +37795,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "0bf08c6e-99a2-48f8-92d3-e7e118c99c30")
+		(uuid "18b2d294-4b79-4087-91e3-4f3d55b59fef")
 		(property "Reference" "C34"
 			(at 380.365 353.06 0)
 			(show_name no)
@@ -37533,10 +37852,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "804b497e-b100-4fc0-9b20-3e8cf4702ca1")
+			(uuid "3cc2b231-e33b-45a8-8287-bae2523ec3d9")
 		)
 		(pin "2"
-			(uuid "c6019cb6-dac4-482c-a66f-3ccfa7ddb86d")
+			(uuid "dc2effe6-72e2-46ea-9626-5fccbb37624b")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -37557,7 +37876,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "4a676206-492a-458f-9cef-50d1ff09be34")
+		(uuid "7115d141-4bf0-4e73-a6f6-c02f93b78532")
 		(property "Reference" "#PWR229"
 			(at 378.46 361.95 0)
 			(hide yes)
@@ -37613,7 +37932,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "578e2b1b-660a-468e-a60e-a8cd911764e6")
+			(uuid "be6cc071-e18c-432a-85fc-5e0749089032")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -37634,7 +37953,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "f23cbcc5-42e3-4977-8ae9-12bc08cb7dbd")
+		(uuid "d8dca3a6-adc6-45e6-a634-0161538b24a2")
 		(property "Reference" "#PWR230"
 			(at 401.32 361.95 0)
 			(hide yes)
@@ -37690,7 +38009,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "b977d37b-7099-4249-9fe1-d91e4ae3a6ec")
+			(uuid "74167aec-8e08-4166-8c6a-356bc5c461a8")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -37709,7 +38028,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "0ed815d8-15a1-4910-b563-8897fd49d9c5")
+		(uuid "fb761284-e84a-45cb-ba78-12d6837d80e8")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -37721,7 +38040,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "d02748fe-66bb-4c62-948d-07f0a520f988")
+		(uuid "dfc4803f-f969-4dd2-ba83-8a0121a7e230")
 		(property "Reference" "R46"
 			(at 419.1 337.82 90)
 			(show_name no)
@@ -37776,10 +38095,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "560166d9-2bb6-4d20-af7e-a16cfafa1418")
+			(uuid "3cac89da-5fbf-48f4-a5cb-3b15cbeaa921")
 		)
 		(pin "2"
-			(uuid "0258b2f6-ad78-4bd2-98ed-38c78731d689")
+			(uuid "1dbf465d-a230-423a-bc5b-1c12effe9c05")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -37800,7 +38119,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "476d8c5f-7908-4be7-80a7-ba3db1b52816")
+		(uuid "7747bebd-05e0-4ae7-a3f4-0cf554f2f7e5")
 		(property "Reference" "D5"
 			(at 425.45 336.55 0)
 			(show_name no)
@@ -37855,10 +38174,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "1ac36898-4c16-4a81-8a5c-3648596aec0d")
+			(uuid "df6d75a2-f471-4ccf-a1b4-b8131e869741")
 		)
 		(pin "2"
-			(uuid "f3c0fe54-fcae-4dd4-82b9-7b773233d020")
+			(uuid "35b4f409-6ca4-40c9-9470-5f6dfd0463ca")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -37879,7 +38198,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "75309b39-331d-4cf0-ba9f-2bc5ecd341b8")
+		(uuid "20b4af5d-2ea8-434c-8f51-f4fb3d686cd4")
 		(property "Reference" "#PWR231"
 			(at 429.26 344.17 0)
 			(hide yes)
@@ -37935,7 +38254,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "5b32a005-fba1-4968-8267-59cd2c5b2a04")
+			(uuid "57b4345d-91ca-444f-addd-519438f4099d")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -37956,7 +38275,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "7528ee0e-9454-4da1-ba9d-b28ee62f783e")
+		(uuid "93e8fc6d-4b59-408d-a513-2ea72baeaaf3")
 		(property "Reference" "U22"
 			(at 443.23 361.95 0)
 			(show_name no)
@@ -38013,10 +38332,10 @@
 			)
 		)
 		(pin "4"
-			(uuid "331ec10e-8ed7-49d3-b542-15ecfcac59d5")
+			(uuid "173fa839-1f4c-4f0c-98cc-b09ac2a4f376")
 		)
 		(pin "8"
-			(uuid "3d8b37af-5203-42f7-a552-10e68680dc21")
+			(uuid "92d693a7-ff1b-4e4b-a8eb-1bc5660b3355")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -38037,7 +38356,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "2412bf3c-750e-4151-92e0-397940cd2e29")
+		(uuid "8940c233-8d91-43cb-bd6e-51f5b199ee19")
 		(property "Reference" "#PWR232"
 			(at 436.88 349.25 0)
 			(hide yes)
@@ -38093,7 +38412,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "b5d58ae2-fe04-4390-b5e6-9d5584d25d55")
+			(uuid "1b04b69c-9c61-48d8-a227-6c33ad6ea235")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -38114,7 +38433,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "94d4e8b7-8b1c-486d-9999-e0f6246e7931")
+		(uuid "4a32481e-e8f2-44e1-8256-6f47c5792425")
 		(property "Reference" "#PWR233"
 			(at 436.88 374.65 0)
 			(hide yes)
@@ -38170,7 +38489,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "618e065b-d2b0-4ee9-980c-e936e868339b")
+			(uuid "8e848501-9cd9-4523-b8ce-0702bacfc15d")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -38189,7 +38508,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "7a0aaced-2877-4df1-aeb3-448ac68d28fa")
+		(uuid "f9ba149d-f0c0-4da9-a24c-c07980049505")
 	)
 	(wire
 		(pts
@@ -38199,7 +38518,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "6b74c968-5fb9-41cc-9da7-5365069c496d")
+		(uuid "c540d242-61b5-4049-bad3-3f32433f7a5e")
 	)
 	(symbol
 		(lib_id "Device:C")
@@ -38211,7 +38530,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "98f131e6-47e8-4f07-806a-b4f979444866")
+		(uuid "899ca019-753f-4bff-98ee-d7ba02eb40f7")
 		(property "Reference" "C28"
 			(at 448.945 350.52 0)
 			(show_name no)
@@ -38268,10 +38587,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "01eb29b4-c506-45f0-a0a6-f38f75961569")
+			(uuid "8ad17f9a-39e2-4757-ba08-b18b317dab51")
 		)
 		(pin "2"
-			(uuid "208d2384-dd8c-4a1d-974b-70fd482ba2ed")
+			(uuid "138f2cc3-6326-4e14-9745-ec8b0833f9ff")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -38292,7 +38611,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "78af968c-2cf5-4f5f-90db-bab40a54c7f5")
+		(uuid "4aba22f5-95cb-4742-9d74-956f01fddb7f")
 		(property "Reference" "#PWR234"
 			(at 447.04 359.41 0)
 			(hide yes)
@@ -38348,7 +38667,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "83b952e0-eef6-4e3b-aa96-5c4fcf59e8ed")
+			(uuid "6ef0ed15-e0bc-4577-bc50-c69a539bdd28")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -38369,7 +38688,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "404a7223-c1aa-46c0-81b3-8e4cd549dac8")
+		(uuid "b7b653f3-10be-48d6-b8e8-90326ad2c962")
 		(property "Reference" "U23"
 			(at 513.08 336.296 0)
 			(show_name no)
@@ -38426,22 +38745,22 @@
 			)
 		)
 		(pin "1"
-			(uuid "6a875e62-aedd-4725-b417-62bd7b31362c")
+			(uuid "0c836384-63ee-476b-b17f-6532d3154697")
 		)
 		(pin "2"
-			(uuid "2f8d7383-2ee4-426a-847c-110daab0dd0d")
+			(uuid "2baf2e19-9524-4ead-bdae-d91e0b12623b")
 		)
 		(pin "3"
-			(uuid "391a60fd-a41b-41c9-bef1-f6b379848c3b")
+			(uuid "191c3d99-b2e4-4741-9e54-1abb6f367705")
 		)
 		(pin "5"
-			(uuid "56f3154e-a876-458f-839c-b8144fd99c4b")
+			(uuid "586650e6-69e6-4766-b1be-21a6b5dd60ad")
 		)
 		(pin "6"
-			(uuid "f566c5db-7152-446a-a484-5293a40cf5c2")
+			(uuid "c3e25a33-e737-48cf-8b1c-3f23c751127c")
 		)
 		(pin "7"
-			(uuid "a72f810b-83f0-49d4-9f74-c07bf856f03f")
+			(uuid "e9445205-66f0-46a7-b680-cbea2938d256")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -38460,7 +38779,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "db6700ef-e2d0-49dd-a1f4-7a0e6241a7c0")
+		(uuid "6a9a17f3-843e-48fe-abd8-4b0cf76ab188")
 	)
 	(wire
 		(pts
@@ -38470,13 +38789,13 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "f5f7724e-be5d-421e-b825-c9110fa2a1c6")
+		(uuid "c8ac7f8b-2f5c-4549-b524-e161b21e9438")
 	)
 	(junction
 		(at 500.38 340.36)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "7e530dd8-a887-4666-9ce8-833c14b0e7d3")
+		(uuid "7a2e11e6-6b25-412a-9988-6edfe6678a8f")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -38488,7 +38807,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "00b83dfb-fdc4-4f58-97b3-c6276d0cd297")
+		(uuid "275e0526-9bbb-464b-91e6-1f2f4c6c49e1")
 		(property "Reference" "R49"
 			(at 501.65 337.185 0)
 			(show_name no)
@@ -38545,10 +38864,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "ae5674ef-8604-4f7e-a252-f6a5c8b739e8")
+			(uuid "4558dc7c-8007-41f9-b650-a642fffe2706")
 		)
 		(pin "2"
-			(uuid "16cb9452-c7ed-4b5d-93ae-b6b349417576")
+			(uuid "9d3dd77a-e215-4898-9891-d4597bb2f4b3")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -38569,7 +38888,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "4dcf09f2-123e-4439-b22d-37ce32d19c23")
+		(uuid "11c21e23-368f-49d9-88ca-311f3d6687c7")
 		(property "Reference" "#PWR235"
 			(at 500.38 339.09 0)
 			(hide yes)
@@ -38625,7 +38944,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "fb33f11a-3eee-4f95-b3ca-2070e4773139")
+			(uuid "a2c9ec89-b8df-42f2-9913-c94f7b06b92e")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -38646,7 +38965,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "6582e056-5fb0-4b1b-865e-f9e3bebe8c39")
+		(uuid "638a7f10-32f8-4e54-812d-9e833e073c5f")
 		(property "Reference" "C29"
 			(at 493.395 342.9 0)
 			(show_name no)
@@ -38703,10 +39022,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "a464e795-a8fb-4430-8d74-cfb0157f8ea9")
+			(uuid "4513bb44-4ab2-4b89-90ca-cc3928f64c55")
 		)
 		(pin "2"
-			(uuid "152977a4-a12c-44db-852e-d2e690b02e9c")
+			(uuid "af4fc1f7-8204-41ee-bbad-3662a4fcae6c")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -38725,7 +39044,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "a7d1e17f-66a8-4d70-922b-712ecae90637")
+		(uuid "afdfed5f-723f-4447-a2f7-4b1ab99457b5")
 	)
 	(wire
 		(pts
@@ -38735,7 +39054,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "357459fc-0d8e-4f1d-bcf8-796f35026a0d")
+		(uuid "d934a0f3-432e-4030-a7d6-8ada94da23db")
 	)
 	(wire
 		(pts
@@ -38745,7 +39064,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "9548d080-fb0e-4cba-932c-4aea37b667e6")
+		(uuid "1e91ce5c-c2de-4247-b1a5-9abda96cdb95")
 	)
 	(global_label "GND"
 		(shape bidirectional)
@@ -38756,7 +39075,7 @@
 			)
 			(justify right)
 		)
-		(uuid "593dea0b-b18a-46ad-92fa-975f0a4963e1")
+		(uuid "00e707bf-939b-4e21-a561-b8cd17833eea")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
 			(at 508 347.98 0)
 			(hide yes)
@@ -38777,7 +39096,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "eb091417-a1e9-4ccd-a581-bea2fd140601")
+		(uuid "5c278858-0690-4af8-ba96-e62f545e365d")
 	)
 	(wire
 		(pts
@@ -38787,7 +39106,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "d86dc423-9a62-40e5-8f11-ccdb303c1a50")
+		(uuid "7235359d-4146-4e6a-b90e-9ee9f30faf9f")
 	)
 	(wire
 		(pts
@@ -38797,7 +39116,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "b2a4edf5-6326-4434-a2b8-124989d73400")
+		(uuid "6bf16cf3-c1f0-4640-91fb-ca7d76a802dd")
 	)
 	(wire
 		(pts
@@ -38807,25 +39126,25 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "28cc11c7-f071-4180-bec0-059e99639928")
+		(uuid "fa54bc17-e511-426a-8d2c-f220a936fec5")
 	)
 	(junction
 		(at 490.22 350.52)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "08c2f3e4-006e-4b17-a701-76fcfa354268")
+		(uuid "c7320ef5-edb4-4621-9233-fa4e43e16948")
 	)
 	(junction
 		(at 497.84 350.52)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "273585ab-628b-4422-9a91-7780ef53d8e9")
+		(uuid "d593b346-6b7a-4ee6-b1d8-9151b37cb139")
 	)
 	(junction
 		(at 488.95 350.52)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "5a690516-5878-48e7-a4ca-b6acd8edef2d")
+		(uuid "bf9043ee-5719-4d77-a842-b46f13113035")
 	)
 	(label "SYNC_SENSE"
 		(at 499.11 350.52 0)
@@ -38835,7 +39154,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "fc2c36c4-3d0d-41dc-9a67-d4ceda7fbd89")
+		(uuid "0ad170fd-4680-4b46-8dc0-598ea1969bf1")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -38847,7 +39166,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "58e2db97-f02d-4fb3-9c92-52a6a79f7f6c")
+		(uuid "09d5b961-a121-4e37-bf8d-e21d57f25975")
 		(property "Reference" "R48"
 			(at 491.49 352.425 0)
 			(show_name no)
@@ -38904,10 +39223,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "3d3d2eab-cf85-4e47-95ec-07ac8ec335a3")
+			(uuid "274fff6d-59bb-4d28-b701-9b1e9c9fbf08")
 		)
 		(pin "2"
-			(uuid "a13e6a2c-8023-4ab1-a00c-1182d27ed16e")
+			(uuid "5b9835ae-5fee-42be-986a-fe260099b5e9")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -38928,7 +39247,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "4654073b-5666-4aae-85e3-703916c4827a")
+		(uuid "b84f412f-e27d-40e0-9281-922e6fdc4bfe")
 		(property "Reference" "#PWR236"
 			(at 490.22 359.41 0)
 			(hide yes)
@@ -38984,7 +39303,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "53306c94-8a84-46e2-ba6e-bcc34ff5c035")
+			(uuid "84778b4e-90ae-4a7d-88d0-4ad863c32fda")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -39005,7 +39324,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "957bc3a2-b3c4-42a2-83c7-d152206c93b1")
+		(uuid "63b0f114-87b8-4b69-ac03-957685798dcf")
 		(property "Reference" "R47"
 			(at 485.14 347.98 90)
 			(show_name no)
@@ -39060,10 +39379,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "8ed01bdc-7f48-42db-96bc-e986d83396b7")
+			(uuid "b868736f-9583-4026-9917-5b26b3768603")
 		)
 		(pin "2"
-			(uuid "61f9a57f-e473-47e3-9d05-70b4004287b8")
+			(uuid "4f00e5a1-ac2a-497d-ae05-5a85274a57d6")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -39082,7 +39401,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "1d136de3-8ec9-43d9-bdda-46089afd0982")
+		(uuid "3c5b419f-b65c-4555-b580-8c8368406bd0")
 	)
 	(wire
 		(pts
@@ -39092,13 +39411,13 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "7b4cbc46-57cb-499a-8d73-867cf0afa1f4")
+		(uuid "fa2f6358-2cd6-4a49-9902-a958cc8069c6")
 	)
 	(junction
 		(at 481.33 350.52)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "c2c3707c-c890-4631-900c-85baefb0de3e")
+		(uuid "5576a1e3-93f2-4ef9-a3ec-0dc90f761dbf")
 	)
 	(label "EXT_SYNC_DRIVE_RAW"
 		(at 480.06 350.52 180)
@@ -39108,7 +39427,7 @@
 			)
 			(justify right bottom)
 		)
-		(uuid "8cc68de3-1c52-4f61-adf1-fadfc5dfce4e")
+		(uuid "1bdbe3b0-81e1-45d0-b021-11957f683137")
 	)
 	(symbol
 		(lib_id "Device:C")
@@ -39120,7 +39439,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "bd6527f2-01d3-4fc2-ab7a-c05e9986c508")
+		(uuid "e9835d06-24cc-44b0-ad1d-933df93a94bc")
 		(property "Reference" "C35"
 			(at 485.14 340.868 90)
 			(show_name no)
@@ -39175,10 +39494,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "0cc9b746-ab41-4da5-8f71-4831599b69bc")
+			(uuid "80f94575-cdca-4ccc-a4a2-96e5bd82f5b3")
 		)
 		(pin "2"
-			(uuid "cd01be30-038a-4682-b6a0-733f5595c2c6")
+			(uuid "acaf09a6-b6b6-4960-b0bb-a599bd644283")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -39197,7 +39516,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "1f75cf24-1947-47d0-b7a6-7929b24535d9")
+		(uuid "90319e33-964c-4423-957d-229ed5d1f145")
 	)
 	(wire
 		(pts
@@ -39207,7 +39526,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "a7962bd6-5502-4706-b84e-df27b92d4c62")
+		(uuid "3364d699-c281-4329-9255-469cc36b84a6")
 	)
 	(symbol
 		(lib_id "Device:C")
@@ -39219,7 +39538,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "965a1f29-ada1-4edf-8a53-9081bdb2e9c1")
+		(uuid "3c92560c-c2e3-44f6-b812-cf29276e9231")
 		(property "Reference" "C36"
 			(at 499.745 353.06 0)
 			(show_name no)
@@ -39276,10 +39595,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "691891cd-1ab2-41b3-9b70-fef0af30a7ac")
+			(uuid "381b35e5-2f86-4a07-b833-5329e6040e35")
 		)
 		(pin "2"
-			(uuid "4845393d-810c-4f2e-87a9-a8dcaaaa414e")
+			(uuid "51163fe4-fbda-45e2-86ad-60790a0869e0")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -39300,7 +39619,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "d89acdb9-0098-4a75-9a33-79517ce9804b")
+		(uuid "f7895451-fb75-444e-9148-5e7889b4e716")
 		(property "Reference" "#PWR237"
 			(at 497.84 361.95 0)
 			(hide yes)
@@ -39356,7 +39675,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "a1baba37-c5c3-4d21-843d-9d76f0d3faa0")
+			(uuid "a083fa98-71f0-406d-ada9-5b43f171c651")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -39377,7 +39696,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "cf77a1f9-edfe-4a41-bc9e-8629356d2290")
+		(uuid "03673cef-3501-4c70-96f4-d1e8d01b8f8d")
 		(property "Reference" "#PWR238"
 			(at 520.7 361.95 0)
 			(hide yes)
@@ -39433,7 +39752,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "d30aa0e2-b3b9-4955-b058-549bb3af7ee4")
+			(uuid "d5582846-4277-4175-b577-7417754bec6e")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -39452,7 +39771,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "b8a0db63-4101-40b5-ac94-a9f3771364d5")
+		(uuid "085cbcbd-8a66-46b9-be22-9b9bf2c6998b")
 	)
 	(symbol
 		(lib_id "Device:R_Small")
@@ -39464,7 +39783,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "b0d7ddd7-e2d0-4b8f-9804-1583bda55921")
+		(uuid "222c442e-429c-49b3-815b-c1b0a3eb01eb")
 		(property "Reference" "R50"
 			(at 538.48 337.82 90)
 			(show_name no)
@@ -39519,10 +39838,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "5c0f533c-f028-43b9-9ec4-7b9a416e3585")
+			(uuid "932d0a58-9377-408e-a4ac-1b726a10fbef")
 		)
 		(pin "2"
-			(uuid "7fd73749-d785-49a8-a241-4d3520fb9a32")
+			(uuid "c9549c5e-28c8-424c-bca8-917fe1c8f285")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -39543,7 +39862,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "6093d490-19e6-4668-94b2-07f75c888177")
+		(uuid "08162296-cf64-4115-9a77-7f09ada82705")
 		(property "Reference" "D6"
 			(at 544.83 336.55 0)
 			(show_name no)
@@ -39598,10 +39917,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "1163927f-ea90-420d-9fc0-e52cecc50b24")
+			(uuid "741e04c6-e0b5-4b30-b136-25f3aaa8f4c3")
 		)
 		(pin "2"
-			(uuid "4361f6e6-8b96-4be5-b5e2-611bee913634")
+			(uuid "02464798-7470-46a5-904f-cd637460efd3")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -39622,7 +39941,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "ac9ca926-34ff-4b50-adf8-1a9d4a731a4c")
+		(uuid "b2b1fa62-b59a-4a04-9481-e58590a48200")
 		(property "Reference" "#PWR239"
 			(at 548.64 344.17 0)
 			(hide yes)
@@ -39678,7 +39997,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "d04844d5-0c50-46c8-8c6e-87d5874be924")
+			(uuid "61d81409-5e12-4db5-b6b9-b2e3f81fa9bb")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -39699,7 +40018,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "b846f4d2-6254-4302-b97a-c23a9cd4e937")
+		(uuid "dbeabab2-42a2-410a-b9f3-a4924852254b")
 		(property "Reference" "U23"
 			(at 562.61 361.95 0)
 			(show_name no)
@@ -39756,10 +40075,10 @@
 			)
 		)
 		(pin "4"
-			(uuid "120f4302-54b4-4a32-b22e-2f342776a0b8")
+			(uuid "3f3bd421-fc29-49dc-8422-23d3bd716911")
 		)
 		(pin "8"
-			(uuid "410415cd-2b0e-4ef8-a55d-5c5bf39e5866")
+			(uuid "6e0f7112-91a5-439c-a708-ab81ce46a7b1")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -39780,7 +40099,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "ef18da52-0195-4f90-9ae4-086ef98d2194")
+		(uuid "8a46fa30-c596-42fd-806b-95290a788034")
 		(property "Reference" "#PWR240"
 			(at 556.26 349.25 0)
 			(hide yes)
@@ -39836,7 +40155,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "20efbcf2-d71a-4a12-b555-893a66455f55")
+			(uuid "56df7eae-a435-40dc-9302-5747d15414fa")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -39857,7 +40176,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "8ea7f1eb-d0e9-484f-87b1-99a31ff76255")
+		(uuid "ad873e96-d69a-495c-aac9-73fdd976386a")
 		(property "Reference" "#PWR241"
 			(at 556.26 374.65 0)
 			(hide yes)
@@ -39913,7 +40232,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "efff724b-c725-4c4e-b21b-5e21bdf8527f")
+			(uuid "03dc1af3-12cf-4c2e-8f1c-6249113cbcc7")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -39932,7 +40251,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "64c1ef3e-3c6d-4bef-bdfd-ff8ad7ab463c")
+		(uuid "705368eb-b392-476c-bb16-0b2833add423")
 	)
 	(wire
 		(pts
@@ -39942,7 +40261,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "b495b342-89be-4234-b705-753465eca89f")
+		(uuid "0aeebc5b-8f68-4dd1-8722-46d4d9e57024")
 	)
 	(symbol
 		(lib_id "Device:C")
@@ -39954,7 +40273,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "90976e5f-903c-4674-a8ed-81057ccb4ca0")
+		(uuid "de8410dc-43aa-45c6-b0a7-ffef3c8a48ea")
 		(property "Reference" "C30"
 			(at 568.325 350.52 0)
 			(show_name no)
@@ -40011,10 +40330,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "28de098f-50ec-48b4-a0b5-0d1ffbf94802")
+			(uuid "4a31e24b-0203-46d2-a63c-71dc52980fba")
 		)
 		(pin "2"
-			(uuid "4d1111ae-2a7c-4c4f-b650-f8e041fb0cf8")
+			(uuid "12dc8369-041c-4a29-abd4-9389415fe0a6")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -40035,7 +40354,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "d45bce67-a733-43fc-8c80-d6b3e0a76d9a")
+		(uuid "5951804e-db05-426a-a6af-2d0826c1b0b4")
 		(property "Reference" "#PWR242"
 			(at 566.42 359.41 0)
 			(hide yes)
@@ -40091,7 +40410,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "4dedd95c-be7a-4a65-b600-85fad6e46569")
+			(uuid "3ad9e709-d90b-4511-a7e3-16e10bcb7aea")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -40111,7 +40430,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "b29971f4-2a82-4a65-b223-8376c805a8d5")
+		(uuid "ac554bf6-9437-4753-a766-1db15d59e7d7")
 	)
 	(symbol
 		(lib_id "Connector:TestPoint")
@@ -40123,7 +40442,7 @@
 		(on_board yes)
 		(in_pos_files no)
 		(dnp no)
-		(uuid "0e1f4a2f-d398-4f2d-a40c-77208eacc48d")
+		(uuid "80ff0068-3b8b-437f-9cc9-fd3d71752001")
 		(property "Reference" "TP4"
 			(at 304.8 242.062 0)
 			(show_name no)
@@ -40178,7 +40497,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "2ff3b13b-1697-4663-9342-5f596ee4a5cf")
+			(uuid "f18359d8-a1ca-41e5-9f22-87c380bfc829")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -40197,7 +40516,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "c91a2cc2-ebb2-40e8-a06a-f6c303f42f5d")
+		(uuid "ae40951a-ace2-4d37-be25-2dc66b34effa")
 	)
 	(symbol
 		(lib_id "power:+12V")
@@ -40209,7 +40528,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "475eeb08-65fa-4155-a93f-53a90a6e6d5f")
+		(uuid "32e39691-ff77-4ff1-ab44-481ac8a35824")
 		(property "Reference" "#PWR243"
 			(at 304.8 255.27 0)
 			(hide yes)
@@ -40265,7 +40584,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "b50179c3-d0f0-4358-b803-6466b55619b4")
+			(uuid "0ad8f356-6c2a-4510-bb42-6178e871f797")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -40286,7 +40605,7 @@
 		(on_board yes)
 		(in_pos_files no)
 		(dnp no)
-		(uuid "f00ef038-5964-41d4-8934-28b8fd4270d3")
+		(uuid "04aefc7f-7f23-4c2c-9a9a-e7239ab825df")
 		(property "Reference" "TP5"
 			(at 314.96 242.062 0)
 			(show_name no)
@@ -40341,7 +40660,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "6c94d008-edd9-4153-a564-06605983f862")
+			(uuid "f4ac4aec-4fa7-466a-822f-09a389a1e792")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -40360,7 +40679,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "91a6b598-f494-4900-a6d7-50ec3eeb3b46")
+		(uuid "1cca9a2f-014b-4506-91fe-87bf2aa7d1d9")
 	)
 	(symbol
 		(lib_id "power:+5V")
@@ -40372,7 +40691,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "54f1810e-8027-4e23-a20d-bba0016f0a0e")
+		(uuid "698a1e2d-8fb2-4838-b63d-a0b8c93d06a4")
 		(property "Reference" "#PWR244"
 			(at 314.96 255.27 0)
 			(hide yes)
@@ -40428,7 +40747,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "ba058320-e2df-47d7-b48f-7c8b4d3f6d38")
+			(uuid "e74697dc-af25-4096-a4d7-91cee45bab9d")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -40449,7 +40768,7 @@
 		(on_board yes)
 		(in_pos_files no)
 		(dnp no)
-		(uuid "3f9e8aba-6a0d-4400-950a-316798157a09")
+		(uuid "606fe384-2679-44ce-acb5-b99836270b7d")
 		(property "Reference" "TP6"
 			(at 325.12 242.062 0)
 			(show_name no)
@@ -40504,7 +40823,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "06c86e1a-f22c-4acc-b0ce-8d164288e242")
+			(uuid "f0888e19-0c9b-4d7d-95ad-e9db92c03c12")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -40523,7 +40842,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "f85678a4-86d4-4e47-8a41-af7c716dc1a8")
+		(uuid "4bdb752b-0e2d-46c3-96e8-6944da941825")
 	)
 	(symbol
 		(lib_id "power:+3V3")
@@ -40535,7 +40854,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "2e74f1a0-1c50-4a14-a305-2ce37293cb1e")
+		(uuid "de573566-cb16-4bb0-89e5-fccd62196b7d")
 		(property "Reference" "#PWR245"
 			(at 325.12 255.27 0)
 			(hide yes)
@@ -40591,7 +40910,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "a3edef00-5500-4044-8061-6bac4ea75320")
+			(uuid "3b64a5b9-dd10-4bfc-98d5-1e35158958ab")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -40612,7 +40931,7 @@
 		(on_board yes)
 		(in_pos_files no)
 		(dnp no)
-		(uuid "f729a07c-37d6-48e9-be93-db651426e6e4")
+		(uuid "2182cf88-a3f4-4577-8ded-20f2c3ab81c0")
 		(property "Reference" "TP7"
 			(at 335.28 242.062 0)
 			(show_name no)
@@ -40667,7 +40986,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "bd23ac83-8c2d-454a-8567-9eafc372d79b")
+			(uuid "651ce0dd-093a-420d-9217-0eaad86cdb4d")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -40686,7 +41005,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "20790e35-98d8-43dd-bf53-855486cd93e5")
+		(uuid "3940af48-2a1e-4abd-a5f1-70e09290cabe")
 	)
 	(symbol
 		(lib_id "power:+1V8")
@@ -40698,7 +41017,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "a42b7922-f357-43a4-b87b-b54d4b493574")
+		(uuid "dfa08b9d-68c2-4915-8b07-30edd8d8b248")
 		(property "Reference" "#PWR246"
 			(at 335.28 255.27 0)
 			(hide yes)
@@ -40754,7 +41073,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "ec7f7a59-d289-4b6c-957b-2f70163d2fd1")
+			(uuid "860a4dd8-76b1-4e5e-8b79-e56c6bbc857d")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -40775,7 +41094,7 @@
 		(on_board yes)
 		(in_pos_files no)
 		(dnp no)
-		(uuid "67b149d4-894f-4aeb-a135-13dd4a9b1384")
+		(uuid "d2bec5c4-835f-4370-9ff6-d8d5730a3df3")
 		(property "Reference" "TP8"
 			(at 345.44 242.062 0)
 			(show_name no)
@@ -40830,7 +41149,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "d6385aeb-bcf7-49f4-9dee-9c98d866d705")
+			(uuid "7859757d-9eb1-4e93-8b5a-0c9f9299aaff")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -40849,7 +41168,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "2daf6d82-6ef6-47e5-a22e-507bc8bc7dcd")
+		(uuid "2aec9666-5f14-45d9-aa28-7d29056bea28")
 	)
 	(symbol
 		(lib_id "PiEBV_Local:+VCAM")
@@ -40861,7 +41180,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "085d8322-41e2-489e-98f4-fde2206786d7")
+		(uuid "00cd03cd-8e7f-4e32-bdd3-ac7dbd58f93d")
 		(property "Reference" "#PWR247"
 			(at 345.44 255.27 0)
 			(hide yes)
@@ -40917,7 +41236,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "364fdc01-fb19-4f6f-96a7-c6fa8b51d4b9")
+			(uuid "8e98dd62-73e2-4bf1-952b-1f2a0c02a46b")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -40938,7 +41257,7 @@
 		(on_board yes)
 		(in_pos_files no)
 		(dnp no)
-		(uuid "68f36bb6-8668-4e9a-8357-1ae20e22e63c")
+		(uuid "db7ecb54-d709-4ba0-8219-df56b568577c")
 		(property "Reference" "TP9"
 			(at 355.6 242.062 0)
 			(show_name no)
@@ -40993,7 +41312,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "b44b1c5e-64c5-4e4f-8636-bc9b893a3e09")
+			(uuid "54b27727-a7a1-4590-ae6a-cd85687c04ed")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -41012,7 +41331,7 @@
 			(width 0)
 			(type default)
 		)
-		(uuid "1befa27a-fb9c-4d68-9ef0-6944fdcb03c1")
+		(uuid "aab39dbd-0508-4efb-9b1a-01087f169955")
 	)
 	(symbol
 		(lib_id "power:GND")
@@ -41024,7 +41343,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "fcf336e5-2a0f-453b-91db-48235fa6e95f")
+		(uuid "2c29f6dc-a70a-422b-a49a-4ec172a3f6b4")
 		(property "Reference" "#PWR248"
 			(at 355.6 255.27 0)
 			(hide yes)
@@ -41080,7 +41399,7 @@
 			)
 		)
 		(pin "1"
-			(uuid "c91bd033-b8bc-425c-be1d-188ddffd4977")
+			(uuid "36ff7e1f-d084-4bff-bdf5-e5ce0dc16114")
 		)
 		(instances
 			(project "PiEBV_Pico"
@@ -41100,7 +41419,7 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "251d66e1-1713-4e12-97f1-1f0a6772d0b0")
+		(uuid "93b83ca5-2328-436c-a366-70d6060d071b")
 	)
 	(sheet_instances
 		(path "/"

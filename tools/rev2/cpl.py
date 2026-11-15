@@ -22,7 +22,7 @@ import pcbnew
 from pcbnew import ToMM
 
 old, oldcpl, new, out = sys.argv[1:5]
-UNVERIFIED = ("LED_0805_2012Metric_Pad1.15x1.40mm_HandSolder", "SOT-23", "SSOP-8_2.95x2.8mm_P0.65mm", "SOT-583-8", "TO-252-2")
+UNVERIFIED = ("LED_0805_2012Metric_Pad1.15x1.40mm_HandSolder", "SOT-23", "SSOP-8_2.95x2.8mm_P0.65mm", "SOT-583-8", "TO-252-2", "D_SOD-123")
 NO_CORR = ("C_0805_2012Metric_Pad1.18x1.45mm_HandSolder", "R_0805_2012Metric_Pad1.20x1.40mm_HandSolder")
 
 

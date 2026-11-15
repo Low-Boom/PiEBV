@@ -19,7 +19,7 @@ J17 USB-C ─ U14 CH224A (asks the charger for 15 V) ─ VBUS_PD (5 V until nego
    │               Pico USB VBUS ─ Pico's own Schottky (D1 on the Pico module, not the board's LED D1) ───┘
    ├─ U17 LT3065 (adj., 500 mA, 400 mA limit) ─ +12V (11.8 V) ─ U13 VDD (C9, C10, C17), U19 VDD (C21, C22)
    │    U18 TPS3700 window on +12V (10.6–13.3 V) ─ LASER_PWR_OK ─ U13 and U19 ENA/ENB  (R16 100k pull-up)
-   └─ U24 CJ78M12 (12 V, 0.5 A part; C37 in, C38 out) ─ +12V_FAN ─ J23 pin 1 (cooling fan, 200 mA maximum)
+   └─ U24 L78M12AB (12 V, 0.5 A part; C37 in, C38 out; D7 from output to input) ─ +12V_FAN ─ J23 pin 1 (cooling fan, 200 mA maximum)
 
      U9 ─ +1V8 ──────── U20 VIN1 ─┐
                                   U20 TPS2116 ─ +VCAM ─ U1–U6 (camera buffers), D1, R51
@@ -42,9 +42,10 @@ VDD pin and would be destroyed. VHV, VBUS, CC1 and CC2 are rated to
 32 V (the CH224K's CC pins: 8 V). Until the PD contract completes VBUS_PD sits at 5 V; after
 it, 15 V. The CH224A has no output switch, so everything downstream must tolerate both, and
 does. Any charger rated **above 27 W** must offer 15 V under the USB-PD rules; a smaller one may
-not, and the laser outputs then stay disabled (see below). C12 (10 µF) is the only large
-capacitor on VBUS_PD (C11 at U14, C16 at U17 and C37 at U24 are 1 µF each), which keeps the board near the
-USB-C 10 µF sink limit.
+not, and the laser outputs then stay disabled (see below). The capacitors on
+VBUS_PD are C12 (10 µF) and C11 at U14, C16 at U17 and C37 at U24 (1 µF each). The total is 13 µF
+nominal (12 µF before the fan supply). This is above the USB-C 10 µF sink limit. It is accepted.
+It was already above the limit before the fan supply.
 
 ## +5 V
 
@@ -126,24 +127,62 @@ R16 and U13's internal pull-ups source, so it is left unconnected and U18 does t
 
 J23 supplies a 2-wire 12 V DC cooling fan. The maximum fan current is 200 mA (the design limit).
 
-**Circuit.** U24 is a **CJ78M12** linear regulator (78M12 type, 12 V, 0.5 A part, TO-252-2,
-LCSC C9072). Its input is VBUS_PD. Its output is the net `+12V_FAN`. C37 (1 µF, 0805) is the
+**Circuit.** U24 is an ST **L78M12ABDT-TR** linear regulator (L78M12AB, 12 V, 0.5 A part,
+DPAK / TO-252-2, LCSC C61534). Its input is VBUS_PD. Its output is the net `+12V_FAN`. C37 (1 µF, 0805) is the
 input capacitor and C38 (1 µF, 0805) is the output capacitor: they are the same part as the other
-1 µF 50 V capacitors (C28323). J23 is a 1×2 vertical 2.54 mm pin header, the same part as J20 and
+1 µF 50 V capacitors (C28323). D7 (1N4148W, SOD-123, LCSC C81598) is in parallel with U24, from
+the output to the input: its cathode is on VBUS_PD and its anode is on `+12V_FAN`. J23 is a 1×2 vertical 2.54 mm pin header, the same part as J20 and
 J22 (C32713268): pin 1 is `+12V_FAN`, pin 2 is GND. The silkscreen shows `J23  FAN 12V`,
 `0.2 A MAX`, `+` beside pin 1 and `-` beside pin 2.
+
+The first version of the fan supply used a CJ78M12. The ST part replaced it because the ST data
+sheet states the protection functions. The footprint and the pinout are the same.
 
 | VBUS_PD | `+12V_FAN` | Fan |
 |---|---|---|
 | 15 V (after the PD negotiation) | about 12 V | runs |
-| 5 V (before the negotiation, or a charger that does not offer 15 V) | far below 12 V | does not run |
+| 9 V or 12 V charger setting | about 7 V or 10 V | turns slowly |
+| 5 V (before the negotiation, or a charger that does not offer 15 V) | about 3 V | normally does not turn (not guaranteed for every fan) |
 
-- The regulator needs about 2 V of headroom (typical 78M12 dropout, not checked against the
-  CJ78M12 data sheet). 15 V gives 3 V.
+No hazard to U24 was identified on the lower charger voltages.
+
+- ST data sheet (DocID2146 Rev 20, "L78M - Precision 500 mA regulators"), values for the
+  L78M12AB:
+  - pins: 1 IN, tab GND, 3 OUT (checked on the ST pin drawing);
+  - input: 35 V maximum;
+  - output at 25 °C: 11.75–12.25 V (Vi = 19 V, 350 mA);
+  - output for 5–350 mA and Vi = 14.5–27 V, at a junction temperature of −40 to 125 °C:
+    11.5–12.5 V;
+  - dropout: 2 V typical;
+  - quiescent current: 6 mA maximum;
+  - short-circuit current: 240 mA typical at Vi = 35 V;
+  - short-circuit peak current: 700 mA typical;
+  - thermal resistance of the DPAK: 8 °C/W junction to case, 100 °C/W junction to ambient;
+  - test capacitors: 0.33 µF at the input, 0.1 µF at the output.
+- The data sheet states thermal overload protection, short-circuit protection and
+  output-transition safe-area protection.
+- 15 V gives 3 V of headroom. The data sheet specifies the output from 14.5 V input. USB-PD
+  permits 15 V ±5 % at the charger, so with a low charger and cable drop the input can be a
+  little below 14.5 V. The output is then outside the specified conditions and can be somewhat
+  below 12 V. That is acceptable for a fan.
+- D7 protects U24 when VBUS_PD falls (the charger is unplugged, or a USB-PD reset occurs). C38,
+  the capacitor of the fan and the turning fan then hold `+12V_FAN` up. D7 carries the current
+  back to the input. Thus U24 does not get a reverse voltage from the output to the input.
 - The fan is always on while 15 V is present. There is no firmware control and no tachometer
   input.
-- There is no fuse. The 78M12 type has internal current limiting and thermal shutdown (not checked
-  against the CJ78M12 data sheet).
+- There is no fuse. The current limit and the thermal protection of the regulator are the
+  protection. If the fan is stalled or J23 is shorted, the regulator limits the current and its
+  thermal protection limits the temperature. These are data-sheet features. They were not tested
+  on this board.
+- The 200 mA design limit is below the 350 mA at which the data sheet specifies the output.
+- J23 is the same 2-pin header type as the jumpers J20 and J22, and it has no key. A shunt on J23
+  shorts the fan supply to GND. Do not fit a shunt on J23.
+
+**Fan start-up (open check).** The data sheet gives the short-circuit current (240 mA typical, at
+35 V input) and a peak of 700 mA typical. It has no curve for the start-up case. A fan near the
+200 mA limit can need more current to start than it draws when it runs. First-board check:
+confirm that the selected fan starts at the lowest and the highest input (about 14.2 V and
+15.75 V), cold and warm. If it does not start, use a fan with a lower rated current.
 
 **Why a separate regulator.** The fan supply does not use the +12V rail of the laser drivers
 (U17), for two reasons:
@@ -152,9 +191,17 @@ J22 (C32713268): pin 1 is `+12V_FAN`, pin 2 is GND. The silkscreen shows `J23  F
   takes 358 mA (see [Board output rating](#board-output-rating)).
 - The noise of the fan motor would go onto the supply of the pulse drivers.
 
-**Heat.** U24 drops about 3 V (15 V − 12 V). Its dissipation is about 3 V × the fan current:
-0.6 W at 200 mA, plus the power of its own supply current. The tab of U24 is GND. It has a solid
-connection to the top-layer GND pour and four GND vias.
+**Heat.** U24 drops about 3 V (15 V − 12 V).
+
+- Nominal dissipation at 200 mA: 3 V × 0.2 A + 15 V × 6 mA = 0.69 W.
+- Worst case, with the data-sheet limits and 15 V + 5 %:
+  (15.75 − 11.5) V × 0.2 A + 15.75 V × 6 mA = 0.94 W.
+- With 100 °C/W junction to ambient (data sheet, no board copper), 0.94 W would give a rise of
+  94 °C. Thus the design relies on the board copper.
+- The tab of U24 is GND. It is solid in the top-layer GND pour and has four GND vias to the GND
+  plane.
+- The junction temperature was not measured. The reviewer's estimate for this copper is
+  30–45 °C/W. This is an estimate, not a measurement.
 
 The placement and the copper are in [Routing](LAYOUT.md#routing).
 

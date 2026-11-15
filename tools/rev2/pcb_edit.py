@@ -514,7 +514,7 @@ via("+VCAM", 231.5, 88.46)                              # U5 / U6 / C3 group: ta
 via("+12V", 235.6, 76.9)                                # U17 output: second tap into the +12V island (C17.1 / R12.1)
 track("+12V", [(236.41, 75.75), (235.6, 76.9)], 0.4)
 
-# ---- 3a. fan supply: U24 (78M12, TO-252) + C37 / C38 + header J23, in the free strip below the USB-C parts --------
+# ---- 3a. fan supply: U24 (L78M12, DPAK) + C37 / C38 + D7 + header J23, in the free strip below the USB-C parts ---
 # VBUS_PD (15 V) comes from the C11 pad track. +12V_FAN goes to J23 on B.Cu below U24, because the GND edge-fence
 # vias at y 128.5 block the F.Cu way round the tab. The tab (GND) gets four vias for heat.
 place("U24", 158.0, 124.9, 0, -3.0, -4.4)
@@ -524,22 +524,27 @@ assert PADNET[("U24", "1")] == "VBUS_PD" and PADNET[("U24", "3")] == "+12V_FAN" 
 for p in b.FindFootprintByReference("U24").Pads():      # tab: solid connection to the F.Cu pour (heat)
     if p.GetNumber() == "2":
         p.SetLocalZoneConnection(pcbnew.ZONE_CONNECTION_FULL)
-place("C37", 148.2, 122.62, 180, None)
-check_pad("C37", "1", 149.2375, 122.62)                 # VBUS_PD pad east
-place("C38", 148.2, 127.18, 180, None)
-check_pad("C38", "1", 149.2375, 127.18)                 # +12V_FAN pad east
-track("VBUS_PD", [(150.1, 119.4), (150.1, 122.62), (152.96, 122.62)], 0.5)
-track("VBUS_PD", [(149.2375, 122.62), (150.1, 122.62)], 0.5)
-track("+12V_FAN", [(149.2375, 127.18), (150.9, 127.18), (152.96, 127.18)], 0.5)
-track("+12V_FAN", [(150.9, 127.18), (150.9, 124.9)], 0.5)
-via("+12V_FAN", 150.9, 124.9)
+place("C37", 146.7, 122.62, 180, None)
+check_pad("C37", "1", 147.7375, 122.62)                 # VBUS_PD pad east
+place("C38", 146.7, 127.18, 180, None)
+check_pad("C38", "1", 147.7375, 127.18)                 # +12V_FAN pad east
+# D7 (reverse protection) stands between the capacitors and the U24 leads: cathode up on VBUS_PD, anode down on
+# +12V_FAN. The +12V_FAN via to B.Cu is below the diode body, between its pads.
+place("D7", 150.1, 124.9, 270, None)
+check_pad("D7", "1", 150.1, 123.25)                     # cathode up
+assert PADNET[("D7", "1")] == "VBUS_PD" and PADNET[("D7", "2")] == "+12V_FAN"
+track("VBUS_PD", [(150.1, 119.4), (150.1, 122.62), (150.1, 123.25)], 0.5)
+track("VBUS_PD", [(147.7375, 122.62), (150.1, 122.62), (152.96, 122.62)], 0.5)
+track("+12V_FAN", [(147.7375, 127.18), (150.1, 127.18), (152.96, 127.18)], 0.5)
+track("+12V_FAN", [(150.1, 127.18), (150.1, 126.55), (150.1, 124.9)], 0.5)
+via("+12V_FAN", 150.1, 124.9)
 place("J23", 166.5, 124.9, 0, None)
 check_pad("J23", "1", 166.5, 124.9)
 assert PADNET[("J23", "1")] == "+12V_FAN" and PADNET[("J23", "2")] == "GND"
-track("+12V_FAN", [(150.9, 124.9), (166.5, 124.9)], 0.5, B)
-for x, y in ((147.1625, 122.62), (147.1625, 127.18)):   # capacitor GND pads
-    track("GND", [(x, y), (145.8, y)], 0.4)
-    via("GND", 145.8, y)
+track("+12V_FAN", [(150.1, 124.9), (166.5, 124.9)], 0.5, B)
+for x, y in ((145.6625, 122.62), (145.6625, 127.18)):   # capacitor GND pads
+    track("GND", [(x, y), (144.3, y)], 0.4)
+    via("GND", 144.3, y)
 for x, y in ((163.6, 123.3), (163.6, 126.5)):           # tab: two vias east of the tab ...
     track("GND", [(162.3, y), (x, y)], 0.5)
     via("GND", x, y)

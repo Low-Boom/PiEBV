@@ -167,7 +167,7 @@ vcam = (p18.replace('"power:+1V8"', '"PiEBV_Local:+VCAM"').replace('"+1V8_0_1"',
 vcam = vcam.replace('Power symbol creates a global label with name \\"+VCAM\\"',
                     'Camera I/O supply, +1V8 or +3V3 as U20 / J22 select. Power symbol creates a global label with name \\"+VCAM\\"')
 new = [vcam, libsym("Device", "LED"), libsym("Power_Management", "TPS2116DRL"), libsym("74xGxx", "74LVC1G123"),
-       libsym("Transistor_FET", "2N7002"), libsym("Regulator_Linear", "LM78M05_TO252")]
+       libsym("Transistor_FET", "2N7002"), libsym("Regulator_Linear", "LM78M05_TO252"), libsym("Device", "D")]
 new_libs = libs[:-1].rstrip() + "".join("\n\t\t" + b for b in new) + "\n\t)"
 s = s[:i0 + 1] + new_libs + s[i0 + 1 + len(libs):]
 
@@ -311,9 +311,9 @@ o += power("GND", vx + 22.86, Y - 5.08)
 o += noconn(xr, Y + 5.08) + power("GND", X, Y + 10.16)
 # ---- fan supply: U24 (78M12) makes +12V_FAN from VBUS_PD for the 2-pin fan header J23, beside J17 ----
 fx, fy = 71.12, 396.24
-o += symbol("Regulator_Linear:LM78M05_TO252", "U24", "CJ78M12", fx, fy, 0, ["1", "2", "3"],
+o += symbol("Regulator_Linear:LM78M05_TO252", "U24", "L78M12ABDT-TR", fx, fy, 0, ["1", "2", "3"],
             fp="Package_TO_SOT_SMD:TO-252-2",
-            desc="12 V 0.5 A linear regulator (78M12, TO-252) for the cooling fan header J23. Input VBUS_PD (15 V).",
+            desc="12 V 0.5 A linear regulator (ST L78M12AB, DPAK; thermal and short-circuit protection) for the cooling fan header J23. Input VBUS_PD (15 V).",
             ref_at=(fx - 3.81, fy - 6.35, 0), val_at=(fx, fy - 6.35, 0, "left"))
 o += wire((fx - 7.62, fy), (fx - 15.24, fy), (fx - 25.4, fy)) + junction(fx - 15.24, fy) + label("VBUS_PD", fx - 25.4, fy, "right")
 o += cap("C37", "1uF", fx - 15.24, fy + 3.81, "Input capacitor of U24", -1) + power("GND", fx - 15.24, fy + 7.62)
@@ -325,8 +325,15 @@ o += symbol("Connector:Conn_01x02_Pin", "J23", "FAN 12V", fx + 33.02, fy, 180, [
             desc="Cooling fan header, 12 V DC, 200 mA maximum. Pin 1 = +12 V, pin 2 = GND.",
             ref_at=(fx + 36.83, fy - 3.81, 0), val_at=(fx + 36.83, fy + 3.81, 0))
 o += wire((fx + 27.94, fy - 2.54), (fx + 25.4, fy - 2.54), (fx + 25.4, fy + 5.08)) + power("GND", fx + 25.4, fy + 5.08)
+# D7: reverse protection of U24. It conducts when VBUS_PD falls below +12V_FAN (unplug, PD reset) while C38 and the fan hold the output up.
+o += symbol("Device:D", "D7", "1N4148W", fx, fy - 10.16, 0, ["1", "2"], fp="Diode_SMD:D_SOD-123",
+            desc="Reverse protection of U24: cathode on VBUS_PD, anode on +12V_FAN",
+            ref_at=(fx, fy - 13.97, 0), val_at=(fx, fy - 12.7, 0))
+o += wire((fx - 3.81, fy - 10.16), (fx - 10.16, fy - 10.16), (fx - 10.16, fy)) + junction(fx - 10.16, fy)
+o += wire((fx + 3.81, fy - 10.16), (fx + 10.16, fy - 10.16), (fx + 10.16, fy)) + junction(fx + 10.16, fy)
 o += text("Cooling fan supply. U24 makes 12 V from VBUS_PD (15 V) for a 2-wire 12 V DC fan on J23, 200 mA maximum.\n"
-          "The fan supply does not use the +12V rail of the laser drivers. With a 5 V-only charger the fan does not run.", fx - 25.4, fy - 12.7)
+          "The fan supply does not use the +12V rail of the laser drivers. With a 5 V-only charger the fan does not run.\n"
+          "J23 is not a jumper: do not fit a shunt.", fx - 25.4, fy - 20.32)
 # J22 and the PR1 network
 jx, jy = 27.94, 363.22
 o += symbol("Connector:Conn_01x02_Pin", "J22", "3V3 camera I/O", jx, jy, 0, ["1", "2"],
@@ -451,4 +458,4 @@ if LOCAL_LIB:
         v = "\n".join(l[1:] if l.startswith("\t") else l for l in v.split("\n"))
         L = L.rstrip()[:-1].rstrip() + "\n\t" + v + "\n)\n"
         open(LOCAL_LIB, "w", encoding="utf-8", newline="\n").write(L)
-print("sch_edit: %d supply symbols moved to +VCAM; U20-U23, Q1, Q2, D1-D6, J22, J23, C23-C38, R33-R70, TP4-TP9, U24 added" % moved)
+print("sch_edit: %d supply symbols moved to +VCAM; U20-U23, Q1, Q2, D1-D6, J22, J23, C23-C38, R33-R70, TP4-TP9, U24, D7 added" % moved)

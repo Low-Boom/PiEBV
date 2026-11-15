@@ -7,7 +7,7 @@ These tools make the Rev 2 board from the Rev 1 EuroCard board. Rev 2 adds:
 - a 47 Ω series resistor in each camera line (R52–R69), at the camera headers;
 - status LEDs: 12 V good (D2), ARMED (D3), output activity (D4–D6, U21–U23);
 - rail test pads TP4–TP9;
-- a 12 V cooling fan supply (U24, C37, C38, header J23) from VBUS_PD, net `+12V_FAN`;
+- a 12 V cooling fan supply (U24, C37, C38, D7, header J23) from VBUS_PD, net `+12V_FAN`;
 - power islands on In2.Cu (`+5V`, `+3V3`, `+1V8`, `+VCAM`, `+12V`) in a GND fill.
 
 The Rev 1 board was made by an autorouter (`tools/eurocard/build.sh`). The Rev 2 build removes
@@ -21,7 +21,7 @@ pulse lanes and the output block keep their Rev 1 copper.
 |---|---|
 | `sch_edit.py` | One-shot generator of the Rev 2 schematic from the Rev 1 schematic (text level). It is kept as the record of the schematic change. It is not part of the build. Do not run it on the Rev 2 schematic. |
 | `build.sh` | The board build: netlist, `pcb_edit.py`, `uuidfix.py`, camera routing (KiCadRoutingTools), `jogs.py`, `tidy.py`, `trim.py`, `spokes.py`, `uuidfix.py`, then the checks. Writes `PiEBV_Pico.kicad_pcb` in the repository root. |
-| `pcb_edit.py` | Rev 1 board + Rev 2 netlist to Rev 2 board: new nets, moved parts (U9, C6, C7), new parts and their copper (coordinates in the script), In2 islands, silkscreen, title block. It removes the Rev 1 camera copper, places R52–R69 with their header stubs and draws `Trigger3`. It places the fan supply parts U24, C37, C38 and J23 with their copper (section "3a. fan supply"). |
+| `pcb_edit.py` | Rev 1 board + Rev 2 netlist to Rev 2 board: new nets, moved parts (U9, C6, C7), new parts and their copper (coordinates in the script), In2 islands, silkscreen, title block. It removes the Rev 1 camera copper, places R52–R69 with their header stubs and draws `Trigger3`. It places the fan supply parts U24, C37, C38, D7 and J23 with their copper (section "3a. fan supply"). |
 | `uuidfix.py` | Gives a board file deterministic item IDs and a fixed item order. pcbnew writes random item IDs, and the router result depends on the item order. |
 | `jogs.py` | Merges router staircases. The track length does not change (see the script header). It reads the choice for each staircase from `jog_choices.json`. |
 | `jog_choices.json` | For each staircase: `"B"` = merge at the other end, `"skip"` = leave it. No entry = merge at the first end. |
@@ -32,7 +32,7 @@ pulse lanes and the output block keep their Rev 1 copper.
 | `spokes.py` | Adds a small pour cut-out at each pad that DRC reports with too few thermal spokes (header GND pins beside a camera track). The In1.Cu connection of the pad does not change. |
 | `plane_check.py` | Lists the In2 island under each B.Cu track, the points where a track changes island, and the plane taps of each rail. |
 | `stats.py` | Board numbers for the documentation (segments, lengths, vias per net, parts, fingerprint). |
-| `cpl.py` | JLC placement file for Rev 2 from the Rev 1 placement file. It accepts the TO-252-2 footprint (U24) as a part whose rotation comes from `tools/jlc_cpl`. |
+| `cpl.py` | JLC placement file for Rev 2 from the Rev 1 placement file. It accepts the TO-252-2 footprint (U24) and the D_SOD-123 footprint (D7) as parts whose rotation comes from `tools/jlc_cpl`. |
 | `fab.sh` | DRC gate, plane check, gerbers, drill files, job file and zip in `fab/`. It does not write the board file. |
 | `images.sh` | Layer SVG files, the top silkscreen view, 3-D renders and the island map for `docs/img/`. |
 | `svg2png.js` | Converts an SVG file to a PNG file with a headless browser. |
@@ -119,13 +119,13 @@ Result on the committed board:
   reference for the design (owner's decision).
 - The stubs from the resistors to the header pins are the same for all six headers: Sync
   4.85 mm, TDRSTN 5.09 mm, Trigger 9.77 mm.
-- 1466 track segments, 3003.4 mm of track (F.Cu 2087.3 mm, B.Cu 916.1 mm), 228 vias (all
+- 1468 track segments, 3007.8 mm of track (F.Cu 2091.0 mm, B.Cu 916.9 mm), 228 vias (all
   0.6 mm with a 0.3 mm hole; 20 on camera lines; GND 139, +5V 13, +3V3 7, +1V8 2, +VCAM 5,
   +12V 9, other nets 53), no duplicate segments. Copper fingerprint (`stats.py`):
-  `20373eccea45c81b`.
-- 163 footprints: 153 placed parts (132 SMD, 21 through-hole), 6 test pads, 4 mounting holes.
-  Rev 2 adds 69 placed parts to the 84 of Rev 1.
-- The fan supply changed no timing net. The signal simulation was not run again. The camera line
+  `2c12e2118b08f34c`.
+- 164 footprints: 154 placed parts (133 SMD, 21 through-hole), 6 test pads, 4 mounting holes.
+  Rev 2 adds 70 placed parts to the 84 of Rev 1.
+- The fan supply changed no timing net. The router check reports no change to the 92 other nets. The signal simulation was not run again. The camera line
   lengths, the camera routing and the DRC result did not change.
 
 ## Notes
@@ -144,9 +144,11 @@ Result on the committed board:
 - **Gerber check sum.** The gerber files contain their creation date. A new run of `fab.sh`
   gives a zip with another check sum for the same board.
 - **JLC rotations.** `cpl.py` does not have the JLC footprints of the new polarised parts
-  (D1–D6, Q1, Q2, U20–U24). It writes the KiCad rotation for them. Run `tools/jlc_cpl` after `cpl.py` and
+  (D1–D7, Q1, Q2, U20–U24). It writes the KiCad rotation for them. Run `tools/jlc_cpl` after `cpl.py` and
   copy its `cpl_new.csv` over the placement file. This was done for the committed file
-  (153 rows). `tools/jlc_cpl` corrected the rotation of U24 from 0 to 270. It flags the pad fit of
-  U24 (0.65 mm, above its 0.2 mm limit), because the KiCad TO-252-2 footprint and JLC's footprint
-  differ in pad shape: check U24 in JLC's placement preview.
+  (154 rows). `tools/jlc_cpl` gives U24 the rotation 0 (no correction) and D7 the rotation 270
+  (no correction, pad fit 0.085 mm). It flags the pad fit of U24 (0.65 mm, above its 0.2 mm
+  limit). This difference is only the centre of the tab pad (JLC's tab pad is 6.95 mm from the
+  leads, KiCad's is 6.30 mm). The lead pads coincide. It is a land-pattern difference, not a
+  placement error. Check U24 and D7 in JLC's placement preview.
   R51–R70 are two-pad parts and need no rotation check.
