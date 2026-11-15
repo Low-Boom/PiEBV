@@ -48,4 +48,4 @@ Every script that takes a clock rate (all but `check_exhaustive.py`, which works
 300 MHz, the clock with the clock jumper fitted (`src/clock_mode.h`).
 
 These checks cover the arithmetic and the program's cycle behaviour. They do not
-replace a scope check on the board (see Hardware.md, First-board checks).
+replace a scope check on the board (see docs/FIRST_BOARD_CHECKS.md).

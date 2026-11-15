@@ -15,7 +15,7 @@ GP11 edge start to the camera header pin 4 (J1-J6), reference level VCAM / 2, J1
 | 3.3 V | typ | 8.44 | 8.48 | 7.68 | 7.71 | 13.07 | 13.18 |
 | 3.3 V | max | 10.97 | 11.02 | 10.07 | 10.09 | 21.11 | 21.51 |
 
-The three corners use the same corner for the camera gates and for U19, as signal_sim.py does in its own offset table; that table also crosses the corners. At 3.3 V the camera gates are faster, so J12 is later relative to the camera pin than at 1.8 V. Measure the offset for the +VCAM setting in use (Hardware.md, first-board check 4).
+The three corners use the same corner for the camera gates and for U19, as signal_sim.py does in its own offset table; that table also crosses the corners. At 3.3 V the camera gates are faster, so J12 is later relative to the camera pin than at 1.8 V. Measure the offset for the +VCAM setting in use (docs/FIRST_BOARD_CHECKS.md, check 4).
 
 ## 2. Camera harness: level and edge at the camera end
 
