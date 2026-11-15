@@ -140,6 +140,7 @@ board fits EuroCard card guides and slotted enclosures.
 ```
 
 (Not to scale. J18, J19 and J21 are the output-mode jumpers. J22, at the top centre, sets the camera signal level.
+J23, the fan header, is at the bottom left, between mounting hole MH3 and camera port J1.
 The status LEDs are near the top edge. Images of the board are in
 [Hardware.md](Hardware.md#board-views).)
 
@@ -158,6 +159,7 @@ The status LEDs are near the top edge. Images of the board are in
 | **J20** | Clock jumper, 2-pin header right of the Pico, below the J14 row | Nothing (150 MHz), or a shunt (300 MHz overclock) | See [Jumpers](#jumpers). Leave it open unless that Pico passed the soak test. |
 | **TP3** | 2-pin header on the left edge, below the Pico | A scope | Pin 1 = the 1 MHz sync straight from the Pico (3.3 V) · pin 2 = ground |
 | **J22** | Camera signal level, 2-pin header at the top centre | Nothing (1.8 V, IDS cameras), or a shunt (3.3 V, Prophesee EVK4) | See [Jumpers](#jumpers). **Never fit it with an IDS camera connected.** |
+| **J23** | Fan supply, 2-pin header at the bottom left, marked `J23  FAN 12V` and `0.2 A MAX` | A 2-wire 12 V DC cooling fan, 200 mA maximum | Pin 1 (`+`, the top pin) = 12 V · pin 2 (`-`) = ground. The fan runs when the charger on J17 gives 15 V. There is no firmware control. Do not connect a fan to the 12 V supply of the laser drivers. |
 | **TP4–TP9** | Bare test pads at the top centre, marked `12V`, `5V`, `3V3`, `1V8`, `VCAM`, `GND` | A multimeter | Supply rails |
 
 ### Jumpers
@@ -195,7 +197,8 @@ LED can fail. To make the lasers safe, send `DISARM`, open J11 or unplug J17.
 ### Pico and power
 
 Seat the Pico components up, with its micro-USB connector at the left edge. Connect a USB-C PD
-charger that offers 15 V to J17. Connect the Pico's micro-USB to the computer. The details are in
+charger that offers 15 V to J17. Connect the Pico's micro-USB to the computer. A 12 V cooling fan
+on J23 runs when the charger gives 15 V. It does not run on a 5 V-only charger. The details are in
 [Seating the Pico](docs/SETUP.md#seating-the-pico) and [Power](docs/SETUP.md#power).
 
 ---
@@ -250,7 +253,7 @@ does not work, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 | `libs/`, `fp-lib-table`, `sym-lib-table` | Project-local KiCad symbols and footprints |
 | `tools/jlc_cpl/` | Corrects the JLC placement file to JLC's own footprints (see its README) |
 | `tools/eurocard/` | Builds the Rev 1 EuroCard board from the 126 × 126 mm hand layout: placement, KiCadRoutingTools routing, checks (see its README) |
-| `tools/rev2/` | Builds the current Rev 2 board from the Rev 1 EuroCard board: camera level select, series resistors in the camera lines, new camera routing with equal lengths, status LEDs, power islands, checks, fab export (see its README) |
+| `tools/rev2/` | Builds the current Rev 2 board from the Rev 1 EuroCard board: camera level select, series resistors in the camera lines, new camera routing with equal lengths, status LEDs, power islands, cooling fan supply, checks, fab export (see its README) |
 | `docs/` | The documentation pages (see [Documentation](#documentation)), the [EVK4 camera harness](docs/EVK4_HARNESS.md) and the board images (`docs/img/`) |
 | `docs/reports/` | Earlier design review reports |
 

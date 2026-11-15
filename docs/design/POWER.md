@@ -1,7 +1,7 @@
 # PiEBV design: power
 
 This page gives the design of the supply rails: the USB-C PD input, +5 V, +12 V and its
-power-good gate, the +VCAM mux with its data-sheet values and load budget, +3.3 V, and the
+power-good gate, the fan supply, the +VCAM mux with its data-sheet values and load budget, +3.3 V, and the
 derivation of the board output rating.
 Back to: [hardware reference](../../Hardware.md) · [design notes index](../DESIGN_NOTES.md)
 
@@ -17,8 +17,9 @@ J17 USB-C ─ U14 CH224A (asks the charger for 15 V) ─ VBUS_PD (5 V until nego
    ├─ U15 AP63205WU buck ─ +5V_PD ─ U16 LM66100 ideal diode ─┐
    │                                                        ├─ +5V island = Pico VSYS ─ U9 (1.8 V) ─┐
    │               Pico USB VBUS ─ Pico's own Schottky (D1 on the Pico module, not the board's LED D1) ───┘
-   └─ U17 LT3065 (adj., 500 mA, 400 mA limit) ─ +12V (11.8 V) ─ U13 VDD (C9, C10, C17), U19 VDD (C21, C22)
-        U18 TPS3700 window on +12V (10.6–13.3 V) ─ LASER_PWR_OK ─ U13 and U19 ENA/ENB  (R16 100k pull-up)
+   ├─ U17 LT3065 (adj., 500 mA, 400 mA limit) ─ +12V (11.8 V) ─ U13 VDD (C9, C10, C17), U19 VDD (C21, C22)
+   │    U18 TPS3700 window on +12V (10.6–13.3 V) ─ LASER_PWR_OK ─ U13 and U19 ENA/ENB  (R16 100k pull-up)
+   └─ U24 CJ78M12 (12 V, 0.5 A part; C37 in, C38 out) ─ +12V_FAN ─ J23 pin 1 (cooling fan, 200 mA maximum)
 
      U9 ─ +1V8 ──────── U20 VIN1 ─┐
                                   U20 TPS2116 ─ +VCAM ─ U1–U6 (camera buffers), D1, R51
@@ -42,7 +43,7 @@ VDD pin and would be destroyed. VHV, VBUS, CC1 and CC2 are rated to
 it, 15 V. The CH224A has no output switch, so everything downstream must tolerate both, and
 does. Any charger rated **above 27 W** must offer 15 V under the USB-PD rules; a smaller one may
 not, and the laser outputs then stay disabled (see below). C12 (10 µF) is the only large
-capacitor on VBUS_PD (C11 at U14 and C16 at U17 are 1 µF each), which keeps the board near the
+capacitor on VBUS_PD (C11 at U14, C16 at U17 and C37 at U24 are 1 µF each), which keeps the board near the
 USB-C 10 µF sink limit.
 
 ## +5 V
@@ -120,6 +121,42 @@ running. The outputs of U13 and U19 are held low:
 
 U17's own PWRGD output (open drain, 90 % of nominal) can only sink 50 µA, less than the ~180 µA that
 R16 and U13's internal pull-ups source, so it is left unconnected and U18 does the job.
+
+## Fan supply (U24, J23)
+
+J23 supplies a 2-wire 12 V DC cooling fan. The maximum fan current is 200 mA (the design limit).
+
+**Circuit.** U24 is a **CJ78M12** linear regulator (78M12 type, 12 V, 0.5 A part, TO-252-2,
+LCSC C9072). Its input is VBUS_PD. Its output is the net `+12V_FAN`. C37 (1 µF, 0805) is the
+input capacitor and C38 (1 µF, 0805) is the output capacitor: they are the same part as the other
+1 µF 50 V capacitors (C28323). J23 is a 1×2 vertical 2.54 mm pin header, the same part as J20 and
+J22 (C32713268): pin 1 is `+12V_FAN`, pin 2 is GND. The silkscreen shows `J23  FAN 12V`,
+`0.2 A MAX`, `+` beside pin 1 and `-` beside pin 2.
+
+| VBUS_PD | `+12V_FAN` | Fan |
+|---|---|---|
+| 15 V (after the PD negotiation) | about 12 V | runs |
+| 5 V (before the negotiation, or a charger that does not offer 15 V) | far below 12 V | does not run |
+
+- The regulator needs about 2 V of headroom (typical 78M12 dropout, not checked against the
+  CJ78M12 data sheet). 15 V gives 3 V.
+- The fan is always on while 15 V is present. There is no firmware control and no tachometer
+  input.
+- There is no fuse. The 78M12 type has internal current limiting and thermal shutdown (not checked
+  against the CJ78M12 data sheet).
+
+**Why a separate regulator.** The fan supply does not use the +12V rail of the laser drivers
+(U17), for two reasons:
+
+- That rail has a 400 mA current limit. The worst case with both laser outputs shorted already
+  takes 358 mA (see [Board output rating](#board-output-rating)).
+- The noise of the fan motor would go onto the supply of the pulse drivers.
+
+**Heat.** U24 drops about 3 V (15 V − 12 V). Its dissipation is about 3 V × the fan current:
+0.6 W at 200 mA, plus the power of its own supply current. The tab of U24 is GND. It has a solid
+connection to the top-layer GND pour and four GND vias.
+
+The placement and the copper are in [Routing](LAYOUT.md#routing).
 
 ## +VCAM (the camera signal supply)
 
