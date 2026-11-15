@@ -8,37 +8,9 @@ Back to: [hardware reference](../../Hardware.md) · [design notes index](../DESI
 
 ## Board images
 
-Images of the Rev 2 board, made by `tools/rev2/images.sh` from `PiEBV_Pico.kicad_pcb`.
-
-**3-D render**
-
-![3-D render of the board](../img/render_3d.png)
-
-**Bottom view (3-D render)**
-
-![Bottom view](../img/render_bottom.png)
-
-The top view and the top assembly image are in [Board views](../../Hardware.md#board-views).
-
-**Layer 1, F.Cu (top): parts, signals, GND fill**
-
-![F.Cu](../img/layer_1_F_Cu.png)
-
-**Layer 2, In1.Cu: GND plane**
-
-![In1.Cu](../img/layer_2_In1_Cu.png)
-
-**Layer 3, In2.Cu: power islands in a GND fill**
-
-![In2.Cu](../img/layer_3_In2_Cu.png)
-
-**In2.Cu power islands (colour map) with the B.Cu tracks**
-
-![In2 power islands](../img/in2_islands.png)
-
-**Layer 4, B.Cu (bottom): signals, GND fill**
-
-![B.Cu](../img/layer_4_B_Cu.png)
+All board images (renders, top assembly view and the four copper layers) are in
+[Board views](../../Hardware.md#board-views) of the hardware reference. The colour map of the
+In2.Cu islands is also in [Power islands (In2.Cu)](#power-islands-in2cu) below.
 
 ---
 

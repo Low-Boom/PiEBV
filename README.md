@@ -159,7 +159,7 @@ The status LEDs are near the top edge. Images of the board are in
 | **J20** | Clock jumper, 2-pin header right of the Pico, below the J14 row | Nothing (150 MHz), or a shunt (300 MHz overclock) | See [Jumpers](#jumpers). Leave it open unless that Pico passed the soak test. |
 | **TP3** | 2-pin header on the left edge, below the Pico | A scope | Pin 1 = the 1 MHz sync straight from the Pico (3.3 V) · pin 2 = ground |
 | **J22** | Camera signal level, 2-pin header at the top centre | Nothing (1.8 V, IDS cameras), or a shunt (3.3 V, Prophesee EVK4) | See [Jumpers](#jumpers). **Never fit it with an IDS camera connected.** |
-| **J23** | Fan supply, 2-pin header at the bottom left, marked `J23  FAN 12V` and `0.2 A MAX` | A 2-wire 12 V DC cooling fan, 200 mA maximum | Pin 1 (`+`, the top pin) = 12 V · pin 2 (`-`) = ground. The fan runs when the charger on J17 gives 15 V. There is no firmware control. The header has no key: connect the fan with the correct polarity. Do not fit a shunt on J23: it shorts the fan supply to ground. Do not connect a fan to the 12 V supply of the laser drivers. |
+| **J23** | Fan supply, 2-pin header at the bottom left, marked `J23  FAN 12V` and `0.2 A MAX` | One 2-wire 12 V DC cooling fan of 40 mm, 200 mA maximum | Pin 1 (`+`, the top pin) = 12 V · pin 2 (`-`) = ground. The fan runs when the charger on J17 gives 15 V. There is no firmware control. The header has no key: connect the fan with the correct polarity. Do not fit a shunt on J23: it shorts the fan supply to ground. Do not connect a fan to the 12 V supply of the laser drivers. |
 | **TP4–TP9** | Bare test pads at the top centre, marked `12V`, `5V`, `3V3`, `1V8`, `VCAM`, `GND` | A multimeter | Supply rails |
 
 ### Jumpers

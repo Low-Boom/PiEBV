@@ -125,7 +125,8 @@ R16 and U13's internal pull-ups source, so it is left unconnected and U18 does t
 
 ## Fan supply (U24, J23)
 
-J23 supplies a 2-wire 12 V DC cooling fan. The maximum fan current is 200 mA (the design limit).
+J23 supplies a 2-wire 12 V DC cooling fan. The board is specified for one 12 V, 40 mm fan. The
+maximum fan current is 200 mA (the design limit).
 
 **Circuit.** U24 is an ST **L78M12ABDT-TR** linear regulator (L78M12AB, 12 V, 0.5 A part,
 DPAK / TO-252-2, LCSC C61534). Its input is VBUS_PD. Its output is the net `+12V_FAN`. C37 (1 µF, 0805) is the
