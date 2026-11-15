@@ -138,12 +138,22 @@ J22 (C32713268): pin 1 is `+12V_FAN`, pin 2 is GND. The silkscreen shows `J23  F
 | 15 V (after the PD negotiation) | about 12 V | runs |
 | 5 V (before the negotiation, or a charger that does not offer 15 V) | far below 12 V | does not run |
 
-- The regulator needs about 2 V of headroom (typical 78M12 dropout, not checked against the
-  CJ78M12 data sheet). 15 V gives 3 V.
+- CJ78M12 data sheet (JCST, rev. B, January 2012): pins 1 IN, 2 GND (tab), 3 OUT; input 35 V
+  maximum; output 11.5–12.5 V at 25 °C (11.4–12.6 V over 0–125 °C) for an input of 14.5–27 V and
+  5–350 mA; dropout 2 V typical at 350 mA; quiescent current 4.6 mA typical, 6 mA maximum;
+  dissipation 1.25 W at 25 °C ambient.
+- 15 V gives 3 V of headroom. The data sheet specifies the output from 14.5 V input. USB-PD
+  permits 15 V ±5 % at the charger, so with a low charger and cable drop the input can be a
+  little below 14.5 V. The output is then outside the specified conditions and can be somewhat
+  below 12 V. That is acceptable for a fan.
+- Dissipation at 200 mA and 15 V in: 3 V × 0.2 A + 15 V × 6 mA = 0.69 W, below the 1.25 W rating.
+  The rating falls with ambient temperature (the data sheet gives no derating curve; the two
+  values imply about 80 °C/W to ambient without copper).
 - The fan is always on while 15 V is present. There is no firmware control and no tachometer
   input.
-- There is no fuse. The 78M12 type has internal current limiting and thermal shutdown (not checked
-  against the CJ78M12 data sheet).
+- There is no fuse. The data sheet gives a short-circuit current of 240 mA typical (at 19 V in)
+  and a peak current of 0.7 A. It does not state a thermal shutdown.
+- The 200 mA design limit is below the 350 mA at which the data sheet specifies the output.
 
 **Why a separate regulator.** The fan supply does not use the +12V rail of the laser drivers
 (U17), for two reasons:

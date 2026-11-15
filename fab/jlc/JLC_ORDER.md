@@ -77,7 +77,7 @@ order.
 | D6 | yellow LED 0805 | C2296 | basic | |
 | C31, C33, C35 | 12 pF 50 V C0G 0805 | C1792 | basic | |
 | C32, C34, C36 | 22 pF 50 V C0G 0805 (was 18 pF, C1797) | C1804 | not checked | Lower capacitor of the sense dividers. |
-| U24 | CJ78M12, TO-252-2 | C9072 | class not confirmed | 12 V regulator of the fan supply (J23). Treat it as an extended part until checked. Stock was not checked. Check its placement in the preview (step 1). |
+| U24 | CJ78M12, TO-252-2 | C9072 | extended | 12 V regulator of the fan supply (J23). JLC's part data gave "Extended Part" and a stock of 11 600 on 2026-11-15. Check its placement in the preview (step 1). |
 | R52–R69 | 47 Ω 1 % 0805 | C17714 | basic | Series resistors in the camera lines: R52–R57 Sync, R58–R63 Trigger, R64–R69 TDRSTN. 18 parts. |
 | R51 | 4.7 kΩ 1 % 0805 | C17673 | – | Discharge resistor of `+VCAM`. Same BOM line as the other 4.7 kΩ resistors (R23, R40, R44, R48). |
 | C23–C30, C37, C38, R33–R50, R70, J22, J23 | same LCSC parts as the Rev 1 lines with these values | – | – | 0.1 µF, 1 µF, 100 Ω, 750 Ω, 1 kΩ, 4.7 kΩ, 10 kΩ, 100 kΩ, 150 kΩ, 1×2 header. C37 and C38 are on the 1 µF 50 V line (C28323). J23 is on the line of J20 and J22 (C32713268). |
@@ -112,8 +112,8 @@ Everything else was in stock in quantity on 2026-09-25 (J17 TYPE-C-31-M-17, C283
 Thirteen lines are JLC basic parts and two preferred extended (no loading fee); the other 26 are
 extended (about $3 loading fee each in Economic). Rev 2 adds 11 lines: 6 basic (2N7002, green,
 red and yellow LED, 12 pF, 47 Ω), 3 extended (TPS2116, SN74LVC1G123, blue LED), the 22 pF
-line (C1804), whose type was not checked, and the CJ78M12 line (U24, C9072), whose class (basic or
-extended) is not confirmed. Treat the CJ78M12 as an extended part until checked.
+line (C1804), whose type was not checked, and the CJ78M12 line (U24, C9072), which is an extended
+part (JLC's part data, 2026-11-15).
 
 ## Placement preview — check before approving
 

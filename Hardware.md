@@ -235,7 +235,7 @@ Limits and ratings of the rails:
 | `+5V_PD` | U15 accepts 3.8–32 V in. The rail is ~4.9 V while VBUS_PD is 5 V. |
 | `+5V` | U16 is an LM66100 ideal diode. The Pico's USB feeds the rail through the Pico's own Schottky D1: ~4.7 V typical from the Pico's USB alone (74AHCT is specified from 4.5 V). |
 | `+12V` | U17: 45 V / 500 mA part, R12/R13 0.1 %. Current limit 400 mA ±10 % (R20 = 750 Ω). Power-good window 10.6–13.3 V (undervoltage 10.6 V rising / 10.4 V falling, overvoltage 13.3 V). |
-| `+12V_FAN` | U24: 78M12 type, 12 V, 0.5 A part. Maximum fan current: 200 mA (design limit). No fuse: the 78M12 type has internal current limiting and thermal shutdown (not checked against the CJ78M12 data sheet). The fan does not run on a 5 V-only charger. The fan is always on while VBUS_PD is 15 V: there is no firmware control and no tachometer input. |
+| `+12V_FAN` | U24: 78M12 type, 12 V, 0.5 A part. Maximum fan current: 200 mA (design limit). No fuse: the CJ78M12 data sheet gives a short-circuit current of 240 mA typical and a peak current of 0.7 A; it does not state a thermal shutdown. The fan does not run on a 5 V-only charger. The fan is always on while VBUS_PD is 15 V: there is no firmware control and no tachometer input. |
 | `+1V8` | U9: fixed 1.8 V, 2.5–24 V in. |
 | `+3V3` | Raspberry Pi recommends a load below 300 mA on the Pico's 3V3_OUT pin (pin 36). |
 | `+VCAM` | U20 is a power mux for 1.6–5.5 V. At most 58 mA for six EVK4 cameras. |
