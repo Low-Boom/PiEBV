@@ -200,7 +200,7 @@ undefined.
 **Charger:** a USB-C PD charger that offers **15 V**. In practice that means any PD charger rated
 30 W or more. With a 5 V or 9 V-only charger the board still runs, but the laser outputs stay off.
 
-**Cooling fan:** J23 (marked `J23  FAN 12V`, `0.2 A MAX`) supplies a 2-wire 12 V DC fan, 200 mA
+**Cooling fan:** J23 (marked `J23  FAN 12V`, `0.2 A MAX`) supplies one 2-wire 12 V DC fan of 40 mm, 200 mA
 maximum. Pin 1 (`+`) is 12 V and pin 2 (`-`) is ground. The fan runs when the charger on J17 gives
 15 V. The firmware does not control the fan.
 

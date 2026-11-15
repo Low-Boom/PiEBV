@@ -99,7 +99,8 @@ Ordered by what would bite hardest.
    camera connected, the level between SYNC_IN_P and SYNC_IN_N must be 2.5 V or more when high.
    The harness has no resistors: the series resistors are on the board (R52–R63).
 
-10. **Cooling fan supply (U24, J23), if you use a fan.** With J17 on a 15 V charger and no fan
+10. **Cooling fan supply (U24, J23), if you use a fan.** The board is specified for one 12 V,
+    40 mm fan. With J17 on a 15 V charger and no fan
     connected, measure J23 pin 1 (`+`) against pin 2: it must be 11.5–12.5 V. Then connect the
     fan (`+` = pin 1; the header has no key). Confirm that the fan starts at the lowest and the
     highest input (about 14.2 V and 15.75 V on VBUS_PD), cold and warm. A fan near the 200 mA

@@ -28,15 +28,45 @@ In this document:
 
 ## Board views
 
-Images of the Rev 2 board, made by `tools/rev2/images.sh` from `PiEBV_Pico.kicad_pcb`. The layer images and the other renders are in [Board images](docs/design/LAYOUT.md#board-images).
+Images of the Rev 2 board, made by `tools/rev2/images.sh` from `PiEBV_Pico.kicad_pcb`.
 
 **Top view (3-D render)**
 
 ![Top view](docs/img/render_top.png)
 
+**3-D render**
+
+![3-D render of the board](docs/img/render_3d.png)
+
+**Bottom view (3-D render)**
+
+![Bottom view](docs/img/render_bottom.png)
+
 **Top side: silkscreen, pads and part outlines**
 
 ![Top silkscreen and pads](docs/img/top_assembly.png)
+
+**Layer 1, F.Cu (top): parts, signals, GND fill**
+
+![F.Cu](docs/img/layer_1_F_Cu.png)
+
+**Layer 2, In1.Cu: GND plane**
+
+![In1.Cu](docs/img/layer_2_In1_Cu.png)
+
+**Layer 3, In2.Cu: power islands in a GND fill**
+
+![In2.Cu](docs/img/layer_3_In2_Cu.png)
+
+**In2.Cu power islands (colour map) with the B.Cu tracks**
+
+![In2 power islands](docs/img/in2_islands.png)
+
+**Layer 4, B.Cu (bottom): signals, GND fill**
+
+![B.Cu](docs/img/layer_4_B_Cu.png)
+
+The layer functions and the island layout are in [docs/design/LAYOUT.md](docs/design/LAYOUT.md).
 
 ## How the board works
 
@@ -235,7 +265,7 @@ Limits and ratings of the rails:
 | `+5V_PD` | U15 accepts 3.8–32 V in. The rail is ~4.9 V while VBUS_PD is 5 V. |
 | `+5V` | U16 is an LM66100 ideal diode. The Pico's USB feeds the rail through the Pico's own Schottky D1: ~4.7 V typical from the Pico's USB alone (74AHCT is specified from 4.5 V). |
 | `+12V` | U17: 45 V / 500 mA part, R12/R13 0.1 %. Current limit 400 mA ±10 % (R20 = 750 Ω). Power-good window 10.6–13.3 V (undervoltage 10.6 V rising / 10.4 V falling, overvoltage 13.3 V). |
-| `+12V_FAN` | U24: ST L78M12AB, 12 V, 0.5 A part. Maximum fan current: 200 mA (design limit). No fuse: the current limit and the thermal protection of the regulator are the protection (data-sheet features, not tested on this board). The data sheet gives a short-circuit current of 240 mA typical (at 35 V input) and a short-circuit peak current of 700 mA typical. D7 (1N4148W) is in parallel with U24, from the output to the input: it carries the current back to the input when VBUS_PD falls. On a 5 V charger the fan gets about 3 V and normally does not turn (not guaranteed for every fan). On a 9 V or 12 V charger setting the fan gets about 7 V or 10 V and turns slowly. The fan is always on while VBUS_PD is 15 V: there is no firmware control and no tachometer input. See [Fan supply](docs/design/POWER.md#fan-supply-u24-j23). |
+| `+12V_FAN` | U24: ST L78M12AB, 12 V, 0.5 A part. Specified load: one 12 V, 40 mm fan. Maximum fan current: 200 mA (design limit). No fuse: the current limit and the thermal protection of the regulator are the protection (data-sheet features, not tested on this board). The data sheet gives a short-circuit current of 240 mA typical (at 35 V input) and a short-circuit peak current of 700 mA typical. D7 (1N4148W) is in parallel with U24, from the output to the input: it carries the current back to the input when VBUS_PD falls. On a 5 V charger the fan gets about 3 V and normally does not turn (not guaranteed for every fan). On a 9 V or 12 V charger setting the fan gets about 7 V or 10 V and turns slowly. The fan is always on while VBUS_PD is 15 V: there is no firmware control and no tachometer input. See [Fan supply](docs/design/POWER.md#fan-supply-u24-j23). |
 | `+1V8` | U9: fixed 1.8 V, 2.5–24 V in. |
 | `+3V3` | Raspberry Pi recommends a load below 300 mA on the Pico's 3V3_OUT pin (pin 36). |
 | `+VCAM` | U20 is a power mux for 1.6–5.5 V. At most 58 mA for six EVK4 cameras. |
@@ -247,7 +277,7 @@ TP4–TP9 are bare 1.5 mm copper pads on the top side (no part). Each is marked 
   - Without 15 V the outputs stay disabled: U18 holds U13 and U19 off while +12V is outside 10.6–13.3 V.
   - 5 V-only charger: +12V ≈ 4.7 V. 9 V charger: +12V ≈ 8.7 V.
   - On a 12 V charger setting or an overload, U17 cannot regulate and +12V is below ~11 V.
-- **Fan header J23.** Connect a 2-wire 12 V DC cooling fan: pin 1 (`+` on the silkscreen) is +12V_FAN, pin 2 (`-`) is GND. The maximum fan current is 200 mA. Do not connect a fan to the +12V rail of the laser drivers.
+- **Fan header J23.** The board is specified for one 12 V, 40 mm fan. Connect a 2-wire 12 V DC cooling fan: pin 1 (`+` on the silkscreen) is +12V_FAN, pin 2 (`-`) is GND. The maximum fan current is 200 mA. Do not connect a fan to the +12V rail of the laser drivers.
   - J23 is the same 2-pin header type as the jumpers J20 and J22. It has no key.
   - **Do not fit a shunt on J23.** A shunt shorts the fan supply to GND.
   - Connect the fan with the correct polarity (`+` = pin 1).
@@ -485,7 +515,7 @@ HRO TYPE-C-31-M-17, a 6-pin power-only receptacle, at the bottom of the left edg
 | TP3 | 1×2 right-angle, left edge below the Pico | 1 `PWM_1MHz` · 2 GND |
 | J20 | 1×2 vertical, clock jumper, right of the Pico's GPIO end, below the J14 row (pin 1 at the bottom) | 1 `CLK_SEL_JMP` (R29 1 kΩ to GP10) · 2 GND. Shunt = 300 MHz, open = 150 MHz ([clock jumper](#clock-jumper-j20-300-mhz-overclock)) |
 | J22 | 1×2 vertical, camera I/O level, top centre (pin 1 at the top) | 1 GND · 2 through R35 (1 kΩ) to `VCAM_SEL` (U20 PR1; R34 and R70, 10 kΩ each, to +3V3). Open = 1.8 V, shunt = 3.3 V ([+VCAM](#vcam-the-camera-signal-supply)) |
-| J23 | 1×2 vertical, fan supply, bottom left, right of MH3 and left of J1 (pin 1 at the top). Silkscreen `J23  FAN 12V`, `0.2 A MAX`, `+` and `-` | 1 `+12V_FAN` (`+`) · 2 GND (`-`). For a 2-wire 12 V DC fan, 200 mA maximum ([Power](#power)) |
+| J23 | 1×2 vertical, fan supply, bottom left, right of MH3 and left of J1 (pin 1 at the top). Silkscreen `J23  FAN 12V`, `0.2 A MAX`, `+` and `-` | 1 `+12V_FAN` (`+`) · 2 GND (`-`). For one 2-wire 12 V DC fan of 40 mm, 200 mA maximum ([Power](#power)) |
 | TP4–TP9 | bare test pads | +12V, +5V, +3V3, +1V8, +VCAM, GND (positions in the rail table under [Power](#power)) |
 
 The camera trigger leaves the board on J12, and J11 is the only user interlock. TP3 sits at the left edge below the Pico; its pins point at the edge and end 0.96 mm inside it.
