@@ -215,7 +215,7 @@ Pico 3V3_OUT ─ +3V3 ─┬─ U20 VIN2 ─┘   J22 open: +VCAM = +1V8.  J22 f
 
 | Rail | Source | Feeds | Test pad | Nominal value |
 |---|---|---|---|---|
-| `VBUS_PD` | J17 through U14 (CH224A) | U15, U17 | – | 5 V, then 15 V after the PD contract |
+| `VBUS_PD` | J17 through U14 (CH224A) | U15, U17 | – | 5 V until the PD contract completes, then 15 V |
 | `+5V_PD` | U15 (AP63205WU buck) | U16 | – | 5.00 V ±1 % |
 | `+5V` | U16 from +5V_PD, or the Pico's USB | Pico VSYS (J15.2), U7, U8, U10, U9 input, R2/R3, D2 (R36) | TP5 `5V` (201.0, 45.0) | ~5.0 V from J17 |
 | `+12V` | U17 (LT3065) from VBUS_PD | U13 and U19 VDD, U18, R16 | TP4 `12V` (237.0, 50.0) | 11.8 V (11.54–12.05 V) |
@@ -233,7 +233,7 @@ Limits and ratings of the rails:
 | `+5V` | U16 is an LM66100 ideal diode. The Pico's USB feeds the rail through the Pico's own Schottky D1: ~4.7 V typical from the Pico's USB alone (74AHCT is specified from 4.5 V). |
 | `+12V` | U17: 45 V / 500 mA part, R12/R13 0.1 %. Current limit 400 mA ±10 % (R20 = 750 Ω). Power-good window 10.6–13.3 V (undervoltage 10.6 V rising / 10.4 V falling, overvoltage 13.3 V). |
 | `+1V8` | U9: fixed 1.8 V, 2.5–24 V in. |
-| `+3V3` | Raspberry Pi recommends a load below 300 mA on that pin. |
+| `+3V3` | Raspberry Pi recommends a load below 300 mA on the Pico's 3V3_OUT pin (pin 36). |
 | `+VCAM` | U20 is a power mux for 1.6–5.5 V. At most 58 mA for six EVK4 cameras. |
 
 TP4–TP9 are bare 1.5 mm copper pads on the top side (no part). Each is marked with the rail name. Use TP9 as the meter reference. Operating rules:
@@ -248,7 +248,7 @@ TP4–TP9 are bare 1.5 mm copper pads on the top side (no part). Each is marked 
 - **Never leave R10 off:** an open CFG1 is outside the CH224A table (6k8 = 9 V, 24k = 12 V, 56k = 15 V, 120k = 20 V, 210k = 28 V).
 - **Do not fit a CH224K** for U14: its pin 1 is a 3.6 V VDD pin and would be destroyed.
 - **If U17 fails short,** +12V follows VBUS_PD to 15 V (~6.3 V into the LDP-V trigger input). The overvoltage side of U18 (13.3 V) then switches the outputs off.
-- **Fit the Pico before you connect cameras.** With no Pico, Sync and TDRSTN at the cameras are undefined ([Signal chains](#signal-chains)). The laser outputs, the camera triggers and J12 stay low (R17/R18, R9).
+- **Fit the Pico before you connect cameras.** With no Pico, Sync and TDRSTN at the cameras are undefined. The laser outputs, the camera triggers and J12 stay low (R17/R18, R9).
 - **Power-up order.** The 1.8 V rail can come up a millisecond or so before the Pico's 3.3 V. TDRSTN is then briefly undefined. That is harmless: the cameras haven't started yet.
 - With J22 open, nothing on this board presents 5 V or 3.3 V to J1–J6. With J22 fitted, pins 3, 4 and 5 of J1–J6 are 3.3 V signals.
 - Rail design, budgets and the power-good analysis: [docs/design/POWER.md](docs/design/POWER.md). Island layout: [Power islands](docs/design/LAYOUT.md#power-islands-in2cu).
