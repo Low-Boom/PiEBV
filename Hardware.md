@@ -6,7 +6,13 @@ This page is the bench reference for the PiEBV board: the parts, the pins, the l
 
 ## Contents
 
-In this document: [Board views](#board-views) · [How the board works](#how-the-board-works) · [At a glance](#at-a-glance) · [Socket pin mapping](#socket-pin-mapping--read-this-first) · [Firmware pin map](#firmware-pin-map) · [Limits](#limits) · [Power](#power) · [Signal chains](#signal-chains) · [Laser interlock](#laser-interlock) · [Status LEDs](#status-leds) · [Connectors](#connectors) · [Clock jumper (J20)](#clock-jumper-j20-300-mhz-overclock) · [Boot and arming](#boot-and-arming) · [Files](#files)
+In this document:
+
+- [Board views](#board-views) · [How the board works](#how-the-board-works) · [At a glance](#at-a-glance)
+- [Socket pin mapping](#socket-pin-mapping--read-this-first) · [Firmware pin map](#firmware-pin-map) · [Limits](#limits)
+- [Power](#power) · [Signal chains](#signal-chains) · [Laser interlock](#laser-interlock) · [Status LEDs](#status-leds)
+- [Connectors](#connectors) · [Clock jumper (J20)](#clock-jumper-j20-300-mhz-overclock) · [Boot and arming](#boot-and-arming)
+- [First-board checks](#first-board-checks) · [Manufacturing notes](#manufacturing-notes) · [Files](#files)
 
 | Other page | Contents |
 |---|---|
@@ -146,7 +152,10 @@ All eight module grounds are connected. Every other socket pad is unconnected an
 
 - **CH1 is the higher GPIO (GP13) and CH2 the lower (GP12).** The order is deliberate; don't "tidy" them into ascending order.
 - `src/board.h` repeats this table as a comment. Keep the two in step: when the constants and the schematic once drifted apart, the whole board looked dead.
-- PIO state machines (pio0): SM0 CH1, SM1 CH2, SM2 MARKER, SM3 PIXGATE. SYNC comes from the RP2350 clock generator (clk_gpout1). CH1/CH2 reach their pins only while ARMED; otherwise `src/laser_gate.cpp` holds them LOW. The pin choice is explained in [Firmware pin map](docs/design/FIRMWARE_HW.md#firmware-pin-map).
+- PIO state machines (pio0): SM0 CH1, SM1 CH2, SM2 MARKER, SM3 PIXGATE.
+- SYNC comes from the RP2350 clock generator (clk_gpout1).
+- CH1/CH2 reach their pins only while ARMED; otherwise `src/laser_gate.cpp` holds them LOW.
+- The pin choice is explained in [Firmware pin map](docs/design/FIRMWARE_HW.md#firmware-pin-map).
 
 ## Limits
 
@@ -204,26 +213,42 @@ Pico 3V3_OUT ─ +3V3 ─┬─ U20 VIN2 ─┘   J22 open: +VCAM = +1V8.  J22 f
                      └─ U20 MODE, R34 and R70 (pull-ups of U20 PR1), R24, U21–U23 (activity LED monostables)
 ```
 
-| Rail | Source | Feeds | Test pad | Nominal value / limit |
+| Rail | Source | Feeds | Test pad | Nominal value |
 |---|---|---|---|---|
-| `VBUS_PD` | J17 through U14 (CH224A PD sink; R10 = 56 kΩ requests 15 V; VHV, VBUS, CC1 and CC2 rated to 32 V) | U15, U17 | – | 5 V until the PD contract completes, then 15 V. U14 has no output switch: everything downstream must tolerate both. |
-| `+5V_PD` | U15 (AP63205WU buck, 3.8–32 V in) | U16 | – | 5.00 V ±1 %; ~4.9 V while VBUS_PD is 5 V |
-| `+5V` | U16 (LM66100 ideal diode) from +5V_PD, or the Pico's USB through the Pico's own Schottky D1 | Pico VSYS (J15.2), U7, U8, U10, U9 input, R2/R3, D2 (R36) | TP5 `5V` at (201.0, 45.0) | ~5.0 V from J17; ~4.7 V typical from the Pico's USB alone (74AHCT is specified from 4.5 V) |
-| `+12V` | U17 (LT3065, 45 V / 500 mA, R12/R13 0.1 %) from VBUS_PD | U13 and U19 VDD, U18, R16 | TP4 `12V` at (237.0, 50.0) | 11.8 V (11.54–12.05 V); current limit 400 mA ±10 % (R20 = 750 Ω); power-good window 10.6–13.3 V (undervoltage 10.6 V rising / 10.4 V falling, overvoltage 13.3 V) |
-| `+1V8` | U9 (NCP718xSN180, fixed 1.8 V, 2.5–24 V in) from +5V | U20 VIN1 | TP7 `1V8` at (225.0, 43.75) | 1.8 V (±2 %) |
-| `+3V3` | Pico 3V3_OUT (pin 36, J15.5) | U20 VIN2 and MODE, R24, R34, R70, U21–U23, D4–D6 | TP6 `3V3` at (220.9, 36.6) | 3.3 V; Raspberry Pi recommends a load below 300 mA on that pin |
-| `+VCAM` | U20 (TPS2116 power mux, 1.6–5.5 V), set by J22 | U1–U6 (all camera-facing logic), D1 (R33), R51 | TP8 `VCAM` at (230.5, 50.3) | 1.8 V (J22 open) or 3.3 V (J22 fitted); at most 58 mA for six EVK4 cameras |
-| `GND` | | | TP9 `GND` at (240.6, 48.6) | meter reference |
+| `VBUS_PD` | J17 through U14 (CH224A) | U15, U17 | – | 5 V, then 15 V after the PD contract |
+| `+5V_PD` | U15 (AP63205WU buck) | U16 | – | 5.00 V ±1 % |
+| `+5V` | U16 from +5V_PD, or the Pico's USB | Pico VSYS (J15.2), U7, U8, U10, U9 input, R2/R3, D2 (R36) | TP5 `5V` (201.0, 45.0) | ~5.0 V from J17 |
+| `+12V` | U17 (LT3065) from VBUS_PD | U13 and U19 VDD, U18, R16 | TP4 `12V` (237.0, 50.0) | 11.8 V (11.54–12.05 V) |
+| `+1V8` | U9 (NCP718xSN180) from +5V | U20 VIN1 | TP7 `1V8` (225.0, 43.75) | 1.8 V (±2 %) |
+| `+3V3` | Pico 3V3_OUT (pin 36, J15.5) | U20 VIN2 and MODE, R24, R34, R70, U21–U23, D4–D6 | TP6 `3V3` (220.9, 36.6) | 3.3 V |
+| `+VCAM` | U20 (TPS2116), set by J22 | U1–U6 (all camera-facing logic), D1 (R33), R51 | TP8 `VCAM` (230.5, 50.3) | 1.8 V (J22 open) or 3.3 V (J22 fitted) |
+| `GND` | | | TP9 `GND` (240.6, 48.6) | meter reference |
+
+Limits and ratings of the rails:
+
+| Rail | Limit or rating |
+|---|---|
+| `VBUS_PD` | U14 is a PD sink. R10 = 56 kΩ requests 15 V. VHV, VBUS, CC1 and CC2 are rated to 32 V. U14 has no output switch: everything downstream must tolerate 5 V and 15 V. |
+| `+5V_PD` | U15 accepts 3.8–32 V in. The rail is ~4.9 V while VBUS_PD is 5 V. |
+| `+5V` | U16 is an LM66100 ideal diode. The Pico's USB feeds the rail through the Pico's own Schottky D1: ~4.7 V typical from the Pico's USB alone (74AHCT is specified from 4.5 V). |
+| `+12V` | U17: 45 V / 500 mA part, R12/R13 0.1 %. Current limit 400 mA ±10 % (R20 = 750 Ω). Power-good window 10.6–13.3 V (undervoltage 10.6 V rising / 10.4 V falling, overvoltage 13.3 V). |
+| `+1V8` | U9: fixed 1.8 V, 2.5–24 V in. |
+| `+3V3` | Raspberry Pi recommends a load below 300 mA on that pin. |
+| `+VCAM` | U20 is a power mux for 1.6–5.5 V. At most 58 mA for six EVK4 cameras. |
 
 TP4–TP9 are bare 1.5 mm copper pads on the top side (no part). Each is marked with the rail name. Use TP9 as the meter reference. Operating rules:
 
-- **The laser outputs and J12 need a 15 V USB-PD charger on J17.** Any charger rated **above 27 W** must offer 15 V under the USB-PD rules (in practice any PD charger rated 30 W or more). A smaller charger may not offer 15 V. The outputs then stay disabled: U18 holds U13 and U19 off while +12V is outside 10.6–13.3 V (5 V-only charger: +12V ≈ 4.7 V; 9 V charger: +12V ≈ 8.7 V). On a 12 V charger setting or an overload, U17 cannot regulate and +12V is below ~11 V.
+- **The laser outputs and J12 need a 15 V USB-PD charger on J17.**
+  - Any charger rated **above 27 W** must offer 15 V under the USB-PD rules (in practice any PD charger rated 30 W or more). A smaller charger may not offer 15 V.
+  - Without 15 V the outputs stay disabled: U18 holds U13 and U19 off while +12V is outside 10.6–13.3 V.
+  - 5 V-only charger: +12V ≈ 4.7 V. 9 V charger: +12V ≈ 8.7 V.
+  - On a 12 V charger setting or an overload, U17 cannot regulate and +12V is below ~11 V.
 - **With the Pico's USB alone** the logic and the cameras run, and the lasers are off (no 12 V). A host whose USB sags below ~4.8 V puts the 74AHCT gates just outside their rated range.
 - **Pico VBUS (pin 40, J15.1) is deliberately not connected.** Do not tie VBUS to VSYS: with J17 also feeding VSYS it would push current back into the USB host.
 - **Never leave R10 off:** an open CFG1 is outside the CH224A table (6k8 = 9 V, 24k = 12 V, 56k = 15 V, 120k = 20 V, 210k = 28 V).
 - **Do not fit a CH224K** for U14: its pin 1 is a 3.6 V VDD pin and would be destroyed.
 - **If U17 fails short,** +12V follows VBUS_PD to 15 V (~6.3 V into the LDP-V trigger input). The overvoltage side of U18 (13.3 V) then switches the outputs off.
-- **Fit the Pico before you connect cameras.** With no Pico, Sync and TDRSTN at the cameras are undefined. The laser outputs, the camera triggers and J12 stay low (R17/R18, R9).
+- **Fit the Pico before you connect cameras.** With no Pico, Sync and TDRSTN at the cameras are undefined ([Signal chains](#signal-chains)). The laser outputs, the camera triggers and J12 stay low (R17/R18, R9).
 - **Power-up order.** The 1.8 V rail can come up a millisecond or so before the Pico's 3.3 V. TDRSTN is then briefly undefined. That is harmless: the cameras haven't started yet.
 - With J22 open, nothing on this board presents 5 V or 3.3 V to J1–J6. With J22 fitted, pins 3, 4 and 5 of J1–J6 are 3.3 V signals.
 - Rail design, budgets and the power-good analysis: [docs/design/POWER.md](docs/design/POWER.md). Island layout: [Power islands](docs/design/LAYOUT.md#power-islands-in2cu).
@@ -337,7 +362,11 @@ J12 gives other equipment a copy of the camera trigger: the marker with J10 on 2
 - **Levels:** the same circuit as a laser output (U19 channel A, R30 68 Ω, R31 47 Ω, R32 82 Ω, J21). J21 on 1-2 gives 4.53–5.14 V into 50 Ω. J21 on 2-3 gives 4.55–5.08 V open circuit from a 47–50 Ω source. Ship with J21 on 1-2.
 - **Power:** J12 is live only with a 15 V PD charger on J17. On the Pico's USB alone it stays at 0 V.
 - **Not gated by the laser interlock.** ARM and J11 act only on the laser pulses (U7/U8). With J10 on 2-3, J12 keeps pulsing while the lasers are disarmed, as the camera triggers do.
-- **Timing: measure the offset to the cameras on each board.** J12 minus camera trigger (simulated with the 4 mA default drive, J10 on 2-3, J21 on 1-2 and J12 into 50 Ω; min / typ / max): **−8.5 / +10.5 / +26.3 ns** rising, **−9.4 / +9.5 / +24.1 ns** falling. On one board the offset is fixed: measured once, it holds to about 0.5 ns, plus 1–2 ns over temperature (estimates). It depends on J10 and J21, so measure each setting you use ([first-board check 4](docs/FIRST_BOARD_CHECKS.md#first-board-checks)). Write the result in the `J12-TRIG OFFSET (MEASURED)` field on the silkscreen, in the left area of the board, below TP3.
+- **Timing: measure the offset to the cameras on each board.**
+  - J12 minus camera trigger, simulated (min / typ / max): **−8.5 / +10.5 / +26.3 ns** rising, **−9.4 / +9.5 / +24.1 ns** falling. Conditions: 4 mA default drive, J10 on 2-3, J21 on 1-2, J12 into 50 Ω.
+  - On one board the offset is fixed: measured once, it holds to about 0.5 ns, plus 1–2 ns over temperature (estimates).
+  - The offset depends on J10 and J21, so measure each setting you use ([first-board check 4](docs/FIRST_BOARD_CHECKS.md#first-board-checks)).
+  - Write the result in the `J12-TRIG OFFSET (MEASURED)` field on the silkscreen, in the left area of the board, below TP3.
 - **Duty and loads.** J12 is high at most 50 % of the time (67 % with J10 on 1-2 and `COMBINE 1`). Don't short it. One load per output, no BNC tee, as for the laser outputs.
 - Timing table and layout: [External Sync Out](docs/design/SIGNALS.md#external-sync-out-j12).
 
@@ -413,7 +442,13 @@ Source: IDS UE-39B0XCP-E-GL datasheet, rev 2026-01-09. **All three signals are 1
 >
 > **Set every camera as a sync *slave*.** The IMX636's SYNC pin is bidirectional (it drives when the sensor is master), and the board drives pin 5 push-pull. A camera left in master mode would fight U2.
 
-**Prophesee EVK4 (Rev 2).** With J22 fitted the same headers drive EVK4 cameras at 3.3 V through the harness of [docs/EVK4_HARNESS.md](docs/EVK4_HARNESS.md): pin 5 (Sync) to SYNC_IN_P, pin 4 (Trigger) to TRIG_IN_P, pins 7 and 2 (GND) to SYNC_IN_N and TRIG_IN_N. The harness has no resistors: the series resistors are on the board (R52–R63). Pin 3 (TDRSTN) is not used: the EVK4 has no pixel-reset input. The EVK4 inputs are opto-coupled (2.5–5.5 V high; 3.7–4.6 mA for each input in the simulation), which is why they need 3.3 V and not 1.8 V. **Do not use IDS and EVK4 cameras together:** J22 sets the level of all six ports.
+**Prophesee EVK4 (Rev 2).** With J22 fitted the same headers drive EVK4 cameras at 3.3 V through the harness of [docs/EVK4_HARNESS.md](docs/EVK4_HARNESS.md).
+
+- **Do not use IDS and EVK4 cameras together:** J22 sets the level of all six ports.
+- Wiring: pin 5 (Sync) to SYNC_IN_P, pin 4 (Trigger) to TRIG_IN_P, pins 7 and 2 (GND) to SYNC_IN_N and TRIG_IN_N.
+- The harness has no resistors: the series resistors are on the board (R52–R63).
+- Pin 3 (TDRSTN) is not used: the EVK4 has no pixel-reset input.
+- The EVK4 inputs are opto-coupled (2.5–5.5 V high; 3.7–4.6 mA for each input in the simulation), which is why they need 3.3 V and not 1.8 V.
 
 **Hand assembly:** solder R52–R69 before the headers J1–J6. The resistors stand in the 2 mm gaps between the header courtyards, and their references are not on the silkscreen ([positions](docs/design/LAYOUT.md#series-resistors-at-the-camera-headers)).
 
@@ -518,10 +553,10 @@ The manufacturing notes, the JLCPCB order notes and the hot-plate assembly are o
 | Path | What |
 |---|---|
 | `PiEBV_Pico.kicad_sch` | schematic |
-| `PiEBV_Pico.kicad_pcb` | board, Rev 2. Copper fingerprint (`tools/rev2/stats.py`: SHA-256 of the sorted track and via lines, first 16 digits) `e7a5f9db42935959`: 1453 segments / 2966.9 mm / 221 vias / 0 duplicates. The Rev 1 EuroCard board (`4381eab`) gives `27ee9924ec2199bf` with this tool: 1015 segments / 2489.2 mm / 173 vias. (Rev 1 text quoted `98a60c3b4332d6e9` from a tool `fp.py` that is not in the repository, and 194 vias from before the stitching lattice was removed.) |
+| `PiEBV_Pico.kicad_pcb` | board, Rev 2. Copper fingerprint `e7a5f9db42935959` (note 1 below) |
 | `fab/PiEBV_Pico_BOM.csv` | master parts list with the design-constraint NOTE rows (hand-maintained; KiCad's `export_bom` ignores DNP attributes). The JLC BOM in `fab/jlc/` is derived from it. |
 | `fab/jlc/PiEBV_Pico_JLC_BOM.csv`, `fab/jlc/PiEBV_Pico_JLC_CPL.csv`, `fab/jlc/JLC_ORDER.md` | JLCPCB full-assembly upload files (all 149 placed parts, LCSC numbers) and the order checklist |
-| `fab/gerbers/`, `fab/PiEBV_Pico_Gerbers.zip` | gerbers, Excellon drill files (plated and unplated), drill maps and job file of the Rev 2 board, from the board's stored plot settings, made by `tools/rev2/fab.sh`. Zip: 14 files (no drill maps). The committed zip has sha256 `639e380ce6e39c0e6fe0ac4c7992643c6c2813aca1549f4994f134cca5a05149`. The gerber files contain their creation date, so a new run of `tools/rev2/fab.sh` gives another check sum for the same board. `fab.sh` does not write the board file. Note on Rev 1: the fab package and the placement file in the repository before Rev 2 were exported before the last Rev 1 layout change (C6 moved by 2.2 mm, stitching vias removed) and did not match the Rev 1 board. |
+| `fab/gerbers/`, `fab/PiEBV_Pico_Gerbers.zip` | gerbers, Excellon drill files (plated and unplated), drill maps and job file of the Rev 2 board, made by `tools/rev2/fab.sh` (note 2 below) |
 | `libs/PiEBV_Local.kicad_sym` | Pico 2 W, UCC27524, LT3065 and TPS3700 symbols |
 | `libs/PiEBV_Local.pretty/` | `*_EdgeTrim` footprint variants (see [Footprint variants and KiCad checks](docs/design/LAYOUT.md#footprint-variants-and-kicad-checks)) and the J7/J8/J12 BNC footprint (see [BNCs](#bncs-50-ω)) |
 | `src/` | firmware: `board.h` (pin map), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `laser_gate.*` (CH1/CH2 gate, start-up hook), `protocol.*` (serial commands), `main.cpp` (arming, hold-off, watchdog) |
@@ -535,6 +570,18 @@ The manufacturing notes, the JLCPCB order notes and the hot-plate assembly are o
 | `docs/MANUFACTURING.md` | manufacturing notes, JLCPCB order notes, hot-plate assembly |
 | `README.md`, `docs/SAFETY.md`, `docs/SETUP.md`, `docs/CONNECTING.md`, `docs/COMMANDS.md`, `docs/TROUBLESHOOTING.md`, `docs/FIRMWARE_BUILD.md` | user guide (README) and its detail pages |
 | `docs/reports/` | earlier review reports: `FABLE_REVIEW.md`, `RESIDUAL_REPORT.md`, `SIMPLIFY_REPORT.md` |
+
+Notes on the table:
+
+1. **Copper fingerprint** (`tools/rev2/stats.py`: SHA-256 of the sorted track and via lines, first 16 digits).
+   - Rev 2: `e7a5f9db42935959`: 1453 segments / 2966.9 mm / 221 vias / 0 duplicates.
+   - The Rev 1 EuroCard board (`4381eab`) gives `27ee9924ec2199bf` with this tool: 1015 segments / 2489.2 mm / 173 vias.
+   - Rev 1 text quoted `98a60c3b4332d6e9` from a tool `fp.py` that is not in the repository, and 194 vias from before the stitching lattice was removed.
+2. **Gerber package.**
+   - The files come from the board's stored plot settings. The zip has 14 files (no drill maps).
+   - The committed zip has sha256 `639e380ce6e39c0e6fe0ac4c7992643c6c2813aca1549f4994f134cca5a05149`.
+   - The gerber files contain their creation date, so a new run of `tools/rev2/fab.sh` gives another check sum for the same board. `fab.sh` does not write the board file.
+   - Note on Rev 1: the fab package and the placement file in the repository before Rev 2 were exported before the last Rev 1 layout change (C6 moved by 2.2 mm, stitching vias removed) and did not match the Rev 1 board.
 
 KiCad rules (detail in [Footprint variants and KiCad checks](docs/design/LAYOUT.md#footprint-variants-and-kicad-checks)):
 
