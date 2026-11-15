@@ -16,7 +16,7 @@ the [hardware reference](../Hardware.md). The JLCPCB order checklist is
 - **Copper keep-outs:** zone copper stays 0.5 mm from the board edge on all four layers, and a
   3 mm-radius keep-out keeps all copper (including the In2 islands) away from each M3 hole, so a
   metal screw or standoff can't touch a plane in the hole wall. No parts are within 2.5 mm of the
-  two 160 mm edges (card-guide border; see [EuroCard mechanics](DESIGN_NOTES.md#eurocard-mechanics)); zone copper
+  two 160 mm edges (card-guide border; see [EuroCard mechanics](design/LAYOUT.md#eurocard-mechanics)); zone copper
   there still goes to 0.5 mm from the edge, under solder mask.
 - **Ground stitching:** edge-fence vias at 10 mm pitch (two gaps on the left edge where parts
   intrude), 1.5 mm in from the outline, plus a tap via at every SMD GND pad and at the pads of

@@ -20,12 +20,12 @@ Ordered by what would bite hardest.
      loops `ARM`/`DISARM` as fast as it can;
    - J7/J8 at 0 V after `DISARM`; after a reset (a power cycle of both J17 and the Pico USB, since
      neither the board nor the Pico 2 W has a reset button, and a watchdog timeout forced over SWD
-     as described under [Boot and arming](../Hardware.md#boot-and-arming)); and, while ARMED with pulses running,
+     as described under [Boot and arming](design/FIRMWARE_HW.md#boot-and-arming)); and, while ARMED with pulses running,
      with J17 unplugged and while it is plugged back in;
    - Hi-Z mode: J18/J19 on 2-3 and the scope at 1 MΩ, 0 V to 4.55–5.08 V, with at most ~5 %
      overshoot (≤ ~5.3 V) at the far end of a 2 m cable (the source is ~49 Ω);
    - the shortest pulse: `WIDTH 20` reaches full height at J7/J8 (U13's minimum input pulse is
-     15 ns maximum for the current die, 25 ns for the older one; see [Amplitude budget](../Hardware.md#amplitude-budget));
+     15 ns maximum for the current die, 25 ns for the older one; see [Amplitude budget](design/SIGNALS.md#amplitude-budget));
 2. **Check the charger's PD behaviour.** The CH224A datasheet does not say what it does when the
    charger lacks the requested 15 V. The board is safe either way (U18 keeps the lasers disabled
    below ~11 V), but a small charger may leave them disabled. Measure VBUS_PD (C12) with the charger
@@ -37,7 +37,7 @@ Ordered by what would bite hardest.
    overshoot of each edge. The series resistors (R52–R69, 47 Ω) are on the board, so this check
    is a measurement only: there is no resistor to fit. The simulation predicts a peak of 2.18 V
    and −0.34 V after a falling edge on a 1.8 V line
-   ([+VCAM](../Hardware.md#vcam-the-camera-signal-supply)). Compare the measured values with what the camera
+   ([Camera line series resistors](design/SIGNALS.md#camera-line-series-resistors)). Compare the measured values with what the camera
    allows.
    IDS documents the pins as 1.8 V
    but publishes no VIH/VIL, input pull or absolute maximum. With one camera, measure TDRSTN,
@@ -51,7 +51,7 @@ Ordered by what would bite hardest.
    with a 10× probe and a short ground spring, both edges, at the 50 % points (J12 ~2.4 V, Trigger1
    0.9 V). Deskew the two scope channels first, and subtract the delay of J12's cable (RG-58
    ~5.05 ns/m). Repeat for each J10/J21 setting you use. Expect −9 to +26 ns, typically about
-   +10 ns (J12 later); see [External Sync Out](../Hardware.md#external-sync-out-j12). These values are for
+   +10 ns (J12 later); see [External Sync Out](design/SIGNALS.md#external-sync-out-j12). These values are for
    `+VCAM` = 1.8 V. With J22 fitted (3.3 V) the camera buffers are faster and the camera edge is
    about 2.5 ns earlier (typical; `rev2_sim.py`, case 1), so expect about +13 ns. Measure the
    offset again after a change of J22. With J21 on 2-3 and the

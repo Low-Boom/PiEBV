@@ -172,7 +172,7 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
   hardware at MH1–MH4 (a 7 mm washer reaches the 2.5 mm guide border).
 - **Hammond 1455N1601 data and cut-out positions** (slots, headroom, bezel window, edge dressing
   ≤ 0.2 mm, and a table of every end-panel cut-out measured from the top 160 mm edge):
-  `docs/DESIGN_NOTES.md`, *EuroCard mechanics*.
+  `docs/design/LAYOUT.md`, *EuroCard mechanics*.
 - **Right edge:** the three BNC barrels stand about 20.6 mm past the board edge (20.58 mm from the
   Kinghelm KH-BNC50-3511 drawing), with the axis about 6.6 mm
   above the board. Laser 1, Laser 2, External Sync Out from top to bottom, for a

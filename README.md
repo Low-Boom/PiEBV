@@ -48,7 +48,7 @@ The README gives the overview. The pages below give the detail.
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Symptoms, likely causes and fixes | Anyone with a problem |
 | [docs/FIRMWARE_BUILD.md](docs/FIRMWARE_BUILD.md) | Building from source, timing checks, signal simulation | Firmware developers |
 | [Hardware.md](Hardware.md) | Hardware reference: pins, power, signal chains, connectors | Hardware developers |
-| [docs/DESIGN_NOTES.md](docs/DESIGN_NOTES.md) | Rev 2 changes, layout, routing, power islands | Hardware developers |
+| [docs/DESIGN_NOTES.md](docs/DESIGN_NOTES.md) | Design notes: index of the design pages in `docs/design/` (layout, power, signals, firmware), Rev 2 changes | Hardware developers |
 | [docs/FIRST_BOARD_CHECKS.md](docs/FIRST_BOARD_CHECKS.md) | The full first-board checks, with exact test points | Anyone who tests a newly assembled board |
 | [docs/MANUFACTURING.md](docs/MANUFACTURING.md) | Fabrication and assembly notes | Anyone who orders or assembles a board |
 | [docs/EVK4_HARNESS.md](docs/EVK4_HARNESS.md) | The EVK4 camera harness | Users of Prophesee EVK4 cameras |
