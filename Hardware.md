@@ -2,7 +2,7 @@
 
 This page is the bench reference for the PiEBV board: the parts, the pins, the limits, the jumpers and the LEDs. The board has a socketed Raspberry Pi Pico 2 W on 4 copper layers. To *use* the board, see the [README](README.md). The reasons, the analysis and the history are in the [design notes](docs/DESIGN_NOTES.md).
 
-**Board revision 2** (2026-11-12). **Status:** KiCad's design-rule check (DRC) and electrical-rule check (ERC) give 0 violations. Not yet built: do the [first-board checks](docs/FIRST_BOARD_CHECKS.md#first-board-checks) on the first boards.
+**Board revision 2** (2026-11-12). **Status:** KiCad's design-rule check (DRC) and electrical-rule check (ERC) give 0 errors. DRC gives one accepted warning on the U14 footprint (see [Footprint variants and KiCad checks](docs/design/LAYOUT.md#footprint-variants-and-kicad-checks)). Not yet built: do the [first-board checks](docs/FIRST_BOARD_CHECKS.md#first-board-checks) on the first boards.
 
 ## Contents
 
@@ -93,7 +93,7 @@ Images of the Rev 2 board, made by `tools/rev2/images.sh` from `PiEBV_Pico.kicad
 In1.Cu and In2.Cu carry no tracks. The fabricated board is **160.0 × 100.0 mm**. The stackup table, the finish, the footprints, the enclosure data and the routing data are in [docs/design/LAYOUT.md](docs/design/LAYOUT.md).
 
 - Confirm the stackup numbers against what your fabricator actually presses.
-- Only the exposed pads of U14 and U17 need hot air or a hot plate (see [Hot-plate assembly](docs/MANUFACTURING.md#hot-plate-assembly)). All other parts have gull-wing leads, so the board can also be assembled by hand.
+- Only the exposed pads of U14 and U17 need hot air or a hot plate (see [Hot-plate assembly](docs/MANUFACTURING.md#hot-plate-assembly)). All ICs have gull-wing leads, so the board can also be assembled by hand.
 - Inspect J17 for solder bridges (pad gaps of 0.27–0.38 mm; [first-board check 5](docs/FIRST_BOARD_CHECKS.md#first-board-checks)).
 
 ## Socket pin mapping — read this first
@@ -162,7 +162,7 @@ The firmware (`realizeTiming()` in `src/pulse_timing.h`) checks all settings on 
 | Marker duty | **at most 50 %:** `2 × MARKERWIDTH ≤ 1/FREQ` | The one limit set for the hardware: it keeps R30's average power inside its rating with J12 shorted. |
 | Combined mode (`COMBINE 1`) | `DELAY ≥ WIDTH + 1 PIO cycle` (6.667 ns) | At `DELAY = WIDTH` the two pulses merge into one of 2 × WIDTH. COMBINE can only be changed while DISARMED. |
 | Pixel-reset gate (`PIXGATE`) | PIXLEAD ≥ 5 cycles; PIXLEAD + DELAY + WIDTH + PIXLAG ≤ 1/FREQ − 3 cycles | PIO program. The first pair after a start has no reset before it. |
-| Pulse through U13 / U19 | Use WIDTH ≥ 20 ns (≥ 30 ns for an older die) at the outputs; the same for MARKERWIDTH at J12 | The driver needs an input pulse of 15 ns maximum (current die) or 25 ns (older die). At 300 MHz a 10 ns WIDTH can be lost or shortened. |
+| Pulse through U13 / U19 | Use WIDTH ≥ 20 ns (≥ 30 ns for an older die) at the outputs; the same for MARKERWIDTH at J12 | The driver needs an input pulse of 15 ns maximum (current die) or 25 ns (older die). The die on the reel is not known. At 300 MHz a 10 ns WIDTH can be lost or shortened. |
 | Camera trigger from CH1 (J10 on 1-2) | `WIDTH` ≥ 500 ns | Prophesee specifies a 500 ns minimum trigger pulse. |
 
 - **`COMBINE 1`** sends both pulses of every pair to **both** laser outputs. Each driver then sees two pulses per period, so check its ratings; the firmware imposes none.
@@ -175,11 +175,11 @@ The firmware (`realizeTiming()` in `src/pulse_timing.h`) checks all settings on 
 
 **No firmware setting can overload the laser outputs.** R6/R7, R30 and R25–R28, R31, R32 are **2 W 2512** resistors, and U17 is a 500 mA regulator with a 400 mA current limit (360 mA minimum). The laser outputs carry any duty the firmware accepts (up to 50 % per output, 67 % with `COMBINE 1`):
 
-| Situation (50 Ω mode) | Current | Dissipation |
+| Situation (50 Ω mode, unless the row says Hi-Z) | Current | Dissipation |
 |---|---|---|
 | Output high into 50 Ω | ~96 mA per output (at most 103 mA), ~200 mA for both, at most ~310 mA for all three | at most 0.71 W in R6/R7 (R30 for J12) while high |
 | Output into a shorted BNC, at the highest duty the firmware allows | at most 358 mA while high with both laser outputs shorted (ROH 0 Ω, 12.05 V), just under U17's 360 mA minimum limit | at most 1.45 W (J12 on the marker: at most 1.08 W in R30) |
-| Output **stuck** high into a short (a fault; the firmware never holds an output high) | | 1.5–2.16 W in R6/R7: at the 2 W rating, and up to 8 % over it only if ROH is near 0 Ω |
+| Output **stuck** high into a short (a fault; the firmware never holds an output high) | | 1.5–2.16 W in R6/R7: at the 2 W rating, and up to 8 % over it only if ROH is near 0 Ω (D-package ROH has no specified minimum) |
 | Hi-Z mode, while high | ~60 mA per output into an open circuit, ~100 mA into a short | R27/R28 (R32) at most 0.31 W; R25/R26 (R31) at most 0.18 W open, 0.32 W into 50 Ω, 0.52 W stuck high into a short |
 
 - **Don't short J12.** J12 follows the camera trigger: its duty is the marker's (at most 50 %), or with J10 on 1-2 the CH1 duty (50 %, 67 % with `COMBINE 1`). The stuck-high case (1.5–2.16 W in R30) needs a firmware or GP11 fault as well as a short.
@@ -217,7 +217,7 @@ Pico 3V3_OUT ─ +3V3 ─┬─ U20 VIN2 ─┘   J22 open: +VCAM = +1V8.  J22 f
 
 TP4–TP9 are bare 1.5 mm copper pads on the top side (no part). Each is marked with the rail name. Use TP9 as the meter reference. Operating rules:
 
-- **The laser outputs and J12 need a 15 V USB-PD charger on J17.** Any charger rated **above 27 W** must offer 15 V under the USB-PD rules (in practice any PD charger rated 30 W or more). A smaller charger may not offer 15 V. The outputs then stay disabled: U18 holds U13 and U19 off while +12V is outside 10.6–13.3 V (5 V-only charger: +12V ≈ 4.7 V; 9 V charger: +12V ≈ 8.7 V).
+- **The laser outputs and J12 need a 15 V USB-PD charger on J17.** Any charger rated **above 27 W** must offer 15 V under the USB-PD rules (in practice any PD charger rated 30 W or more). A smaller charger may not offer 15 V. The outputs then stay disabled: U18 holds U13 and U19 off while +12V is outside 10.6–13.3 V (5 V-only charger: +12V ≈ 4.7 V; 9 V charger: +12V ≈ 8.7 V). On a 12 V charger setting or an overload, U17 cannot regulate and +12V is below ~11 V.
 - **With the Pico's USB alone** the logic and the cameras run, and the lasers are off (no 12 V). A host whose USB sags below ~4.8 V puts the 74AHCT gates just outside their rated range.
 - **Pico VBUS (pin 40, J15.1) is deliberately not connected.** Do not tie VBUS to VSYS: with J17 also feeding VSYS it would push current back into the USB host.
 - **Never leave R10 off:** an open CFG1 is outside the CH224A table (6k8 = 9 V, 24k = 12 V, 56k = 15 V, 120k = 20 V, 210k = 28 V).
@@ -244,7 +244,7 @@ TP4–TP9 are bare 1.5 mm copper pads on the top side (no part). Each is marked 
 - A lost shunt gives 1.8 V. No shunt is necessary for IDS cameras.
 - **Don't remove the 1.8 V rail** (U9), even though it looks like it powers only a few small chips. Specify the **fixed 1.8 V** part (e.g. NCP718BSN180T1G, as ordered, or NCP718ASN180T1G). A 1.65 V or 1.7 V version eats into the camera's input margin.
 
-The selector is U20 (TPS2116). J22 pin 1 is GND. J22 pin 2 goes through R35 (1 kΩ) to U20 PR1 (net `VCAM_SEL`). R34 and R70 (10 kΩ each, in parallel) pull PR1 up to +3V3. R51 (4.7 kΩ) discharges +VCAM.
+The selector is U20 (TPS2116). J22 pin 1 is GND. J22 pin 2 goes through R35 (1 kΩ) to U20 PR1 (net `VCAM_SEL`). R34 and R70 (10 kΩ each, in parallel) pull PR1 up to +3V3. R51 (4.7 kΩ) discharges +VCAM. U20 pins: 1 GND, 2 and 7 VOUT, 3 VIN1, 4 PR1, 5 MODE, 6 VIN2, 8 ST.
 
 **Faults** (found by the [first-board checks](docs/FIRST_BOARD_CHECKS.md#first-board-checks)):
 
@@ -288,7 +288,7 @@ J10's silkscreen reads **`CH1 / TRG / MKR`** (pins 1/2/3).
 | none | idle low (R9, 10 k, pulls `PWM_TRIG_TAP` low) | |
 
 - **Never fit a shunt across all three pins:** that ties GP13 (through R19) to GP11.
-- J10.1 reaches `_PULSE_OUT_CH1` through **R19 (100 Ω)**. Keep R19: it keeps the J10 setting from changing the laser timing ([Trigger source](docs/design/SIGNALS.md#trigger-source-j10)).
+- J10.1 reaches `_PULSE_OUT_CH1` through **R19 (100 Ω)**. Keep R19: it reduces the effect of the J10 setting on the laser timing. With J10 on 1-2 the laser delay error still depends on the jumper: R19 cuts it by about 65–70 % at the typical corner and by about 37 % at the worst corner ([Trigger source](docs/design/SIGNALS.md#trigger-source-j10)).
 
 ### Laser outputs
 
@@ -304,7 +304,7 @@ The target loads are PicoLas LDP-V 10-70 and LDP-V 240-100 drivers. Their trigge
 | Typical | 11.79 V | 68 Ω | 5 Ω | 4.79 V |
 | High | 12.05 V | 67.32 Ω | 0 Ω | **5.14 V** |
 
-Every corner passes. R12/R13 must be **0.1 %** parts: with 1 % parts the corners would sit only ~0.7 % inside the window. Check that a 20 ns WIDTH reaches J7/J8 at full height on the first board ([first-board check 1](docs/FIRST_BOARD_CHECKS.md#first-board-checks)). The derivation and the minimum pulse width of U13 are in [Amplitude budget](docs/design/SIGNALS.md#amplitude-budget).
+Every corner passes. R12/R13 must be **0.1 %** parts: with 1 % parts the corners would sit only ~0.7 % inside the window. The die of U13 on the reel is not known, so check that a 20 ns WIDTH reaches J7/J8 at full height on the first board ([first-board check 1](docs/FIRST_BOARD_CHECKS.md#first-board-checks)). The derivation and the minimum pulse width of U13 are in [Amplitude budget](docs/design/SIGNALS.md#amplitude-budget).
 
 #### Output mode
 
@@ -324,7 +324,7 @@ CHn_DRIVE ──┬── R25/R26 47 Ω 2 W ──┬── CHn_OUT ── BNC c
 
 > **Match the output mode to the load.** In 50 Ω mode an open-circuit or high-impedance load sees ~12 V; use Hi-Z mode for those.
 >
-> **One driver per output, no BNC tees.** J7 and J8 joined into one 50 Ω input give 3.4 V per pulse, and 6.9 V where the pulses overlap (DELAY < WIDTH), above the LDP-V's 5.2 V damage limit. One output teed to two drivers gives 3.0 V each. The PiEBV itself survives either (see [Board output rating](#board-output-rating)).
+> **One driver per output, no BNC tees.** In a transmission-line simulation (typical corners, 50 Ω mode), J7 and J8 joined into one 50 Ω input give 3.4 V per pulse, and 6.9 V where the pulses overlap (DELAY < WIDTH), above the LDP-V's 5.2 V damage limit. One output teed to two drivers gives 3.0 V each. The PiEBV itself survives either (see [Board output rating](#board-output-rating)).
 >
 > PicoLas's acceptance test applies: a scope with **50 Ω input termination** must read 0 to ~4.9 V.
 
@@ -337,7 +337,7 @@ J12 gives other equipment a copy of the camera trigger: the marker with J10 on 2
 - **Levels:** the same circuit as a laser output (U19 channel A, R30 68 Ω, R31 47 Ω, R32 82 Ω, J21). J21 on 1-2 gives 4.53–5.14 V into 50 Ω. J21 on 2-3 gives 4.55–5.08 V open circuit from a 47–50 Ω source. Ship with J21 on 1-2.
 - **Power:** J12 is live only with a 15 V PD charger on J17. On the Pico's USB alone it stays at 0 V.
 - **Not gated by the laser interlock.** ARM and J11 act only on the laser pulses (U7/U8). With J10 on 2-3, J12 keeps pulsing while the lasers are disarmed, as the camera triggers do.
-- **Timing: measure the offset to the cameras on each board.** J12 minus camera trigger (simulated, min / typ / max): **−8.5 / +10.5 / +26.3 ns** rising, **−9.4 / +9.5 / +24.1 ns** falling. On one board the offset is fixed. It depends on J10 and J21, so measure each setting you use ([first-board check 4](docs/FIRST_BOARD_CHECKS.md#first-board-checks)). Write the result in the `J12-TRIG OFFSET (MEASURED)` field on the silkscreen, in the left area of the board, below TP3.
+- **Timing: measure the offset to the cameras on each board.** J12 minus camera trigger (simulated with the 4 mA default drive, J10 on 2-3, J21 on 1-2 and J12 into 50 Ω; min / typ / max): **−8.5 / +10.5 / +26.3 ns** rising, **−9.4 / +9.5 / +24.1 ns** falling. On one board the offset is fixed: measured once, it holds to about 0.5 ns, plus 1–2 ns over temperature (estimates). It depends on J10 and J21, so measure each setting you use ([first-board check 4](docs/FIRST_BOARD_CHECKS.md#first-board-checks)). Write the result in the `J12-TRIG OFFSET (MEASURED)` field on the silkscreen, in the left area of the board, below TP3.
 - **Duty and loads.** J12 is high at most 50 % of the time (67 % with J10 on 1-2 and `COMBINE 1`). Don't short it. One load per output, no BNC tee, as for the laser outputs.
 - Timing table and layout: [External Sync Out](docs/design/SIGNALS.md#external-sync-out-j12).
 
@@ -361,7 +361,7 @@ J8 output = AND( LASER_EN , CH2 pulse )    -- U8
 |---|---|
 | shunt on **1-2** (**ON**) | enabled (the firmware must also be ARMED; see [Boot and arming](#boot-and-arming)) |
 | shunt on **2-3** (**OFF**) | disabled |
-| no shunt | disabled: R8 holds U10 pin 1 low (**fails safe**) |
+| no shunt | disabled: R8 holds U10 pin 1 low (**fails safe**; without R8 the interlock would be enabled with the header empty) |
 
 - **E-stop switch: wire it across J11 1-2.** Replace the shunt with a *normally-closed* switch between J11.1 and J11.2. Closed, it acts like the shunt. Pressing it or breaking its cable opens the circuit and R8 pulls U10.1 low, so the stop fails safe. The silkscreen beside J11 reads `LASER INTERLOCK: ON = 1-2` and `E-STOP: NC SWITCH ACROSS 1-2`.
 - **Three gates in series.** The firmware's ARM state (DISARMED holds the pulse inputs of U7/U8 LOW), the J11/U10 interlock at U7/U8, and the power-good gate `LASER_PWR_OK` on the ENA/ENB pins of U13 (and of U19, for J12). Any one of them alone forces both BNC centre pins to 0 V, and none can enable a laser that another has disabled.
@@ -491,7 +491,7 @@ What the firmware changes at 300 MHz, and why: [Clock jumper](docs/design/FIRMWA
 
 - **The firmware starts DISARMED.** GP12/GP13 stay LOW until the host sends `ARM` over USB. SYNC and MARKER keep running while DISARMED.
 - **J7/J8 pulse only when all three are true:** firmware ARMED, J11 on 1-2 (hardware interlock), and `LASER_PWR_OK` (12 V rail in its window).
-- **`ARM`** (exactly that word, no argument) restarts CH1, CH2 and MARKER together. It replies at once. A host that loops ARM/DISARM can't fire faster than FREQ.
+- **`ARM`** (exactly that word, no argument) restarts CH1, CH2 and MARKER together. It replies at once. Changing pulse settings while armed goes through the same restart and hold-off. A host that loops ARM/DISARM can't fire faster than FREQ.
 - **`DISARM` can never be refused and acts at once.** The six characters `DISARM` (any case) anywhere in the input disarm immediately and cancel a pending start. Lines may end with CR, LF or CRLF.
 - **Watchdog.** A 3 s hardware watchdog restarts the chip if the firmware hangs. It comes back DISARMED, and `STATUS` shows `RESET=WATCHDOG` and a `WDT_RESETS` count.
 - **A host that stops reading** delays a queued DISARM by at most about 250 ms in total. Dropped reply bytes are counted in `STATUS` as `TX_DROPPED`.
@@ -500,7 +500,7 @@ What the firmware changes at 300 MHz, and why: [Clock jumper](docs/design/FIRMWA
 
 **Remaining hazards the firmware can't remove.** Both need a reset to land during a laser pulse, so the chance per reset is at most the duty.
 
-- *A reset mid-pulse* (watchdog, or the 1200-baud restart that `pio run -t upload` uses) releases the pin instead of driving it LOW. That one pulse can end an estimated 70–150 ns later than WIDTH. Measure it (scope GP13 while forcing a watchdog reset). If it matters, fit R17/R18 = 2.2 k.
+- *A reset mid-pulse* (watchdog, or the 1200-baud restart that `pio run -t upload` uses) releases the pin instead of driving it LOW. That one pulse can end up to an estimated 70–150 ns later than WIDTH. Measure it (scope GP13 while forcing a watchdog reset). If it matters, fit R17/R18 = 2.2 k.
 - *A debugger warm reset (SYSRESETREQ)* can leave a pin HIGH for milliseconds. **Before any SWD session or debugger reset: DISARM and open J11 (or unplug J17).** The one deliberate exception is the watchdog test in [first-board check 1](docs/FIRST_BOARD_CHECKS.md#first-board-checks), done into a 50 Ω scope input with no laser driver connected.
 
 Start-up hooks, hold-off, watchdog test and rationale: [Boot and arming](docs/design/FIRMWARE_HW.md#boot-and-arming).
