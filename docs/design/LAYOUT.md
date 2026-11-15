@@ -92,7 +92,7 @@ uneven enough that J17 is worth inspecting for solder bridges
 (see [first-board check 5](../FIRST_BOARD_CHECKS.md#first-board-checks)). All 0805, 1206 and 2512 passives and the
 SOT-23-5/TSOT-23-6 parts (U1, U3, U5, U7–U10, U15) and the LEDs D1–D6 use `_HandSolder`/`_HandSoldering` footprints.
 The other SMD parts use standard footprints: U18 (SOT-23-6), U16 (SC-70-6), U17 (MSOP-12), U14
-(SSOP-10), the SOICs (U2, U4, U6, U13, U19), U24 (TO-252-2), L1 and J17. The tab of U24 is a large
+(SSOP-10), the SOICs (U2, U4, U6, U13, U19), U24 (TO-252-2), D7 (SOD-123), L1 and J17. The tab of U24 is a large
 pad with a solid connection to the GND pour: it needs more heat than the other pads.
 
 ## Board size
@@ -240,24 +240,27 @@ Positions are as seen from the top side, with the board landscape (160 mm wide, 
   via (210.2, 57.2) is R9.1's only connection (R9 is a front SMD part), so it is not a plane jump
   on the J10-to-U5 path. `CH1_J10` needs its via to cross the lane (no via in the R19.2 pad), and
   `PWM_Trig` leaves J10.3 with one 45° run.
-- **Fan supply (U24, C37, C38, J23).** The parts are in the bottom-left area of the board, below
+- **Fan supply (U24, C37, C38, D7, J23).** The parts are in the bottom-left area of the board, below
   the USB-C power parts (U14, U15, L1), right of mounting hole MH3 and left of camera header J1.
   `tools/rev2/pcb_edit.py` places them (section "3a. fan supply"). Positions (board coordinates, mm):
 
   | Part | Position | Notes |
   |---|---|---|
   | U24 | (158.0, 124.9) | The tab (GND) has a solid connection to the top-layer GND pour and four GND vias. |
-  | C37 | (148.2, 122.62) | input capacitor |
-  | C38 | (148.2, 127.18) | output capacitor |
+  | C37 | (146.7, 122.62) | input capacitor |
+  | C38 | (146.7, 127.18) | output capacitor |
+  | D7 | (150.1, 124.9) | Vertical, cathode up. Between the capacitors and the leads of U24. |
   | J23 | (166.5, 124.9) | Pin 1 (`+12V_FAN`) at the top, at (166.5, 124.9). Pin 2 (GND) below it, at (166.5, 127.44). |
 
-  VBUS_PD comes from the C11 pad track on F.Cu. `+12V_FAN` goes from U24 to J23 on B.Cu (15.6 mm,
+  VBUS_PD comes from the C11 pad track on F.Cu. The `+12V_FAN` via to B.Cu is at
+  (150.1, 124.9), below the body of D7, between its pads. `+12V_FAN` goes to J23 on B.Cu (16.4 mm,
   below U24, over the +5V island), because the GND edge-fence vias block the top-layer path.
-  Silkscreen: `J23  FAN 12V`, `0.2 A MAX`, `+` beside pin 1 and `-` beside pin 2. The camera
+  Silkscreen: `J23  FAN 12V`, `0.2 A MAX`, `+` beside pin 1 and `-` beside pin 2. The reference
+  of D7 is not on the silkscreen. The camera
   routing and the camera line lengths did not change.
-- **Totals (Rev 2):** 1466 track segments, 3003.4 mm of track (F.Cu 2087.3 mm, B.Cu 916.1 mm), 228 vias
+- **Totals (Rev 2):** 1468 track segments, 3007.8 mm of track (F.Cu 2091.0 mm, B.Cu 916.9 mm), 228 vias
   (`tools/rev2/stats.py`): GND 139, +5V 13, +3V3 7, +1V8 2, +VCAM 5, +12V 9, other nets 53. No two
-  segments are identical. Copper fingerprint `20373eccea45c81b`. Rev 1: 1015 segments, 2489 mm, 173 vias.
+  segments are identical. Copper fingerprint `2c12e2118b08f34c`. Rev 1: 1015 segments, 2489 mm, 173 vias.
 - **Rev 2 build of the copper** (`tools/rev2/build.sh`). The steps, in order:
   1. `pcb_edit.py` removes the Rev 1 camera copper. It places the fan supply parts with their
      copper. It places R52–R69 with their stubs. It draws

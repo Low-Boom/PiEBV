@@ -26,8 +26,8 @@ operating rules are in the [hardware reference](../Hardware.md).
 | Third copper layer (In2.Cu) | one +5 V plane | islands: +5V, +3V3, +1V8, +VCAM, +12V, in a GND fill. See [Power islands](design/LAYOUT.md#power-islands-in2cu). |
 | Test pads | TP3 only | TP4–TP9: +12V, +5V, +3V3, +1V8, +VCAM, GND |
 | U9, C6, C7 | beside the camera buffers | in the supply block at the top centre, beside U20 |
-| Cooling fan header | none | J23 (1×2 header): pin 1 = `+12V_FAN`, pin 2 = GND, for a 2-wire 12 V DC fan, 200 mA maximum. U24 (CJ78M12, TO-252-2) makes `+12V_FAN` from VBUS_PD, with C37 and C38 (1 µF). The fan supply does not use the +12V rail of the laser drivers. The fan is always on while VBUS_PD is 15 V. See [Fan supply](design/POWER.md#fan-supply-u24-j23). |
-| Parts | 84 placed | 153 placed, plus 6 test pads |
+| Cooling fan header | none | J23 (1×2 header): pin 1 = `+12V_FAN`, pin 2 = GND, for a 2-wire 12 V DC fan, 200 mA maximum. U24 (ST L78M12AB, TO-252-2) makes `+12V_FAN` from VBUS_PD, with C37 and C38 (1 µF). D7 (1N4148W) is in parallel with U24, from the output to the input. The fan supply does not use the +12V rail of the laser drivers. The fan is always on while VBUS_PD is 15 V. See [Fan supply](design/POWER.md#fan-supply-u24-j23). |
+| Parts | 84 placed | 154 placed, plus 6 test pads |
 | Finest pitch | 0.65 mm | 0.5 mm (U20, SOT-583) |
 | Camera line lengths (buffer pad to resistor pad in Rev 2) | group spreads 1.18 / 2.47 / 1.37 mm (Sync / Trigger / TDRSTN, buffer pin to header pin) | `Sync1`–`Sync6` 74.082 mm, `Trigger1`–`Trigger6` 43.584 mm, `TDRSTN1`–`TDRSTN6` 51.472 mm. The spread in each group is 0.000 mm (below 0.001 mm). The stubs from the resistors to the header pins are equal in each group. |
 | Routing | – | The Rev 1 camera copper is removed. The camera lines are routed again, from the buffer to the series resistor. See [Routing](design/LAYOUT.md#routing). |

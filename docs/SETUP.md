@@ -69,6 +69,9 @@ list, with exact test points, is under
 2. **Supply voltages,** with the charger on J17: `VBUS_PD` at C12 about 15 V (with the charger you
    will actually use), +12V at C17 between 11.54 and 12.05 V, and `LASER_PWR_OK` (U13 pins 1 and 8)
    about 12 V.
+   - **Fan start-up,** if you use a fan on J23: confirm that the selected fan starts at the lowest
+     and the highest input (about 14.2 V and 15.75 V), cold and warm. If it does not start, use a
+     fan with a lower rated current.
 3. **Laser outputs,** J18/J19 on 1-2, into a 50 Ω-terminated scope with no driver connected:
    - pulses from 0 V to 4.53–5.14 V;
    - CH2 exactly `DELAY` after CH1 (`DELAY 13` should give 13.3 ns);
@@ -199,7 +202,16 @@ undefined.
 
 **Cooling fan:** J23 (marked `J23  FAN 12V`, `0.2 A MAX`) supplies a 2-wire 12 V DC fan, 200 mA
 maximum. Pin 1 (`+`) is 12 V and pin 2 (`-`) is ground. The fan runs when the charger on J17 gives
-15 V. It does not run on a 5 V-only charger. The firmware does not control the fan.
+15 V. The firmware does not control the fan.
+
+- On a 5 V-only charger the fan gets about 3 V and normally does not turn. On a 9 V or 12 V
+  charger setting it gets about 7 V or 10 V and turns slowly.
+- J23 is the same 2-pin header type as the jumpers J20 and J22. It has no key.
+- **Do not fit a shunt on J23.** A shunt shorts the fan supply to ground.
+- Connect the fan with the correct polarity (`+` = pin 1).
+- A fan near the 200 mA limit can need more current to start than it draws when it runs. If the
+  fan does not start, use a fan with a lower rated current
+  (see [Fan supply](design/POWER.md#fan-supply-u24-j23)).
 
 **To restart the board,** unplug both J17 and the Pico's USB cable. Unplugging just one doesn't
 restart it, and neither does closing the serial port.
