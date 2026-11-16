@@ -132,7 +132,9 @@ eduroam) cannot be joined. The address comes from DHCP.
 
 ### Set-up
 
-Do the set-up on the **USB port**, with the lasers **DISARMED** and the clock jumper J20 open:
+Do the set-up on the **USB port**, with the lasers **DISARMED** and the clock jumper J20 open. Use
+the *Network (Wi-Fi)* card of the [web GUI](../tools/piebv_gui/README.md#network-wi-fi), or these
+commands in a serial terminal:
 
 ```
 WIFI SSID Lab Network        ->  OK WIFI SSID=Lab Network (not in use yet: send WIFI ON)

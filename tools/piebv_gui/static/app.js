@@ -109,6 +109,9 @@ async function toggleConnect() {
       logSeq = 0;
       $("console").replaceChildren();
       dirty = {};
+      wifiSsidDirty = false;
+      $("wifiPass").value = "";
+      wifiMessage("");
     }
   } catch (e) {
     toast(String(e.message || e));
@@ -280,6 +283,86 @@ function applyGroup(group) {
   applyNames(Object.keys(dirty).filter((n) => ((META[n] || {}).group || "other") === group));
 }
 
+// ---------------------------------------------------------------- network (Wi-Fi)
+// The board's Wi-Fi set-up. The board takes it only on its USB port and only while
+// DISARMED; the card shows why when it cannot be changed. The passphrase is sent once
+// and never read back: the board reports only SET or NONE.
+let wifiSsidDirty = false;
+let wifiBusy = false;
+
+function wifiMessage(text, bad) {
+  const m = $("wifiMsg");
+  m.textContent = text || "";
+  m.classList.toggle("bad", !!bad);
+}
+
+async function wifiAction(action) {
+  if (wifiBusy) return;
+  const body = { action };
+  if (action === "on") {
+    body.ssid = $("wifiSsid").value;
+    if ($("wifiOpen").checked) body.passphrase = "";
+    else if ($("wifiPass").value !== "") body.passphrase = $("wifiPass").value;  // empty = keep the board's
+  }
+  if (action === "clear" && !window.confirm("Erase the network name and the passphrase from the board?")) return;
+  wifiBusy = true;
+  wifiMessage(action === "on" ? "Starting the radio and joining…" : "Working…", false);
+  render();
+  try {
+    const r = await api("/api/wifi", body);
+    const last = (r.replies || []).slice(-1)[0] || r.error || "";
+    // SAVED=0 is a success with a warning: in use, but lost at power-off.
+    wifiMessage(last, !r.ok || / SAVED=0/.test(last));
+    if (r.ok) {
+      $("wifiPass").value = "";
+      wifiSsidDirty = false;
+    }
+    if (r.state) snap = r.state;
+  } catch (e) { wifiMessage(String(e.message || e), true); }
+  wifiBusy = false;
+  render();
+}
+
+function renderWifi(sys, connected) {
+  const card = $("wifiCard");
+  const state = sys && sys.WIFI;
+  card.hidden = !state;  // firmware without the network link: no WIFI line in STATUS
+  if (!state) return;
+  const none = (v) => !v || v === "NONE";
+  const ip = sys.WIFI_IP, port = sys.NET_PORT || "4242";
+  $("wifiPort").textContent = port;
+  const available = !state.startsWith("UNAVAILABLE");
+  $("wifiForm").hidden = !available;
+  const rows = [["State", state]];
+  if (available) {
+    rows.push(
+      ["Network", sys.WIFI_SSID ? sys.WIFI_SSID + (sys.WIFI_PASS === "SET" ? " (passphrase set)" : " (no passphrase)") : "not set"],
+      ["Address", none(ip) ? "none" : ip + " · connect to socket://" + ip + ":" + port],
+      ["Signal", none(sys.WIFI_RSSI_DBM) ? "—" : sys.WIFI_RSSI_DBM + " dBm"],
+      ["Radio address (MAC)", sys.WIFI_MAC || "?"],
+      ["Network host", none(sys.NET_CLIENT) ? "none" : sys.NET_CLIENT],
+      ["At power-up", sys.WIFI_AT_POWER_UP === "1" ? "joins the network" : "radio off"],
+      ["Stored in the board", sys.WIFI_SAVED === "1" ? "yes" : "no: the set-up in use is lost at power-off"],
+    );
+  }
+  kv($("wifiInfo"), rows);
+  if (!available) { $("wifiHint").textContent = ""; return; }
+
+  const ssid = $("wifiSsid");
+  if (!wifiSsidDirty && document.activeElement !== ssid) ssid.value = sys.WIFI_SSID || "";
+  $("wifiPass").disabled = $("wifiOpen").checked;
+  $("wifiPass").placeholder = $("wifiOpen").checked ? "" : sys.WIFI_PASS === "SET" ? "unchanged" : "8 to 63 characters";
+  // Why the set-up cannot change now, in the board's own terms.
+  const overNetwork = connected && /^socket:/i.test(snap.target || "");
+  const why = overNetwork ? "This page is connected over the network. The board changes its Wi-Fi set-up only over its USB port: connect to its serial port to change it."
+    : sys.ARMED ? "DISARM first: the board refuses a Wi-Fi change while ARMED. The radio start and the flash write stop its command loop for a moment."
+    : "";
+  for (const b of document.querySelectorAll(".wifi-act")) b.disabled = !connected || wifiBusy || !!why;
+  for (const i of [ssid, $("wifiOpen")]) i.disabled = overNetwork;
+  if (overNetwork) $("wifiPass").disabled = true;
+  $("wifiHint").textContent = why || "The link has no password and no encryption: every computer that can reach the board on the network can send ARM. A lost link does not disarm. The board joins open networks and WPA2 networks with a shared passphrase. The name and the passphrase are stored in the board as plain text.";
+}
+
 // ---------------------------------------------------------------- rendering
 function render() {
   const connected = !!(snap && snap.connected);
@@ -300,6 +383,7 @@ function render() {
   $("armText").textContent = !st ? (connected ? "…" : "offline")
     : sys.ARMED ? (pending > 0 ? "ARMED · starting in " + fmtTime(pending * 1e-6, 0) : "ARMED") : "DISARMED";
 
+  renderWifi(st ? sys : null, connected);
   if (!st) {
     if (connected && snap.error) $("ident").textContent = snap.error;
     renderSysline(null);
@@ -711,6 +795,14 @@ window.addEventListener("DOMContentLoaded", async () => {
   $("fitPulses").addEventListener("click", () => setFit("pulses"));
   $("fitWindow").addEventListener("click", () => setFit("window"));
   for (const b of document.querySelectorAll(".apply")) b.addEventListener("click", () => applyGroup(b.dataset.group));
+  $("wifiOn").addEventListener("click", () => wifiAction("on"));
+  $("wifiOff").addEventListener("click", () => wifiAction("off"));
+  $("wifiClear").addEventListener("click", () => wifiAction("clear"));
+  $("wifiSsid").addEventListener("input", () => { wifiSsidDirty = true; });
+  $("wifiOpen").addEventListener("change", render);
+  for (const id of ["wifiSsid", "wifiPass"]) {
+    $(id).addEventListener("keydown", (ev) => { if (ev.key === "Enter") { ev.preventDefault(); wifiAction("on"); } });
+  }
   $("cmdSend").addEventListener("click", sendCommand);
   $("cmdInput").addEventListener("keydown", (ev) => { if (ev.key === "Enter") { ev.preventDefault(); sendCommand(); } });
   document.addEventListener("keydown", (ev) => {

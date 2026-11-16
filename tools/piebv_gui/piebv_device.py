@@ -225,6 +225,25 @@ def parse_status(lines):
     return {"fields": fields, "order": order, "system": system, "pixreset": pixreset}
 
 
+# ---------------------------------------------------------------- Wi-Fi set-up values
+def wifi_check(ssid, passphrase):
+    """None, or why the board cannot take this network name / passphrase (None = not
+    sent). The limits are the firmware's (src/wifi_config.h, src/protocol.cpp); the link
+    is ASCII, so other characters need a serial terminal."""
+    for what, text, lo, hi in (("network name", ssid, 1, 32), ("passphrase", passphrase, 8, 63)):
+        if text is None or (what == "passphrase" and text == ""):
+            continue
+        if not lo <= len(text) <= hi:
+            return "the %s must have %d to %d characters" % (what, lo, hi)
+        if any(not 32 <= ord(c) <= 126 for c in text):
+            return "the %s can hold only printable ASCII characters here" % what
+        if text != text.strip():
+            return "the %s cannot start or end with a space" % what
+        if "disarm" in text.lower():
+            return "the %s cannot contain the letters 'disarm': the board reads them as DISARM" % what
+    return None
+
+
 # ---------------------------------------------------------------- client
 class PiEBV:
     """Thread-safe PiEBV client. One command is in flight at a time (except DISARM)."""
@@ -264,14 +283,17 @@ class PiEBV:
                 return
             self._record("<", line)
 
-    def _exchange(self, line, done, timeout=1.5, log=True):
+    def _exchange(self, line, done, timeout=1.5, log=True, shown=None):
         """Send `line`, collect reply lines until done(lines) is true. Stray DISARM acks
         and boot banners are logged, not returned. log=False keeps the command and its
-        reply out of the console log (the GUI's once-a-second STATUS poll)."""
+        reply out of the console log (the GUI's once-a-second STATUS poll). `shown` is
+        the text the console log gets in place of the line (a passphrase stays out of it)."""
         with self._cmd:
-            if log:
+            if log and shown is None:
                 self._send(line)
             else:
+                if log:
+                    self._record(">", shown)
                 self.link.write_line(line)
             got = []
             deadline = time.monotonic() + timeout
@@ -338,6 +360,38 @@ class PiEBV:
         # Confirm through the normal path (queued behind any command in flight).
         reply = self._exchange("ARM?", lambda g: g[-1].startswith("ARMED="))[-1]
         return reply == "ARMED=0", reply
+
+    def wifi_setup(self, action, ssid=None, passphrase=None):
+        """The board's Wi-Fi set-up (USB link only; the board refuses it over the network).
+        action "on": set the network name (if given) and the passphrase (if given; "" =
+        open network; None = keep the one the board has), then join and store. "off":
+        radio link off. "clear": off, and erase the name and the passphrase.
+        Returns (ok, reply lines). Raises ValueError for a value the board cannot take."""
+        if action not in ("on", "off", "clear"):
+            raise ValueError("unknown Wi-Fi action")
+
+        def done(g):
+            return g[-1].startswith("OK WIFI") or g[-1].startswith("ERR WIFI")
+
+        steps = []
+        if action == "on":
+            why = wifi_check(ssid, passphrase)
+            if why:
+                raise ValueError(why)
+            if ssid is not None:
+                steps.append(("WIFI SSID " + ssid, None, 1.5))
+            if passphrase is not None:
+                steps.append(("WIFI PASS " + passphrase if passphrase else "WIFI PASS",
+                              "WIFI PASS ********" if passphrase else None, 1.5))
+        # The radio's power-up and the flash write can take seconds (the firmware allows 8 s).
+        steps.append(("WIFI " + action.upper(), None, 12.0))
+        replies = []
+        for line, shown, timeout in steps:
+            reply = self._exchange(line, done, timeout=timeout, shown=shown)[-1]
+            replies.append(reply)
+            if not reply.startswith("OK "):
+                return False, replies
+        return True, replies
 
     def raw(self, line, quiet=0.25, timeout=3.0):
         """Any command; returns every line until the output goes quiet."""

@@ -154,6 +154,16 @@ class Handler(BaseHTTPRequestHandler):
                 results = dev.apply(settings)
                 return self._json({"results": [{"name": n, "ok": ok, "reply": r} for n, ok, r in results],
                                    "state": snapshot()})
+            if url.path == "/api/wifi":
+                # ssid / passphrase: a string, or absent/null = leave as the board has it.
+                ssid, passphrase = body.get("ssid"), body.get("passphrase")
+                try:
+                    ok, replies = dev.wifi_setup(str(body.get("action", "")),
+                                                 None if ssid is None else str(ssid),
+                                                 None if passphrase is None else str(passphrase))
+                except ValueError as exc:
+                    return self._json({"error": str(exc)}, 400)
+                return self._json({"ok": ok, "replies": replies, "state": snapshot()})
             if url.path == "/api/command":
                 line = str(body.get("line", "")).strip()
                 if not line or len(line) > 120 or any(ord(c) < 32 for c in line):
