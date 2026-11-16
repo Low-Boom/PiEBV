@@ -254,7 +254,9 @@ class PiEBV:
     def __init__(self, target, log_size=2000):
         self.target = target
         self.link = open_transport(target)
-        self._cmd = threading.Lock()
+        # Re-entrant: a sequence of commands (wifi_setup) holds it from its first command
+        # to its last, so another request cannot put a command in between.
+        self._cmd = threading.RLock()
         self._log = deque(maxlen=log_size)
         self._log_seq = 0
         self._log_lock = threading.Lock()
@@ -365,55 +367,69 @@ class PiEBV:
         reply = self._exchange("ARM?", lambda g: g[-1].startswith("ARMED="))[-1]
         return reply == "ARMED=0", reply
 
-    def _wifi_exchange(self, line, shown=None, timeout=1.5):
-        """One WIFI set-up command and its one reply line."""
-        def done(g):
-            return g[-1].startswith("OK WIFI") or g[-1].startswith("ERR WIFI")
+    def _wifi_exchange(self, line, sub, shown=None):
+        """One WIFI set-up command (`sub`: SSID, PASS, ON, OFF or CLEAR) and its one
+        reply line: the OK line of that sub-command, or any ERR line."""
+        ok = {"SSID": "OK WIFI SSID=", "PASS": "OK WIFI PASS="}.get(sub, "OK WIFI=")
 
+        def done(g):
+            return g[-1].startswith(ok) or g[-1].startswith("ERR")
+
+        # The radio's power-up and the flash write can take seconds (the firmware
+        # allows 8 s for them).
+        timeout = 12.0 if sub in ("ON", "OFF", "CLEAR") else 1.5
         return self._exchange(line, done, timeout=timeout, shown=shown)[-1]
 
     def wifi_setup(self, action, ssid=None, passphrase=None):
         """The board's Wi-Fi set-up (USB link only; the board refuses it over the network).
         action "on": join the network `ssid` and store the set-up. `passphrase` is its
         passphrase, or "" for an open network. None is permitted only for the network
-        that the board has in use: the board then keeps its passphrase (this restarts
-        the radio link). "off": radio link off. "clear": off, and erase the name and
-        the passphrase.
+        that the board has in use: the board then keeps its passphrase. "off": radio
+        off. "clear": off, and erase the name and the passphrase.
         Returns (ok, reply lines). Raises ValueError for a value the board cannot take."""
         if action not in ("on", "off", "clear"):
             raise ValueError("unknown Wi-Fi action")
-        # (line, text for the console log or None, time-out). The radio's power-up and
-        # the flash write can take seconds (the firmware allows 8 s for them).
-        steps = []
         if action == "on":
             if ssid is None:
                 raise ValueError("the network name is missing")
             why = wifi_check(ssid, passphrase)
             if why:
                 raise ValueError(why)
-            if passphrase is None:
-                # The board never tells its passphrase, and a name or passphrase that
-                # was sent earlier but not joined could still wait in it. WIFI OFF
-                # discards that and keeps the set-up in use; WIFI ON then joins it.
-                in_use = self.status(log=False)["system"].get("WIFI_SSID", "")
-                if ssid != in_use:
+        with self._cmd:  # one sequence: no other command goes in between
+            steps = []  # (line, sub-command, text for the console log or None)
+            if action != "on":
+                steps.append(("WIFI " + action.upper(), action.upper(), None))
+            elif passphrase is None:
+                # The board never tells its passphrase. WIFI ON alone joins the network
+                # in use with it, but it would also take a name or passphrase that was
+                # sent before and not joined (WIFI_PENDING=1), so that must not be there.
+                system = self.status(log=False)["system"]
+                if ssid != system.get("WIFI_SSID", ""):
                     raise ValueError("type the passphrase of this network, or choose an open network")
-                steps.append(("WIFI OFF", None, 12.0))
+                if system.get("WIFI_PENDING", "0") != "0":
+                    raise ValueError("the board holds a name or passphrase that was sent but not joined: "
+                                     "type the passphrase of this network, or choose an open network")
+                steps.append(("WIFI ON", "ON", None))
             else:
                 # WIFI SSID discards a passphrase sent earlier; WIFI PASS is always sent.
-                steps.append(("WIFI SSID " + ssid, None, 1.5))
-                steps.append(("WIFI PASS " + passphrase if passphrase else "WIFI PASS",
-                              "WIFI PASS ********" if passphrase else None, 1.5))
-            steps.append(("WIFI ON", None, 12.0))
-        else:
-            steps.append(("WIFI " + action.upper(), None, 12.0))
-        replies = []
-        for line, shown, timeout in steps:
-            reply = self._wifi_exchange(line, shown, timeout)
-            replies.append(reply)
-            if not reply.startswith("OK "):
-                return False, replies
-        return True, replies
+                steps.append(("WIFI SSID " + ssid, "SSID", None))
+                steps.append(("WIFI PASS " + passphrase if passphrase else "WIFI PASS", "PASS",
+                              "WIFI PASS ********" if passphrase else None))
+                steps.append(("WIFI ON", "ON", None))
+            replies = []
+            for line, sub, shown in steps:
+                reply = self._wifi_exchange(line, sub, shown)
+                replies.append(reply)
+                if not reply.startswith("OK "):
+                    return False, replies
+            if action == "on":
+                # The board names what it joined: it must be what was asked for.
+                want_pass = "SET" if passphrase or passphrase is None and system.get("WIFI_PASS") == "SET" else "NONE"
+                m = re.match(r"^OK WIFI=ON SSID=(.*) PASS=(SET|NONE) SAVED=", replies[-1])
+                if not m or m.group(1) != ssid or m.group(2) != want_pass:
+                    replies.append("ERR the board joined another set-up than the one asked for: check it and join again")
+                    return False, replies
+            return True, replies
 
     def raw(self, line, quiet=0.25, timeout=3.0):
         """Any command; returns every line until the output goes quiet. The WIFI set-up
@@ -422,11 +438,17 @@ class PiEBV:
         kept out of the console log."""
         m = _WIFI_LINE.match(line)
         sub = m.group(1).upper() if m else ""
-        if sub in ("SSID", "PASS", "ON", "OFF", "CLEAR"):
-            shown = "WIFI PASS ********" if sub == "PASS" and m.group(2) else None
-            return [self._wifi_exchange(line, shown, 12.0 if sub in ("ON", "OFF", "CLEAR") else 1.5)]
+        masked = "WIFI PASS ********" if sub.startswith("PASS") and (m.group(2) or sub != "PASS") else None
+        # A line that holds the letters "disarm" is answered as DISARM, and one that is
+        # too long as "ERR line too long": those take the plain path below.
+        if sub in ("SSID", "PASS", "ON", "OFF", "CLEAR") and "disarm" not in line.lower() and len(line) <= 95:
+            return [self._wifi_exchange(line, sub, masked)]
         with self._cmd:
-            self._send(line)
+            if masked:
+                self._record(">", masked)
+                self.link.write_line(line)
+            else:
+                self._send(line)
             got, deadline = [], time.monotonic() + timeout
             first = self.link.readline(1.5)
             if first is None:

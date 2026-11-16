@@ -15,11 +15,18 @@
 
 namespace {
 
-// Free send-buffer space that counts as "the host reads again" after a reply was
-// dropped: room for the longest reply (HELP, about 3.3 kB) in one piece, so a host
-// that drains slowly cannot make every command wait out its reply budget.
+// Reply bytes that may be queued in lwIP and not yet acknowledged by the host. lwIP
+// (as the core builds it) gives every TCP segment a buffer of full segment size from
+// a heap of 16 kB that it shares with DHCP, ARP and mDNS, so the whole send buffer of
+// 8 segments would take most of that heap. 4 segments hold the longest reply (HELP,
+// about 3.3 kB) with room to spare.
+constexpr int kMaxQueued = 4 * TCP_MSS;
+static_assert(kMaxQueued <= TCP_SND_BUF, "cannot queue more than the send buffer");
+// Free queue space that counts as "the host reads again" after a reply was dropped:
+// room for the longest reply in one piece, so a host that drains slowly cannot make
+// every command wait out its reply budget.
 constexpr int kDrainedRoom = 4096;
-static_assert(kDrainedRoom < TCP_SND_BUF, "the send buffer must be able to reach the drained level");
+static_assert(kDrainedRoom < kMaxQueued, "the queue must be able to reach the drained level");
 // After lwIP refused a write for lack of memory, no room is reported for at least this
 // long, so that the wait for memory (ReplyOut's reply budget) is not repeated at once.
 constexpr uint32_t kNoMemoryHoldMs = 2000;
@@ -27,7 +34,8 @@ constexpr uint32_t kNoMemoryHoldMs = 2000;
 // the link after about 5 + 3 x 2 = 11 s of silence.
 constexpr uint32_t kKeepAliveIdleMs = 5000, kKeepAliveIntervalMs = 2000, kKeepAliveCount = 3;
 // A second host gets the "busy" line and is closed. At most this many such connections
-// at a time (each holds an lwIP segment), each for at most kRejectPollTicks x 0.5 s.
+// at a time, each for at most kRejectPollTicks x 0.5 s: lwIP has 5 connection blocks
+// in all, and a connection that waits for its host to close holds one.
 constexpr int kMaxRejecting = 2;
 constexpr uint8_t kRejectPollTicks = 4;
 
@@ -44,8 +52,20 @@ struct Conn {
     ip_addr_t remote;
 };
 Conn g_conn;
+// The listening socket. It is made once and kept for good, also while the link is
+// stopped: this lwIP build has no address re-use (SO_REUSE is off), so a second bind to
+// the port fails for as long as any old connection on the port is in its closing wait
+// (up to 2 minutes).
 tcp_pcb *g_listen = nullptr;
-int g_rejecting = 0;  // "busy" connections that are not closed yet
+bool g_accepting = false;  // start() .. stop()
+int g_rejecting = 0;       // "busy" connections that their host has not closed yet
+
+// The reply bytes that the connection can take now: the queue limit less what is
+// queued and not yet acknowledged.
+int queueRoom(const tcp_pcb *pcb) {
+    const int queued = TCP_SND_BUF - (int)tcp_sndbuf(pcb);
+    return queued >= kMaxQueued ? 0 : kMaxQueued - queued;
+}
 
 err_t onRecv(void *, tcp_pcb *pcb, pbuf *p, err_t err) {
     if (pcb != g_conn.pcb) {  // not the link's connection: cannot happen
@@ -92,18 +112,16 @@ void rejectDetach(tcp_pcb *pcb) {
     --g_rejecting;
 }
 
-err_t rejectClose(tcp_pcb *pcb) {
-    rejectDetach(pcb);
-    if (tcp_close(pcb) != ERR_OK) {
-        tcp_abort(pcb);
-        return ERR_ABRT;
-    }
-    return ERR_OK;
-}
-
 err_t onRejectRecv(void *, tcp_pcb *pcb, pbuf *p, err_t) {
     if (!p) {
-        return rejectClose(pcb);  // the host closed first
+        // The host has closed: close our side too. From here on lwIP can take the
+        // connection block back when it needs one, so it is not counted any more.
+        rejectDetach(pcb);
+        if (tcp_close(pcb) != ERR_OK) {
+            tcp_abort(pcb);
+            return ERR_ABRT;
+        }
+        return ERR_OK;
     }
     // Take and discard what the host sends: a close with unread input would reset the
     // connection, and the host could lose the "busy" line.
@@ -112,11 +130,17 @@ err_t onRejectRecv(void *, tcp_pcb *pcb, pbuf *p, err_t) {
     return ERR_OK;
 }
 
+// The host has the line: send FIN, and keep the receiving side open until the host
+// closes (onRejectRecv) or the time limit ends it (onRejectPoll). A full close here
+// would leave a connection block that lwIP cannot take back for 20 s if the host keeps
+// its socket open.
 err_t onRejectSent(void *, tcp_pcb *pcb, u16_t) {
-    return rejectClose(pcb);  // the host has the line
+    tcp_sent(pcb, nullptr);
+    tcp_shutdown(pcb, 0, 1);
+    return ERR_OK;
 }
 
-err_t onRejectPoll(void *, tcp_pcb *pcb) {  // the host did not take the line in time
+err_t onRejectPoll(void *, tcp_pcb *pcb) {  // the host did not take the line, or did not close, in time
     rejectDetach(pcb);
     tcp_abort(pcb);
     return ERR_ABRT;
@@ -131,6 +155,10 @@ err_t onAccept(void *, tcp_pcb *pcb, err_t err) {
         return ERR_VAL;
     }
     tcp_arg(pcb, nullptr);
+    if (!g_accepting) {  // the link is stopped (the radio is off: no host can reach this)
+        tcp_abort(pcb);
+        return ERR_ABRT;
+    }
     if (g_conn.open) {  // one host at a time; the first one keeps the link
         static const char kBusy[] = "ERR busy: another host is connected\r\n";
         if (g_rejecting >= kMaxRejecting ||
@@ -153,7 +181,9 @@ err_t onAccept(void *, tcp_pcb *pcb, err_t err) {
     ip_addr_copy(g_conn.remote, pcb->remote_ip);
     tcp_recv(pcb, onRecv);
     tcp_err(pcb, onErr);
-    tcp_nagle_disable(pcb);  // flushConn() decides when a reply goes out
+    // Nagle's rule stays on (lwIP's default): while the host has not acknowledged the
+    // last segment, further replies collect in one segment. Without it every reply
+    // line that goes out before the acknowledgement takes a full-size lwIP buffer.
     ip_set_option(pcb, SOF_KEEPALIVE);
     pcb->keep_idle = kKeepAliveIdleMs;
     pcb->keep_intvl = kKeepAliveIntervalMs;
@@ -192,7 +222,7 @@ public:
             }
             g_conn.noMemory = false;
         }
-        return (int)tcp_sndbuf(pcb);
+        return queueRoom(pcb);
     }
     // All or nothing, and never waits for the host: 0 when lwIP cannot take the whole
     // line now (no room, or no memory for a segment). The bytes are only queued here;
@@ -202,7 +232,7 @@ public:
     size_t write(const uint8_t *buf, size_t n) override {
         LWIPMutex lock;
         tcp_pcb *pcb = g_conn.pcb;
-        if (!canSend(pcb) || tcp_sndbuf(pcb) < n) {
+        if (!canSend(pcb) || queueRoom(pcb) < (int)n) {
             return 0;
         }
         if (tcp_write(pcb, buf, (u16_t)n, TCP_WRITE_FLAG_COPY) != ERR_OK) {
@@ -292,22 +322,24 @@ namespace tcplink {
 
 bool start(uint16_t port) {
     LWIPMutex lock;
-    tcp_pcb *pcb = tcp_new();
-    if (!pcb) {
-        return false;
+    if (!g_listen) {  // the first start: see g_listen
+        tcp_pcb *pcb = tcp_new();
+        if (!pcb) {
+            return false;
+        }
+        if (tcp_bind(pcb, IP_ANY_TYPE, port) != ERR_OK) {
+            tcp_close(pcb);
+            return false;
+        }
+        tcp_pcb *listen = tcp_listen_with_backlog(pcb, 2);  // frees pcb, or leaves it on failure
+        if (!listen) {
+            tcp_close(pcb);
+            return false;
+        }
+        g_listen = listen;
+        tcp_accept(listen, onAccept);
     }
-    ip_set_option(pcb, SOF_REUSEADDR);
-    if (tcp_bind(pcb, IP_ANY_TYPE, port) != ERR_OK) {
-        tcp_close(pcb);
-        return false;
-    }
-    tcp_pcb *listen = tcp_listen_with_backlog(pcb, 2);  // frees pcb, or leaves it on failure
-    if (!listen) {
-        tcp_close(pcb);
-        return false;
-    }
-    g_listen = listen;
-    tcp_accept(listen, onAccept);
+    g_accepting = true;
     return true;
 }
 
@@ -324,11 +356,7 @@ void stop(bool keepInput) {
         connEnd(true);
     }
     LWIPMutex lock;
-    if (g_listen) {
-        tcp_accept(g_listen, nullptr);
-        tcp_close(g_listen);
-        g_listen = nullptr;
-    }
+    g_accepting = false;  // the listening socket stays: see g_listen
 }
 
 void service() {

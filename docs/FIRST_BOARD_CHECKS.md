@@ -124,12 +124,15 @@ these checks with J11 open (no laser output), at 150 MHz first.
 4. **Commands over the network.** Connect to port 4242. `ID?`, `STATUS`, a setting, `ARM` and
    `DISARM` give the same replies as on USB. A second connection gets `ERR busy`. A connection
    that opens and closes at once (`nc -z <address> 4242`, ten times) changes nothing:
-   `WDT_RESETS` stays 0 and the next connection works.
+   `WDT_RESETS` stays 0 and the next connection works. Restart the server after a second
+   connection: connect a second host (it gets `ERR busy`), close both, then send `WIFI OFF` and
+   `WIFI ON` over USB within a minute. The board must join and take a connection again.
 5. **`DISARM` latency.** With a scope on J10 pin 1, send `DISARM` over the network and over USB
    while the other link sends `STATUS` continuously. Measure the time from the command to the
-   end of the pulses on each link. Then, while ARMED, run
-   `printf 'DISARM\n' | nc -N <address> 4242` and a script that sends `DISARM` and closes the
-   connection without reading: the board must disarm each time.
+   end of the pulses on each link. Then, while ARMED, send `DISARM` and close the connection
+   without reading (the close then often resets it):
+   `python3 -c "import socket; s=socket.create_connection(('<address>',4242)); s.sendall(b'DISARM\n'); s.close()"`.
+   The board must disarm each time.
 6. **Pulse timing with network traffic.** Repeat the timing checks (pulse width, CH1-to-CH2 delay,
    sync period) while a host sends `STATUS` continuously over the network. The values do not
    change.
@@ -143,7 +146,8 @@ these checks with J11 open (no laser output), at 150 MHz first.
 9. **Wrong passphrase, unknown network.** `WIFI` shows `JOINING` with the reason, and USB commands
    answer. `WIFI=FAULT` here is a firmware error: the test command to the radio must get its
    answer also from a radio that is not joined. After a `WIFI=FAULT`, from any cause, `WIFI ON`
-   must start the radio again.
+   must start the radio again. Watch `WIFI` for some hours of normal use at the place of use: a
+   `WIFI=FAULT` with a radio that is in order means that the test of the radio is too strict.
 10. **300 MHz.** Fit the clock jumper and power-cycle. The stored set-up joins the network.
     `WIFI ON` with a new name gives `SAVED=0`. This combination is outside the RP2350
     specification and may not work on every Pico.

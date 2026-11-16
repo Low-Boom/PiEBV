@@ -16,16 +16,20 @@
 //   * Replies to the TCP host never wait for the host inside lwIP (tcp_link.h).
 // What remains, in the radio's driver (a compiled library), and was not measured:
 //   * A radio chip that stops answering. The driver then waits for its time-outs
-//     (about 1 s each) in every command and every frame. The link sends the chip one
-//     cheap command every 2 s while joined and before each join request. When the
-//     driver reports that this command got no answer (after 1 to 3 s), the link hands
-//     no further frame to the driver, powers the chip off and shows WIFI=FAULT, until
-//     WIFI ON. loop() feeds the watchdog right before, but a wait above the watchdog
-//     period restarts the board (DISARMED, radio held off). A chip that fails between
-//     that command and the end of a join request (more than ten commands) also ends in
-//     the watchdog restart.
-//   * A bad radio link. The driver can wait up to about 1 s inside one frame send when
-//     the chip withholds bus credits, also in lwIP's background work.
+//     (about 1 s each) in every command and every frame. The link tests the chip with
+//     one cheap command every 2 s while joined, before each join request, and at once
+//     after a frame send that took long. No frame is handed to the driver during a
+//     test, nor after a failed one, so a failed test holds the loop for the time-outs
+//     of that one command (1 to 2 s). The second failed test in a row powers the chip
+//     off (WIFI=FAULT, until WIFI ON). loop() feeds the watchdog right before each
+//     test; a wait above the watchdog period restarts the board (DISARMED, radio held
+//     off). A chip that fails between a passed test and the end of the join request
+//     that follows it (more than ten commands) also ends in the watchdog restart.
+//   * A bad radio link. The driver can wait about 1 s inside one frame send when the
+//     chip withholds bus credits, also in lwIP's background work. After such a send
+//     the link holds further frames back until the chip has passed a test. A chip that
+//     is alive but withholds its credits through two tests is powered off like a dead
+//     one.
 //
 // The pulse outputs do not depend on the link: they come from PIO and the clock
 // generator. The radio's driver takes one PIO state machine (outside pio0, which

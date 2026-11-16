@@ -12,6 +12,8 @@ tools/timing_check/*.pdb
 tools/net_check/net_check
 tools/net_check/net_check.exe
 tools/net_check/*.pdb
+tools/net_check/lwip/lwip_check
+tools/net_check/lwip/obj/
 # PiEBV simulator (tools/piebv_sim) build artifacts
 tools/piebv_sim/piebv_sim
 tools/piebv_sim/piebv_sim.exe

@@ -18,7 +18,6 @@ enum : err_t { ERR_OK = 0, ERR_MEM = -1, ERR_VAL = -6, ERR_ABRT = -13, ERR_RST =
 #define TCP_WND (8 * TCP_MSS)
 #define TCP_SND_BUF (8 * TCP_MSS)
 #define TCP_WRITE_FLAG_COPY 0x01
-#define SOF_REUSEADDR 0x04
 #define SOF_KEEPALIVE 0x08
 
 enum tcp_state { CLOSED, LISTEN, SYN_SENT, SYN_RCVD, ESTABLISHED, FIN_WAIT_1, FIN_WAIT_2, CLOSE_WAIT, CLOSING, LAST_ACK, TIME_WAIT };
@@ -57,14 +56,13 @@ struct tcp_pcb {
     std::string out;         // bytes taken by tcp_write()
     size_t sentBytes = 0;    // of `out`, handed on by tcp_output()
     size_t recved = 0;       // sum of tcp_recved()
-    bool nagleOff = false;
+    bool txClosed = false;   // tcp_shutdown(tx): FIN sent, still receiving
     bool closed = false;     // tcp_close(): orderly
     bool aborted = false;    // tcp_abort(): reset
     bool gone = false;       // the application must not use it any more
 };
 
 #define tcp_sndbuf(pcb) ((pcb)->snd_buf)
-#define tcp_nagle_disable(pcb) ((pcb)->nagleOff = true)
 #define ip_set_option(pcb, opt) ((pcb)->so_options |= (opt))
 
 tcp_pcb *tcp_new();
@@ -79,6 +77,7 @@ void tcp_poll(tcp_pcb *pcb, tcp_poll_fn fn, u8_t interval);
 err_t tcp_write(tcp_pcb *pcb, const void *data, u16_t len, u8_t flags);
 err_t tcp_output(tcp_pcb *pcb);
 void tcp_recved(tcp_pcb *pcb, u16_t len);
+err_t tcp_shutdown(tcp_pcb *pcb, int shutRx, int shutTx);
 err_t tcp_close(tcp_pcb *pcb);
 void tcp_abort(tcp_pcb *pcb);
 u8_t pbuf_free(pbuf *p);

@@ -313,7 +313,9 @@ function wifiMessage(text, bad) {
 // the network that the board has in use.
 function wifiKeepsPassphrase() {
   const sys = snap && snap.status ? snap.status.system : null;
-  return !!(sys && sys.WIFI_SSID && $("wifiSsid").value === sys.WIFI_SSID);
+  // WIFI_PENDING=1: the board holds a name or passphrase that was sent but not joined;
+  // a join without a passphrase would take that.
+  return !!(sys && sys.WIFI_SSID && $("wifiSsid").value === sys.WIFI_SSID && sys.WIFI_PENDING !== "1");
 }
 
 function wifiForget() {  // nothing typed stays in the page after the link is gone

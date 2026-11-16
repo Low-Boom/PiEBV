@@ -139,7 +139,7 @@ commands in a serial terminal:
 ```
 WIFI SSID Lab Network        ->  OK WIFI SSID=Lab Network (not in use yet: send WIFI PASS if it has a passphrase, then WIFI ON)
 WIFI PASS correct horse      ->  OK WIFI PASS=SET (not in use yet: send WIFI ON)
-WIFI ON                      ->  OK WIFI=ON SSID=Lab Network SAVED=1
+WIFI ON                      ->  OK WIFI=ON SSID=Lab Network PASS=SET SAVED=1
 WIFI                         ->  WIFI=CONNECTED … WIFI_IP=192.168.1.37 …
 ```
 
@@ -188,16 +188,21 @@ with a serial port. For a terminal, use `nc 192.168.1.37 4242`, or PuTTY with co
 - **The network link can delay a `DISARM`.** The firmware acts on `DISARM` when it reads the
   letters. None of the times below was measured on a board. The J11 interlock does not depend on
   the firmware.
-  - *A host that is slow to read replies:* each link gives the other link its turn after one slow
-    command, and a command waits at most about 250 ms for its host. So a `DISARM` can wait about
-    250 ms for the other link, and about 250 ms more for the replies on its own link.
-  - *A radio chip that stops answering:* the firmware finds this with a test command, every 2 s
-    while joined and before each new join. The driver holds the command loop for that command
-    (1 s to 3 s by its time-outs). Then either the board switches the radio chip off and shows
-    `WIFI=FAULT`, or, if the wait was longer than the 3 s watchdog period, the watchdog restarts
-    the board, DISARMED. After `WIFI=FAULT`, `WIFI ON` over USB starts the radio again.
-  - *A bad radio link:* the radio's driver can wait up to about 1 s inside one send, also in the
-    background.
+  - *A host that reads replies slowly, or not at all:* the replies of a link wait for its host
+    only out of a time budget of 250 ms, which comes back slowly (one eighth of the time that
+    passes). When it is used up, replies are dropped (`TX_DROPPED`) until the host has caught up.
+    Each link gives the other link its turn after one slow command. So a `DISARM` can wait about
+    0.3 s for the replies on its own link, however many commands are queued before it, and about
+    250 ms for the other link.
+  - *A radio chip that stops answering:* the firmware tests the radio with one command every 2 s
+    while joined, before each new join, and at once after a send that took long. While a test
+    runs, and after a failed test, it hands no frame to the radio's driver. The driver holds the
+    command loop for a failed test (1 s to 2 s by its time-outs). After the second failed test in
+    a row the board switches the radio chip off and shows `WIFI=FAULT`; `WIFI ON` over USB starts
+    the radio again. If a wait is longer than the 3 s watchdog period, the watchdog restarts the
+    board, DISARMED.
+  - *A bad radio link:* the radio's driver can wait about 1 s inside one send, also in the
+    background. The firmware then holds further frames back until the next test of the radio.
 - **Input that has arrived is run.** When a network host sends a command and then closes or
   resets the connection, the command still runs, `DISARM` included. Its reply is lost if the
   connection was reset.
@@ -210,9 +215,13 @@ with a serial port. For a terminal, use `nc 192.168.1.37 4242`, or PuTTY with co
   that changes the network starts it from power-off.
 - With the clock jumper fitted (300 MHz) the set-up is not written to flash (`SAVED=0`): it holds
   until power-off. A set-up that was stored at 150 MHz is used at 300 MHz also.
-- A name or a passphrase cannot start or end with a space, cannot contain control characters, and
-  cannot contain the letters `disarm` in sequence (in any case): the board reads them as the
-  `DISARM` command.
+- A name or a passphrase cannot start or end with a space, and cannot contain the letters
+  `disarm` in sequence (in any case): the board reads them as the `DISARM` command. A name must be
+  UTF-8 text (plain ASCII is that) without control characters; a name in another encoding, such as
+  Shift-JIS, is refused. A passphrase must be printable ASCII characters.
+- A host that connects while another host has the link gets `ERR busy`. This also applies to
+  your own computer after its old connection was cut without a close: the link is free again
+  after about 11 s.
 - A reply that the network host does not take in time is dropped (`TX_DROPPED`), as on USB.
 - After a watchdog restart the radio stays off (`WIFI=OFF (held off after a watchdog reset …)`)
   until `WIFI ON` or a power cycle.

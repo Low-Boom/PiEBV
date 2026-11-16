@@ -23,10 +23,11 @@
 
 namespace tcplink {
 
-// Starts listening on `port`. False if lwIP has no memory for it.
+// Starts taking hosts on `port`. The port is fixed by the first call. False if lwIP
+// has no memory for the listening socket.
 bool start(uint16_t port);
 
-// Resets the host's connection, if any, and stops listening. `keepInput` true: input
+// Resets the host's connection, if any, and takes no further host until start(). `keepInput` true: input
 // that has arrived stays for read(), and service() frees the link when it is read
 // (for a radio that failed: a DISARM that arrived just before must still act).
 // `keepInput` false: unread input is discarded.

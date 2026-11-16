@@ -70,7 +70,7 @@ StdioSink g_sink;
 ProtocolLink g_link(g_sink, true);
 
 WifiConfig g_wifi;        // in memory only
-bool g_wifiSaved = true;  // false once the set-up was changed: this run does not store it
+bool g_wifiSaved = true;  // the set-up in use is the one of the next start: the empty one
 bool g_pioReady = true;
 bool g_configured = false;
 bool g_armed = false;
@@ -193,9 +193,7 @@ const char *wifiSet(const WifiConfig &cfg, const char **notSaved) {
     if (g_armed || g_startPending) {
         return "DISARM first: the radio start and the flash write stop the command loop for a moment";
     }
-    if (!wifiConfigSame(g_wifi, cfg)) {
-        g_wifiSaved = false;
-    }
+    g_wifiSaved = wifiConfigSame(cfg, WifiConfig{});  // net_link.cpp store(), with a flash that is always empty
     g_wifi = cfg;
     *notSaved = g_wifiSaved ? nullptr : "simulator: nothing is stored";
     return nullptr;

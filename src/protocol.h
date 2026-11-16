@@ -23,12 +23,15 @@
 // (any case) anywhere in the input disarm at once, without waiting for the end
 // of the line and whatever surrounds them; the rest of that line is discarded.
 //
-// Replies are written a whole line at a time with a per-command time budget, and
-// once a host stops reading, later replies stop waiting at all until it drains
-// again. A host that stops reading therefore delays a DISARM queued on its own link
-// by at most about kReplyBudgetUs (250 ms). A DISARM on the other link can wait for
-// one such slow command as well, because the main loop ends a link's turn after
-// kLinkTurnUs (main.cpp, serviceLink): about 0.5 s when both hosts are slow to read. Lines that could not be sent are dropped whole and their
+// Replies are written a whole line at a time, and wait for a host that is slow to take
+// them only out of a time budget of the link: kReplyBudgetUs (250 ms), which comes back
+// at one eighth of the time that passes. When it is used up, replies are dropped
+// without a wait until the host has drained the link again. So a host that reads
+// slowly, or not at all, delays a DISARM queued on its own link by about 0.3 s at
+// most, however many commands are queued before it. A DISARM on the other link waits
+// for one slow command of this link at most, because the main loop ends a link's
+// turn after kLinkTurnUs (main.cpp, serviceLink): about 0.5 s in all when both hosts
+// are slow. Lines that could not be sent are dropped whole and their
 // bytes counted (STATUS TX_DROPPED, counted per link and per network host).
 
 #include <Arduino.h>
@@ -57,25 +60,28 @@ protected:
 // retrying for as long as the host accepts a byte at least once a second) -- during
 // which no DISARM can be read, and the 3 s watchdog could fire. ReplyOut buffers each
 // reply line and hands the sink a whole line only when it has room for all of it,
-// waiting at most kReplyBudgetUs per command; a line that does not make it is dropped
-// whole (and counted), so a truncated reply can never glue itself onto the next one.
-// Once a wait has run out, the stall is sticky: until the host drains the sink again,
-// later replies write only what fits and never wait, so a backlog of queued commands
-// cannot add up to a long DISARM delay.
+// waiting for room only while the link's time budget lasts; a line that does not make
+// it is dropped whole (and counted), so a truncated reply can never glue itself onto
+// the next one. The budget is one amount for the link, not one per command: it is used
+// up by waiting and comes back slowly, so a backlog of queued commands cannot add up
+// to a long DISARM delay, also when the host takes each reply just in time. Once the
+// budget has run out, the stall is sticky: until the host drains the sink again, later
+// replies write only what fits and never wait.
 class ReplyOut : public Print {
 public:
     explicit ReplyOut(ReplySink &sink) : sink_(sink) {}
-    // Called before every reply: flushes any leftover partial line, then grants a
-    // fresh time budget unless the host is still not draining after an earlier
-    // give-up.
+    // Called before every reply: flushes any leftover partial line, then lets the
+    // reply wait for as long as the link's time budget lasts, unless the host is
+    // still not draining after an earlier give-up.
     void startCommand();
     size_t write(uint8_t c) override;
     size_t write(const uint8_t *buf, size_t n) override;
     uint32_t dropped() const { return dropped_; }
-    // True if a reply of the current command waited out its time budget.
+    // True if a reply waited out the time budget and the host has not drained since.
     bool stalled() const { return stalled_; }
     // A new host on this link: nothing of the old host's replies is left to send, and
-    // its dropped-byte count does not carry over.
+    // its dropped-byte count does not carry over. The time budget does: a host cannot
+    // get a new one by connecting again.
     void reset();
 
 private:
@@ -87,6 +93,8 @@ private:
     size_t lineLen_ = 0;
     uint8_t prev_ = 0;  // last byte put, also across a flush
     uint64_t deadlineUs_ = 0;
+    uint64_t budgetUs_ = ~0ull;   // waiting time left; capped to kReplyBudgetUs at the first command
+    uint64_t refillUs_ = 0;       // time up to which the budget's refill is counted
     bool stalled_ = false;
     uint32_t dropped_ = 0;
 };
@@ -165,6 +173,7 @@ private:
     void dispatch(ProtocolLink &link, char *line);
     void disarmNow(ProtocolLink &link);
     void wifiCommand(ProtocolLink &link, char *args);
+    void printWifiPending();
 
     PulseParams *params_ = nullptr;
     ProtocolHooks hooks_{};

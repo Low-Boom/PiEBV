@@ -102,6 +102,11 @@ err_t tcp_write(tcp_pcb *pcb, const void *data, u16_t len, u8_t) {
         printf("FAIL [%s] tcp_write in state %d\n", g_case, (int)pcb->state);
         return ERR_ARG;
     }
+    if (pcb->txClosed) {
+        ++g_failures;
+        printf("FAIL [%s] tcp_write after the sending side was closed\n", g_case);
+        return ERR_ARG;
+    }
     if (g_writeFails || len > pcb->snd_buf) {
         return ERR_MEM;
     }
@@ -122,6 +127,16 @@ err_t tcp_output(tcp_pcb *pcb) {
 void tcp_recved(tcp_pcb *pcb, u16_t len) {
     use(pcb, "tcp_recved");
     pcb->recved += len;
+}
+err_t tcp_shutdown(tcp_pcb *pcb, int shutRx, int shutTx) {
+    use(pcb, "tcp_shutdown");
+    if (shutRx || !shutTx) {
+        ++g_failures;
+        printf("FAIL [%s] tcp_shutdown: only the sending side is modelled\n", g_case);
+    }
+    tcp_output(pcb);  // lwIP sends what is queued, then FIN; the receiving side stays open
+    pcb->txClosed = true;
+    return ERR_OK;
 }
 err_t tcp_close(tcp_pcb *pcb) {
     use(pcb, "tcp_close");
@@ -286,7 +301,7 @@ int main() {
     g_case = "command and reply";
     tcp_pcb *a = hostConnects();
     CHECK(linkHasHost());
-    CHECK(a->nagleOff && (a->so_options & SOF_KEEPALIVE) && a->keep_idle == 5000 && a->keep_cnt == 3);
+    CHECK((a->so_options & SOF_KEEPALIVE) && a->keep_idle == 5000 && a->keep_intvl == 2000 && a->keep_cnt == 3);
     hostSends(a, "ARM\n");
     loopPass();
     CHECK(g_armed);
@@ -346,7 +361,9 @@ int main() {
     hostSends(g, "ARM\n");  // taken and discarded
     loopPass();
     CHECK(!g_armed && g->recved == 4 && g_pbufsLive == 0);
-    hostAcks(g);            // the host has the line
+    hostAcks(g);            // the host has the line: our FIN goes out, we still listen
+    CHECK(g->txClosed && !g->gone);
+    hostCloses(g);          // the host closes: now the connection is given up
     CHECK(g->closed && !g->aborted);
     hostSends(f, "ARM?\n"); // the first host is not disturbed
     loopPass();
@@ -364,8 +381,15 @@ int main() {
     CHECK(r == ERR_OK && g_pcbs.back()->closed);
     tcp_pcb *h5 = hostConnects(&r), *h6 = hostConnects(&r);
     CHECK(r == ERR_OK && h5->out == kBusy && h6->out == kBusy);
-    hostAcks(h5);
-    hostAcks(h6);
+    hostAcks(h5);           // both read the line and keep their sockets open:
+    hostAcks(h6);           // they still hold their places ...
+    tcp_pcb *h7 = hostConnects(&r);
+    CHECK(r == ERR_ABRT && h7->aborted && h5->txClosed && !h5->gone);
+    pollFires(h5);          // ... until the time limit
+    pollFires(h6);
+    CHECK(h5->aborted && h6->aborted);
+    hostCloses(hostConnects(&r));
+    CHECK(r == ERR_OK);
 
     g_case = "lwIP has no memory: one bounded wait, then none";
     hostAcks(f);
@@ -438,7 +462,10 @@ int main() {
     CHECK(g_armed);
     hostSends(f, "DISARM\n");
     tcplink::stop(true);
-    CHECK(f->aborted && g_listener == nullptr && g_armed);
+    CHECK(f->aborted && g_armed);
+    err_t stopped = ERR_OK;
+    tcp_pcb *late = hostConnects(&stopped);  // the listening socket stays, but takes no host
+    CHECK(stopped == ERR_ABRT && late->aborted);
     loopPass();
     CHECK(!g_armed);
     loopPass();
@@ -450,8 +477,9 @@ int main() {
     g_case = "stop with a host connected, then start again";
     hostSends(f, "ARM");
     tcplink::stop(false);
-    CHECK(f->aborted && !linkHasHost() && g_listener == nullptr);
-    CHECK(hostConnects() == nullptr);
+    CHECK(f->aborted && !linkHasHost());
+    hostConnects(&stopped);
+    CHECK(stopped == ERR_ABRT);
     loopPass();
     CHECK(!g_armed);
     CHECK(tcplink::start(4242));

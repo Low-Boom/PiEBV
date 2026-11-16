@@ -11,6 +11,7 @@
 namespace {
 
 constexpr uint64_t kReplyBudgetUs = 250000;
+constexpr uint64_t kBudgetRefillDiv = 8;  // 1 us of budget comes back per 8 us that pass
 
 // The reply path of the command being handled. Set on entry to Protocol::feed(), so
 // the print helpers below need no extra argument. The firmware is single-threaded.
@@ -199,10 +200,14 @@ void printHelp(uint32_t clkHz) {
 // ---------------------------------------------------------------- bounded replies
 void ReplyOut::startCommand() {
     flushLine();
+    const uint64_t now = time_us_64();
+    const uint64_t back = (now - refillUs_) / kBudgetRefillDiv;
+    refillUs_ += back * kBudgetRefillDiv;
+    budgetUs_ = (budgetUs_ > kReplyBudgetUs || back >= kReplyBudgetUs - budgetUs_) ? kReplyBudgetUs : budgetUs_ + back;
     if (stalled_ && sink_.connected() && sink_.room() >= sink_.drainedRoom()) {
         stalled_ = false;
     }
-    deadlineUs_ = stalled_ ? 0 : time_us_64() + kReplyBudgetUs;
+    deadlineUs_ = stalled_ ? 0 : now + budgetUs_;
 }
 
 size_t ReplyOut::write(uint8_t c) {
@@ -243,6 +248,7 @@ void ReplyOut::flushLine() {
         return;
     }
     bool sent = false;
+    uint64_t waitFromUs = 0;  // 0 = this line has not waited
     while (sink_.connected()) {  // no host listening: drop at once, never wait
         if (sink_.room() >= (int)lineLen_) {
             const size_t n = sink_.write(line_, lineLen_);
@@ -252,10 +258,18 @@ void ReplyOut::flushLine() {
             }
             // 0: the sink took nothing after all; wait like for room.
         }
-        if (time_us_64() >= deadlineUs_) {
+        const uint64_t now = time_us_64();
+        if (now >= deadlineUs_) {
             stalled_ = true;
             break;
         }
+        if (waitFromUs == 0) {
+            waitFromUs = now;
+        }
+    }
+    if (waitFromUs != 0) {  // the wait comes out of the link's budget
+        const uint64_t waited = time_us_64() - waitFromUs;
+        budgetUs_ = (stalled_ || waited >= budgetUs_) ? 0 : budgetUs_ - waited;
     }
     if (!sent) {
         dropped_ += (uint32_t)lineLen_;
@@ -357,6 +371,19 @@ void Protocol::feed(ProtocolLink &link, char c) {
     link.buf_[link.len_++] = c;
 }
 
+// STATUS line WIFI_PENDING: 1 = a name or passphrase was given with WIFI SSID / WIFI
+// PASS and is not in use (the next WIFI ON takes it; WIFI OFF and CLEAR discard it).
+// Nothing is printed on a firmware without Wi-Fi.
+void Protocol::printWifiPending() {
+    if (!hooks_.wifiSet || !hooks_.wifiGet) {
+        return;
+    }
+    WifiConfig inUse{};
+    hooks_.wifiGet(&inUse);
+    g_out->print(F("WIFI_PENDING="));
+    g_out->println(strcmp(wifi_.ssid, inUse.ssid) != 0 || strcmp(wifi_.pass, inUse.pass) != 0 ? 1 : 0);
+}
+
 // WIFI: the Wi-Fi set-up. `args` is the rest of the line after "WIFI" (nullptr if
 // none), not split into words: a network name or a passphrase can hold spaces.
 //   WIFI                    the Wi-Fi and network STATUS lines
@@ -382,6 +409,7 @@ void Protocol::wifiCommand(ProtocolLink &link, char *args) {
     if (!sub || !*sub) {
         if (hooks_.printNetStatus) {
             hooks_.printNetStatus(*g_out);
+            printWifiPending();
         } else {
             g_out->println(F("WIFI=UNAVAILABLE (this firmware has no Wi-Fi)"));
         }
@@ -451,7 +479,7 @@ void Protocol::wifiCommand(ProtocolLink &link, char *args) {
     wifi_ = inUse;
     // Told to the user when a refusal dropped something that was collected.
     const bool dropped = strcmp(collected.ssid, inUse.ssid) != 0 || strcmp(collected.pass, inUse.pass) != 0;
-    const __FlashStringHelper *again = dropped ? F(" (send the name and the passphrase again)") : F("");
+    const __FlashStringHelper *again = dropped ? F(" (what was sent with WIFI SSID / WIFI PASS is discarded)") : F("");
     if (*value) {
         g_out->print(F("ERR WIFI "));
         g_out->print(sub);
@@ -480,6 +508,7 @@ void Protocol::wifiCommand(ProtocolLink &link, char *args) {
     g_out->print(F("OK WIFI="));
     g_out->print(cfg.enabled ? F("ON SSID=") : F("OFF SSID="));
     g_out->print(cfg.ssid);
+    g_out->print(cfg.pass[0] ? F(" PASS=SET") : F(" PASS=NONE"));  // never the passphrase itself
     if (notSaved) {
         g_out->print(F(" SAVED=0 ("));
         g_out->print(notSaved);
@@ -588,6 +617,7 @@ void Protocol::dispatch(ProtocolLink &link, char *line) {
         printArmed(hooks_.isArmed());
         if (hooks_.printSystemStatus) {
             hooks_.printSystemStatus(*g_out);
+            printWifiPending();
         }
         g_out->print(F("TX_DROPPED="));
         g_out->println(g_out->dropped());

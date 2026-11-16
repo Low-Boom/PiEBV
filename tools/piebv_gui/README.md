@@ -116,9 +116,12 @@ DISARMED. In the *Network (Wi-Fi)* card:
 3. Wait until *State* shows `CONNECTED`. *Address* then shows the URL to connect to.
 
 - For the network that the board has in use, an empty passphrase field keeps its passphrase
-  (the placeholder shows *unchanged*). The page then sends `WIFI OFF` and `WIFI ON`, which
-  restarts the radio. For any other name, type the passphrase or tick *Open network*: a
-  passphrase is never carried over to another network.
+  (the placeholder shows *unchanged*). The page then sends only `WIFI ON`. For any other name,
+  type the passphrase or tick *Open network*: a passphrase is never carried over to another
+  network. The same applies when the board holds a name or passphrase that was sent but not
+  joined (`WIFI_PENDING=1`, for example from the console).
+- The page checks the board's reply: the name and `PASS=SET` / `PASS=NONE` must be what you
+  asked for.
 - If the board refuses the join, the fields keep what you typed. Click **Join and store** again.
 - **Switch off** sends `WIFI OFF`. **Erase set-up** sends `WIFI CLEAR`.
 - The board's reply is shown under the buttons. `SAVED=0` means that the set-up is in use but not

@@ -58,8 +58,17 @@ g++ -std=c++17 -O1 -g -Wall -Wextra -fsanitize=address,undefined -DPIEBV_NET_CHE
 ./net_check
 ```
 
-It prints `net_check: all checks passed`. It does not replace the
-[network checks](FIRST_BOARD_CHECKS.md#network-checks) on a board: see [its README](../tools/net_check/README.md).
+It prints `net_check: all checks passed`. A second check, `tools/net_check/lwip`, runs the same
+code against lwIP itself (the lwIP sources that PlatformIO installed for the firmware):
+
+```
+cd tools/net_check/lwip
+sh build.sh
+ASAN_OPTIONS=detect_leaks=0 ./lwip_check
+```
+
+Its last line is `lwip_check: all checks passed`. The two checks do not replace the
+[network checks](FIRST_BOARD_CHECKS.md#network-checks) on a board: see [their README](../tools/net_check/README.md).
 
 ## Signal simulation
 

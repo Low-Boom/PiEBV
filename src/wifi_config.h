@@ -30,17 +30,53 @@ inline bool wifiConfigSame(const WifiConfig &a, const WifiConfig &b) {
     return a.enabled == b.enabled && strcmp(a.ssid, b.ssid) == 0 && strcmp(a.pass, b.pass) == 0;
 }
 
-// Control characters are refused: the name is printed in replies, where an escape
-// sequence could change what a terminal shows. That is every byte below 0x20, DEL, and
-// the C1 controls U+0080..U+009F in UTF-8 (0xC2 followed by 0x80..0x9F).
-inline bool wifiHasControlChar(const char *s) {
+// A network name is printed in replies, where control characters could change what a
+// terminal shows. So a name must be well-formed UTF-8 (plain ASCII is that) without
+// control characters (C0, DEL, C1), line and paragraph separators, and the characters
+// that change the writing direction. A name in another encoding (e.g. Shift-JIS) is
+// refused unless it happens to pass.
+inline bool wifiNameTextOk(const char *s) {
+    static constexpr uint32_t kMinOfLength[] = {0, 0, 0x80, 0x800, 0x10000};  // shorter forms are overlong
+    for (const unsigned char *p = (const unsigned char *)s; *p;) {
+        uint32_t cp;
+        int n;
+        if (*p < 0x80) {
+            cp = *p, n = 1;
+        } else if ((*p & 0xE0) == 0xC0) {
+            cp = *p & 0x1Fu, n = 2;
+        } else if ((*p & 0xF0) == 0xE0) {
+            cp = *p & 0x0Fu, n = 3;
+        } else if ((*p & 0xF8) == 0xF0) {
+            cp = *p & 0x07u, n = 4;
+        } else {
+            return false;  // a continuation byte or 0xF8..0xFF where a character must start
+        }
+        for (int i = 1; i < n; ++i) {
+            if ((p[i] & 0xC0) != 0x80) {  // also the end of the text
+                return false;
+            }
+            cp = (cp << 6) | (p[i] & 0x3Fu);
+        }
+        if (cp < kMinOfLength[n] || cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF)) {
+            return false;
+        }
+        if (cp < 0x20 || (cp >= 0x7F && cp <= 0x9F) || cp == 0x200E || cp == 0x200F ||
+            (cp >= 0x2028 && cp <= 0x202E) || (cp >= 0x2066 && cp <= 0x2069)) {
+            return false;
+        }
+        p += n;
+    }
+    return true;
+}
+
+// A WPA2 passphrase is 8 to 63 printable ASCII characters (IEEE 802.11).
+inline bool wifiPassTextOk(const char *s) {
     for (; *s; ++s) {
-        const unsigned char c = (unsigned char)s[0], next = (unsigned char)s[1];
-        if (c < 0x20 || c == 0x7F || (c == 0xC2 && next >= 0x80 && next <= 0x9F)) {
-            return true;
+        if (*s < 0x20 || *s > 0x7E) {
+            return false;
         }
     }
-    return false;
+    return true;
 }
 
 // nullptr, or why `s` cannot be an SSID.
@@ -52,7 +88,7 @@ inline const char *wifiCheckSsid(const char *s) {
     if (n > kWifiSsidMax) {
         return "the network name is longer than 32 characters";
     }
-    return wifiHasControlChar(s) ? "the network name has a control character" : nullptr;
+    return wifiNameTextOk(s) ? nullptr : "the network name must be UTF-8 text without control characters";
 }
 
 // nullptr, or why `s` cannot be a passphrase. "" is an open network.
@@ -64,7 +100,7 @@ inline const char *wifiCheckPass(const char *s) {
     if (n < kWifiPassMin || n > kWifiPassMax) {
         return "the passphrase must have 8 to 63 characters";
     }
-    return wifiHasControlChar(s) ? "the passphrase has a control character" : nullptr;
+    return wifiPassTextOk(s) ? nullptr : "the passphrase must be printable ASCII characters";
 }
 
 // ---------------------------------------------------------------- flash record

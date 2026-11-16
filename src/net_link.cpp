@@ -18,6 +18,13 @@ constexpr uint32_t kPollMs = 200;           // join-state poll
 constexpr uint32_t kRejoinDelayMs = 5000;   // shortest time between two join requests
 constexpr uint32_t kJoinTimeoutMs = 20000;  // a join with no result is started again
 constexpr uint32_t kProbeMs = 2000;         // signal-level read while joined: also the radio's liveness check
+// The driver reports "no answer" also for a chip that is alive but holds back its bus
+// credits for about a second (a bad link), so one failed test is not a fault: the
+// second one in a row is.
+constexpr int kProbeFailLimit = 2;
+// A frame send that took this long waited inside the driver. Frames are then held back
+// until the chip has answered a test command.
+constexpr uint64_t kSlowFrameUs = 300000;
 constexpr uint32_t kIoctlGetRssi = 0xFE;    // CYW43_IOCTL_GET_RSSI, as in the core's CYW43lwIP::RSSI()
 constexpr size_t kEepromSize = 256;         // >= kWifiRecordSize, a multiple of the flash page
 // cyw43_wifi_pm() value the core uses for "no power saving" (WiFiClass::noLowPowerMode):
@@ -44,16 +51,16 @@ bool g_rssiKnown = false;
 int32_t g_rssi = 0;
 bool g_macKnown = false;
 uint8_t g_mac[6] = {};
-// True: no frame is handed to the radio's driver (the chip is off, or it has stopped
-// answering). With a chip that does not answer, the driver waits up to a second or
-// more inside every frame send, also in lwIP's background work.
+// True: no frame is handed to the radio's driver (the chip is off, or it is in doubt).
+// With a chip that does not answer, the driver waits about a second inside every frame
+// send, also in lwIP's background work. lwIP sends a dropped TCP segment again.
 volatile bool g_radioOff = true;
+volatile bool g_radioSuspect = false;  // a frame send was slow: test the chip at once
+int g_probeFails = 0;                  // failed test commands in a row
 
-// One cheap driver command. False = the driver gave up on the chip: it could not wake
-// the bus, could not send, or got no answer within its own time-outs (cyw43_ll.c; each
-// of these waits is about 1 s in this port, so a dead chip holds this call for 1 to
-// 3 s). A chip that is slow but answers is not a fault. `*rssi` (may be nullptr) gets
-// the signal level.
+// One cheap driver command. False = the driver gave up: it could not wake the bus,
+// could not send (no bus credits), or got no answer, each after its own time-out of
+// about 1 s (cyw43_ll.c). `*rssi` (may be nullptr) gets the signal level.
 bool radioAnswers(int32_t *rssi) {
     int32_t v = 0;
     if (cyw43_ioctl(&cyw43_state, kIoctlGetRssi, sizeof(v), (uint8_t *)&v, CYW43_ITF_STA) != 0) {
@@ -117,7 +124,19 @@ public:
 
     void end() { _netif = nullptr; }
 
-    uint16_t sendFrame(struct pbuf *p) { return g_radioOff ? 0 : CYW43::sendFrame(p); }
+    // Called from the main loop and from lwIP's background work.
+    uint16_t sendFrame(struct pbuf *p) {
+        if (g_radioOff) {
+            return 0;
+        }
+        const uint64_t t0 = time_us_64();
+        const uint16_t sent = CYW43::sendFrame(p);
+        if (time_us_64() - t0 >= kSlowFrameUs) {
+            g_radioOff = true;  // until probe() has heard from the chip
+            g_radioSuspect = true;
+        }
+        return sent;
+    }
 };
 
 LwipIntfDev<RadioDev> g_radio;
@@ -127,9 +146,22 @@ bool g_mdnsStarted = false;
 // Takes the link down and powers the radio chip off. `polite` true (a command of the
 // user, chip in order): the host gets a reset and the network a DHCP release before
 // the chip goes off. `polite` false (the chip does not answer): nothing more is handed
-// to the driver. Neither way needs an answer from the chip: cyw43_deinit() releases
-// the bus and switches the chip's supply off (WL_REG_ON low), and the next start
-// powers it up and loads its firmware again.
+// to the driver. Neither way needs an answer from the chip, and the next start powers
+// it up and loads its firmware again.
+// Chip supply off (WL_REG_ON low) and the driver back in its start state, with its bus
+// (a PIO state machine and two DMA channels) released. cyw43_deinit() does this for a
+// chip that started. It returns at once for a chip whose start failed part of the way,
+// which the driver leaves powered and with the bus claimed; so the two steps are also
+// made directly. Both do nothing when there is nothing to do, and neither needs an
+// answer from the chip.
+void radioPowerOff() {
+    cyw43_deinit(&cyw43_state);
+    cyw43_arch_lwip_begin();  // the driver's lock
+    cyw43_ll_deinit(&cyw43_state.cyw43_ll);
+    cyw43_init(&cyw43_state);
+    cyw43_arch_lwip_end();
+}
+
 void radioStop(bool polite) {
     const bool running = g_phase == Phase::Joining || g_phase == Phase::Linked;
     if (!polite) {
@@ -140,7 +172,9 @@ void radioStop(bool polite) {
         g_radio.end();  // DHCP stop, interface removed (mDNS follows through its callback)
     }
     g_radioOff = true;
-    cyw43_deinit(&cyw43_state);  // does nothing if the chip is off already
+    radioPowerOff();
+    g_radioSuspect = false;
+    g_probeFails = 0;
     g_phase = Phase::Off;
     g_note = nullptr;
     g_rssiKnown = false;
@@ -184,15 +218,34 @@ bool linkUp() {
     return netif_is_link_up(g_radio.getNetIf());
 }
 
+// Tests the chip with one driver command. True if it answered. On the second failure
+// in a row the radio is powered off (radioFault()).
+// Frames are held back from before the test until the chip has answered: when the
+// driver call ends, lwIP's background work runs with everything that became due in the
+// meantime, and each frame to a chip that does not answer would wait in the driver
+// again. So a failed test costs the command loop the driver's time-outs for one
+// command (1 to 2 s), and nothing after that.
+bool probe(int32_t *rssi) {
+    g_radioOff = true;
+    g_radioSuspect = false;
+    if (radioAnswers(rssi)) {
+        g_probeFails = 0;
+        g_radioOff = false;
+        return true;
+    }
+    if (++g_probeFails >= kProbeFailLimit) {
+        radioFault();
+    }
+    return false;
+}
+
 // A join request is more than ten driver commands, whose results the driver does not
 // report. So it goes only to a chip that has just answered one.
 void rejoin(uint32_t nowMs) {
     g_lastJoinMs = nowMs;
-    if (!radioAnswers(nullptr)) {
-        radioFault();
-        return;
+    if (probe(nullptr)) {
+        requestJoin();
     }
-    requestJoin();
 }
 
 void pollJoin(uint32_t nowMs) {
@@ -202,14 +255,12 @@ void pollJoin(uint32_t nowMs) {
             g_phase = Phase::Joining;
             g_note = "link lost";
             g_rssiKnown = false;
-        } else if (nowMs - g_lastProbeMs >= kProbeMs) {
+        } else if (g_radioSuspect || nowMs - g_lastProbeMs >= kProbeMs) {
             // The signal level for STATUS, read here so that STATUS makes no radio
             // call; a chip that has stopped answering is found here too.
             g_lastProbeMs = nowMs;
             int32_t rssi = 0;
-            if (!radioAnswers(&rssi)) {
-                radioFault();
-            } else if (rssi != 0) {
+            if (probe(&rssi) && rssi != 0) {
                 g_rssi = rssi;
                 g_rssiKnown = true;
             }
@@ -242,7 +293,13 @@ const char *store(const WifiConfig &cfg) {
     uint8_t rec[kWifiRecordSize];
     wifiRecordEncode(cfg, rec);
     EEPROM.begin(kEepromSize);  // (re)reads the sector
-    if (memcmp(EEPROM.getConstDataPtr(), rec, sizeof(rec)) == 0) {
+    // Nothing to write if the flash already gives this set-up at power-up: the same
+    // record, or no valid record and the empty set-up (as begin() reads it).
+    WifiConfig inFlash;
+    if (!wifiRecordDecode(EEPROM.getConstDataPtr(), &inFlash)) {
+        inFlash = WifiConfig{};
+    }
+    if (wifiConfigSame(inFlash, cfg)) {
         return nullptr;
     }
     if (clock_get_hz(clk_sys) != kStandardClockHz) {
@@ -314,7 +371,8 @@ const char *set(const WifiConfig &cfg, const char **notSaved) {
 
 void service() {
     const uint32_t now = millis();
-    if ((g_phase == Phase::Joining || g_phase == Phase::Linked) && now - g_lastPollMs >= kPollMs) {
+    if ((g_phase == Phase::Joining || g_phase == Phase::Linked) &&
+        (now - g_lastPollMs >= kPollMs || g_radioSuspect)) {
         g_lastPollMs = now;
         pollJoin(now);
     }
