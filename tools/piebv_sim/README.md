@@ -40,7 +40,7 @@ steps), and `STATUS` shows `CLKMODE=OVERCLOCK`.
 | Every command, reply and error, and the order-dependent accept/reject rules | Anything timed: no PIO, no pulses, no sync clock |
 | Arming, with the real start hold-off: `ARM` reports it and `STATUS` counts it down | The J11 interlock, the 12 V laser-rail gate and the `HW` check; `HW` always reads `OK` |
 | The realized cycles and values from `pulse_timing.h` | The reset reason and watchdog registers in `STATUS`, which are placeholders |
-| The `WIFI` commands as on the board's USB port, with their checks and replies | The radio, the network link and the flash: `WIFI ON` shows a joined network with a made-up address at once, and nothing is stored (`SAVED=0`) |
+| The `WIFI` commands as on the board's USB port, with their checks and replies | The radio, the network link and the flash: `WIFI ON` shows a joined network with a made-up address at once, and nothing is stored (`SAVED=0` after a change) |
 
 `piebv_sim.cpp` emulates the hooks that `src/main.cpp` installs, with the hardware calls removed:
 - arming;

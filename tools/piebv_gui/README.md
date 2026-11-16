@@ -115,14 +115,17 @@ DISARMED. In the *Network (Wi-Fi)* card:
 2. Click **Join and store**. The page sends `WIFI SSID`, `WIFI PASS` and `WIFI ON`.
 3. Wait until *State* shows `CONNECTED`. *Address* then shows the URL to connect to.
 
-- An empty passphrase field keeps the passphrase that the board has in use.
+- For the network that the board has in use, an empty passphrase field keeps its passphrase
+  (the placeholder shows *unchanged*). The page then sends `WIFI OFF` and `WIFI ON`, which
+  restarts the radio. For any other name, type the passphrase or tick *Open network*: a
+  passphrase is never carried over to another network.
 - If the board refuses the join, the fields keep what you typed. Click **Join and store** again.
 - **Switch off** sends `WIFI OFF`. **Erase set-up** sends `WIFI CLEAR`.
 - The board's reply is shown under the buttons. `SAVED=0` means that the set-up is in use but not
   stored (see [the limits](../../docs/CONNECTING.md#limits)).
 - The passphrase is shown as `********` in the console, also when you type `WIFI PASS …` there.
   The page clears the field after a join and when the link closes. The board does not send it
-  back.
+  back. The console takes printable ASCII characters only.
 - The buttons and the Enter key do nothing while ARMED, and while the page is connected over the
   network (a `socket://` address): the board changes its Wi-Fi set-up only over USB and only
   while DISARMED.

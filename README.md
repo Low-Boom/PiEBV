@@ -241,12 +241,13 @@ does not work, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
 | Path | Contents |
 |---|---|
-| `src/` | Firmware: `main.cpp` (start-up, arming, crash watchdog), `protocol.*` (commands, on USB and on the network link), `net_link.*` (Wi-Fi and TCP link of a Pico 2 W), `wifi_config.h` (Wi-Fi set-up values and flash record), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `sync_clock.*` (1 MHz SYNC clock), `clock_mode.*` (clock jumper: 150 or 300 MHz at boot), `laser_gate.*` (laser output gate), `board.h` (pin map) |
+| `src/` | Firmware: `main.cpp` (start-up, arming, crash watchdog), `protocol.*` (commands, on USB and on the network link), `net_link.*` (Wi-Fi link of a Pico 2 W), `tcp_link.*` (its TCP server), `wifi_config.h` (Wi-Fi set-up values and flash record), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `sync_clock.*` (1 MHz SYNC clock), `clock_mode.*` (clock jumper: 150 or 300 MHz at boot), `laser_gate.*` (laser output gate), `board.h` (pin map) |
 | `platformio.ini` | Build configuration (`pico2w` and `pico2` builds) |
 | `tools/piebv_example.py` | Python example script |
 | `tools/piebv_gui/` | Web GUI: settings, timing chart and console in the browser |
 | `tools/piebv_sim/` | Simulator: the firmware's command code built for a computer, for trying the GUI and scripts without a board |
 | `tools/timing_check/` | Timing checks run on a computer |
+| `tools/net_check/` | Check of the network link's connection handling, run on a computer against a model of lwIP |
 | `tools/signal_sim/` | Transmission-line simulation of the timing nets (KiCad's ngspice) |
 | `PiEBV_Pico.kicad_pro` / `.kicad_sch` / `.kicad_pcb` | **Current hardware:** KiCad project of the 4-layer board |
 | `Hardware.md` | [Full hardware reference](Hardware.md) |

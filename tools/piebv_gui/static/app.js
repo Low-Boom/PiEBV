@@ -134,7 +134,7 @@ async function poll() {
       logSeq = lg.next || logSeq;
     }
   } catch (e) {
-    snap = { connected: false, error: "GUI server not reachable" };
+    snap = { connected: false, error: "GUI server not reachable", unreachable: true };
     render();
   } finally {
     polling = false;
@@ -298,6 +298,13 @@ function wifiMessage(text, bad) {
   m.classList.toggle("bad", !!bad);
 }
 
+// True if a join with an empty passphrase field keeps the board's passphrase: only for
+// the network that the board has in use.
+function wifiKeepsPassphrase() {
+  const sys = snap && snap.status ? snap.status.system : null;
+  return !!(sys && sys.WIFI_SSID && $("wifiSsid").value === sys.WIFI_SSID);
+}
+
 function wifiForget() {  // nothing typed stays in the page after the link is gone
   wifiSsidDirty = false;
   $("wifiPass").value = "";
@@ -311,7 +318,12 @@ async function wifiAction(action) {
   if (action === "on") {
     body.ssid = $("wifiSsid").value;
     if ($("wifiOpen").checked) body.passphrase = "";
-    else if ($("wifiPass").value !== "") body.passphrase = $("wifiPass").value;  // empty = keep the board's
+    else if ($("wifiPass").value !== "") body.passphrase = $("wifiPass").value;
+    else if (!wifiKeepsPassphrase()) {
+      // A passphrase is never carried over to another network.
+      wifiMessage("Type the passphrase of this network, or tick Open network.", true);
+      return;
+    }  // else: no passphrase in the request = the board keeps the one of the network in use
   }
   if (action === "clear" && !window.confirm("Erase the network name and the passphrase from the board?")) return;
   wifiBusy = true;
@@ -339,7 +351,13 @@ function renderWifi(sys, connected) {
   // (status absent while still connected) leaves the card as it is.
   if (!state && connected && snap && !snap.status) return;
   card.hidden = !state;
-  if (!state) { wifiBlocked = "not connected"; if (!connected) wifiForget(); return; }
+  if (!state) {
+    wifiBlocked = "not connected";
+    // The link is closed: nothing typed stays. Not when only the GUI server could not
+    // be reached for one poll: the link may still be open.
+    if (!connected && !(snap && snap.unreachable)) wifiForget();
+    return;
+  }
   const none = (v) => !v || v === "NONE";
   const ip = sys.WIFI_IP, port = sys.NET_PORT || "4242";
   $("wifiPort").textContent = port;
@@ -354,8 +372,9 @@ function renderWifi(sys, connected) {
       ["Radio address (MAC)", sys.WIFI_MAC || "?"],
       ["Network host", none(sys.NET_CLIENT) ? "none" : sys.NET_CLIENT],
       ["At power-up", sys.WIFI_AT_POWER_UP === "1" ? "joins the network" : "radio off"],
-      ["Stored in the board", sys.WIFI_SAVED === "1" ? "yes"
-        : sys.WIFI_SSID || sys.WIFI_AT_POWER_UP === "1" ? "no: the set-up in use is lost at power-off" : "nothing is set up"],
+      // WIFI_SAVED=1: the set-up in use is the one the board loads at power-up.
+      ["Stored in the board", sys.WIFI_SAVED !== "1" ? "no: at the next power-up the board uses the set-up in its flash, not this one"
+        : sys.WIFI_SSID ? "yes" : "nothing is set up"],
     );
   }
   kv($("wifiInfo"), rows);
@@ -364,7 +383,8 @@ function renderWifi(sys, connected) {
   const ssid = $("wifiSsid");
   if (!wifiSsidDirty && document.activeElement !== ssid) ssid.value = sys.WIFI_SSID || "";
   $("wifiPass").disabled = $("wifiOpen").checked;
-  $("wifiPass").placeholder = $("wifiOpen").checked ? "" : sys.WIFI_PASS === "SET" ? "unchanged" : "8 to 63 characters";
+  $("wifiPass").placeholder = $("wifiOpen").checked ? ""
+    : wifiKeepsPassphrase() && sys.WIFI_PASS === "SET" ? "unchanged" : "8 to 63 characters";
   // Why the set-up cannot change now, in the board's own terms.
   const overNetwork = connected && /^socket:/i.test(snap.target || "");
   const why = overNetwork ? "This page is connected over the network. The board changes its Wi-Fi set-up only over its USB port: connect to its serial port to change it."
@@ -494,7 +514,10 @@ async function sendCommand() {
     if (r.error) toast(r.error);
     if (r.state) snap = r.state;
   } catch (e) {  // refused by the GUI server, or the server is unreachable
-    appendLog([{ dir: ">", text: line }, { dir: "<", text: "ERR " + (e.message || e) }]);
+    // The line never reached the server's console log: show it here, without a
+    // passphrase (the server masks its own log entries the same way).
+    const shown = /^\s*WIFI\??\s+PASS\s+\S/i.test(line) ? "WIFI PASS ********" : line;
+    appendLog([{ dir: ">", text: shown }, { dir: "<", text: "ERR " + (e.message || e) }]);
   }
   render();
   const lg = await api("/api/log?since=" + logSeq).catch(() => null);
@@ -812,7 +835,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   $("wifiOn").addEventListener("click", () => wifiAction("on"));
   $("wifiOff").addEventListener("click", () => wifiAction("off"));
   $("wifiClear").addEventListener("click", () => wifiAction("clear"));
-  $("wifiSsid").addEventListener("input", () => { wifiSsidDirty = true; });
+  $("wifiSsid").addEventListener("input", () => { wifiSsidDirty = true; render(); });
   $("wifiOpen").addEventListener("change", render);
   for (const id of ["wifiSsid", "wifiPass"]) {
     $(id).addEventListener("keydown", (ev) => { if (ev.key === "Enter") { ev.preventDefault(); wifiAction("on"); } });

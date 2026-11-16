@@ -119,24 +119,31 @@ these checks with J11 open (no laser output), at 150 MHz first.
    this call). A `RESET=WATCHDOG` after `WIFI ON` means that the radio start hung.
 2. **Join.** `WIFI` shows `CONNECTED` and an address. Note the time from `WIFI ON`.
 3. **Stored set-up.** Power-cycle. The board joins the network again without a command, and
-   `WIFI_SAVED=1`. `WDT_RESETS` stays 0.
+   `WIFI_SAVED=1`. `WDT_RESETS` stays 0. Then send `WIFI OFF` and `WIFI ON` three times: each
+   `WIFI OFF` switches the radio chip off, and each `WIFI ON` must start it and join again.
 4. **Commands over the network.** Connect to port 4242. `ID?`, `STATUS`, a setting, `ARM` and
-   `DISARM` give the same replies as on USB. A second connection gets `ERR busy`.
+   `DISARM` give the same replies as on USB. A second connection gets `ERR busy`. A connection
+   that opens and closes at once (`nc -z <address> 4242`, ten times) changes nothing:
+   `WDT_RESETS` stays 0 and the next connection works.
 5. **`DISARM` latency.** With a scope on J10 pin 1, send `DISARM` over the network and over USB
-   while the other link sends `STATUS` continuously. Both act at once.
+   while the other link sends `STATUS` continuously. Measure the time from the command to the
+   end of the pulses on each link. Then, while ARMED, run
+   `printf 'DISARM\n' | nc -N <address> 4242` and a script that sends `DISARM` and closes the
+   connection without reading: the board must disarm each time.
 6. **Pulse timing with network traffic.** Repeat the timing checks (pulse width, CH1-to-CH2 delay,
    sync period) while a host sends `STATUS` continuously over the network. The values do not
    change.
 7. **Lost network.** Switch the access point off while connected and ARMED (J11 open), with a host
    that polls `STATUS` over the network (the GUI does). `WIFI` over USB shows `JOINING (link lost)`
    and later `JOINING (network not found)`. Switch it on: the board joins again. During all of
-   this, USB commands answer, `DISARM` over USB acts at once, and `WDT_RESETS` stays 0. This is
+   this, USB commands answer, `DISARM` over USB acts without a delay that you can see, and `WDT_RESETS` stays 0. This is
    the check for a reply that the host no longer acknowledges.
 8. **Lost host.** Disconnect the host computer from the network without closing the connection.
    Note the time until `NET_CLIENT` goes to `NONE` (about 11 s for an idle connection).
 9. **Wrong passphrase, unknown network.** `WIFI` shows `JOINING` with the reason, and USB commands
-   answer. `WIFI=FAULT` here is a firmware error: the liveness check of the radio must pass on a
-   radio that is not joined.
+   answer. `WIFI=FAULT` here is a firmware error: the test command to the radio must get its
+   answer also from a radio that is not joined. After a `WIFI=FAULT`, from any cause, `WIFI ON`
+   must start the radio again.
 10. **300 MHz.** Fit the clock jumper and power-cycle. The stored set-up joins the network.
     `WIFI ON` with a new name gives `SAVED=0`. This combination is outside the RP2350
     specification and may not work on every Pico.

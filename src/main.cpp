@@ -106,10 +106,12 @@ constexpr uint32_t kWatchdogMs = 3000;
 // LOW, so a longer period delays nothing but the restart after a hang.
 constexpr uint32_t kRadioStartWatchdogMs = 8000;
 // Characters taken from one host link before the other link gets its turn. The turn
-// also ends when a reply of this link has waited out its time budget (its host is not
-// reading; the link then gets one character per turn until the host reads again): the
-// other link's DISARM waits for one such command at most.
+// also ends when it has lasted kLinkTurnUs. A command is slow only when its host is
+// slow to take the reply, and the replies of one command wait 250 ms at most
+// (protocol.h), so the other link's DISARM waits for one slow command of this link at
+// most, not for a whole burst of them.
 constexpr int kLinkBurst = 128;
+constexpr uint64_t kLinkTurnUs = 5000;
 
 // SCRATCH4 as the SDK's watchdog_enable() left it (WATCHDOG_NON_REBOOT_MAGIC, private to
 // hardware_watchdog/watchdog.c; getResetReason() relies on it). Read back after
@@ -471,12 +473,13 @@ const char *wifiSet(const WifiConfig &cfg, const char **notSaved) {
 template <class Read>
 void serviceLink(ProtocolLink &link, Read read) {
     int c;
+    const uint64_t t0 = time_us_64();
     for (int n = 0; n < kLinkBurst && (c = read()) >= 0; ++n) {
         g_protocol.feed(link, (char)c);
         servicePendingStart();
         gpio_put(kPinArmedLed, g_armed);
         feedWatchdog();  // a long burst of input is still progress
-        if (link.stalled()) {
+        if (time_us_64() - t0 >= kLinkTurnUs) {
             break;
         }
     }
@@ -571,6 +574,9 @@ void loop() {
     servicePendingStart();
     gpio_put(kPinArmedLed, g_armed);  // status only; every path that changes g_armed returns here
     serviceLink(g_usbLink, [] { return Serial.read(); });
+    // A full watchdog period for the one call in here that can be long: the check of a
+    // radio chip that has stopped answering (net_link.h).
+    feedWatchdog();
     net::service();
     serviceLink(net::link(), [] { return net::read(); });
     net::flush();

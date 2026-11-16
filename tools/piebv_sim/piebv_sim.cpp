@@ -69,7 +69,8 @@ public:
 StdioSink g_sink;
 ProtocolLink g_link(g_sink, true);
 
-WifiConfig g_wifi;  // in memory only
+WifiConfig g_wifi;        // in memory only
+bool g_wifiSaved = true;  // false once the set-up was changed: this run does not store it
 bool g_pioReady = true;
 bool g_configured = false;
 bool g_armed = false;
@@ -151,7 +152,8 @@ void printNetStatus(Print &out) {
     out.println(g_wifi.pass[0] ? F("SET") : F("NONE"));
     out.print(F("WIFI_AT_POWER_UP="));
     out.println(g_wifi.enabled ? 1 : 0);
-    out.println(F("WIFI_SAVED=0"));
+    out.print(F("WIFI_SAVED="));
+    out.println(g_wifiSaved ? 1 : 0);
     out.println(F("WIFI_MAC=02:00:00:00:00:01"));
     out.println(g_wifi.enabled ? F("WIFI_IP=192.0.2.10") : F("WIFI_IP=NONE"));
     out.println(g_wifi.enabled ? F("WIFI_RSSI_DBM=-50") : F("WIFI_RSSI_DBM=NONE"));
@@ -191,8 +193,11 @@ const char *wifiSet(const WifiConfig &cfg, const char **notSaved) {
     if (g_armed || g_startPending) {
         return "DISARM first: the radio start and the flash write stop the command loop for a moment";
     }
+    if (!wifiConfigSame(g_wifi, cfg)) {
+        g_wifiSaved = false;
+    }
     g_wifi = cfg;
-    *notSaved = "simulator: nothing is stored";
+    *notSaved = g_wifiSaved ? nullptr : "simulator: nothing is stored";
     return nullptr;
 }
 

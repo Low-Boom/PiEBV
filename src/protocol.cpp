@@ -360,14 +360,16 @@ void Protocol::feed(ProtocolLink &link, char c) {
 // WIFI: the Wi-Fi set-up. `args` is the rest of the line after "WIFI" (nullptr if
 // none), not split into words: a network name or a passphrase can hold spaces.
 //   WIFI                    the Wi-Fi and network STATUS lines
-//   WIFI SSID <name>        network name            } kept in RAM until
-//   WIFI PASS [passphrase]  no passphrase = open    } WIFI ON
+//   WIFI SSID <name>        network name; clears a   } kept in RAM until the
+//                           collected passphrase     } next WIFI ON, OFF or
+//   WIFI PASS [passphrase]  no passphrase = open     } CLEAR
 //   WIFI ON                 join the network now and at every power-up
 //   WIFI OFF                radio link off, now and at power-up; keeps the name and
 //                           passphrase in use
 //   WIFI CLEAR              as OFF, and erases the name and the passphrase
 // A name or passphrase given with SSID / PASS holds only until the next ON, OFF or
-// CLEAR, accepted or refused.
+// CLEAR, accepted or refused for any reason. WIFI PASS alone, then WIFI ON, changes the
+// passphrase of the network in use.
 // Everything but the bare query is refused from the network link: a host on the
 // network must not be able to move the board to another network or lock the USB
 // user out. The passphrase is never printed.
@@ -420,10 +422,13 @@ void Protocol::wifiCommand(ProtocolLink &link, char *args) {
             reportErr("WIFI SSID", why);
             return;
         }
+        // A new name starts without a passphrase: the passphrase of one network must
+        // never be tried on another one. WIFI PASS comes after WIFI SSID.
         strcpy(wifi_.ssid, value);
+        wifi_.pass[0] = '\0';
         g_out->print(F("OK WIFI SSID="));
         g_out->print(wifi_.ssid);
-        g_out->println(F(" (not in use yet: send WIFI ON)"));
+        g_out->println(F(" (not in use yet: send WIFI PASS if it has a passphrase, then WIFI ON)"));
         return;
     }
     if (isPass) {
@@ -437,31 +442,38 @@ void Protocol::wifiCommand(ProtocolLink &link, char *args) {
         g_out->println(F(" (not in use yet: send WIFI ON)"));
         return;
     }
+    // ON, OFF or CLEAR. What was collected with SSID / PASS ends here, on every path
+    // below (see wifi_): ON takes it, OFF keeps the name and passphrase in use, CLEAR
+    // erases them, and every refusal drops it.
+    const WifiConfig collected = wifi_;
+    WifiConfig inUse{};
+    hooks_.wifiGet(&inUse);
+    wifi_ = inUse;
+    // Told to the user when a refusal dropped something that was collected.
+    const bool dropped = strcmp(collected.ssid, inUse.ssid) != 0 || strcmp(collected.pass, inUse.pass) != 0;
+    const __FlashStringHelper *again = dropped ? F(" (send the name and the passphrase again)") : F("");
     if (*value) {
         g_out->print(F("ERR WIFI "));
         g_out->print(sub);
-        g_out->println(F(" takes no value"));
+        g_out->print(F(" takes no value"));
+        g_out->println(again);
         return;
     }
-
-    // ON takes the collected name and passphrase. OFF keeps the ones in use and
-    // CLEAR erases them: neither takes a name or passphrase that was only collected.
-    WifiConfig inUse{};
-    hooks_.wifiGet(&inUse);
-    WifiConfig cfg = isOn ? wifi_ : isOff ? inUse : WifiConfig{};
+    WifiConfig cfg = isOn ? collected : isOff ? inUse : WifiConfig{};
     cfg.enabled = isOn;
     if (isOn && !cfg.ssid[0]) {
-        reportErr("WIFI ON", "no network name: send WIFI SSID <name> first");
+        g_out->print(F("ERR WIFI ON no network name: send WIFI SSID <name> first"));
+        g_out->println(again);
         return;
     }
     const char *notSaved = nullptr;
     if (const char *why = hooks_.wifiSet(cfg, &notSaved)) {
-        hooks_.wifiGet(&wifi_);  // what was collected is dropped: see wifi_
+        hooks_.wifiGet(&wifi_);  // as the hook left it
         g_out->print(F("ERR WIFI "));
         g_out->print(sub);
         g_out->print(F(" refused: "));
         g_out->print(why);
-        g_out->println(isOn ? F(" (send the name and the passphrase again)") : F(""));
+        g_out->println(again);
         return;
     }
     wifi_ = cfg;

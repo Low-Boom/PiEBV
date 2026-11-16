@@ -30,12 +30,13 @@ inline bool wifiConfigSame(const WifiConfig &a, const WifiConfig &b) {
     return a.enabled == b.enabled && strcmp(a.ssid, b.ssid) == 0 && strcmp(a.pass, b.pass) == 0;
 }
 
-// Control characters (below 0x20, and DEL) are refused: the name is printed in
-// replies, where an escape sequence could change what a terminal shows.
+// Control characters are refused: the name is printed in replies, where an escape
+// sequence could change what a terminal shows. That is every byte below 0x20, DEL, and
+// the C1 controls U+0080..U+009F in UTF-8 (0xC2 followed by 0x80..0x9F).
 inline bool wifiHasControlChar(const char *s) {
     for (; *s; ++s) {
-        const unsigned char c = (unsigned char)*s;
-        if (c < 0x20 || c == 0x7F) {
+        const unsigned char c = (unsigned char)s[0], next = (unsigned char)s[1];
+        if (c < 0x20 || c == 0x7F || (c == 0xC2 && next >= 0x80 && next <= 0x9F)) {
             return true;
         }
     }

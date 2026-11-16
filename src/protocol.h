@@ -27,9 +27,8 @@
 // once a host stops reading, later replies stop waiting at all until it drains
 // again. A host that stops reading therefore delays a DISARM queued on its own link
 // by at most about kReplyBudgetUs (250 ms). A DISARM on the other link can wait for
-// one such stalled command as well, because the main loop gives the other link its
-// turn after every stalled command (main.cpp, serviceLink): about 0.5 s when both
-// hosts have stopped reading. Lines that could not be sent are dropped whole and their
+// one such slow command as well, because the main loop ends a link's turn after
+// kLinkTurnUs (main.cpp, serviceLink): about 0.5 s when both hosts are slow to read. Lines that could not be sent are dropped whole and their
 // bytes counted (STATUS TX_DROPPED, counted per link and per network host).
 
 #include <Arduino.h>

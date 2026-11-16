@@ -43,6 +43,24 @@ python check_pixgate.py
 The expected output is listed in [its README](../tools/timing_check/README.md). These checks don't
 replace a scope check on the board.
 
+## Network check
+
+`tools/net_check/` runs the firmware's TCP link (`src/tcp_link.cpp`) and command protocol on a
+computer, against a model of lwIP. It checks what happens to commands and replies when a host
+closes or resets the connection, when a second host connects and when lwIP has no memory. Run it
+after changing `src/tcp_link.*` or `src/protocol.*`:
+
+```
+cd tools/net_check
+g++ -std=c++17 -O1 -g -Wall -Wextra -fsanitize=address,undefined -DPIEBV_NET_CHECK \
+    -I fake -I ../piebv_sim/fake -I ../../src -o net_check \
+    net_check.cpp ../../src/tcp_link.cpp ../../src/protocol.cpp
+./net_check
+```
+
+It prints `net_check: all checks passed`. It does not replace the
+[network checks](FIRST_BOARD_CHECKS.md#network-checks) on a board: see [its README](../tools/net_check/README.md).
+
 ## Signal simulation
 
 `tools/signal_sim/` is a transmission-line simulation of the trigger, laser and External Sync Out

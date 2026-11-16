@@ -131,9 +131,10 @@ laser timing.
 - **Replies never block the firmware.** Each reply line is written whole within a 250 ms budget, and
   once a host stops reading, later replies stop waiting until it catches up. So a host that stops
   reading delays a DISARM queued on its own link by at most about 250 ms and can't trip the watchdog.
-  With the network link in use, a DISARM on one link can also wait for one stalled command of the
-  other link: about 0.5 s when both hosts have stopped reading. A radio chip that stops answering
-  can hold the command loop for about 1 s, once ([network limits](../CONNECTING.md#limits)).
+  With the network link in use, a DISARM on one link can also wait for one slow command of the
+  other link (about 250 ms more): the main loop ends a link's turn after 5 ms. A radio chip that
+  stops answering can hold the command loop for 1 s to 3 s, once
+  ([network limits](../CONNECTING.md#limits)).
   Replies that couldn't be sent are dropped a whole line at a time, and their bytes are counted in
   `STATUS` as `TX_DROPPED`.
 - **Host scripts** must send `ARM` after every reset, and should check `RESET=` in `STATUS` first

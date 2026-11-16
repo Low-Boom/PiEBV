@@ -137,18 +137,22 @@ the *Network (Wi-Fi)* card of the [web GUI](../tools/piebv_gui/README.md#network
 commands in a serial terminal:
 
 ```
-WIFI SSID Lab Network        ->  OK WIFI SSID=Lab Network (not in use yet: send WIFI ON)
+WIFI SSID Lab Network        ->  OK WIFI SSID=Lab Network (not in use yet: send WIFI PASS if it has a passphrase, then WIFI ON)
 WIFI PASS correct horse      ->  OK WIFI PASS=SET (not in use yet: send WIFI ON)
 WIFI ON                      ->  OK WIFI=ON SSID=Lab Network SAVED=1
 WIFI                         ->  WIFI=CONNECTED … WIFI_IP=192.168.1.37 …
 ```
 
+- Send `WIFI SSID` first, then `WIFI PASS`: a new name discards a passphrase given before it.
+  For a network without a passphrase, send no `WIFI PASS`.
 - `WIFI ON` joins the network now and at every power-up. The join takes some seconds: send `WIFI`
   until it shows `WIFI=CONNECTED`, and read the address from `WIFI_IP`.
+- If `WIFI ON` (or `OFF`, or `CLEAR`) gives an `ERR` reply, the name and the passphrase that you
+  sent are discarded. Send them again.
 - If the network accepts only known devices, give its administrator the `WIFI_MAC` address. It is
   shown after the first `WIFI ON`.
-- `WIFI OFF` switches the link off, now and at power-up. `WIFI CLEAR` also erases the name and the
-  passphrase.
+- `WIFI OFF` switches the radio off, now and at power-up. `WIFI ON` alone then joins the same
+  network again. `WIFI CLEAR` also erases the name and the passphrase.
 - The name and the passphrase are stored in the Pico's flash as plain text. Anyone who holds the
   board can read them. Send `WIFI CLEAR` before you give the board away.
 
@@ -181,17 +185,29 @@ with a serial port. For a terminal, use `nc 192.168.1.37 4242`, or PuTTY with co
   the 12 V supply gate are not affected by the network.
 - **A lost link does not disarm,** as with USB. If the network fails while ARMED, send `DISARM` over
   USB, or stop the lasers in hardware (take the J11 shunt off 1-2, or unplug J17).
-- **The network link can delay a `DISARM` on USB.** By design the delay is at most one stalled
-  reply of the network host (about 250 ms). A radio chip that stops answering holds the command
-  loop for about 1 s, once; the board then shows `WIFI=FAULT` and uses the radio no more until a
-  power cycle. The radio's driver can also wait up to 1 s inside a send when the link is bad. None
-  of these times was measured on a board. The J11 interlock does not depend on the firmware.
+- **The network link can delay a `DISARM`.** The firmware acts on `DISARM` when it reads the
+  letters. None of the times below was measured on a board. The J11 interlock does not depend on
+  the firmware.
+  - *A host that is slow to read replies:* each link gives the other link its turn after one slow
+    command, and a command waits at most about 250 ms for its host. So a `DISARM` can wait about
+    250 ms for the other link, and about 250 ms more for the replies on its own link.
+  - *A radio chip that stops answering:* the firmware finds this with a test command, every 2 s
+    while joined and before each new join. The driver holds the command loop for that command
+    (1 s to 3 s by its time-outs). Then either the board switches the radio chip off and shows
+    `WIFI=FAULT`, or, if the wait was longer than the 3 s watchdog period, the watchdog restarts
+    the board, DISARMED. After `WIFI=FAULT`, `WIFI ON` over USB starts the radio again.
+  - *A bad radio link:* the radio's driver can wait up to about 1 s inside one send, also in the
+    background.
+- **Input that has arrived is run.** When a network host sends a command and then closes or
+  resets the connection, the command still runs, `DISARM` included. Its reply is lost if the
+  connection was reset.
 - The Wi-Fi set-up changes only from USB. From the network, `WIFI SSID`, `PASS`, `ON`, `OFF` and
   `CLEAR` give `ERR WIFI refused: …`. A network host can read the set-up (`WIFI`, `STATUS`), but
   not the passphrase.
 - `WIFI ON`, `OFF` and `CLEAR` are refused while ARMED. The radio start and the flash write stop
   the command loop for a time that was not yet measured. No command, `DISARM` included, is read in
-  that time.
+  that time. The radio chip is switched off by `WIFI OFF` and `WIFI CLEAR`, and each `WIFI ON`
+  that changes the network starts it from power-off.
 - With the clock jumper fitted (300 MHz) the set-up is not written to flash (`SAVED=0`): it holds
   until power-off. A set-up that was stored at 150 MHz is used at 300 MHz also.
 - A name or a passphrase cannot start or end with a space, cannot contain control characters, and

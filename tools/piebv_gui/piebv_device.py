@@ -365,52 +365,70 @@ class PiEBV:
         reply = self._exchange("ARM?", lambda g: g[-1].startswith("ARMED="))[-1]
         return reply == "ARMED=0", reply
 
-    def wifi_setup(self, action, ssid=None, passphrase=None):
-        """The board's Wi-Fi set-up (USB link only; the board refuses it over the network).
-        action "on": set the network name (if given) and the passphrase (if given; "" =
-        open network; None = keep the one the board has), then join and store. "off":
-        radio link off. "clear": off, and erase the name and the passphrase.
-        Returns (ok, reply lines). Raises ValueError for a value the board cannot take."""
-        if action not in ("on", "off", "clear"):
-            raise ValueError("unknown Wi-Fi action")
-
+    def _wifi_exchange(self, line, shown=None, timeout=1.5):
+        """One WIFI set-up command and its one reply line."""
         def done(g):
             return g[-1].startswith("OK WIFI") or g[-1].startswith("ERR WIFI")
 
+        return self._exchange(line, done, timeout=timeout, shown=shown)[-1]
+
+    def wifi_setup(self, action, ssid=None, passphrase=None):
+        """The board's Wi-Fi set-up (USB link only; the board refuses it over the network).
+        action "on": join the network `ssid` and store the set-up. `passphrase` is its
+        passphrase, or "" for an open network. None is permitted only for the network
+        that the board has in use: the board then keeps its passphrase (this restarts
+        the radio link). "off": radio link off. "clear": off, and erase the name and
+        the passphrase.
+        Returns (ok, reply lines). Raises ValueError for a value the board cannot take."""
+        if action not in ("on", "off", "clear"):
+            raise ValueError("unknown Wi-Fi action")
+        # (line, text for the console log or None, time-out). The radio's power-up and
+        # the flash write can take seconds (the firmware allows 8 s for them).
         steps = []
         if action == "on":
+            if ssid is None:
+                raise ValueError("the network name is missing")
             why = wifi_check(ssid, passphrase)
             if why:
                 raise ValueError(why)
-            if ssid is not None:
+            if passphrase is None:
+                # The board never tells its passphrase, and a name or passphrase that
+                # was sent earlier but not joined could still wait in it. WIFI OFF
+                # discards that and keeps the set-up in use; WIFI ON then joins it.
+                in_use = self.status(log=False)["system"].get("WIFI_SSID", "")
+                if ssid != in_use:
+                    raise ValueError("type the passphrase of this network, or choose an open network")
+                steps.append(("WIFI OFF", None, 12.0))
+            else:
+                # WIFI SSID discards a passphrase sent earlier; WIFI PASS is always sent.
                 steps.append(("WIFI SSID " + ssid, None, 1.5))
-            if passphrase is not None:
                 steps.append(("WIFI PASS " + passphrase if passphrase else "WIFI PASS",
                               "WIFI PASS ********" if passphrase else None, 1.5))
-        # The radio's power-up and the flash write can take seconds (the firmware allows 8 s).
-        steps.append(("WIFI " + action.upper(), None, 12.0))
+            steps.append(("WIFI ON", None, 12.0))
+        else:
+            steps.append(("WIFI " + action.upper(), None, 12.0))
         replies = []
         for line, shown, timeout in steps:
-            reply = self._exchange(line, done, timeout=timeout, shown=shown)[-1]
+            reply = self._wifi_exchange(line, shown, timeout)
             replies.append(reply)
             if not reply.startswith("OK "):
                 return False, replies
         return True, replies
 
     def raw(self, line, quiet=0.25, timeout=3.0):
-        """Any command; returns every line until the output goes quiet. A passphrase
-        typed as WIFI PASS is kept out of the console log. WIFI ON, OFF and CLEAR get
-        the long wait of the radio start, so their reply is not left for the next command."""
+        """Any command; returns every line until the output goes quiet. The WIFI set-up
+        commands have one reply line and are waited for by it (WIFI ON, OFF and CLEAR
+        for as long as the radio start takes), and a passphrase typed as WIFI PASS is
+        kept out of the console log."""
         m = _WIFI_LINE.match(line)
         sub = m.group(1).upper() if m else ""
+        if sub in ("SSID", "PASS", "ON", "OFF", "CLEAR"):
+            shown = "WIFI PASS ********" if sub == "PASS" and m.group(2) else None
+            return [self._wifi_exchange(line, shown, 12.0 if sub in ("ON", "OFF", "CLEAR") else 1.5)]
         with self._cmd:
-            if sub == "PASS" and m.group(2):
-                self._record(">", "WIFI PASS ********")
-                self.link.write_line(line)
-            else:
-                self._send(line)
+            self._send(line)
             got, deadline = [], time.monotonic() + timeout
-            first = self.link.readline(12.0 if sub in ("ON", "OFF", "CLEAR") else 1.5)
+            first = self.link.readline(1.5)
             if first is None:
                 return got
             self._record("<", first)

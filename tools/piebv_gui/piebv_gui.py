@@ -137,7 +137,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             body = self._body()
             if not isinstance(body, dict):
-                return self._json({"error": "the request body must be a JSON object"}, 400)
+                body = {}  # e.g. null: the routes without arguments (disarm, arm) do not need one
             if url.path == "/api/connect":
                 STATE.connect(str(body.get("target", "")).strip())
                 return self._json(snapshot())
@@ -168,8 +168,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({"ok": ok, "replies": replies, "state": snapshot()})
             if url.path == "/api/command":
                 line = str(body.get("line", "")).strip()
-                if not line or len(line) > 120 or any(ord(c) < 32 for c in line):
-                    return self._json({"error": "one printable command line, up to 120 characters"}, 400)
+                # The error text does not repeat the line: it can hold a passphrase.
+                if not line or len(line) > 120 or any(not 32 <= ord(c) <= 126 for c in line):
+                    return self._json({"error": "one command line of printable ASCII characters, up to 120"}, 400)
                 return self._json({"lines": dev.raw(line), "state": snapshot()})
         except piebv_device.LinkError as exc:
             return self._json({"error": str(exc), "state": snapshot()}, 409)

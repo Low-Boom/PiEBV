@@ -87,7 +87,8 @@ ID?            ->  PiEBV delay generator (Pico 2 W), firmware 5dfedd5
 - **`DISARM`** is never refused. The outputs go low the moment the `M` arrives, the rest of that line
   is ignored, and a pending start is cancelled. It works even when the host is not reading replies,
   though a host that has stopped reading can delay it by up to about 250 ms (about 0.5 s if the
-  hosts of both links, USB and network, have stopped reading). The letters must be on
+  hosts of both links, USB and network, are slow to read;
+  a radio fault can add more: see [the network limits](CONNECTING.md#limits)). The letters must be on
   one line: `DIS`, Enter, `ARM`, Enter is two commands and **arms** the board.
 - While DISARMED, **the sync clock and the marker keep running**, so the cameras stay synchronised.
   The laser outputs are held at 0 V.
@@ -100,10 +101,10 @@ own works on both links. All the others work **only on the USB port**.
 | Command | What it does |
 |---|---|
 | `WIFI` (or `WIFI?`) | Shows the Wi-Fi and network lines of [`STATUS`](#status) |
-| `WIFI SSID <name>` | Gives the network name (1 to 32 characters; spaces inside are allowed) for the next `WIFI ON` |
-| `WIFI PASS <passphrase>` | Sets the WPA2 passphrase (8 to 63 characters). `WIFI PASS` on its own selects an open network. For the next `WIFI ON`. The passphrase is never shown. |
+| `WIFI SSID <name>` | Gives the network name (1 to 32 characters; spaces inside are allowed) for the next `WIFI ON`. It also discards a passphrase given before: send `WIFI PASS` after `WIFI SSID`. |
+| `WIFI PASS <passphrase>` | Gives the WPA2 passphrase (8 to 63 characters) for the next `WIFI ON`. `WIFI PASS` on its own selects an open network. The passphrase is never shown. |
 | `WIFI ON` | Joins the network now and at every power-up, and stores the set-up in flash |
-| `WIFI OFF` | Switches the link off, now and at power-up. Keeps the name and the passphrase that are in use. |
+| `WIFI OFF` | Switches the radio off, now and at power-up. Keeps the name and the passphrase that are in use. |
 | `WIFI CLEAR` | As `WIFI OFF`, and erases the name and the passphrase |
 
 ```
@@ -117,9 +118,15 @@ WIFI ON      ->  OK WIFI=ON SSID=Lab Network SAVED=0 (not stored: flash is writt
 - `OK WIFI=ON` means that the join started, not that it completed. Send `WIFI` to see the result.
 - `SAVED=0 (…)` means that the set-up is in use but not in flash, with the reason.
 - A name or passphrase given with `WIFI SSID` or `WIFI PASS` holds only until the next `WIFI ON`,
-  `OFF` or `CLEAR`. `WIFI ON` uses it. `WIFI OFF`, `WIFI CLEAR` and a refused `WIFI ON` discard it:
-  after a refused `WIFI ON`, send the name and the passphrase again. Without a new `WIFI PASS`,
-  `WIFI ON` keeps the passphrase in use.
+  `OFF` or `CLEAR`. `WIFI ON` uses it. `WIFI OFF` and `WIFI CLEAR` discard it, and so does each
+  of the three when it gives an `ERR` reply, for any reason. The reply then ends in
+  `(send the name and the passphrase again)`.
+- A new name never gets the passphrase of another network: `WIFI SSID` starts the name without a
+  passphrase. `WIFI SSID <name>`, `WIFI ON` joins an open network.
+- `WIFI PASS <passphrase>`, `WIFI ON` (no `WIFI SSID`) changes the passphrase of the network in
+  use. `WIFI ON` alone joins the network in use again, for example after `WIFI OFF`.
+- `WIFI OFF` and `WIFI CLEAR` switch the radio chip off. `WIFI ON` starts it again, which takes
+  longer than the other commands (up to some seconds; not yet measured).
 - `<name>` and `<passphrase>` are the rest of the line. They cannot start or end with a space,
   cannot contain control characters (a tab included), and cannot contain the letters `disarm` in
   sequence.
@@ -246,12 +253,13 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
 | `ERR ARM takes no argument` | Something after `ARM` (the same for `ARM?`, `STATUS`, `ID?` and `HELP`) |
 | `ERR line too long` | More than 95 characters; the whole line is ignored |
 | `ERR WIFI refused: the Wi-Fi set-up changes only from the Pico USB port` | A `WIFI` command other than the bare `WIFI`, sent over the network link |
-| `ERR WIFI <sub> refused: DISARM first: …` | `WIFI ON`, `OFF` or `CLEAR` while ARMED or while a laser start is pending. A refused `WIFI ON` ends in `(send the name and the passphrase again)`. |
-| `ERR WIFI ON refused: the radio chip did not start …` | The radio did not answer at its power-up. The link is off. |
-| `ERR WIFI ON refused: the radio chip does not answer: power-cycle the board …` | The radio stopped answering earlier (`WIFI=FAULT`) |
+| `ERR WIFI <sub> refused: DISARM first: …` | `WIFI ON`, `OFF` or `CLEAR` while ARMED or while a laser start is pending |
+| `ERR WIFI ON refused: the radio chip did not start` | The radio chip did not start. The radio is off. `WIFI ON` tries again. |
+| `ERR WIFI ON refused: the TCP server did not start` | No memory for the network server. The radio is off. |
 | `ERR WIFI unknown sub-command (SSID, PASS, ON, OFF, CLEAR; see HELP)` | A word after `WIFI` that is not a sub-command |
 | `ERR WIFI <sub> takes no value` | Something after `WIFI ON`, `OFF` or `CLEAR` |
-| `ERR WIFI ON no network name: send WIFI SSID <name> first` | `WIFI ON` with no name set |
+| `ERR WIFI ON no network name: send WIFI SSID <name> first` | `WIFI ON` with no name given and none in use |
+| `… (send the name and the passphrase again)` | At the end of an `ERR WIFI ON`, `OFF` or `CLEAR` reply: a name or passphrase that was given before was discarded |
 | `ERR WIFI SSID …` / `ERR WIFI PASS …` | The name or the passphrase does not have a permitted length, or has a control character |
 | `ERR WIFI not available: this firmware has no Wi-Fi` | The `pico2` firmware image (plain Pico 2) |
 | `ERR busy: another host is connected` | Network link only: a second connection. It is closed. |
@@ -322,10 +330,10 @@ TX_DROPPED=0
 | `RESET_RAW` | Raw restart registers (for bug reports) |
 | `WDT_RESETS` | Crash restarts since power-on |
 | `WDT_MS` | Crash-restart timeout (3000 ms). If the firmware ever hangs, it restarts DISARMED after this long. While the radio chip starts (at power-up with Wi-Fi set up, and during `WIFI ON`, `OFF` and `CLEAR`) the timeout is 8000 ms; `WDT_MS` does not show that. |
-| `WIFI` | `OFF`; `JOINING` (not yet joined); `DHCP` (joined, no address yet); `CONNECTED`; `FAULT (the radio chip does not answer: power-cycle the board)`: the board then makes no radio call until the power cycle; or `UNAVAILABLE` (the `pico2` image). A reason can follow in brackets, e.g. `JOINING (network not found)`, `JOINING (the network refused the passphrase)`, `JOINING (link lost)`. While `JOINING`, the board tries again at intervals of 5 s to 20 s. |
+| `WIFI` | `OFF` (the radio chip is off); `JOINING` (not yet joined); `DHCP` (joined, no address yet); `CONNECTED`; `FAULT (the radio chip stopped answering: send WIFI ON to start it again)`: the board switched the radio chip off and leaves it off until `WIFI ON` or a power cycle; or `UNAVAILABLE` (the `pico2` image). A reason can follow in brackets, e.g. `JOINING (network not found)`, `JOINING (the network refused the passphrase)`, `JOINING (link lost)`. While `JOINING`, the board tries again at intervals of 5 s to 20 s. |
 | `WIFI_SSID`, `WIFI_PASS` | The network name in use, and `SET` or `NONE` for the passphrase |
 | `WIFI_AT_POWER_UP` | 1 = the board joins the network at power-up |
-| `WIFI_SAVED` | 1 = the set-up in use is the one in flash |
+| `WIFI_SAVED` | 1 = the set-up in use is the one that the board loads at power-up. 0 = the flash holds another set-up (after `SAVED=0`), which the board uses at the next power-up. |
 | `WIFI_MAC` | The radio's hardware address. `UNKNOWN (…)` until the radio starts for the first time after power-up. |
 | `WIFI_IP` | The board's address, or `NONE` |
 | `WIFI_RSSI_DBM` | Received signal level in dBm, or `NONE` |
