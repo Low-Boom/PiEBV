@@ -12,8 +12,13 @@
 //   * The one long call is the radio chip's power-up (it loads the chip's firmware), in
 //     start() and in set(): the caller makes these calls only while DISARMED and with a
 //     longer watchdog period (main.cpp).
-//   * After that, a radio call that fails or takes longer than 1 s counts as a fault;
-//     after three faults in a row the link stops (WIFI=FAULT) until the next WIFI ON.
+//   * A radio chip that stops answering makes each driver command wait for its 1 s
+//     time-out. The link notices this on one cheap command (about 1 s, once), stops
+//     (WIFI=FAULT) and makes no further radio call until the next power cycle.
+//   * Replies to the TCP host are queued in lwIP with tcp_write() and are dropped when
+//     lwIP cannot take them; the core's WiFiClient::write() would wait.
+// What remains, and was not measured: the driver itself can wait up to 1 s inside a
+// frame send when the chip withholds bus credits, also in the background.
 //
 // The pulse outputs do not depend on the link: they come from PIO and the clock
 // generator. The radio's driver takes one PIO state machine (outside pio0, which
@@ -54,11 +59,16 @@ const WifiConfig &config();
 // power-up plus a flash sector erase.
 const char *set(const WifiConfig &cfg, const char **notSaved);
 
-// Call from loop(): the join state and the TCP client. Never waits.
+// Call from loop(): the join state and the TCP client. Waits only for a radio chip
+// that has stopped answering: one driver time-out, once (see above).
 void service();
 
 // The next byte from the TCP host, or -1.
 int read();
+
+// Sends the reply bytes queued since the last call. Call after the link's commands
+// of one loop() pass.
+void flush();
 
 // The TCP host's protocol link (line buffer and reply path).
 ProtocolLink &link();

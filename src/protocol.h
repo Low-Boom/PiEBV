@@ -25,9 +25,12 @@
 //
 // Replies are written a whole line at a time with a per-command time budget, and
 // once a host stops reading, later replies stop waiting at all until it drains
-// again. A host that stops reading therefore delays a queued DISARM by at most
-// about kReplyBudgetUs (250 ms) in total per link; lines that could not be sent are
-// dropped whole and their bytes counted (STATUS TX_DROPPED, counted per link).
+// again. A host that stops reading therefore delays a DISARM queued on its own link
+// by at most about kReplyBudgetUs (250 ms). A DISARM on the other link can wait for
+// one such stalled command as well, because the main loop gives the other link its
+// turn after every stalled command (main.cpp, serviceLink): about 0.5 s when both
+// hosts have stopped reading. Lines that could not be sent are dropped whole and their
+// bytes counted (STATUS TX_DROPPED, counted per link and per network host).
 
 #include <Arduino.h>
 #include <cstddef>
@@ -40,7 +43,11 @@ class ReplySink {
 public:
     virtual bool connected() = 0;  // a host is listening
     virtual int room() = 0;        // bytes that write() takes now without waiting
+    // Returns n. 0 = nothing was taken and the caller may try again; any other value =
+    // part of the bytes went out (the line then counts as dropped).
     virtual size_t write(const uint8_t *buf, size_t n) = 0;
+    // room() that counts as "the host reads again" after a reply was dropped.
+    virtual int drainedRoom() { return 64; }
 
 protected:
     ~ReplySink() = default;
@@ -66,7 +73,10 @@ public:
     size_t write(uint8_t c) override;
     size_t write(const uint8_t *buf, size_t n) override;
     uint32_t dropped() const { return dropped_; }
-    // A new host on this link: nothing of the old host's replies is left to send.
+    // True if a reply of the current command waited out its time budget.
+    bool stalled() const { return stalled_; }
+    // A new host on this link: nothing of the old host's replies is left to send, and
+    // its dropped-byte count does not carry over.
     void reset();
 
 private:
@@ -92,6 +102,8 @@ public:
     ProtocolLink(ReplySink &sink, bool usb) : out_(sink), usb_(usb) {}
     // A new host on this link (a new TCP client): forgets a partial line.
     void reset();
+    // The host of this link is not reading replies (ReplyOut::stalled()).
+    bool stalled() const { return out_.stalled(); }
 
 private:
     friend class Protocol;
@@ -133,8 +145,8 @@ struct ProtocolHooks {
     // The configuration in use.
     void (*wifiGet)(WifiConfig *cfg);
     // Makes cfg the configuration in use (radio on, off, or a new join) and stores it
-    // in flash. Returns nullptr, or why it was refused (then nothing changed). On
-    // success *notSaved is nullptr, or why cfg holds for this power cycle only.
+    // in flash. Returns nullptr, or why it was refused (then the configuration is as
+    // before). On success *notSaved is nullptr, or why cfg holds for this power cycle only.
     const char *(*wifiSet)(const WifiConfig &cfg, const char **notSaved);
     // Prints the Wi-Fi and network STATUS lines, one "KEY=value" each.
     void (*printNetStatus)(Print &out);
@@ -158,6 +170,8 @@ private:
     PulseParams *params_ = nullptr;
     ProtocolHooks hooks_{};
     RealizedTiming realized_{};
-    // WIFI SSID / WIFI PASS collect here; WIFI ON, OFF and CLEAR hand it to wifiSet.
+    // WIFI SSID / WIFI PASS collect here until the next WIFI ON, OFF or CLEAR. Each of
+    // those three ends with wifi_ equal to the configuration in use, accepted or
+    // refused, so nothing typed earlier can take effect later by surprise.
     WifiConfig wifi_{};
 };

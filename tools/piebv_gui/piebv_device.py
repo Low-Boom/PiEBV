@@ -226,6 +226,9 @@ def parse_status(lines):
 
 
 # ---------------------------------------------------------------- Wi-Fi set-up values
+_WIFI_LINE = re.compile(r"^\s*WIFI\??\s+(\S+)\s*(.*)$", re.I)  # sub-command, value
+
+
 def wifi_check(ssid, passphrase):
     """None, or why the board cannot take this network name / passphrase (None = not
     sent). The limits are the firmware's (src/wifi_config.h, src/protocol.cpp); the link
@@ -300,7 +303,8 @@ class PiEBV:
             while True:
                 left = deadline - time.monotonic()
                 if left <= 0:
-                    raise LinkError("no reply to %r (wrong port, or DTR off?)" % line)
+                    # `shown`, not `line`: the message reaches the page and the log.
+                    raise LinkError("no reply to %r (wrong port, or DTR off?)" % (shown or line))
                 r = self.link.readline(left)
                 if r is None:
                     continue
@@ -394,11 +398,19 @@ class PiEBV:
         return True, replies
 
     def raw(self, line, quiet=0.25, timeout=3.0):
-        """Any command; returns every line until the output goes quiet."""
+        """Any command; returns every line until the output goes quiet. A passphrase
+        typed as WIFI PASS is kept out of the console log. WIFI ON, OFF and CLEAR get
+        the long wait of the radio start, so their reply is not left for the next command."""
+        m = _WIFI_LINE.match(line)
+        sub = m.group(1).upper() if m else ""
         with self._cmd:
-            self._send(line)
+            if sub == "PASS" and m.group(2):
+                self._record(">", "WIFI PASS ********")
+                self.link.write_line(line)
+            else:
+                self._send(line)
             got, deadline = [], time.monotonic() + timeout
-            first = self.link.readline(1.5)
+            first = self.link.readline(12.0 if sub in ("ON", "OFF", "CLEAR") else 1.5)
             if first is None:
                 return got
             self._record("<", first)

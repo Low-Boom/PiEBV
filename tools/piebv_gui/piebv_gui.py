@@ -136,6 +136,8 @@ class Handler(BaseHTTPRequestHandler):
         url = urlparse(self.path)
         try:
             body = self._body()
+            if not isinstance(body, dict):
+                return self._json({"error": "the request body must be a JSON object"}, 400)
             if url.path == "/api/connect":
                 STATE.connect(str(body.get("target", "")).strip())
                 return self._json(snapshot())
@@ -156,11 +158,11 @@ class Handler(BaseHTTPRequestHandler):
                                    "state": snapshot()})
             if url.path == "/api/wifi":
                 # ssid / passphrase: a string, or absent/null = leave as the board has it.
-                ssid, passphrase = body.get("ssid"), body.get("passphrase")
+                action, ssid, passphrase = body.get("action"), body.get("ssid"), body.get("passphrase")
+                if not isinstance(action, str) or not all(v is None or isinstance(v, str) for v in (ssid, passphrase)):
+                    return self._json({"error": "action, ssid and passphrase must be text"}, 400)
                 try:
-                    ok, replies = dev.wifi_setup(str(body.get("action", "")),
-                                                 None if ssid is None else str(ssid),
-                                                 None if passphrase is None else str(passphrase))
+                    ok, replies = dev.wifi_setup(action, ssid, passphrase)
                 except ValueError as exc:
                     return self._json({"error": str(exc)}, 400)
                 return self._json({"ok": ok, "replies": replies, "state": snapshot()})

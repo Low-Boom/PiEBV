@@ -115,14 +115,19 @@ DISARMED. In the *Network (Wi-Fi)* card:
 2. Click **Join and store**. The page sends `WIFI SSID`, `WIFI PASS` and `WIFI ON`.
 3. Wait until *State* shows `CONNECTED`. *Address* then shows the URL to connect to.
 
-- An empty passphrase field keeps the passphrase that the board already has.
+- An empty passphrase field keeps the passphrase that the board has in use.
+- If the board refuses the join, the fields keep what you typed. Click **Join and store** again.
 - **Switch off** sends `WIFI OFF`. **Erase set-up** sends `WIFI CLEAR`.
 - The board's reply is shown under the buttons. `SAVED=0` means that the set-up is in use but not
   stored (see [the limits](../../docs/CONNECTING.md#limits)).
-- The passphrase is shown as `********` in the console. The page does not keep it, and the board
-  does not send it back.
-- The buttons are disabled while ARMED, and while the page is connected over the network: the
-  board changes its Wi-Fi set-up only over USB and only while DISARMED.
+- The passphrase is shown as `********` in the console, also when you type `WIFI PASS …` there.
+  The page clears the field after a join and when the link closes. The board does not send it
+  back.
+- The buttons and the Enter key do nothing while ARMED, and while the page is connected over the
+  network (a `socket://` address): the board changes its Wi-Fi set-up only over USB and only
+  while DISARMED.
+- While the board starts its radio (some seconds), the page shows no new state. **DISARM** is
+  still written to the board at once.
 - The name and the passphrase can hold printable ASCII characters only in the page. They cannot
   start or end with a space, and cannot contain the letters `disarm` in sequence.
 - The same set-up is possible with the `WIFI` commands in the console or a serial terminal: see

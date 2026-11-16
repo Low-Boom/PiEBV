@@ -127,12 +127,16 @@ these checks with J11 open (no laser output), at 150 MHz first.
 6. **Pulse timing with network traffic.** Repeat the timing checks (pulse width, CH1-to-CH2 delay,
    sync period) while a host sends `STATUS` continuously over the network. The values do not
    change.
-7. **Lost network.** Switch the access point off while connected. `WIFI` over USB shows
-   `JOINING (link lost)`. Switch it on: the board joins again. USB commands answer during all of
-   this.
+7. **Lost network.** Switch the access point off while connected and ARMED (J11 open), with a host
+   that polls `STATUS` over the network (the GUI does). `WIFI` over USB shows `JOINING (link lost)`
+   and later `JOINING (network not found)`. Switch it on: the board joins again. During all of
+   this, USB commands answer, `DISARM` over USB acts at once, and `WDT_RESETS` stays 0. This is
+   the check for a reply that the host no longer acknowledges.
 8. **Lost host.** Disconnect the host computer from the network without closing the connection.
-   `NET_CLIENT` goes to `NONE` after about 11 s.
-9. **Wrong passphrase, unknown network.** `WIFI` shows the reason, and USB commands answer.
+   Note the time until `NET_CLIENT` goes to `NONE` (about 11 s for an idle connection).
+9. **Wrong passphrase, unknown network.** `WIFI` shows `JOINING` with the reason, and USB commands
+   answer. `WIFI=FAULT` here is a firmware error: the liveness check of the radio must pass on a
+   radio that is not joined.
 10. **300 MHz.** Fit the clock jumper and power-cycle. The stored set-up joins the network.
     `WIFI ON` with a new name gives `SAVED=0`. This combination is outside the RP2350
     specification and may not work on every Pico.

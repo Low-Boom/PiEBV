@@ -105,7 +105,10 @@ constexpr uint32_t kWatchdogMs = 3000;
 // long call in the firmware. Only used while DISARMED, when the laser pads are gated
 // LOW, so a longer period delays nothing but the restart after a hang.
 constexpr uint32_t kRadioStartWatchdogMs = 8000;
-// Characters taken from one host link before the other link gets its turn.
+// Characters taken from one host link before the other link gets its turn. The turn
+// also ends when a reply of this link has waited out its time budget (its host is not
+// reading; the link then gets one character per turn until the host reads again): the
+// other link's DISARM waits for one such command at most.
 constexpr int kLinkBurst = 128;
 
 // SCRATCH4 as the SDK's watchdog_enable() left it (WATCHDOG_NON_REBOOT_MAGIC, private to
@@ -208,8 +211,9 @@ void feedWatchdog() {
 
 // Claims the pio0 state machines of the pulse group (kSmMask) before anything else
 // can. If any is already taken, nothing is claimed and ARM is refused. (On a Pico 2 W
-// the core's CYW43 init in initVariant() has already claimed a state machine, but the
-// SDK allocates from the highest PIO down, so it lands on pio2.)
+// the radio's driver claims a state machine too, when the radio chip first powers up.
+// That is after this call, and the SDK allocates from the highest PIO down, so it
+// lands on pio2.)
 bool claimPioStateMachines() {
     for (uint sm = 0; sm < NUM_PIO_STATE_MACHINES; ++sm) {
         if (((kSmMask >> sm) & 1u) && pio_sm_is_claimed(kPio, sm)) {
@@ -472,6 +476,9 @@ void serviceLink(ProtocolLink &link, Read read) {
         servicePendingStart();
         gpio_put(kPinArmedLed, g_armed);
         feedWatchdog();  // a long burst of input is still progress
+        if (link.stalled()) {
+            break;
+        }
     }
 }
 
@@ -566,4 +573,5 @@ void loop() {
     serviceLink(g_usbLink, [] { return Serial.read(); });
     net::service();
     serviceLink(net::link(), [] { return net::read(); });
+    net::flush();
 }

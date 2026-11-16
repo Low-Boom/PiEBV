@@ -22,8 +22,10 @@ overview and the list of all pages are in the [README](../README.md).
   with no way to send `DISARM`. Stop them in hardware: take the J11 shunt off 1-2, or unplug J17.
 - **With Wi-Fi on, `ARM` can come from the network.** The network link has no password and no
   encryption: every computer that can reach the board can arm it. Losing the network link does not
-  disarm. `DISARM` over USB always works. See [Network (Wi-Fi)](CONNECTING.md#network-wi-fi). The
-  link is off until it is set up over USB.
+  disarm. `DISARM` over USB stays available, but the network link can delay it: by design up to
+  about 0.5 s, and about 1 s if the radio chip stops answering. The network link was not yet
+  tested on a board. See [Network (Wi-Fi)](CONNECTING.md#network-wi-fi). The link is off until it
+  is set up over USB.
 - **Before uploading new firmware, send `DISARM`.** The upload restarts the Pico, and a restart in
   the middle of a pulse can stretch that one pulse by an estimated 70–150 ns.
 - **Before using a debugger (SWD), send `DISARM` and remove the J11 shunt** (or unplug J17). A

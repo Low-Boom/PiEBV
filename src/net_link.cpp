@@ -6,6 +6,9 @@
 #include <SimpleMDNS.h>
 #include <WiFi.h>  // WiFiServer, WiFiClient (the WiFi object itself is not used)
 #include <lwIP_CYW43.h>
+#include <lwip/tcp.h>
+#include <lwip_wrap.h>  // LWIPMutex
+#include <include/ClientContext.h>  // the core's TCP connection object (for its lwIP pcb)
 #include <pico/cyw43_arch.h>
 #include "clock_mode.h"
 #include "hardware/clocks.h"
@@ -17,12 +20,21 @@ namespace {
 constexpr uint32_t kPollMs = 200;           // join-state poll
 constexpr uint32_t kRejoinDelayMs = 5000;   // shortest time between two join requests
 constexpr uint32_t kJoinTimeoutMs = 20000;  // a join with no result is started again
-constexpr uint64_t kSlowCallUs = 1000000;   // a radio call this slow is a fault
-constexpr int kMaxFaults = 3;               // faults in a row that stop the link
+constexpr uint32_t kProbeMs = 2000;         // signal-level read while joined: also the radio's liveness check
+// A radio chip that does not answer makes each driver command (ioctl) wait for its
+// time-out, 1 s in this port (CYW43_IOCTL_TIMEOUT_US, cyw43_configport.h), and one join
+// request is more than ten such commands. So the link never sends a join to a chip it
+// has not just heard from: it sends one cheap command first, and a command that takes
+// this long is a fault. A dead chip therefore costs the command loop one time-out
+// (about 1 s), once, and the link then makes no radio call until the next power cycle.
+constexpr uint64_t kSlowCallUs = 500000;
+constexpr uint32_t kIoctlGetRssi = 0xFE;    // CYW43_IOCTL_GET_RSSI, as in the core's CYW43lwIP::RSSI()
 constexpr size_t kEepromSize = 256;         // >= kWifiRecordSize, a multiple of the flash page
-// Reply writes go through ReplyOut, which writes only what the send buffer takes. This
-// bounds the wait if lwIP still cannot queue the bytes (no segment memory).
-constexpr unsigned long kClientWriteTimeoutMs = 20;
+// Free send-buffer space that counts as "the host reads again" after a reply was
+// dropped: room for the longest reply (HELP, about 3.3 kB) in one piece, so a host
+// that drains slowly cannot make every command wait out its reply budget.
+constexpr int kDrainedRoom = 4096;
+static_assert(kDrainedRoom < TCP_SND_BUF, "the send buffer must be able to reach the drained level");
 // TCP keep-alive: a host that went away without closing (crash, cable, sleep) frees
 // the link after about 5 + 3 x 2 = 11 s.
 constexpr uint16_t kKeepAliveIdleS = 5, kKeepAliveIntervalS = 2;
@@ -46,9 +58,27 @@ Phase g_phase = Phase::Off;
 const char *g_note = nullptr;  // why the link is not up (STATUS), or nullptr
 uint32_t g_lastPollMs = 0;
 uint32_t g_lastJoinMs = 0;
-int g_faults = 0;
+uint32_t g_lastProbeMs = 0;
+bool g_rssiKnown = false;
+int32_t g_rssi = 0;
 bool g_macKnown = false;
 uint8_t g_mac[6] = {};
+
+// One cheap driver command, timed. False = the radio chip did not answer in time (it
+// then took the driver's full time-out). `*rssi` (may be nullptr) gets the signal level
+// if the chip gave one; a chip that is not joined answers quickly with an error.
+bool radioAnswers(int32_t *rssi) {
+    int32_t v = 0;
+    const uint64_t t0 = time_us_64();
+    const int ret = cyw43_ioctl(&cyw43_state, kIoctlGetRssi, sizeof(v), (uint8_t *)&v, CYW43_ITF_STA);
+    if (time_us_64() - t0 >= kSlowCallUs) {
+        return false;
+    }
+    if (rssi && ret == 0) {
+        *rssi = v;
+    }
+    return true;
+}
 
 int requestJoin() {
     const size_t passLen = strlen(g_cfg.pass);
@@ -82,6 +112,11 @@ public:
         if (!(cyw43_state.itf_state & (1u << CYW43_ITF_STA))) {
             return false;
         }
+        // The chip was already up (a second WIFI ON): make sure it still answers
+        // before the many commands below.
+        if (!radioAnswers(nullptr)) {
+            return false;
+        }
         cyw43_wifi_get_mac(&cyw43_state, CYW43_ITF_STA, netif->hwaddr);
         memcpy(g_mac, netif->hwaddr, sizeof(g_mac));
         g_macKnown = true;
@@ -99,41 +134,149 @@ public:
 
 LwipIntfDev<RadioDev> g_radio;
 WiFiServer g_server(kNetPort);
-WiFiClient g_client;
+
+// The core's TCP client, plus direct access to its lwIP connection. The link reads
+// through WiFiClient but writes with tcp_write() itself: WiFiClient::write() waits
+// inside the core when lwIP cannot queue the bytes (for as long as its time-out, which
+// the core reads as SECONDS for values below 100), and that wait would hold the command
+// loop: no DISARM is read, and the watchdog is not fed.
+class LinkClient : public WiFiClient {
+public:
+    LinkClient() = default;
+    LinkClient(const WiFiClient &c) : WiFiClient(c) {}
+    // Call with the lwIP lock held: the background lwIP work can free the connection.
+    tcp_pcb *pcb() { return _client ? _client->getPCB() : nullptr; }
+};
+LinkClient g_client;
 bool g_haveClient = false;
 bool g_mdnsStarted = false;
+size_t g_unsent = 0;  // bytes queued in lwIP since the last tcp_output()
+// lwIP refused a write although the send buffer had room: it has no memory for another
+// segment. Room is then reported as 0 until the host has acknowledged everything, so
+// that ReplyOut waits for this once (its reply budget) and not again for every command.
+bool g_noMemory = false;
+
+// Replies can go out while the connection is open in our direction: established, or
+// the host has closed its sending side only (CLOSE_WAIT), e.g. `echo STATUS | nc -N`.
+bool canSend(const tcp_pcb *pcb) {
+    return pcb && (pcb->state == ESTABLISHED || pcb->state == CLOSE_WAIT);
+}
 
 class TcpSink final : public ReplySink {
 public:
-    bool connected() override { return g_haveClient && g_client.connected(); }
-    int room() override { return g_client.availableForWrite(); }
-    size_t write(const uint8_t *buf, size_t n) override { return g_client.write(buf, n); }
+    bool connected() override {
+        if (!g_haveClient) {
+            return false;
+        }
+        LWIPMutex lock;
+        return canSend(g_client.pcb());
+    }
+    int room() override {
+        LWIPMutex lock;
+        tcp_pcb *pcb = g_client.pcb();
+        if (!canSend(pcb)) {
+            return 0;
+        }
+        if (g_noMemory) {
+            if (pcb->unacked != nullptr || pcb->unsent != nullptr) {
+                return 0;
+            }
+            g_noMemory = false;
+        }
+        return (int)tcp_sndbuf(pcb);
+    }
+    // All or nothing, and never waits: 0 when lwIP cannot take the whole line now (no
+    // room, or no memory for a segment). The bytes are only queued here; flush() sends
+    // them, so the lines of one reply share segments. (One segment per line would use a
+    // full-size lwIP buffer for each line until the host acknowledges it.)
+    size_t write(const uint8_t *buf, size_t n) override {
+        LWIPMutex lock;
+        tcp_pcb *pcb = g_client.pcb();
+        if (!canSend(pcb) || tcp_sndbuf(pcb) < n) {
+            return 0;
+        }
+        if (tcp_write(pcb, buf, (u16_t)n, TCP_WRITE_FLAG_COPY) != ERR_OK) {
+            g_noMemory = true;
+            tcp_output(pcb);  // what is queued must go out for its memory to come back
+            g_unsent = 0;
+            return 0;
+        }
+        g_unsent += n;
+        if (g_unsent >= TCP_MSS) {  // a full segment is ready: send it, so that its space comes back
+            g_unsent = 0;
+            tcp_output(pcb);
+        }
+        return n;
+    }
+    int drainedRoom() override { return kDrainedRoom; }
 };
 TcpSink g_sink;
 ProtocolLink g_link(g_sink, false);
 
+void flushClient() {
+    if (g_unsent == 0) {
+        return;
+    }
+    g_unsent = 0;
+    LWIPMutex lock;
+    if (tcp_pcb *pcb = g_client.pcb()) {
+        tcp_output(pcb);
+    }
+}
+
+// Closes a connection. Unread input is thrown away first: closing with unread data
+// makes lwIP send a reset, and the host could then lose the last reply (or the "busy"
+// text) that was sent before the close.
+void closeClient(WiFiClient &c) {
+    uint8_t scrap[64];
+    for (int i = 0; i < 64 && c.read(scrap, sizeof(scrap)) > 0; ++i) {
+    }
+    c.stop(1);  // 1 ms: do not wait for the peer's acknowledgements
+}
+
 void dropClient() {
     if (g_haveClient) {
-        g_client.stop(1);  // 1 ms: do not wait for the peer's acknowledgements
-        g_client = WiFiClient();
+        flushClient();
+        closeClient(g_client);
+        g_client = LinkClient();
         g_haveClient = false;
     }
+    g_unsent = 0;
+    g_noMemory = false;
     g_link.reset();
 }
 
 void radioStop() {
     dropClient();
     if (g_phase != Phase::Off) {
+        // Connections that lwIP accepted but the link did not take yet would stay
+        // queued in the server and come back, with their input, after a restart.
+        for (int i = 0; i < 16 && g_server.hasClient(); ++i) {
+            WiFiClient c = g_server.accept();
+            closeClient(c);
+        }
         g_server.close();
         g_radio.end();
     }
     g_phase = Phase::Off;
     g_note = nullptr;
-    g_faults = 0;
+    g_rssiKnown = false;
+}
+
+constexpr char kNoAnswer[] = "the radio chip does not answer: power-cycle the board";
+
+void radioFault() {
+    dropClient();
+    g_phase = Phase::Fault;
+    g_note = kNoAnswer;
+    g_rssiKnown = false;
 }
 
 // Brings the interface up and requests the join. nullptr, or why the radio is off.
 const char *radioStart() {
+    if (g_phase == Phase::Fault) {
+        return kNoAnswer;  // more radio calls would only wait for their time-outs
+    }
     radioStop();
     g_radio.setHostname(kNetHostname);
     if (!g_radio.begin()) {
@@ -150,6 +293,7 @@ const char *radioStart() {
     g_phase = Phase::Joining;
     g_lastJoinMs = millis();
     g_lastPollMs = g_lastJoinMs;
+    g_lastProbeMs = g_lastJoinMs;
     return nullptr;
 }
 
@@ -158,17 +302,15 @@ bool linkUp() {
 }
 
 void rejoin(uint32_t nowMs) {
-    const uint64_t t0 = time_us_64();
-    const int ret = requestJoin();
     g_lastJoinMs = nowMs;
-    if (ret == 0 && time_us_64() - t0 < kSlowCallUs) {
-        g_faults = 0;
+    if (!radioAnswers(nullptr)) {
+        radioFault();
         return;
     }
-    if (++g_faults >= kMaxFaults) {
-        dropClient();
-        g_phase = Phase::Fault;
-        g_note = "the radio chip does not answer: send WIFI ON to start it again";
+    const uint64_t t0 = time_us_64();
+    requestJoin();
+    if (time_us_64() - t0 >= kSlowCallUs) {
+        radioFault();
     }
 }
 
@@ -178,13 +320,25 @@ void pollJoin(uint32_t nowMs) {
         if (!up) {
             g_phase = Phase::Joining;
             g_note = "link lost";
+            g_rssiKnown = false;
+        } else if (nowMs - g_lastProbeMs >= kProbeMs) {
+            // The signal level for STATUS, read here so that STATUS makes no radio
+            // call; a chip that has stopped answering is found here too.
+            g_lastProbeMs = nowMs;
+            int32_t rssi = 0;
+            if (!radioAnswers(&rssi)) {
+                radioFault();
+            } else if (rssi != 0) {
+                g_rssi = rssi;
+                g_rssiKnown = true;
+            }
         }
         return;
     }
     if (up) {
         g_phase = Phase::Linked;
         g_note = nullptr;
-        g_faults = 0;
+        g_lastProbeMs = nowMs - kProbeMs;  // read the signal level at the next poll
         return;
     }
     const int st = cyw43_wifi_link_status(&cyw43_state, CYW43_ITF_STA);
@@ -203,26 +357,39 @@ void pollJoin(uint32_t nowMs) {
 }
 
 void serviceClient() {
-    if (g_haveClient && !g_client.connected()) {
+    // Gone = the core sees no open connection and no unread input. (A host that closed
+    // only its sending side is dropped here too, after its last input was read and
+    // answered; the close then sends the queued replies before the FIN.)
+    bool gone = false;
+    if (g_haveClient) {
+        LWIPMutex lock;
+        gone = !g_client.connected();
+    }
+    if (gone) {
         dropClient();
     }
-    WiFiClient c = g_server.accept();
-    if (!c) {
+    if (!g_server.hasClient()) {
         return;
     }
-    c.setTimeout(kClientWriteTimeoutMs);
+    WiFiClient c = g_server.accept();
     if (g_haveClient) {  // one host at a time; the first one keeps the link
         static const char kBusy[] = "ERR busy: another host is connected\r\n";
-        if (c.availableForWrite() >= (int)(sizeof(kBusy) - 1)) {
-            c.write((const uint8_t *)kBusy, sizeof(kBusy) - 1);
+        {
+            LWIPMutex lock;
+            tcp_pcb *pcb = LinkClient(c).pcb();
+            if (canSend(pcb) && tcp_write(pcb, kBusy, sizeof(kBusy) - 1, TCP_WRITE_FLAG_COPY) == ERR_OK) {
+                tcp_output(pcb);
+            }
         }
-        c.stop(1);
+        closeClient(c);
         return;
     }
-    g_client = c;
+    g_client = LinkClient(c);
     g_client.setNoDelay(true);
     g_client.keepAlive(kKeepAliveIdleS, kKeepAliveIntervalS, kKeepAliveCount);
     g_haveClient = true;
+    g_unsent = 0;
+    g_noMemory = false;
     g_link.reset();
 }
 
@@ -289,11 +456,16 @@ const char *set(const WifiConfig &cfg, const char **notSaved) {
     const bool running = g_phase == Phase::Joining || g_phase == Phase::Linked;
     g_cfg = cfg;  // radioStart() joins with g_cfg
     if (!cfg.enabled) {
-        radioStop();
+        if (g_phase == Phase::Fault) {
+            // Leaving the network is one more command to a chip that does not answer:
+            // skip it. The interface stays as it is, unused, until the power cycle.
+            g_note = kNoAnswer;
+        } else {
+            radioStop();
+        }
     } else if (!running || strcmp(cfg.ssid, old.ssid) != 0 || strcmp(cfg.pass, old.pass) != 0) {
         if (const char *why = radioStart()) {
             g_cfg = old;
-            g_phase = Phase::Off;
             return why;
         }
     }
@@ -318,7 +490,17 @@ void service() {
 }
 
 int read() {
-    return g_haveClient ? g_client.read() : -1;
+    if (!g_haveClient) {
+        return -1;
+    }
+    // The core's read path is not protected against its own receive callback, which
+    // runs in the background: take the lwIP lock around it.
+    LWIPMutex lock;
+    return g_client.read();
+}
+
+void flush() {
+    flushClient();
 }
 
 ProtocolLink &link() {
@@ -361,11 +543,9 @@ void printStatus(Print &out) {
     } else {
         out.println(F("NONE"));
     }
-    out.print(F("WIFI_RSSI_DBM="));
-    int32_t rssi = 0;
-    // 0xFE = CYW43_IOCTL_GET_RSSI, as in the core's CYW43lwIP::RSSI().
-    if (linked && cyw43_ioctl(&cyw43_state, 0xFE, sizeof(rssi), (uint8_t *)&rssi, CYW43_ITF_STA) == 0) {
-        out.println(rssi);
+    out.print(F("WIFI_RSSI_DBM="));  // read every kProbeMs in pollJoin(): no radio call here
+    if (linked && g_rssiKnown) {
+        out.println(g_rssi);
     } else {
         out.println(F("NONE"));
     }
@@ -373,7 +553,12 @@ void printStatus(Print &out) {
     out.println(kNetPort);
     out.print(F("NET_CLIENT="));
     if (g_haveClient) {
-        out.println(g_client.remoteIP());
+        IPAddress host;
+        {
+            LWIPMutex lock;  // not held while printing: a reply write can wait for the host
+            host = g_client.remoteIP();
+        }
+        out.println(host);
     } else {
         out.println(F("NONE"));
     }
@@ -409,6 +594,7 @@ void service() {}
 int read() {
     return -1;
 }
+void flush() {}
 ProtocolLink &link() {
     return g_link;
 }

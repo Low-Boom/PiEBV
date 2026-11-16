@@ -101,6 +101,7 @@ async function toggleConnect() {
   try {
     if (snap && snap.connected) {
       snap = await api("/api/disconnect", {});
+      wifiForget();
     } else {
       let target = $("target").value;
       if (target === "__custom") target = $("customTarget").value.trim();
@@ -289,6 +290,7 @@ function applyGroup(group) {
 // and never read back: the board reports only SET or NONE.
 let wifiSsidDirty = false;
 let wifiBusy = false;
+let wifiBlocked = "";   // why the set-up cannot change now ("" = it can); set by renderWifi()
 
 function wifiMessage(text, bad) {
   const m = $("wifiMsg");
@@ -296,8 +298,15 @@ function wifiMessage(text, bad) {
   m.classList.toggle("bad", !!bad);
 }
 
+function wifiForget() {  // nothing typed stays in the page after the link is gone
+  wifiSsidDirty = false;
+  $("wifiPass").value = "";
+  $("wifiOpen").checked = false;
+}
+
 async function wifiAction(action) {
-  if (wifiBusy) return;
+  // The same rule as for the buttons, also for Enter in a field.
+  if (wifiBusy || wifiBlocked || !(snap && snap.connected)) return;
   const body = { action };
   if (action === "on") {
     body.ssid = $("wifiSsid").value;
@@ -311,12 +320,12 @@ async function wifiAction(action) {
   try {
     const r = await api("/api/wifi", body);
     const last = (r.replies || []).slice(-1)[0] || r.error || "";
-    // SAVED=0 is a success with a warning: in use, but lost at power-off.
-    wifiMessage(last, !r.ok || / SAVED=0/.test(last));
-    if (r.ok) {
-      $("wifiPass").value = "";
-      wifiSsidDirty = false;
-    }
+    // SAVED=0 is a success with a warning: in use, but lost at power-off. The reply
+    // ends in " SAVED=0 (why)"; the network name is earlier in the line.
+    wifiMessage(last, !r.ok || / SAVED=0 \([^()]*\)$/.test(last));
+    // "Join" used what was typed. A refused join made the board drop it too, so the
+    // fields stay as typed for the next try, and every join sends them again.
+    if (r.ok && action !== "off") wifiForget();
     if (r.state) snap = r.state;
   } catch (e) { wifiMessage(String(e.message || e), true); }
   wifiBusy = false;
@@ -326,8 +335,11 @@ async function wifiAction(action) {
 function renderWifi(sys, connected) {
   const card = $("wifiCard");
   const state = sys && sys.WIFI;
-  card.hidden = !state;  // firmware without the network link: no WIFI line in STATUS
-  if (!state) return;
+  // No WIFI line in STATUS: firmware without the network link. A single missed poll
+  // (status absent while still connected) leaves the card as it is.
+  if (!state && connected && snap && !snap.status) return;
+  card.hidden = !state;
+  if (!state) { wifiBlocked = "not connected"; if (!connected) wifiForget(); return; }
   const none = (v) => !v || v === "NONE";
   const ip = sys.WIFI_IP, port = sys.NET_PORT || "4242";
   $("wifiPort").textContent = port;
@@ -342,7 +354,8 @@ function renderWifi(sys, connected) {
       ["Radio address (MAC)", sys.WIFI_MAC || "?"],
       ["Network host", none(sys.NET_CLIENT) ? "none" : sys.NET_CLIENT],
       ["At power-up", sys.WIFI_AT_POWER_UP === "1" ? "joins the network" : "radio off"],
-      ["Stored in the board", sys.WIFI_SAVED === "1" ? "yes" : "no: the set-up in use is lost at power-off"],
+      ["Stored in the board", sys.WIFI_SAVED === "1" ? "yes"
+        : sys.WIFI_SSID || sys.WIFI_AT_POWER_UP === "1" ? "no: the set-up in use is lost at power-off" : "nothing is set up"],
     );
   }
   kv($("wifiInfo"), rows);
@@ -357,6 +370,7 @@ function renderWifi(sys, connected) {
   const why = overNetwork ? "This page is connected over the network. The board changes its Wi-Fi set-up only over its USB port: connect to its serial port to change it."
     : sys.ARMED ? "DISARM first: the board refuses a Wi-Fi change while ARMED. The radio start and the flash write stop its command loop for a moment."
     : "";
+  wifiBlocked = why;
   for (const b of document.querySelectorAll(".wifi-act")) b.disabled = !connected || wifiBusy || !!why;
   for (const i of [ssid, $("wifiOpen")]) i.disabled = overNetwork;
   if (overNetwork) $("wifiPass").disabled = true;

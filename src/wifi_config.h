@@ -30,13 +30,28 @@ inline bool wifiConfigSame(const WifiConfig &a, const WifiConfig &b) {
     return a.enabled == b.enabled && strcmp(a.ssid, b.ssid) == 0 && strcmp(a.pass, b.pass) == 0;
 }
 
+// Control characters (below 0x20, and DEL) are refused: the name is printed in
+// replies, where an escape sequence could change what a terminal shows.
+inline bool wifiHasControlChar(const char *s) {
+    for (; *s; ++s) {
+        const unsigned char c = (unsigned char)*s;
+        if (c < 0x20 || c == 0x7F) {
+            return true;
+        }
+    }
+    return false;
+}
+
 // nullptr, or why `s` cannot be an SSID.
 inline const char *wifiCheckSsid(const char *s) {
     const size_t n = strlen(s);
     if (n == 0) {
         return "needs a network name";
     }
-    return n > kWifiSsidMax ? "the network name is longer than 32 characters" : nullptr;
+    if (n > kWifiSsidMax) {
+        return "the network name is longer than 32 characters";
+    }
+    return wifiHasControlChar(s) ? "the network name has a control character" : nullptr;
 }
 
 // nullptr, or why `s` cannot be a passphrase. "" is an open network.
@@ -45,7 +60,10 @@ inline const char *wifiCheckPass(const char *s) {
     if (n == 0) {
         return nullptr;
     }
-    return (n < kWifiPassMin || n > kWifiPassMax) ? "the passphrase must have 8 to 63 characters" : nullptr;
+    if (n < kWifiPassMin || n > kWifiPassMax) {
+        return "the passphrase must have 8 to 63 characters";
+    }
+    return wifiHasControlChar(s) ? "the passphrase has a control character" : nullptr;
 }
 
 // ---------------------------------------------------------------- flash record

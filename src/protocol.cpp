@@ -11,7 +11,6 @@
 namespace {
 
 constexpr uint64_t kReplyBudgetUs = 250000;
-constexpr int kDrainedRoom = 64;  // free sink bytes that count as "the host is reading again"
 
 // The reply path of the command being handled. Set on entry to Protocol::feed(), so
 // the print helpers below need no extra argument. The firmware is single-threaded.
@@ -200,7 +199,7 @@ void printHelp(uint32_t clkHz) {
 // ---------------------------------------------------------------- bounded replies
 void ReplyOut::startCommand() {
     flushLine();
-    if (stalled_ && sink_.connected() && sink_.room() >= kDrainedRoom) {
+    if (stalled_ && sink_.connected() && sink_.room() >= sink_.drainedRoom()) {
         stalled_ = false;
     }
     deadlineUs_ = stalled_ ? 0 : time_us_64() + kReplyBudgetUs;
@@ -224,6 +223,7 @@ size_t ReplyOut::write(const uint8_t *buf, size_t n) {
 }
 
 void ReplyOut::reset() {
+    dropped_ = 0;
     lineLen_ = 0;
     prev_ = 0;
     stalled_ = false;
@@ -245,8 +245,12 @@ void ReplyOut::flushLine() {
     bool sent = false;
     while (sink_.connected()) {  // no host listening: drop at once, never wait
         if (sink_.room() >= (int)lineLen_) {
-            sent = sink_.write(line_, lineLen_) == lineLen_;
-            break;
+            const size_t n = sink_.write(line_, lineLen_);
+            if (n != 0) {
+                sent = n == lineLen_;
+                break;
+            }
+            // 0: the sink took nothing after all; wait like for room.
         }
         if (time_us_64() >= deadlineUs_) {
             stalled_ = true;
@@ -359,8 +363,11 @@ void Protocol::feed(ProtocolLink &link, char c) {
 //   WIFI SSID <name>        network name            } kept in RAM until
 //   WIFI PASS [passphrase]  no passphrase = open    } WIFI ON
 //   WIFI ON                 join the network now and at every power-up
-//   WIFI OFF                radio link off, now and at power-up; keeps name and passphrase
+//   WIFI OFF                radio link off, now and at power-up; keeps the name and
+//                           passphrase in use
 //   WIFI CLEAR              as OFF, and erases the name and the passphrase
+// A name or passphrase given with SSID / PASS holds only until the next ON, OFF or
+// CLEAR, accepted or refused.
 // Everything but the bare query is refused from the network link: a host on the
 // network must not be able to move the board to another network or lock the USB
 // user out. The passphrase is never printed.
@@ -399,7 +406,7 @@ void Protocol::wifiCommand(ProtocolLink &link, char *args) {
         reportErr("WIFI", "unknown sub-command (SSID, PASS, ON, OFF, CLEAR; see HELP)");
         return;
     }
-    if (!hooks_.wifiSet) {
+    if (!hooks_.wifiSet || !hooks_.wifiGet) {
         reportErr("WIFI", "not available: this firmware has no Wi-Fi");
         return;
     }
@@ -437,24 +444,24 @@ void Protocol::wifiCommand(ProtocolLink &link, char *args) {
         return;
     }
 
-    WifiConfig cfg = wifi_;
-    if (isOn) {
-        if (!cfg.ssid[0]) {
-            reportErr("WIFI ON", "no network name: send WIFI SSID <name> first");
-            return;
-        }
-        cfg.enabled = true;
-    } else if (isOff) {
-        cfg.enabled = false;
-    } else {
-        cfg = WifiConfig{};
+    // ON takes the collected name and passphrase. OFF keeps the ones in use and
+    // CLEAR erases them: neither takes a name or passphrase that was only collected.
+    WifiConfig inUse{};
+    hooks_.wifiGet(&inUse);
+    WifiConfig cfg = isOn ? wifi_ : isOff ? inUse : WifiConfig{};
+    cfg.enabled = isOn;
+    if (isOn && !cfg.ssid[0]) {
+        reportErr("WIFI ON", "no network name: send WIFI SSID <name> first");
+        return;
     }
     const char *notSaved = nullptr;
     if (const char *why = hooks_.wifiSet(cfg, &notSaved)) {
+        hooks_.wifiGet(&wifi_);  // what was collected is dropped: see wifi_
         g_out->print(F("ERR WIFI "));
         g_out->print(sub);
         g_out->print(F(" refused: "));
-        g_out->println(why);
+        g_out->print(why);
+        g_out->println(isOn ? F(" (send the name and the passphrase again)") : F(""));
         return;
     }
     wifi_ = cfg;

@@ -567,8 +567,8 @@ What the firmware changes at 300 MHz, and why: [Clock jumper](docs/design/FIRMWA
 - **J7/J8 pulse only when all three are true:** firmware ARMED, J11 on 1-2 (hardware interlock), and `LASER_PWR_OK` (12 V rail in its window).
 - **`ARM`** (exactly that word, no argument) restarts CH1, CH2 and MARKER together. It replies at once. Changing pulse settings while armed goes through the same restart and hold-off. A host that loops ARM/DISARM can't fire faster than FREQ.
 - **`DISARM` can never be refused and acts at once.** The six characters `DISARM` (any case) anywhere in the input disarm immediately and cancel a pending start. Lines may end with CR, LF or CRLF.
-- **Watchdog.** A 3 s hardware watchdog restarts the chip if the firmware hangs. It comes back DISARMED, and `STATUS` shows `RESET=WATCHDOG` and a `WDT_RESETS` count.
-- **A host that stops reading** delays a queued DISARM by at most about 250 ms in total. Dropped reply bytes are counted in `STATUS` as `TX_DROPPED`.
+- **Watchdog.** A 3 s hardware watchdog restarts the chip if the firmware hangs. The period is 8 s in place of 3 s while the radio chip of a Pico 2 W starts (at power-up if Wi-Fi is set up, and during `WIFI ON`, `OFF` and `CLEAR`); the lasers are DISARMED in that time. It comes back DISARMED, and `STATUS` shows `RESET=WATCHDOG` and a `WDT_RESETS` count.
+- **A host that stops reading** delays a DISARM queued on its own link by at most about 250 ms, and a DISARM on the other link (USB or network) by one stalled command more: about 0.5 s when both hosts have stopped reading. Dropped reply bytes are counted in `STATUS` as `TX_DROPPED`.
 - **Host scripts** must send `ARM` after every reset, and should check `RESET=` in `STATUS` first (require an operator action after `RESET=WATCHDOG`). Parse `STATUS` by key, not by line count.
 - **Losing the USB link does not disarm.** A pulled cable, a sleeping PC or a killed host script leaves an ARMED board pulsing with no serial path for `DISARM`. The hardware stops are J11 (off 1-2) or unplugging J17.
 
@@ -598,7 +598,7 @@ The manufacturing notes, the JLCPCB order notes and the hot-plate assembly are o
 | `fab/gerbers/`, `fab/PiEBV_Pico_Gerbers.zip` | gerbers, Excellon drill files (plated and unplated), drill maps and job file of the Rev 2 board, made by `tools/rev2/fab.sh` (note 2 below) |
 | `libs/PiEBV_Local.kicad_sym` | Pico 2 W, UCC27524, LT3065 and TPS3700 symbols |
 | `libs/PiEBV_Local.pretty/` | `*_EdgeTrim` footprint variants (see [Footprint variants and KiCad checks](docs/design/LAYOUT.md#footprint-variants-and-kicad-checks)) and the J7/J8/J12 BNC footprint (see [BNCs](#bncs-50-ω)) |
-| `src/` | firmware: `board.h` (pin map), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `laser_gate.*` (CH1/CH2 gate, start-up hook), `protocol.*` (serial commands), `main.cpp` (arming, hold-off, watchdog) |
+| `src/` | firmware: `board.h` (pin map), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `laser_gate.*` (CH1/CH2 gate, start-up hook), `protocol.*` (commands, on USB and on the network link), `net_link.*` (Wi-Fi and TCP link of a Pico 2 W), `wifi_config.h` (Wi-Fi set-up values and flash record), `main.cpp` (arming, hold-off, watchdog) |
 | `platformio.ini` | build configuration: platform pinned to an exact commit; `pico2w` (default) and `pico2` builds |
 | `tools/timing_check/` | checks `pulse_timing.h` against a cycle-level PIO model (see its README) |
 | `tools/signal_sim/` | transmission-line simulation (ngspice, routed geometry) of the trigger, laser and J12 nets: R19 skew, J12 delay and offset, output levels (see its README) |

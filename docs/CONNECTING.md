@@ -167,7 +167,9 @@ In a script, `PiEBV("socket://192.168.1.37:4242")` from `tools/piebv_gui/piebv_d
 with a serial port. For a terminal, use `nc 192.168.1.37 4242`, or PuTTY with connection type *Raw*.
 
 - **One host at a time.** A second connection gets `ERR busy: another host is connected` and is
-  closed. A host that disappears without closing frees the link after about 11 s.
+  closed. A host that disappears without closing frees the link after about 11 s if the connection
+  was idle (longer if a reply was on its way; not measured). Until then a new connection gets
+  `ERR busy`.
 - USB keeps working at the same time. A reply goes only to the link that sent the command.
 - The network link has no connect banner. Send `ID?` to check the link.
 - Two boards on one network have the same name: use the addresses.
@@ -179,15 +181,23 @@ with a serial port. For a terminal, use `nc 192.168.1.37 4242`, or PuTTY with co
   the 12 V supply gate are not affected by the network.
 - **A lost link does not disarm,** as with USB. If the network fails while ARMED, send `DISARM` over
   USB, or stop the lasers in hardware (take the J11 shunt off 1-2, or unplug J17).
+- **The network link can delay a `DISARM` on USB.** By design the delay is at most one stalled
+  reply of the network host (about 250 ms). A radio chip that stops answering holds the command
+  loop for about 1 s, once; the board then shows `WIFI=FAULT` and uses the radio no more until a
+  power cycle. The radio's driver can also wait up to 1 s inside a send when the link is bad. None
+  of these times was measured on a board. The J11 interlock does not depend on the firmware.
 - The Wi-Fi set-up changes only from USB. From the network, `WIFI SSID`, `PASS`, `ON`, `OFF` and
-  `CLEAR` give `ERR WIFI refused: …`.
+  `CLEAR` give `ERR WIFI refused: …`. A network host can read the set-up (`WIFI`, `STATUS`), but
+  not the passphrase.
 - `WIFI ON`, `OFF` and `CLEAR` are refused while ARMED. The radio start and the flash write stop
   the command loop for a time that was not yet measured. No command, `DISARM` included, is read in
   that time.
 - With the clock jumper fitted (300 MHz) the set-up is not written to flash (`SAVED=0`): it holds
   until power-off. A set-up that was stored at 150 MHz is used at 300 MHz also.
-- A name or a passphrase cannot start or end with a space, and cannot contain the letters
-  `disarm` in sequence (in any case): the board reads them as the `DISARM` command.
+- A name or a passphrase cannot start or end with a space, cannot contain control characters, and
+  cannot contain the letters `disarm` in sequence (in any case): the board reads them as the
+  `DISARM` command.
+- A reply that the network host does not take in time is dropped (`TX_DROPPED`), as on USB.
 - After a watchdog restart the radio stays off (`WIFI=OFF (held off after a watchdog reset …)`)
   until `WIFI ON` or a power cycle.
 - The pulse timing does not depend on the network: the pulses and the sync clock come from timing

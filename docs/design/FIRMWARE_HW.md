@@ -123,12 +123,17 @@ laser timing.
   `LASER_PWR_OK` (12 V rail in its window).
 - **Watchdog.** A 3 s hardware watchdog, fed only from the main loop, restarts the chip if the
   firmware hangs. It comes back DISARMED, and `STATUS` shows `RESET=WATCHDOG` and a `WDT_RESETS`
-  count. No command can hang the firmware; to test the watchdog, write `0x80000000` (TRIGGER) to
+  count. The period is 8 s in place of 3 s while the radio chip of a Pico 2 W starts (at power-up
+  if Wi-Fi is set up, and during `WIFI ON`, `OFF` and `CLEAR`, which stop the command loop for that
+  call); the lasers are DISARMED then. No other command is designed to hold the firmware; to test the watchdog, write `0x80000000` (TRIGGER) to
   `WATCHDOG_CTRL` (`0x400d8000`) over SWD with the core running (a halted core pauses the
   watchdog).
 - **Replies never block the firmware.** Each reply line is written whole within a 250 ms budget, and
   once a host stops reading, later replies stop waiting until it catches up. So a host that stops
-  reading delays a queued DISARM by at most about 250 ms in total and can't trip the watchdog.
+  reading delays a DISARM queued on its own link by at most about 250 ms and can't trip the watchdog.
+  With the network link in use, a DISARM on one link can also wait for one stalled command of the
+  other link: about 0.5 s when both hosts have stopped reading. A radio chip that stops answering
+  can hold the command loop for about 1 s, once ([network limits](../CONNECTING.md#limits)).
   Replies that couldn't be sent are dropped a whole line at a time, and their bytes are counted in
   `STATUS` as `TX_DROPPED`.
 - **Host scripts** must send `ARM` after every reset, and should check `RESET=` in `STATUS` first
