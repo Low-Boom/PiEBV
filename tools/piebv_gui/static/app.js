@@ -122,19 +122,30 @@ async function toggleConnect() {
 }
 
 // ---------------------------------------------------------------- polling
+// The console log is fetched from one place at a time: two fetches with the same
+// `since` would show their entries twice.
+let logFetch = Promise.resolve();
+function fetchLog() {
+  logFetch = logFetch.then(async () => {
+    const lg = await api("/api/log?since=" + logSeq).catch(() => null);
+    if (lg) { appendLog(lg.entries || []); logSeq = lg.next || logSeq; }
+  });
+  return logFetch;
+}
+
+let unreachablePolls = 0;  // polls in a row that did not reach the GUI server
 async function poll() {
   if (polling) return;
   polling = true;
   try {
     snap = await api("/api/state");
+    unreachablePolls = 0;
     render();
     if (snap.connected) {
-      const lg = await api("/api/log?since=" + logSeq);
-      appendLog(lg.entries || []);
-      logSeq = lg.next || logSeq;
+      await fetchLog();
     }
   } catch (e) {
-    snap = { connected: false, error: "GUI server not reachable", unreachable: true };
+    snap = { connected: false, error: "GUI server not reachable", unreachable: ++unreachablePolls };
     render();
   } finally {
     polling = false;
@@ -319,7 +330,10 @@ async function wifiAction(action) {
     body.ssid = $("wifiSsid").value;
     if ($("wifiOpen").checked) body.passphrase = "";
     else if ($("wifiPass").value !== "") body.passphrase = $("wifiPass").value;
-    else if (!wifiKeepsPassphrase()) {
+    else if (!body.ssid) {
+      wifiMessage("Type the network name.", true);
+      return;
+    } else if (!wifiKeepsPassphrase()) {
       // A passphrase is never carried over to another network.
       wifiMessage("Type the passphrase of this network, or tick Open network.", true);
       return;
@@ -335,9 +349,13 @@ async function wifiAction(action) {
     // SAVED=0 is a success with a warning: in use, but lost at power-off. The reply
     // ends in " SAVED=0 (why)"; the network name is earlier in the line.
     wifiMessage(last, !r.ok || / SAVED=0 \([^()]*\)$/.test(last));
-    // "Join" used what was typed. A refused join made the board drop it too, so the
-    // fields stay as typed for the next try, and every join sends them again.
-    if (r.ok && action !== "off") wifiForget();
+    // After an action that the board accepted, the passphrase does not stay in the
+    // page ("Switch off" keeps a typed name). A refused join keeps the fields as typed
+    // for the next try: every join sends them again.
+    if (r.ok) {
+      if (action === "off") $("wifiPass").value = "";
+      else wifiForget();
+    }
     if (r.state) snap = r.state;
   } catch (e) { wifiMessage(String(e.message || e), true); }
   wifiBusy = false;
@@ -353,9 +371,9 @@ function renderWifi(sys, connected) {
   card.hidden = !state;
   if (!state) {
     wifiBlocked = "not connected";
-    // The link is closed: nothing typed stays. Not when only the GUI server could not
-    // be reached for one poll: the link may still be open.
-    if (!connected && !(snap && snap.unreachable)) wifiForget();
+    // The link is closed: nothing typed stays. A single poll that did not reach the
+    // GUI server is not that (the link may still be open); three in a row are.
+    if (!connected && !(snap && snap.unreachable && snap.unreachable < 3)) wifiForget();
     return;
   }
   const none = (v) => !v || v === "NONE";
@@ -516,12 +534,11 @@ async function sendCommand() {
   } catch (e) {  // refused by the GUI server, or the server is unreachable
     // The line never reached the server's console log: show it here, without a
     // passphrase (the server masks its own log entries the same way).
-    const shown = /^\s*WIFI\??\s+PASS\s+\S/i.test(line) ? "WIFI PASS ********" : line;
+    const shown = /^\s*WIFI\??\s+PASS/i.test(line) ? "WIFI PASS ********" : line;
     appendLog([{ dir: ">", text: shown }, { dir: "<", text: "ERR " + (e.message || e) }]);
   }
   render();
-  const lg = await api("/api/log?since=" + logSeq).catch(() => null);
-  if (lg) { appendLog(lg.entries || []); logSeq = lg.next || logSeq; }
+  await fetchLog();
 }
 
 // ---------------------------------------------------------------- timing model

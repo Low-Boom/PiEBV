@@ -92,10 +92,16 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _body(self):
-        n = int(self.headers.get("Content-Length") or 0)
-        if n <= 0:
-            return {}
-        return json.loads(self.rfile.read(n).decode("utf-8") or "{}")
+        """The JSON object of the request, or None if the body is not one. Never raises:
+        DISARM must not depend on what a client put in its body."""
+        try:
+            n = int(self.headers.get("Content-Length") or 0)
+            if n <= 0:
+                return {}
+            body = json.loads(self.rfile.read(n).decode("utf-8") or "{}")
+        except (ValueError, UnicodeDecodeError):
+            return None
+        return body if isinstance(body, dict) else None
 
     def _static(self, path):
         rel = "index.html" if path in ("/", "") else path.lstrip("/")
@@ -136,23 +142,30 @@ class Handler(BaseHTTPRequestHandler):
         url = urlparse(self.path)
         try:
             body = self._body()
-            if not isinstance(body, dict):
-                body = {}  # e.g. null: the routes without arguments (disarm, arm) do not need one
-            if url.path == "/api/connect":
-                STATE.connect(str(body.get("target", "")).strip())
-                return self._json(snapshot())
+            # Routes without arguments first: they ignore the body, whatever it holds.
+            if url.path == "/api/disarm":
+                ok, reply = STATE.device().disarm()
+                return self._json({"ok": ok, "reply": reply, "state": snapshot()})
             if url.path == "/api/disconnect":
                 STATE.disconnect()
                 return self._json(snapshot())
-            dev = STATE.device()
-            if url.path == "/api/disarm":
-                ok, reply = dev.disarm()
-                return self._json({"ok": ok, "reply": reply, "state": snapshot()})
             if url.path == "/api/arm":
-                ok, reply = dev.arm()
+                ok, reply = STATE.device().arm()
                 return self._json({"ok": ok, "reply": reply, "state": snapshot()})
+            if body is None:
+                return self._json({"error": "the request body must be a JSON object"}, 400)
+            if url.path == "/api/connect":
+                target = body.get("target")
+                if not isinstance(target, str) or not target.strip():
+                    return self._json({"error": "target must be a port name or a URL"}, 400)
+                STATE.connect(target.strip())
+                return self._json(snapshot())
+            dev = STATE.device()
             if url.path == "/api/apply":
-                settings = {str(k).upper(): int(v) for k, v in (body.get("settings") or {}).items()}
+                raw = body.get("settings")
+                if not isinstance(raw, dict) or not all(isinstance(v, int) and not isinstance(v, bool) for v in raw.values()):
+                    return self._json({"error": "settings must be an object of whole numbers"}, 400)
+                settings = {str(k).upper(): v for k, v in raw.items()}
                 results = dev.apply(settings)
                 return self._json({"results": [{"name": n, "ok": ok, "reply": r} for n, ok, r in results],
                                    "state": snapshot()})
@@ -167,7 +180,8 @@ class Handler(BaseHTTPRequestHandler):
                     return self._json({"error": str(exc)}, 400)
                 return self._json({"ok": ok, "replies": replies, "state": snapshot()})
             if url.path == "/api/command":
-                line = str(body.get("line", "")).strip()
+                line = body.get("line")
+                line = line.strip() if isinstance(line, str) else ""
                 # The error text does not repeat the line: it can hold a passphrase.
                 if not line or len(line) > 120 or any(not 32 <= ord(c) <= 126 for c in line):
                     return self._json({"error": "one command line of printable ASCII characters, up to 120"}, 400)
