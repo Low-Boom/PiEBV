@@ -1,0 +1,69 @@
+#pragma once
+// Network link of the PiEBV firmware: the Pico 2 W's radio as a Wi-Fi station on an
+// existing network, and a TCP server that carries the command protocol (protocol.h) for
+// one host at a time on port kNetPort. The image for a plain Pico 2 has none of this
+// (net::kAvailable is false, and every function here does nothing).
+//
+// Nothing here may hold up the command loop, because DISARM over USB and the watchdog
+// feed depend on it:
+//   * The core's own WiFi.begin() and WiFi.beginNoBlock() wait inside the join, so the
+//     link does not use them. It starts the join through the same CYW43 driver and then
+//     only polls (service()).
+//   * The one long call is the radio chip's power-up (it loads the chip's firmware), in
+//     start() and in set(): the caller makes these calls only while DISARMED and with a
+//     longer watchdog period (main.cpp).
+//   * After that, a radio call that fails or takes longer than 1 s counts as a fault;
+//     after three faults in a row the link stops (WIFI=FAULT) until the next WIFI ON.
+//
+// The pulse outputs do not depend on the link: they come from PIO and the clock
+// generator. The radio's driver takes one PIO state machine (outside pio0, which
+// main.cpp claims first) and two DMA channels.
+//
+// Flash. The set-up is one record (wifi_config.h) in the core's EEPROM sector. It is
+// written only at the 150 MHz clock: after a flash write the SDK restores the flash
+// interface timing of its start-up, which is too fast at 300 MHz (clock_mode.cpp sets
+// its own timing there). With the clock jumper fitted, a new set-up holds until
+// power-off.
+
+#include <Arduino.h>
+#include "protocol.h"
+#include "wifi_config.h"
+
+namespace net {
+
+#if defined(ARDUINO_RASPBERRY_PI_PICO_2W)
+constexpr bool kAvailable = true;
+#else
+constexpr bool kAvailable = false;
+#endif
+
+// Reads the stored set-up. No radio call. Call before Protocol::begin().
+void begin();
+
+// Joins the network if the stored set-up asks for it. `allowed` false (after a watchdog
+// reset) holds the radio off until WIFI ON, so a radio fault cannot reset the board
+// again and again. Can take as long as the radio chip's power-up.
+void start(bool allowed);
+
+// The set-up in use.
+const WifiConfig &config();
+
+// Makes cfg the set-up in use and stores it. Returns nullptr, or why not: then the
+// set-up is as before, and the radio link is off if a radio fault is the reason.
+// *notSaved: nullptr, or why cfg is not in flash. Can take as long as the radio chip's
+// power-up plus a flash sector erase.
+const char *set(const WifiConfig &cfg, const char **notSaved);
+
+// Call from loop(): the join state and the TCP client. Never waits.
+void service();
+
+// The next byte from the TCP host, or -1.
+int read();
+
+// The TCP host's protocol link (line buffer and reply path).
+ProtocolLink &link();
+
+// The Wi-Fi and network STATUS lines, one "KEY=value" each.
+void printStatus(Print &out);
+
+}  // namespace net

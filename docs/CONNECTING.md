@@ -1,7 +1,7 @@
 # Connecting
 
 This page tells you how to connect a computer to the board: the USB serial port, the web GUI, Python
-scripts, and the status of wireless control. This page is part of the PiEBV documentation. The
+scripts, and the network (Wi-Fi) link. This page is part of the PiEBV documentation. The
 overview and the list of all pages are in the [README](../README.md).
 
 ## USB serial
@@ -117,19 +117,79 @@ Rules for host scripts:
   inner lines with LF only, so a host that also talks to older boards should split on LF and strip
   any trailing CR.)
 
-## Wireless (Wi-Fi / Bluetooth)
+## Network (Wi-Fi)
 
-**Not supported by the current firmware.** The board talks over USB only, and the Pico 2 W's radio
-is never switched on. The Pico 2 W is fitted only because it is easier to buy than the plain Pico 2.
+A Pico 2 W can also take the commands over Wi-Fi. The board joins an existing network and listens on
+**TCP port 4242**. The commands and the replies are the same as on USB, `ARM` included. The radio is
+off until you set it up. Bluetooth is not used.
 
-Wireless control is possible as a future option, as firmware-only work:
-- switch on the radio;
-- carry the same text commands over the wireless link;
-- add a login;
-- decide whether `ARM` may be sent wirelessly (`DISARM` must always stay reachable).
+> **Not yet tested on a board.** The network code compiles, and its command handling is tested on a
+> computer. Do the [network checks](FIRST_BOARD_CHECKS.md#network-checks) before you rely on it.
 
-The [web GUI](#web-gui) would need no change: it already accepts a network address such as
-`socket://piebv.local:4242` wherever it takes a serial port.
+**What the network must be:** an open network, or WPA2 with one passphrase for all users
+(WPA2-Personal). A network that asks each user for a name and a password (WPA2-Enterprise, e.g.
+eduroam) cannot be joined. The address comes from DHCP.
 
-The board has solid copper under the module's antenna, which shortens the radio's range. That is
-fine for the intended short range (a few metres, like Bluetooth), so no board change is needed.
+### Set-up
+
+Do the set-up on the **USB port**, with the lasers **DISARMED** and the clock jumper J20 open:
+
+```
+WIFI SSID Lab Network        ->  OK WIFI SSID=Lab Network (not in use yet: send WIFI ON)
+WIFI PASS correct horse      ->  OK WIFI PASS=SET (not in use yet: send WIFI ON)
+WIFI ON                      ->  OK WIFI=ON SSID=Lab Network SAVED=1
+WIFI                         ->  WIFI=CONNECTED … WIFI_IP=192.168.1.37 …
+```
+
+- `WIFI ON` joins the network now and at every power-up. The join takes some seconds: send `WIFI`
+  until it shows `WIFI=CONNECTED`, and read the address from `WIFI_IP`.
+- If the network accepts only known devices, give its administrator the `WIFI_MAC` address. It is
+  shown after the first `WIFI ON`.
+- `WIFI OFF` switches the link off, now and at power-up. `WIFI CLEAR` also erases the name and the
+  passphrase.
+- The name and the passphrase are stored in the Pico's flash as plain text. Anyone who holds the
+  board can read them. Send `WIFI CLEAR` before you give the board away.
+
+All `WIFI` commands and replies are in the [command reference](COMMANDS.md#wi-fi-wifi).
+
+### Connecting
+
+Use the address from `WIFI_IP`, or the name `piebv.local` where the computer and the network
+support mDNS:
+
+```
+python tools/piebv_gui/piebv_gui.py --connect socket://192.168.1.37:4242
+```
+
+In a script, `PiEBV("socket://192.168.1.37:4242")` from `tools/piebv_gui/piebv_device.py` works as
+with a serial port. For a terminal, use `nc 192.168.1.37 4242`, or PuTTY with connection type *Raw*.
+
+- **One host at a time.** A second connection gets `ERR busy: another host is connected` and is
+  closed. A host that disappears without closing frees the link after about 11 s.
+- USB keeps working at the same time. A reply goes only to the link that sent the command.
+- The network link has no connect banner. Send `ID?` to check the link.
+- Two boards on one network have the same name: use the addresses.
+
+### Limits
+
+- **No password and no encryption.** Every computer that can reach the board on the network can
+  send `ARM`. Use a network that only the laboratory's computers can reach. The J11 interlock and
+  the 12 V supply gate are not affected by the network.
+- **A lost link does not disarm,** as with USB. If the network fails while ARMED, send `DISARM` over
+  USB, or stop the lasers in hardware (take the J11 shunt off 1-2, or unplug J17).
+- The Wi-Fi set-up changes only from USB. From the network, `WIFI SSID`, `PASS`, `ON`, `OFF` and
+  `CLEAR` give `ERR WIFI refused: …`.
+- `WIFI ON`, `OFF` and `CLEAR` are refused while ARMED. The radio start and the flash write stop
+  the command loop for a time that was not yet measured. No command, `DISARM` included, is read in
+  that time.
+- With the clock jumper fitted (300 MHz) the set-up is not written to flash (`SAVED=0`): it holds
+  until power-off. A set-up that was stored at 150 MHz is used at 300 MHz also.
+- A name or a passphrase cannot start or end with a space, and cannot contain the letters
+  `disarm` in sequence (in any case): the board reads them as the `DISARM` command.
+- After a watchdog restart the radio stays off (`WIFI=OFF (held off after a watchdog reset …)`)
+  until `WIFI ON` or a power cycle.
+- The pulse timing does not depend on the network: the pulses and the sync clock come from timing
+  hardware, not from software. Network traffic can only delay the reply to a command.
+- The board has solid copper under the module's antenna, which shortens the radio's range. The
+  range was not measured. `WIFI_RSSI_DBM` shows the signal level.
+- The `pico2` firmware image (plain Pico 2) has no network link: `WIFI=UNAVAILABLE`.

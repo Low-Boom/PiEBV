@@ -43,7 +43,7 @@ The README gives the overview. The pages below give the detail.
 |---|---|---|
 | [docs/SAFETY.md](docs/SAFETY.md) | The safety rules in detail: starting and stopping, laser outputs, cameras and jumpers | Everyone, before the first `ARM` |
 | [docs/SETUP.md](docs/SETUP.md) | Hardware setup step by step, first-board checks, jumpers, J12, seating the Pico, power | Anyone who sets up a board |
-| [docs/CONNECTING.md](docs/CONNECTING.md) | USB serial, web GUI, Python scripting, wireless | Operators and script writers |
+| [docs/CONNECTING.md](docs/CONNECTING.md) | USB serial, web GUI, Python scripting, network (Wi-Fi) | Operators and script writers |
 | [docs/COMMANDS.md](docs/COMMANDS.md) | Command reference: rules, commands, timing, errors, `STATUS` | Operators and script writers |
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Symptoms, likely causes and fixes | Anyone with a problem |
 | [docs/FIRMWARE_BUILD.md](docs/FIRMWARE_BUILD.md) | Building from source, timing checks, signal simulation | Firmware developers |
@@ -106,7 +106,8 @@ the output mode (J18/J19) set to match their input.
    - the firmware is ARMED;
    - a shunt is on **J11 pins 1-2** (or a closed E-stop switch is wired there);
    - a 15 V USB-C charger is plugged into **J17**.
-4. **Unplugging the computer does not stop the lasers.** Use J11 or J17 for that.
+4. **Unplugging the computer does not stop the lasers.** Use J11 or J17 for that. A lost network
+   link does not stop them either. With Wi-Fi set up, `ARM` can also come from the network.
 5. **Set each output's mode (J18, J19, J21) before you connect anything to it.**
 6. **One laser driver per output.** Never split an output with a BNC tee, and never join J7 and J8.
 7. **Cameras:** build the harness with wires 2, 3, 4, 5 and 7 only, and set every camera to sync
@@ -214,7 +215,7 @@ on J23 runs when the charger gives 15 V. On a 5 V-only charger it normally does 
 4. Do not use 1200 baud. 115200 is usual.
 5. Type `STATUS` and press Enter.
 
-Other terminals, the web GUI and Python scripting are in [docs/CONNECTING.md](docs/CONNECTING.md).
+Other terminals, the web GUI, Python scripting and the network (Wi-Fi) link are in [docs/CONNECTING.md](docs/CONNECTING.md).
 
 ## Most-used commands
 
@@ -240,7 +241,7 @@ does not work, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
 | Path | Contents |
 |---|---|
-| `src/` | Firmware: `main.cpp` (start-up, arming, crash watchdog), `protocol.*` (serial commands), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `sync_clock.*` (1 MHz SYNC clock), `clock_mode.*` (clock jumper: 150 or 300 MHz at boot), `laser_gate.*` (laser output gate), `board.h` (pin map) |
+| `src/` | Firmware: `main.cpp` (start-up, arming, crash watchdog), `protocol.*` (commands, on USB and on the network link), `net_link.*` (Wi-Fi and TCP link of a Pico 2 W), `wifi_config.h` (Wi-Fi set-up values and flash record), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `sync_clock.*` (1 MHz SYNC clock), `clock_mode.*` (clock jumper: 150 or 300 MHz at boot), `laser_gate.*` (laser output gate), `board.h` (pin map) |
 | `platformio.ini` | Build configuration (`pico2w` and `pico2` builds) |
 | `tools/piebv_example.py` | Python example script |
 | `tools/piebv_gui/` | Web GUI: settings, timing chart and console in the browser |

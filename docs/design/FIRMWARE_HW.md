@@ -106,7 +106,7 @@ laser timing.
 - **The firmware starts DISARMED.** An early start-up hook (`src/laser_gate.cpp`, `.preinit_array`
   priority 00110) drives GP12/GP13 LOW right after the chip's peripheral reset, before clock setup,
   USB, the Pico 2 W's radio-chip initialisation and `setup()`. They stay LOW until the host sends
-  `ARM` over USB. SYNC and MARKER start as soon as `setup()` applies the defaults, and keep running
+  `ARM` (over USB, or over the network link if it is set up). SYNC and MARKER start as soon as `setup()` applies the defaults, and keep running
   while DISARMED. A second hook (`src/clock_mode.cpp`, priority 00700, after the clock setup) reads
   the [clock jumper](#clock-jumper-j20-300-mhz-overclock); the laser pins are already LOW then.
 - **`ARM`** (exactly that word, no argument) restarts CH1, CH2 and MARKER together, so the first

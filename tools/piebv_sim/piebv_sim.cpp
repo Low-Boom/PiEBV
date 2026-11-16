@@ -10,6 +10,11 @@
 // It is a protocol simulator only: nothing is timed, and the reset registers in
 // STATUS are placeholders. Keep the hook emulation in step with src/main.cpp.
 //
+// Wi-Fi: the WIFI command runs as on the board's USB port, but there is no radio. The
+// set-up lives in memory (nothing is stored between runs), and WIFI ON shows a joined
+// network with a made-up address at once. Keep the STATUS keys in step with
+// net::printStatus() in src/net_link.cpp.
+//
 // Option: --overclock simulates the clock jumper fitted (clk_sys 300 MHz, clock_mode.h).
 //
 // Build (any C++17 compiler), from this directory:
@@ -53,6 +58,18 @@ bool g_gateOpen = false;  // laser::gateIsOpen()
 PulseParams g_params;
 RealizedTiming g_rt;
 Protocol g_protocol;
+
+// stdin / stdout as the USB host link.
+class StdioSink final : public ReplySink {
+public:
+    bool connected() override { return (bool)Serial; }
+    int room() override { return Serial.availableForWrite(); }
+    size_t write(const uint8_t *buf, size_t n) override { return Serial.write(buf, n); }
+};
+StdioSink g_sink;
+ProtocolLink g_link(g_sink, true);
+
+WifiConfig g_wifi;  // in memory only
 bool g_pioReady = true;
 bool g_configured = false;
 bool g_armed = false;
@@ -125,6 +142,24 @@ const char *applyPulseParams(const PulseParams &p, RealizedTiming *realized) {
     return nullptr;
 }
 
+// net::printStatus(), with a radio that joins at once.
+void printNetStatus(Print &out) {
+    out.println(g_wifi.enabled ? F("WIFI=CONNECTED") : F("WIFI=OFF"));
+    out.print(F("WIFI_SSID="));
+    out.println(g_wifi.ssid);
+    out.print(F("WIFI_PASS="));
+    out.println(g_wifi.pass[0] ? F("SET") : F("NONE"));
+    out.print(F("WIFI_AT_POWER_UP="));
+    out.println(g_wifi.enabled ? 1 : 0);
+    out.println(F("WIFI_SAVED=0"));
+    out.println(F("WIFI_MAC=02:00:00:00:00:01"));
+    out.println(g_wifi.enabled ? F("WIFI_IP=192.0.2.10") : F("WIFI_IP=NONE"));
+    out.println(g_wifi.enabled ? F("WIFI_RSSI_DBM=-50") : F("WIFI_RSSI_DBM=NONE"));
+    out.print(F("NET_PORT="));
+    out.println(kNetPort);
+    out.println(F("NET_CLIENT=NONE"));
+}
+
 void printSystemStatus(Print &out) {
     out.print(F("HW="));
     if (g_hwWhy[0]) {
@@ -146,6 +181,19 @@ void printSystemStatus(Print &out) {
     out.println(F("WDT_RESETS=0"));
     out.print(F("WDT_MS="));
     out.println(kWatchdogMs);
+    printNetStatus(out);
+}
+
+void wifiGet(WifiConfig *cfg) { *cfg = g_wifi; }
+
+// main.cpp wifiSet(), without the radio and the flash.
+const char *wifiSet(const WifiConfig &cfg, const char **notSaved) {
+    if (g_armed || g_startPending) {
+        return "DISARM first: the radio start and the flash write stop the command loop for a moment";
+    }
+    g_wifi = cfg;
+    *notSaved = "simulator: nothing is stored";
+    return nullptr;
 }
 
 void printIdentity(Print &out) {
@@ -156,7 +204,7 @@ void setup() {
     g_lastLaserPeriodCycles = clkHz();  // worst case (1 s), as on the board
     const char *why = g_protocol.begin(
         &g_params, ProtocolHooks{applyPulseParams, setArmed, isArmed, startPendingUs, printSystemStatus,
-                                 printIdentity, clkHz});
+                                 printIdentity, clkHz, wifiGet, wifiSet, printNetStatus});
     if (why) snprintf(g_hwWhy, sizeof(g_hwWhy), "outputs not started: %s", why);
     Serial.print(F("PiEBV delay generator ready, lasers DISARMED (reset: POWER_ON"));
     Serial.print(clockModeBannerNote(g_clockMode));
@@ -187,7 +235,7 @@ int main(int argc, char **argv) {
     for (;;) {
         const size_t n = fread(buf, 1, 1, stdin);  // one byte at a time: DISARM acts on its last letter
         if (n == 0) break;                          // host closed the pipe
-        g_protocol.feed((char)buf[0]);
+        g_protocol.feed(g_link, (char)buf[0]);
         servicePendingStart();
     }
     return 0;

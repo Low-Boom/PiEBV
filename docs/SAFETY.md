@@ -20,6 +20,10 @@ overview and the list of all pages are in the [README](../README.md).
 - **Losing the USB link does not disarm.** If the Pico's USB cable is pulled, the PC goes to sleep
   or a script is killed while ARMED, the board keeps running from J17 and the lasers keep pulsing,
   with no way to send `DISARM`. Stop them in hardware: take the J11 shunt off 1-2, or unplug J17.
+- **With Wi-Fi on, `ARM` can come from the network.** The network link has no password and no
+  encryption: every computer that can reach the board can arm it. Losing the network link does not
+  disarm. `DISARM` over USB always works. See [Network (Wi-Fi)](CONNECTING.md#network-wi-fi). The
+  link is off until it is set up over USB.
 - **Before uploading new firmware, send `DISARM`.** The upload restarts the Pico, and a restart in
   the middle of a pulse can stretch that one pulse by an estimated 70–150 ns.
 - **Before using a debugger (SWD), send `DISARM` and remove the J11 shunt** (or unplug J17). A

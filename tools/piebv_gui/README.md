@@ -1,6 +1,6 @@
 # PiEBV web GUI
 
-A small local web server that drives the PiEBV over USB serial. The browser page does everything
+A small local web server that drives the PiEBV over USB serial or over its network link. The browser page does everything
 the serial commands do, and draws the timing of one PIV pulse pair above the settings.
 
 - **Everything shown comes from the board.** The chart, the edge table and every "actual …" line
@@ -30,7 +30,7 @@ python tools/piebv_gui/piebv_gui.py --connect sim       # no hardware: the simul
 
 | Option | Meaning |
 |---|---|
-| `--connect TARGET` | Connect at start-up. `TARGET` is one of: a serial port; `auto` (the first USB device with the Pico's ID `2E8A`); `sim`; or a [pyserial URL](#wi-fi-later). Without it, pick the device on the page. |
+| `--connect TARGET` | Connect at start-up. `TARGET` is one of: a serial port; `auto` (the first USB device with the Pico's ID `2E8A`); `sim`; or a [pyserial URL](#network-wi-fi). Without it, pick the device on the page. |
 | `--http-port N` | Web server port (default 8765). |
 | `--host ADDR` | Interface to serve on. Default `127.0.0.1`: this computer only. See [Safety](#safety). |
 | `--no-browser` | Don't open a browser window. |
@@ -94,23 +94,25 @@ compiles the firmware's real `src/protocol.cpp` and `src/pulse_timing.h` for thi
 every reply, error message and realized value is the one the board would print. Build it once
 (see its README). The option appears in the device list only when the simulator binary exists.
 
-## Wi-Fi later
+## Network (Wi-Fi)
 
 The device layer accepts any [pyserial URL](https://pyserial.readthedocs.io/en/latest/url_handlers.html),
-so a network link needs no GUI change. When the firmware serves the same line protocol over TCP:
+and the firmware serves the same line protocol on TCP port 4242 when its Wi-Fi link is set up:
 
 ```
-python tools/piebv_gui/piebv_gui.py --connect socket://piebv.local:4242
+python tools/piebv_gui/piebv_gui.py --connect socket://192.168.1.37:4242
 ```
 
-or type the URL into *Other port or URL…* in the device list. This path is already tested: pyserial's
-`socket://` handler, talking to the simulator through a TCP bridge, works end to end.
+or type the URL into *Other port or URL…* in the device list. Use the address that `WIFI` shows
+(`WIFI_IP`), or `piebv.local` where mDNS works.
 
-The firmware side is still to be done; see "Wireless" in the top-level README. It needs:
-- the radio brought up;
-- a TCP server for the same commands;
-- authentication;
-- a decision on whether `ARM` may be sent wirelessly (`DISARM` must always stay reachable).
+- Set the link up first, over USB: see [Network (Wi-Fi)](../../docs/CONNECTING.md#network-wi-fi).
+  The `WIFI` set-up commands can be typed into the command box of the page while it is connected
+  over USB. Over the network the board refuses them.
+- The board takes one network host at a time. Close other connections first.
+- The link has no password and no encryption, and a lost link does not disarm.
+- Tested: pyserial's `socket://` handler with the simulator through a TCP bridge. Not yet tested:
+  the link to a board.
 
 ## Files
 

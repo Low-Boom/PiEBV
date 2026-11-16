@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""PiEBV web GUI: a local web server that drives the PiEBV over USB serial.
+"""PiEBV web GUI: a local web server that drives the PiEBV over USB serial or the network.
 
     python tools/piebv_gui/piebv_gui.py                    # then open http://127.0.0.1:8765
     python tools/piebv_gui/piebv_gui.py --connect COM7     # connect at start-up
     python tools/piebv_gui/piebv_gui.py --connect sim      # the simulator (tools/piebv_sim)
-    python tools/piebv_gui/piebv_gui.py --connect socket://piebv.local:4242   # future Wi-Fi link
+    python tools/piebv_gui/piebv_gui.py --connect socket://piebv.local:4242   # network (Wi-Fi) link
 
 The server owns the serial port; any number of browser tabs share it. It binds to
 127.0.0.1 only unless --host says otherwise: whoever can reach the page can ARM the

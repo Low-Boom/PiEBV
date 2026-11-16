@@ -109,9 +109,36 @@ Ordered by what would bite hardest.
     with the fan running: the junction temperature was not measured in the design. Do not fit
     a shunt on J23: it shorts the fan supply to GND.
 
-**Not an open item: Wi-Fi / Bluetooth.** The firmware doesn't use the radio; the Pico 2 W is fitted
-only because it is easier to buy than the plain Pico 2. The In1 GND plane and the In2 +5V and +3V3 islands run
-under the whole module, including its antenna, and F.Cu and B.Cu carry GND fill and some tracks
-there; this copper shortens the radio's range. That is acceptable even for a
-future wireless firmware, which would aim for short, Bluetooth-like range (a few metres), so no
-antenna keep-out is needed.
+## Network checks
+
+The network link ([Network (Wi-Fi)](CONNECTING.md#network-wi-fi)) was not tested on a board. Do
+these checks with J11 open (no laser output), at 150 MHz first.
+
+1. **Power-up time of the radio.** Send `WIFI SSID …`, `WIFI PASS …`, `WIFI ON` over USB. Measure
+   the time to the `OK WIFI=ON` reply. The firmware allows 8 s for it (the watchdog period for
+   this call). A `RESET=WATCHDOG` after `WIFI ON` means that the radio start hung.
+2. **Join.** `WIFI` shows `CONNECTED` and an address. Note the time from `WIFI ON`.
+3. **Stored set-up.** Power-cycle. The board joins the network again without a command, and
+   `WIFI_SAVED=1`. `WDT_RESETS` stays 0.
+4. **Commands over the network.** Connect to port 4242. `ID?`, `STATUS`, a setting, `ARM` and
+   `DISARM` give the same replies as on USB. A second connection gets `ERR busy`.
+5. **`DISARM` latency.** With a scope on J10 pin 1, send `DISARM` over the network and over USB
+   while the other link sends `STATUS` continuously. Both act at once.
+6. **Pulse timing with network traffic.** Repeat the timing checks (pulse width, CH1-to-CH2 delay,
+   sync period) while a host sends `STATUS` continuously over the network. The values do not
+   change.
+7. **Lost network.** Switch the access point off while connected. `WIFI` over USB shows
+   `JOINING (link lost)`. Switch it on: the board joins again. USB commands answer during all of
+   this.
+8. **Lost host.** Disconnect the host computer from the network without closing the connection.
+   `NET_CLIENT` goes to `NONE` after about 11 s.
+9. **Wrong passphrase, unknown network.** `WIFI` shows the reason, and USB commands answer.
+10. **300 MHz.** Fit the clock jumper and power-cycle. The stored set-up joins the network.
+    `WIFI ON` with a new name gives `SAVED=0`. This combination is outside the RP2350
+    specification and may not work on every Pico.
+11. **Range.** Read `WIFI_RSSI_DBM` at the place of use. The In1 GND plane and the In2 +5V and
+    +3V3 islands run under the whole module, including its antenna, and F.Cu and B.Cu carry GND
+    fill and some tracks there; this copper shortens the radio's range. The board has no antenna
+    keep-out.
+12. **Interference.** Check the camera sync, trigger and pixel-reset lines and the laser outputs
+    with a scope while the radio transmits (a host that sends `STATUS` continuously).

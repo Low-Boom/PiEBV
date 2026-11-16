@@ -12,7 +12,7 @@ fixed in `platformio.ini`.
 | Command | Builds |
 |---|---|
 | `pio run` | `pico2w` (default): Raspberry Pi Pico 2 W |
-| `pio run -e pico2` | plain Raspberry Pi Pico 2 (same pins and socket) |
+| `pio run -e pico2` | plain Raspberry Pi Pico 2 (same pins and socket; no network link) |
 | `pio run -t upload` | builds and uploads to a connected board (send `DISARM` first) |
 
 Output files land in `.pio/build/<env>/`, including `firmware.uf2` for drag-and-drop loading. Load

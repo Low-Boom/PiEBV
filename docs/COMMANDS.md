@@ -1,6 +1,6 @@
 # Command reference
 
-This page lists all serial commands of the PiEBV firmware, their limits, the timing rules, the error
+This page lists all commands of the PiEBV firmware, their limits, the timing rules, the error
 replies and the `STATUS` report. This page is part of the PiEBV documentation. The overview and the
 list of all pages are in the [README](../README.md).
 
@@ -11,6 +11,8 @@ list of all pages are in the [README](../README.md).
   (`DELAY 5000`). There is no `NAME?` form, except `ARM?` and `ID?`.
 - `ARM`, `ARM?`, `STATUS`, `ID?` and `HELP` take nothing after them: `STATUS 1` gives
   `ERR STATUS takes no argument`.
+- The same commands work on the USB port and on the [network link](CONNECTING.md#network-wi-fi).
+  Only the [Wi-Fi set-up](#wi-fi-wifi) is limited to USB.
 - Numbers are plain whole numbers (0 … 4294967295): no units, decimal points, signs or hex. Times
   are in **ns** and frequencies in **Hz**.
 - Backspace and DEL edit the line. Lines can be up to 95 characters.
@@ -37,6 +39,7 @@ list of all pages are in the [README](../README.md).
 | `ARM?` | – | – | – | Report the arm state: `ARMED=0` or `ARMED=1` |
 | `STATUS` | – | – | – | All settings, the arm state and system information |
 | `ID?` | – | – | – | Board and firmware version (the git commit it was built from) |
+| `WIFI …` | – | off | see [Wi-Fi](#wi-fi-wifi) | The Wi-Fi state and set-up |
 | `HELP` | – | – | – | Command summary |
 
 The camera sync clock is fixed at **1 MHz** and cannot be changed: the RP2350 clock generator divides
@@ -87,6 +90,33 @@ ID?            ->  PiEBV delay generator (Pico 2 W), firmware 5dfedd5
   one line: `DIS`, Enter, `ARM`, Enter is two commands and **arms** the board.
 - While DISARMED, **the sync clock and the marker keep running**, so the cameras stay synchronised.
   The laser outputs are held at 0 V.
+
+## Wi-Fi (`WIFI`)
+
+These commands set up the [network link](CONNECTING.md#network-wi-fi) of a Pico 2 W. `WIFI` on its
+own works on both links. All the others work **only on the USB port**.
+
+| Command | What it does |
+|---|---|
+| `WIFI` (or `WIFI?`) | Shows the Wi-Fi and network lines of [`STATUS`](#status) |
+| `WIFI SSID <name>` | Sets the network name (1 to 32 characters; spaces inside are allowed). Not in use until `WIFI ON`. |
+| `WIFI PASS <passphrase>` | Sets the WPA2 passphrase (8 to 63 characters). `WIFI PASS` on its own selects an open network. Not in use until `WIFI ON`. The passphrase is never shown. |
+| `WIFI ON` | Joins the network now and at every power-up, and stores the set-up in flash |
+| `WIFI OFF` | Switches the link off, now and at power-up. Keeps the name and the passphrase. |
+| `WIFI CLEAR` | As `WIFI OFF`, and erases the name and the passphrase |
+
+```
+WIFI ON      ->  OK WIFI=ON SSID=Lab Network SAVED=1
+WIFI OFF     ->  OK WIFI=OFF SSID=Lab Network SAVED=1
+WIFI ON      ->  OK WIFI=ON SSID=Lab Network SAVED=0 (not stored: flash is written only at the 150 MHz clock; …)
+```
+
+- `WIFI ON`, `OFF` and `CLEAR` are refused while ARMED or while a laser start is pending:
+  `ERR WIFI ON refused: DISARM first: …`.
+- `OK WIFI=ON` means that the join started, not that it completed. Send `WIFI` to see the result.
+- `SAVED=0 (…)` means that the set-up is in use but not in flash, with the reason.
+- `<name>` and `<passphrase>` are the rest of the line. They cannot start or end with a space, and
+  cannot contain the letters `disarm` in sequence.
 
 ## Combined mode (`COMBINE`)
 
@@ -208,6 +238,13 @@ SYNC       _|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_|‾|_ .
 | `ERR <NAME> takes one value` | More than one number |
 | `ERR ARM takes no argument` | Something after `ARM` (the same for `ARM?`, `STATUS`, `ID?` and `HELP`) |
 | `ERR line too long` | More than 95 characters; the whole line is ignored |
+| `ERR WIFI refused: the Wi-Fi set-up changes only from the Pico USB port` | A `WIFI` command other than the bare `WIFI`, sent over the network link |
+| `ERR WIFI <sub> refused: DISARM first: …` | `WIFI ON`, `OFF` or `CLEAR` while ARMED or while a laser start is pending |
+| `ERR WIFI ON refused: the radio chip did not start` | The radio did not answer at power-up. The link is off. |
+| `ERR WIFI ON no network name: send WIFI SSID <name> first` | `WIFI ON` with no name set |
+| `ERR WIFI SSID …` / `ERR WIFI PASS …` | The name or the passphrase does not have a permitted length |
+| `ERR WIFI not available: this firmware has no Wi-Fi` | The `pico2` firmware image (plain Pico 2) |
+| `ERR busy: another host is connected` | Network link only: a second connection. It is closed. |
 | `ERR <NAME> rejected: value must be > 0` | FREQ set to 0 |
 | `ERR <NAME> rejected: WIDTH realizes below the 3-cycle minimum (20.000 ns)` | WIDTH ≤ 16 ns (the same for MARKERWIDTH) |
 | `ERR <NAME> rejected: DELAY must leave >= WIDTH before the next pulse pair (DELAY <= 1/FREQ - 2 x WIDTH); max DELAY … ns` | DELAY too long for the period at this WIDTH |
@@ -246,6 +283,16 @@ RESET=POWER_ON
 RESET_RAW=WD:0x0 CHIP:0x0
 WDT_RESETS=0
 WDT_MS=3000
+WIFI=CONNECTED
+WIFI_SSID=Lab Network
+WIFI_PASS=SET
+WIFI_AT_POWER_UP=1
+WIFI_SAVED=1
+WIFI_MAC=28:CD:C1:00:00:01
+WIFI_IP=192.168.1.37
+WIFI_RSSI_DBM=-58
+NET_PORT=4242
+NET_CLIENT=192.168.1.20
 TX_DROPPED=0
 ```
 
@@ -265,4 +312,15 @@ TX_DROPPED=0
 | `RESET_RAW` | Raw restart registers (for bug reports) |
 | `WDT_RESETS` | Crash restarts since power-on |
 | `WDT_MS` | Crash-restart timeout (3000 ms). If the firmware ever hangs, it restarts DISARMED after this long. |
-| `TX_DROPPED` | Bytes of replies thrown away because the host was not reading |
+| `WIFI` | `OFF`; `JOINING` (not yet joined); `DHCP` (joined, no address yet); `CONNECTED`; `FAULT` (the radio does not answer); or `UNAVAILABLE` (the `pico2` image). A reason can follow in brackets, e.g. `JOINING (network not found)`, `JOINING (the network refused the passphrase)`, `JOINING (link lost)`. While `JOINING`, the board tries again at intervals of 5 s to 20 s. |
+| `WIFI_SSID`, `WIFI_PASS` | The network name in use, and `SET` or `NONE` for the passphrase |
+| `WIFI_AT_POWER_UP` | 1 = the board joins the network at power-up |
+| `WIFI_SAVED` | 1 = the set-up in use is the one in flash |
+| `WIFI_MAC` | The radio's hardware address. `UNKNOWN (…)` until the radio starts for the first time after power-up. |
+| `WIFI_IP` | The board's address, or `NONE` |
+| `WIFI_RSSI_DBM` | Received signal level in dBm, or `NONE` |
+| `NET_PORT` | TCP port of the network link (4242) |
+| `NET_CLIENT` | Address of the connected host, or `NONE` |
+| `TX_DROPPED` | Bytes of replies thrown away because the host on this link was not reading. Each link has its own count. |
+
+The `pico2` image shows one line, `WIFI=UNAVAILABLE (…)`, in place of the `WIFI_` and `NET_` lines.

@@ -563,7 +563,7 @@ What the firmware changes at 300 MHz, and why: [Clock jumper](docs/design/FIRMWA
 | DISARMED (after every start) | LOW | run |
 | ARMED | pulses, after a restart hold-off of one pulse period (≤ 1 s) | run; MARKER pauses during the hold-off |
 
-- **The firmware starts DISARMED.** GP12/GP13 stay LOW until the host sends `ARM` over USB. SYNC and MARKER keep running while DISARMED.
+- **The firmware starts DISARMED.** GP12/GP13 stay LOW until the host sends `ARM` (over USB, or over the network link if it is set up). SYNC and MARKER keep running while DISARMED.
 - **J7/J8 pulse only when all three are true:** firmware ARMED, J11 on 1-2 (hardware interlock), and `LASER_PWR_OK` (12 V rail in its window).
 - **`ARM`** (exactly that word, no argument) restarts CH1, CH2 and MARKER together. It replies at once. Changing pulse settings while armed goes through the same restart and hold-off. A host that loops ARM/DISARM can't fire faster than FREQ.
 - **`DISARM` can never be refused and acts at once.** The six characters `DISARM` (any case) anywhere in the input disarm immediately and cancel a pending start. Lines may end with CR, LF or CRLF.

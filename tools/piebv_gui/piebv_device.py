@@ -2,8 +2,8 @@
 
 Transports (all carry the same line protocol, src/protocol.cpp):
   * a serial port: "COM7", "/dev/ttyACM0", "/dev/cu.usbmodem1101"  (needs pyserial)
-  * any pyserial URL, e.g. "socket://piebv.local:4242" -- the planned Wi-Fi link, once
-    the firmware serves the same protocol over TCP  (needs pyserial)
+  * any pyserial URL, e.g. "socket://piebv.local:4242" -- the board's network (Wi-Fi)
+    link, which serves the same protocol over TCP  (needs pyserial)
   * "sim": the PiEBV simulator (tools/piebv_sim), which runs the real protocol code on
     this computer  (no pyserial needed)
 
