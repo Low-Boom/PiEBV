@@ -63,7 +63,7 @@ class _LineTransport:
                 if nl >= 0:
                     line = bytes(self._buf[:nl])
                     del self._buf[:nl + 1]
-                    return line.decode("ascii", "replace").rstrip("\r")
+                    return line.decode("utf-8", "replace").rstrip("\r")  # a network name can be UTF-8
                 if self._closed:
                     raise LinkError("link closed" + (": %s" % self.error if self.error else ""))
                 left = deadline - time.monotonic()
@@ -73,7 +73,7 @@ class _LineTransport:
 
     def write_line(self, text):
         with self._wlock:
-            self._write((text + "\n").encode("ascii"))
+            self._write((text + "\n").encode("utf-8"))
 
     @property
     def closed(self):
@@ -229,17 +229,28 @@ def parse_status(lines):
 _WIFI_LINE = re.compile(r"^\s*WIFI\??\s+(\S+)\s*(.*)$", re.I)  # sub-command, value
 
 
+def _is_control(c):
+    """Control and writing-direction characters, as src/wifi_config.h wifiNameTextOk()."""
+    o = ord(c)
+    return (o < 0x20 or 0x7F <= o <= 0x9F or o in (0x061C, 0x200E, 0x200F) or 0x2028 <= o <= 0x202E
+            or 0x2066 <= o <= 0x2069 or 0xD800 <= o <= 0xDFFF)
+
+
 def wifi_check(ssid, passphrase):
     """None, or why the board cannot take this network name / passphrase (None = not
-    sent). The limits are the firmware's (src/wifi_config.h, src/protocol.cpp); the link
-    is ASCII, so other characters need a serial terminal."""
+    sent). The limits are the firmware's (src/wifi_config.h, src/protocol.cpp): a name
+    is 1 to 32 bytes of UTF-8 text, a passphrase 8 to 63 printable ASCII characters."""
     for what, text, lo, hi in (("network name", ssid, 1, 32), ("passphrase", passphrase, 8, 63)):
         if text is None or (what == "passphrase" and text == ""):
             continue
-        if not lo <= len(text) <= hi:
-            return "the %s must have %d to %d characters" % (what, lo, hi)
-        if any(not 32 <= ord(c) <= 126 for c in text):
-            return "the %s can hold only printable ASCII characters here" % what
+        if what == "passphrase" and any(not 32 <= ord(c) <= 126 for c in text):
+            return "the passphrase can hold only printable ASCII characters"
+        if any(_is_control(c) for c in text):
+            return "the %s cannot contain control characters" % what
+        size = len(text.encode("utf-8"))
+        if not lo <= size <= hi:
+            return ("the network name must have 1 to 32 bytes (in UTF-8; a letter outside ASCII is 2 or more)"
+                    if what == "network name" else "the passphrase must have 8 to 63 characters")
         if text != text.strip():
             return "the %s cannot start or end with a space" % what
         if "disarm" in text.lower():
@@ -257,6 +268,12 @@ class PiEBV:
         # Re-entrant: a sequence of commands (wifi_setup) holds it from its first command
         # to its last, so another request cannot put a command in between.
         self._cmd = threading.RLock()
+        # Order of ARM and DISARM on the wire. A command can wait for self._cmd for
+        # seconds (behind a Wi-Fi set-up). An ARM that waited while a DISARM was sent
+        # must not go out after it: disarm() counts under self._order, and arm() sends
+        # only if the count is the one it saw when it was asked.
+        self._order = threading.Lock()
+        self._disarms = 0
         self._log = deque(maxlen=log_size)
         self._log_seq = 0
         self._log_lock = threading.Lock()
@@ -288,13 +305,16 @@ class PiEBV:
                 return
             self._record("<", line)
 
-    def _exchange(self, line, done, timeout=1.5, log=True, shown=None):
+    def _exchange(self, line, done, timeout=1.5, log=True, shown=None, send=None):
         """Send `line`, collect reply lines until done(lines) is true. Stray DISARM acks
         and boot banners are logged, not returned. log=False keeps the command and its
         reply out of the console log (the GUI's once-a-second STATUS poll). `shown` is
         the text the console log gets in place of the line (a passphrase stays out of it)."""
         with self._cmd:
-            if log and shown is None:
+            if send is not None:
+                if not send():  # the caller's own send, which can decide not to
+                    return None
+            elif log and shown is None:
                 self._send(line)
             else:
                 if log:
@@ -357,12 +377,28 @@ class PiEBV:
         return results
 
     def arm(self):
-        reply = self._exchange("ARM", lambda g: g[-1].startswith("OK ARMED=") or g[-1].startswith("ERR ARM"))[-1]
-        return reply.startswith("OK ARMED=1"), reply
+        """ARM, unless a DISARM was sent between this call and the moment the link is
+        free for it (the call can wait behind another command)."""
+        asked = self._disarms
+
+        def send():
+            with self._order:
+                if self._disarms != asked:
+                    return False
+                self._send("ARM")
+                return True
+
+        got = self._exchange("ARM", lambda g: g[-1].startswith("OK ARMED=") or g[-1].startswith("ERR ARM"), send=send)
+        if got is None:
+            self._record("<", "ARM not sent: a DISARM came after it")
+            return False, "ARM not sent: a DISARM came after it"
+        return got[-1].startswith("OK ARMED=1"), got[-1]
 
     def disarm(self):
         """Written at once, even while another command is waiting for its reply."""
-        self._send("DISARM")
+        with self._order:
+            self._disarms += 1
+            self._send("DISARM")
         # Confirm through the normal path (queued behind any command in flight).
         reply = self._exchange("ARM?", lambda g: g[-1].startswith("ARMED="))[-1]
         return reply == "ARMED=0", reply
@@ -436,12 +472,14 @@ class PiEBV:
         commands have one reply line and are waited for by it (WIFI ON, OFF and CLEAR
         for as long as the radio start takes), and a passphrase typed as WIFI PASS is
         kept out of the console log."""
+        if line.strip().upper() == "ARM":  # the same order rule as the ARM button
+            return [self.arm()[1]]
         m = _WIFI_LINE.match(line)
         sub = m.group(1).upper() if m else ""
         masked = "WIFI PASS ********" if sub.startswith("PASS") and (m.group(2) or sub != "PASS") else None
         # A line that holds the letters "disarm" is answered as DISARM, and one that is
         # too long as "ERR line too long": those take the plain path below.
-        if sub in ("SSID", "PASS", "ON", "OFF", "CLEAR") and "disarm" not in line.lower() and len(line) <= 95:
+        if sub in ("SSID", "PASS", "ON", "OFF", "CLEAR") and "disarm" not in line.lower() and len(line.encode("utf-8")) <= 95:
             return [self._wifi_exchange(line, sub, masked)]
         with self._cmd:
             if masked:

@@ -127,9 +127,13 @@ async function toggleConnect() {
 let logFetch = Promise.resolve();
 function fetchLog() {
   logFetch = logFetch.then(async () => {
-    const lg = await api("/api/log?since=" + logSeq).catch(() => null);
-    if (lg) { appendLog(lg.entries || []); logSeq = lg.next || logSeq; }
-  });
+    let lg = await api("/api/log?since=" + logSeq);
+    // A counter below ours: the GUI server or the link was started again. Take its log
+    // from the start.
+    if (typeof lg.next === "number" && lg.next < logSeq) { logSeq = 0; lg = await api("/api/log?since=0"); }
+    appendLog(lg.entries || []);
+    logSeq = lg.next || logSeq;
+  }).catch(() => {});  // a failed fetch must not stop the later ones
   return logFetch;
 }
 
@@ -337,7 +341,9 @@ async function wifiAction(action) {
       return;
     } else if (!wifiKeepsPassphrase()) {
       // A passphrase is never carried over to another network.
-      wifiMessage("Type the passphrase of this network, or tick Open network.", true);
+      const sys = snap && snap.status ? snap.status.system : {};
+      wifiMessage((sys.WIFI_PENDING === "1" ? "The board holds a name or passphrase that was sent but not joined. " : "") +
+        "Type the passphrase of this network, or tick Open network.", true);
       return;
     }  // else: no passphrase in the request = the board keeps the one of the network in use
   }
@@ -426,7 +432,8 @@ function render() {
   $("customTarget").disabled = connected;
   $("ident").textContent = connected ? (snap.identity || snap.target) : (snap && snap.error ? snap.error : "Not connected");
   $("ident").title = $("ident").textContent;
-  for (const b of document.querySelectorAll("#armBtn, .apply, #cmdSend")) b.disabled = !connected;
+  // No ARM while a Wi-Fi action runs: it would wait behind it for seconds.
+  for (const b of document.querySelectorAll("#armBtn, .apply, #cmdSend")) b.disabled = !connected || (b.id === "armBtn" && wifiBusy);
   for (const b of document.querySelectorAll(".disarm")) b.disabled = !connected;
 
   const st = connected ? snap.status : null;

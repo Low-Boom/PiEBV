@@ -13,6 +13,7 @@ Closing the page or stopping the server does NOT disarm -- only DISARM does.
 """
 import argparse
 import json
+import re
 import mimetypes
 import os
 import sys
@@ -91,17 +92,28 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    MAX_BODY = 65536  # bytes; every request of the page is far smaller
+
     def _body(self):
-        """The JSON object of the request, or None if the body is not one. Never raises:
-        DISARM must not depend on what a client put in its body."""
+        """The JSON object of the request, or None if the body is not one (also: too
+        long, or not there within 5 s). Never raises. Not called for DISARM."""
         try:
             n = int(self.headers.get("Content-Length") or 0)
             if n <= 0:
                 return {}
+            if n > self.MAX_BODY:
+                return None
+            self.connection.settimeout(5)
             body = json.loads(self.rfile.read(n).decode("utf-8") or "{}")
-        except (ValueError, UnicodeDecodeError):
+        except Exception:  # bad JSON, bad UTF-8, nesting too deep, time-out, ...
             return None
         return body if isinstance(body, dict) else None
+
+    def _same_origin(self):
+        """False for a request that a page of another site made in the user's browser:
+        such a request carries an Origin header that is not this server."""
+        origin = self.headers.get("Origin")
+        return not origin or urlparse(origin).netloc == self.headers.get("Host")
 
     def _static(self, path):
         rel = "index.html" if path in ("/", "") else path.lstrip("/")
@@ -141,19 +153,23 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         url = urlparse(self.path)
         try:
-            body = self._body()
-            # Routes without arguments first: they ignore the body, whatever it holds.
+            # DISARM first, before anything is read or checked: it must not depend on
+            # the body (which could be malformed, huge or never arrive) or on where the
+            # request comes from.
             if url.path == "/api/disarm":
                 ok, reply = STATE.device().disarm()
                 return self._json({"ok": ok, "reply": reply, "state": snapshot()})
+            if not self._same_origin():
+                return self._json({"error": "request from another site refused"}, 403)
+            body = self._body()
+            if body is None:
+                return self._json({"error": "the request body must be a JSON object"}, 400)
             if url.path == "/api/disconnect":
                 STATE.disconnect()
                 return self._json(snapshot())
             if url.path == "/api/arm":
                 ok, reply = STATE.device().arm()
                 return self._json({"ok": ok, "reply": reply, "state": snapshot()})
-            if body is None:
-                return self._json({"error": "the request body must be a JSON object"}, 400)
             if url.path == "/api/connect":
                 target = body.get("target")
                 if not isinstance(target, str) or not target.strip():
@@ -163,8 +179,9 @@ class Handler(BaseHTTPRequestHandler):
             dev = STATE.device()
             if url.path == "/api/apply":
                 raw = body.get("settings")
-                if not isinstance(raw, dict) or not all(isinstance(v, int) and not isinstance(v, bool) for v in raw.values()):
-                    return self._json({"error": "settings must be an object of whole numbers"}, 400)
+                if (not isinstance(raw, dict) or not all(re.fullmatch(r"[A-Za-z]+", str(k)) for k in raw)
+                        or not all(isinstance(v, int) and not isinstance(v, bool) for v in raw.values())):
+                    return self._json({"error": "settings must be an object of setting names and whole numbers"}, 400)
                 settings = {str(k).upper(): v for k, v in raw.items()}
                 results = dev.apply(settings)
                 return self._json({"results": [{"name": n, "ok": ok, "reply": r} for n, ok, r in results],
@@ -183,8 +200,8 @@ class Handler(BaseHTTPRequestHandler):
                 line = body.get("line")
                 line = line.strip() if isinstance(line, str) else ""
                 # The error text does not repeat the line: it can hold a passphrase.
-                if not line or len(line) > 120 or any(not 32 <= ord(c) <= 126 for c in line):
-                    return self._json({"error": "one command line of printable ASCII characters, up to 120"}, 400)
+                if not line or len(line) > 120 or any(piebv_device._is_control(c) for c in line):
+                    return self._json({"error": "one command line without control characters, up to 120 characters"}, 400)
                 return self._json({"lines": dev.raw(line), "state": snapshot()})
         except piebv_device.LinkError as exc:
             return self._json({"error": str(exc), "state": snapshot()}, 409)
