@@ -271,6 +271,7 @@ static void loopPass() {
     tcplink::service();
     const uint64_t t0 = time_us_64();
     for (int n = 0, c; n < 128 && (c = tcplink::read()) >= 0; ++n) {
+        tcplink::link().setInputPending(tcplink::inputPending());
         g_protocol.feed(tcplink::link(), (char)c);
         if (time_us_64() - t0 >= 5000) {  // kLinkTurnUs
             break;

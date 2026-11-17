@@ -26,12 +26,21 @@
 // Replies are written a whole line at a time, and wait for a host that is slow to take
 // them only out of a time budget of the link: kReplyBudgetUs (250 ms), which comes back
 // at one eighth of the time that passes. When it is used up, replies are dropped
-// without a wait until the host has drained the link again. So a host that reads
-// slowly, or not at all, delays a DISARM queued on its own link by about 0.3 s at
-// most, however many commands are queued before it. A DISARM on the other link waits
-// for one slow command of this link at most, because the main loop ends a link's
-// turn after kLinkTurnUs (main.cpp, serviceLink): about 0.5 s in all when both hosts
-// are slow. Lines that could not be sent are dropped whole and their
+// without a wait until the host has drained the link again.
+//   * While more input of the link waits behind the command that is answered, every
+//     wait is charged to the budget: a DISARM could be in that input. So commands
+//     queued before a DISARM delay it by about 0.3 s in all, however many they are
+//     (plus the processor time to run them).
+//   * While nothing waits behind the command (a host that sends a command and reads
+//     the reply before it sends the next one), a wait is charged only as far as the
+//     host takes the line slower than 20 kB/s. Such a host keeps its budget and loses
+//     no line, also when it polls in a tight loop. A DISARM that arrives during such a
+//     command waits for the rest of it: 250 ms at most.
+// Together: about 0.55 s for a DISARM on its own link. The main loop ends a link's
+// turn after kLinkTurnUs (main.cpp, serviceLink), so the other link costs one slow
+// command for each turn until its own budget is used up; with both hosts slow that
+// is about as much again (1.2 s). From tests on a computer with long command queues;
+// not measured on a board. Lines that could not be sent are dropped whole and their
 // bytes counted (STATUS TX_DROPPED, counted per link and per network host).
 
 #include <Arduino.h>
@@ -63,8 +72,9 @@ protected:
 // waiting for room only while the link's time budget lasts; a line that does not make
 // it is dropped whole (and counted), so a truncated reply can never glue itself onto
 // the next one. The budget is one amount for the link, not one per command: it is used
-// up by waiting and comes back slowly, so a backlog of queued commands cannot add up
-// to a long DISARM delay, also when the host takes each reply just in time. Once the
+// up by waiting for a slow host and comes back slowly, so a backlog of queued commands
+// cannot add up to a long DISARM delay, also when the host takes each reply just in
+// time. Once the
 // budget has run out, the stall is sticky: until the host drains the sink again, later
 // replies write only what fits and never wait.
 class ReplyOut : public Print {
@@ -79,6 +89,9 @@ public:
     uint32_t dropped() const { return dropped_; }
     // True if a reply waited out the time budget and the host has not drained since.
     bool stalled() const { return stalled_; }
+    // More input of this link waits behind the command that is being answered (it
+    // could be a DISARM): waits are then charged to the budget in full.
+    void setInputPending(bool pending) { inputPending_ = pending; }
     // A new host on this link: nothing of the old host's replies is left to send, and
     // its dropped-byte count does not carry over. The time budget does: a host cannot
     // get a new one by connecting again.
@@ -96,6 +109,7 @@ private:
     uint64_t budgetUs_ = ~0ull;   // waiting time left; capped to kReplyBudgetUs at the first command
     uint64_t refillUs_ = 0;       // time up to which the budget's refill is counted
     bool stalled_ = false;
+    bool inputPending_ = false;
     uint32_t dropped_ = 0;
 };
 
@@ -111,6 +125,9 @@ public:
     void reset();
     // The host of this link is not reading replies (ReplyOut::stalled()).
     bool stalled() const { return out_.stalled(); }
+    // Call before feed(): true if more input of this link has already arrived behind
+    // the character that is fed (ReplyOut::setInputPending()).
+    void setInputPending(bool pending) { out_.setInputPending(pending); }
 
 private:
     friend class Protocol;

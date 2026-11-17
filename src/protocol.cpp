@@ -12,6 +12,12 @@ namespace {
 
 constexpr uint64_t kReplyBudgetUs = 250000;
 constexpr uint64_t kBudgetRefillDiv = 8;  // 1 us of budget comes back per 8 us that pass
+// A host that takes its replies at 20 kB/s or faster is not slow: while no further
+// input waits on the link, the wait for a line that went out is charged to the budget
+// only beyond that line's time at this rate. (A USB host drains the 256-byte FIFO far
+// faster; a script that polls STATUS in a tight loop makes the board wait most of the
+// time, and must not lose lines for that.) With input waiting, every wait is charged.
+constexpr uint64_t kFairUsPerByte = 50;
 
 // The reply path of the command being handled. Set on entry to Protocol::feed(), so
 // the print helpers below need no extra argument. The firmware is single-threaded.
@@ -267,9 +273,11 @@ void ReplyOut::flushLine() {
             waitFromUs = now;
         }
     }
-    if (waitFromUs != 0) {  // the wait comes out of the link's budget
+    if (waitFromUs != 0) {  // the wait comes out of the link's budget, see kFairUsPerByte
         const uint64_t waited = time_us_64() - waitFromUs;
-        budgetUs_ = (stalled_ || waited >= budgetUs_) ? 0 : budgetUs_ - waited;
+        const uint64_t fair = (sent && !inputPending_) ? (uint64_t)lineLen_ * kFairUsPerByte : 0;
+        const uint64_t charge = waited > fair ? waited - fair : 0;
+        budgetUs_ = (stalled_ || charge >= budgetUs_) ? 0 : budgetUs_ - charge;
     }
     if (!sent) {
         dropped_ += (uint32_t)lineLen_;

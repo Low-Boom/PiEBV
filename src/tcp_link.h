@@ -41,6 +41,9 @@ void service();
 // The next byte from the host, or -1.
 int read();
 
+// True if more input from the host is in the buffer.
+bool inputPending();
+
 // Sends the reply bytes queued since the last call.
 void flush();
 

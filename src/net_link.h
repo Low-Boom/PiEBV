@@ -77,6 +77,9 @@ void service();
 // The next byte from the TCP host, or -1.
 int read();
 
+// True if more input from the TCP host has arrived.
+bool inputPending();
+
 // Sends the reply bytes queued since the last call. Call after the link's commands
 // of one loop() pass.
 void flush();

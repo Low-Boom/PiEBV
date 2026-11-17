@@ -288,18 +288,27 @@ void pollJoin(uint32_t nowMs) {
     }
 }
 
+// True if the record's place in flash is erased (never written).
+bool flashErased() {
+    const uint8_t *p = EEPROM.getConstDataPtr();
+    for (size_t i = 0; i < kWifiRecordSize; ++i) {
+        if (p[i] != 0xFF) {
+            return false;
+        }
+    }
+    return true;
+}
+
 // Writes cfg to flash if the flash holds something else. nullptr, or why it is not there.
 const char *store(const WifiConfig &cfg) {
     uint8_t rec[kWifiRecordSize];
     wifiRecordEncode(cfg, rec);
     EEPROM.begin(kEepromSize);  // (re)reads the sector
-    // Nothing to write if the flash already gives this set-up at power-up: the same
-    // record, or no valid record and the empty set-up (as begin() reads it).
-    WifiConfig inFlash;
-    if (!wifiRecordDecode(EEPROM.getConstDataPtr(), &inFlash)) {
-        inFlash = WifiConfig{};
-    }
-    if (wifiConfigSame(inFlash, cfg)) {
+    // Nothing to write if the flash holds this record already, or if it is erased and
+    // the set-up is the empty one (which is what begin() reads from erased flash). A
+    // record that cannot be read is always written over: it can hold a passphrase.
+    if (memcmp(EEPROM.getConstDataPtr(), rec, sizeof(rec)) == 0 ||
+        (flashErased() && wifiConfigSame(cfg, WifiConfig{}))) {
         return nullptr;
     }
     if (clock_get_hz(clk_sys) != kStandardClockHz) {
@@ -333,6 +342,9 @@ void begin() {
     EEPROM.begin(kEepromSize);
     if (!wifiRecordDecode(EEPROM.getConstDataPtr(), &g_cfg)) {
         g_cfg = WifiConfig{};  // no record: the set-up of every power-up until one is stored
+        if (!flashErased()) {  // damaged, or written by firmware with other rules
+            g_note = "the stored set-up cannot be read: send it again, or WIFI CLEAR";
+        }
     }
     g_saved = true;
 }
@@ -381,6 +393,10 @@ void service() {
 
 int read() {
     return tcplink::read();
+}
+
+bool inputPending() {
+    return tcplink::inputPending();
 }
 
 void flush() {
@@ -473,6 +489,9 @@ const char *set(const WifiConfig &, const char **) {
 void service() {}
 int read() {
     return -1;
+}
+bool inputPending() {
+    return false;
 }
 void flush() {}
 ProtocolLink &link() {

@@ -25,7 +25,7 @@ overview and the list of all pages are in the [README](../README.md).
 - **With Wi-Fi on, `ARM` can come from the network.** The network link has no password and no
   encryption: every computer that can reach the board can arm it. Losing the network link does not
   disarm. `DISARM` over USB stays available, but the network link can delay it: by design by about
-  250 ms for a slow network host, and by 1 s to 2 s, at most twice, if the radio chip stops
+  0.6 s for a slow network host, and by 1 s to 2 s, at most twice, if the radio chip stops
   answering (a wait above 3 s ends in a watchdog restart, which also disarms). The network link was not yet
   tested on a board, and these times were not measured. See [Network (Wi-Fi)](CONNECTING.md#network-wi-fi). The link is off until it
   is set up over USB.

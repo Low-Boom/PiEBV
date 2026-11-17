@@ -108,8 +108,9 @@ constexpr uint32_t kRadioStartWatchdogMs = 8000;
 // Characters taken from one host link before the other link gets its turn. The turn
 // also ends when it has lasted kLinkTurnUs. A command is slow only when its host is
 // slow to take the reply, and the replies of one command wait 250 ms at most
-// (protocol.h), so the other link's DISARM waits for one slow command of this link at
-// most, not for a whole burst of them.
+// (protocol.h), so the other link's DISARM waits for one slow command of this link
+// in each pass of loop(), not for a whole burst of them, and only until this link's
+// reply budget is used up.
 constexpr int kLinkBurst = 128;
 constexpr uint64_t kLinkTurnUs = 5000;
 
@@ -469,12 +470,14 @@ const char *wifiSet(const WifiConfig &cfg, const char **notSaved) {
 
 // One turn of a host link: up to kLinkBurst characters. One driver call per character;
 // `read` returns -1 when nothing is left, also when the data went away after a check
-// (e.g. a USB bus reset), so -1 is never fed as a character.
-template <class Read>
-void serviceLink(ProtocolLink &link, Read read) {
+// (e.g. a USB bus reset), so -1 is never fed as a character. `pending` tells if more
+// input of the link has arrived.
+template <class Read, class Pending>
+void serviceLink(ProtocolLink &link, Read read, Pending pending) {
     int c;
     const uint64_t t0 = time_us_64();
     for (int n = 0; n < kLinkBurst && (c = read()) >= 0; ++n) {
+        link.setInputPending(pending());  // input behind this character: see ReplyOut
         g_protocol.feed(link, (char)c);
         servicePendingStart();
         gpio_put(kPinArmedLed, g_armed);
@@ -573,11 +576,11 @@ void loop() {
     feedWatchdog();
     servicePendingStart();
     gpio_put(kPinArmedLed, g_armed);  // status only; every path that changes g_armed returns here
-    serviceLink(g_usbLink, [] { return Serial.read(); });
+    serviceLink(g_usbLink, [] { return Serial.read(); }, [] { return Serial.available() > 0; });
     // A full watchdog period for the one call in here that can be long: the check of a
     // radio chip that has stopped answering (net_link.h).
     feedWatchdog();
     net::service();
-    serviceLink(net::link(), [] { return net::read(); });
+    serviceLink(net::link(), [] { return net::read(); }, [] { return net::inputPending(); });
     net::flush();
 }

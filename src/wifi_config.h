@@ -60,7 +60,7 @@ inline bool wifiNameTextOk(const char *s) {
         if (cp < kMinOfLength[n] || cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF)) {
             return false;
         }
-        if (cp < 0x20 || (cp >= 0x7F && cp <= 0x9F) || cp == 0x200E || cp == 0x200F ||
+        if (cp < 0x20 || (cp >= 0x7F && cp <= 0x9F) || cp == 0x061C || cp == 0x200E || cp == 0x200F ||
             (cp >= 0x2028 && cp <= 0x202E) || (cp >= 0x2066 && cp <= 0x2069)) {
             return false;
         }
@@ -86,7 +86,7 @@ inline const char *wifiCheckSsid(const char *s) {
         return "needs a network name";
     }
     if (n > kWifiSsidMax) {
-        return "the network name is longer than 32 characters";
+        return "the network name is longer than 32 bytes";
     }
     return wifiNameTextOk(s) ? nullptr : "the network name must be UTF-8 text without control characters";
 }

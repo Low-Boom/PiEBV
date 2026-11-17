@@ -86,9 +86,9 @@ ID?            ->  PiEBV delay generator (Pico 2 W), firmware 5dfedd5
   restarts nothing.
 - **`DISARM`** is never refused. The outputs go low the moment the `M` arrives, the rest of that line
   is ignored, and a pending start is cancelled. It works even when the host is not reading replies,
-  though a host that reads its replies slowly, or not at all, can delay it by up to about 0.3 s
-  (about 0.65 s if the hosts of both links, USB and network, are slow; these times are by
-  design and were not measured on a board; a radio fault can add
+  though a host that reads its replies slowly, or not at all, can delay it by up to about 0.55 s
+  (about 1.2 s if the hosts of both links, USB and network, are slow; these times are from
+  tests on a computer and were not measured on a board; a radio fault can add
   more: see [the network limits](CONNECTING.md#limits)). The letters must be on
   one line: `DIS`, Enter, `ARM`, Enter is two commands and **arms** the board.
 - While DISARMED, **the sync clock and the marker keep running**, so the cameras stay synchronised.
@@ -339,7 +339,7 @@ TX_DROPPED=0
 | `RESET_RAW` | Raw restart registers (for bug reports) |
 | `WDT_RESETS` | Crash restarts since power-on |
 | `WDT_MS` | Crash-restart timeout (3000 ms). If the firmware ever hangs, it restarts DISARMED after this long. While the radio chip starts (at power-up with Wi-Fi set up, and during `WIFI ON`, `OFF` and `CLEAR`) the timeout is 8000 ms; `WDT_MS` does not show that. |
-| `WIFI` | `OFF` (the radio chip is off); `JOINING` (not yet joined); `DHCP` (joined, no address yet); `CONNECTED`; `FAULT (the radio chip stopped answering: send WIFI ON to start it again)`: the board switched the radio chip off and leaves it off until `WIFI ON` or a power cycle; or `UNAVAILABLE` (the `pico2` image). A reason can follow in brackets, e.g. `JOINING (network not found)`, `JOINING (the network refused the passphrase)`, `JOINING (link lost)`. While `JOINING`, the board tries again at intervals of 5 s to 20 s. |
+| `WIFI` | `OFF` (the radio chip is off); `JOINING` (not yet joined); `DHCP` (joined, no address yet); `CONNECTED`; `OFF (the stored set-up cannot be read: send it again, or WIFI CLEAR)` after a power-up with a damaged record; `FAULT (the radio chip stopped answering: send WIFI ON to start it again)`: the board switched the radio chip off and leaves it off until `WIFI ON` or a power cycle; or `UNAVAILABLE` (the `pico2` image). A reason can follow in brackets, e.g. `JOINING (network not found)`, `JOINING (the network refused the passphrase)`, `JOINING (link lost)`. While `JOINING`, the board tries again at intervals of 5 s to 20 s. |
 | `WIFI_SSID`, `WIFI_PASS` | The network name in use, and `SET` or `NONE` for the passphrase |
 | `WIFI_AT_POWER_UP` | 1 = the board joins the network at power-up |
 | `WIFI_SAVED` | 1 = the set-up in use is the one that the board loads at power-up. 0 = it is not (after `SAVED=0`): at the next power-up the board uses what its flash holds. |

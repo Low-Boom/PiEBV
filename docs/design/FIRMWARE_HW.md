@@ -130,13 +130,16 @@ laser timing.
   watchdog).
 - **Replies never block the firmware.** Each reply line is written whole. A link's replies wait
   for a slow host only out of a 250 ms budget, which comes back at one eighth of the time that
-  passes; once it is used up, replies stop waiting until the host catches up. So a host that
-  reads slowly, or not at all, delays a DISARM queued on its own link by at most about 0.3 s,
-  however many commands are queued before it, and can't trip the watchdog.
+  passes; once it is used up, replies stop waiting until the host catches up. While more input
+  of the link waits behind a command (a DISARM could be in it), every wait is charged to the
+  budget. While nothing waits behind it, a wait is charged only as far as the host reads slower
+  than 20 kB/s, so a host that polls fast loses no line. So a host that reads slowly, or not at
+  all, delays a DISARM queued on its own link by at most about 0.55 s (250 ms for the command
+  in progress, then about 0.3 s for any number of queued commands), and can't trip the watchdog.
   With the network link in use, a DISARM on one link can also wait for the other link: the main
   loop ends a link's turn after 5 ms, so the other link costs one slow command for each turn,
-  until its own budget is used up. Both hosts slow: about 0.65 s in all (500 ms of budget with a
-  quarter of the time coming back; 0.64 s in a test on a computer, not measured on a board). A radio chip that
+  until its own budget is used up. Both hosts slow: about 1.2 s in all. (Tests on a computer
+  with long command queues: 0.54 s and 1.24 s. Not measured on a board.) A radio chip that
   stops answering can hold the command loop for 1 s to 2 s, at most twice
   ([network limits](../CONNECTING.md#limits)).
   Replies that couldn't be sent are dropped a whole line at a time, and their bytes are counted in
