@@ -32,7 +32,7 @@ operating rules are in the [hardware reference](../Hardware.md).
 | Finest pitch | 0.65 mm | 0.5 mm (U20, SOT-583) |
 | Camera line lengths (buffer pad to resistor pad in Rev 2) | group spreads 1.18 / 2.47 / 1.37 mm (Sync / Trigger / TDRSTN, buffer pin to header pin) | `Sync1`–`Sync6` 74.082 mm, `Trigger1`–`Trigger6` 43.584 mm, `TDRSTN1`–`TDRSTN6` 51.472 mm. The spread in each group is 0.000 mm (below 0.001 mm). The stubs from the resistors to the header pins are equal in each group. |
 | Routing | – | The Rev 1 camera copper is removed. The camera lines are routed again, from the buffer to the series resistor. See [Routing](design/LAYOUT.md#routing). |
-| Copyright mark | – | Front silkscreen, lower left: `PiEBV Rev 2  (C) 2026 Louis M. Edelman, Chris Willert` and `GPL-3.0` (1 mm text). The licence of the repository is GPL v3 (`LICENSE`). |
+| Copyright mark | – | Front silkscreen, lower left: `PiEBV Rev 2  (C) 2026 Louis M. Edelman, Chris Willert` and `OCL v1.1 + RnD v1` (1 mm text). The licence of the repository is the Open Community License v1.1 with the add-on condition Research & Development v1 (`LICENSE`). |
 
 Rev 2 is made from the Rev 1 board by `tools/rev2` (see its README). The laser pulse lanes and the
 output block keep their Rev 1 copper. The camera lines do not: `tools/rev2/build.sh` removes the

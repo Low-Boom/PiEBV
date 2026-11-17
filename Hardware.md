@@ -618,7 +618,7 @@ Notes on the table:
    - Rev 1 text quoted `98a60c3b4332d6e9` from a tool `fp.py` that is not in the repository, and 194 vias from before the stitching lattice was removed.
 2. **Gerber package.**
    - The files come from the board's stored plot settings. The zip has 14 files (no drill maps).
-   - The committed zip has sha256 `6e8f2f57b0d8061f1c65cbb8b8a0669bd953783ddeead730004e731c7208f0f3`.
+   - The committed zip has sha256 `e5f2a1bbad14a2c9f5ea0f2df799f603d2b4fbc37a303ca363a31d31f7b88f98`.
    - The gerber files contain their creation date, so a new run of `tools/rev2/fab.sh` gives another check sum for the same board. `fab.sh` does not write the board file.
    - Note on Rev 1: the fab package and the placement file in the repository before Rev 2 were exported before the last Rev 1 layout change (C6 moved by 2.2 mm, stitching vias removed) and did not match the Rev 1 board.
 

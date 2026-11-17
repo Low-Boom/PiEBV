@@ -289,4 +289,21 @@ does not work, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
 ## License
 
-GNU General Public License, version 3 (GPL-3.0). See [LICENSE](LICENSE).
+PiEBV is distributed under **OCL v1.1 + RnD v1**: the
+[Open Community License v1.1](https://github.com/OpenCommunityLicence/OpenCommunityLicence)
+with the add-on condition
+[Research & Development v1](https://github.com/OpenCommunityLicence/OpenCommunityLicence/blob/main/addons/RnD-v1.md).
+The full text is in [LICENSE](LICENSE). The board silkscreen shows `OCL v1.1 + RnD v1`.
+
+Summary (for orientation only; the text in [LICENSE](LICENSE) applies):
+
+- **Non-commercial use:** you may use, copy, modify and hack PiEBV. If you distribute a
+  derivative, you must distribute it under OCL and keep the RnD v1 condition.
+- **Commercial use:** only for internal research and development: experiments and prototyping
+  to develop your own creations that are not derived from PiEBV. You must not use PiEBV or its
+  derivatives for manufacturing outside this scope without a separate business licence. You
+  must not copy or replicate them for a commercial purpose without a separate business licence
+  or repair licence, except for your internal right to repair.
+- **Text and data mining:** systematic or automated text or data mining of PiEBV is not
+  permitted without explicit permission.
+- Components that are under a licence that is not compatible with OCL keep their own licence.
