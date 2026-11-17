@@ -661,7 +661,7 @@ for x, t in ((200.5, "12V OK"), (206.5, "ARMED"), (229.6, "J22"), (235.5, "3V3")
 silk("CAMERA I/O LEVEL (J22)", 212.6, 47.2, just=-1)
 # Copyright and licence mark, front, lower left (below the offset table). "(C)": the stroke font has no copyright sign.
 silk("PiEBV Rev 2  (C) 2026 Louis M. Edelman, Chris Willert", 139.0, 92.0, size=1.0, just=-1)
-silk("GPL-3.0", 139.0, 94.0, size=1.0, just=-1)
+silk("OCL v1.1 + RnD v1", 139.0, 94.0, size=1.0, just=-1)
 # Fan header
 silk("J23  FAN 12V", 164.9, 122.0, just=-1)
 silk("0.2 A MAX", 173.6, 124.9)

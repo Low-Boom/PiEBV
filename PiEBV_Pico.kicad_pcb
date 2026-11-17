@@ -33240,10 +33240,10 @@
 			(justify left)
 		)
 	)
-	(gr_text "GPL-3.0"
+	(gr_text "OCL v1.1 + RnD v1"
 		(at 139 94 0)
 		(layer "F.SilkS")
-		(uuid "b780dfaa-f22e-8b10-2f9c-727296c57aa5")
+		(uuid "45204aed-7fa8-ccd3-81be-df841ade5b53")
 		(effects
 			(font
 				(size 1 1)
