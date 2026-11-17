@@ -76,6 +76,29 @@
         <div id="otherFields"></div>
         <div class="card-foot"><button class="apply primary" data-group="other">Apply</button><span class="msg"></span></div>
       </section>
+
+      <section class="card" id="wifiCard" hidden>
+        <div class="card-head"><h2>Network (Wi-Fi)</h2><span class="sub">The board's own link to a Wi-Fi network, TCP port <span id="wifiPort">4242</span></span></div>
+        <dl class="kv" id="wifiInfo"></dl>
+        <div id="wifiForm">
+          <div class="field wide">
+            <label for="wifiSsid">Network name<span class="code">SSID</span></label>
+            <div class="input"><input id="wifiSsid" type="text" maxlength="32" autocomplete="off" spellcheck="false"></div>
+          </div>
+          <div class="field wide">
+            <label for="wifiPass">Passphrase<span class="code">PASS</span></label>
+            <div class="input"><input id="wifiPass" type="password" maxlength="63" autocomplete="new-password"></div>
+            <div class="realized"><label class="check"><input id="wifiOpen" type="checkbox"> Open network (no passphrase)</label></div>
+          </div>
+          <div class="card-foot">
+            <button id="wifiOn" class="primary wifi-act">Join and store</button>
+            <button id="wifiOff" class="wifi-act">Switch off</button>
+            <button id="wifiClear" class="wifi-act">Erase set-up</button>
+          </div>
+        </div>
+        <p class="error" id="wifiMsg" role="status"></p>
+        <p class="hint" id="wifiHint"></p>
+      </section>
     </div>
 
     <section class="card keep" id="consoleCard">

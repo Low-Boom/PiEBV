@@ -106,7 +106,7 @@ laser timing.
 - **The firmware starts DISARMED.** An early start-up hook (`src/laser_gate.cpp`, `.preinit_array`
   priority 00110) drives GP12/GP13 LOW right after the chip's peripheral reset, before clock setup,
   USB, the Pico 2 W's radio-chip initialisation and `setup()`. They stay LOW until the host sends
-  `ARM` over USB. SYNC and MARKER start as soon as `setup()` applies the defaults, and keep running
+  `ARM` (over USB, or over the network link if it is set up). SYNC and MARKER start as soon as `setup()` applies the defaults, and keep running
   while DISARMED. A second hook (`src/clock_mode.cpp`, priority 00700, after the clock setup) reads
   the [clock jumper](#clock-jumper-j20-300-mhz-overclock); the laser pins are already LOW then.
 - **`ARM`** (exactly that word, no argument) restarts CH1, CH2 and MARKER together, so the first
@@ -123,12 +123,25 @@ laser timing.
   `LASER_PWR_OK` (12 V rail in its window).
 - **Watchdog.** A 3 s hardware watchdog, fed only from the main loop, restarts the chip if the
   firmware hangs. It comes back DISARMED, and `STATUS` shows `RESET=WATCHDOG` and a `WDT_RESETS`
-  count. No command can hang the firmware; to test the watchdog, write `0x80000000` (TRIGGER) to
+  count. The period is 8 s in place of 3 s while the radio chip of a Pico 2 W starts (at power-up
+  if Wi-Fi is set up, and during `WIFI ON`, `OFF` and `CLEAR`, which stop the command loop for that
+  call); the lasers are DISARMED then. No other command is designed to hold the firmware; to test the watchdog, write `0x80000000` (TRIGGER) to
   `WATCHDOG_CTRL` (`0x400d8000`) over SWD with the core running (a halted core pauses the
   watchdog).
-- **Replies never block the firmware.** Each reply line is written whole within a 250 ms budget, and
-  once a host stops reading, later replies stop waiting until it catches up. So a host that stops
-  reading delays a queued DISARM by at most about 250 ms in total and can't trip the watchdog.
+- **Replies never block the firmware.** Each reply line is written whole. A link's replies wait
+  for a slow host only out of a 250 ms budget, which comes back at one eighth of the time that
+  passes; once it is used up, replies stop waiting until the host catches up. While more input
+  of the link waits behind a command (a DISARM could be in it), every wait is charged to the
+  budget. While nothing waits behind it, a wait is charged only as far as the host reads slower
+  than 20 kB/s, so a host that polls fast loses no line. So a host that reads slowly, or not at
+  all, delays a DISARM queued on its own link by at most about 0.55 s (250 ms for the command
+  in progress, then about 0.3 s for any number of queued commands), and can't trip the watchdog.
+  With the network link in use, a DISARM on one link can also wait for the other link: the main
+  loop ends a link's turn after 5 ms, so the other link costs one slow command for each turn,
+  until its own budget is used up. Both hosts slow: about 1.2 s in all. (Tests on a computer
+  with long command queues: 0.54 s and 1.24 s. Not measured on a board.) A radio chip that
+  stops answering can hold the command loop for 1 s to 2 s, at most twice
+  ([network limits](../CONNECTING.md#limits)).
   Replies that couldn't be sent are dropped a whole line at a time, and their bytes are counted in
   `STATUS` as `TX_DROPPED`.
 - **Host scripts** must send `ARM` after every reset, and should check `RESET=` in `STATUS` first

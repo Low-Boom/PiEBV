@@ -109,9 +109,51 @@ Ordered by what would bite hardest.
     with the fan running: the junction temperature was not measured in the design. Do not fit
     a shunt on J23: it shorts the fan supply to GND.
 
-**Not an open item: Wi-Fi / Bluetooth.** The firmware doesn't use the radio; the Pico 2 W is fitted
-only because it is easier to buy than the plain Pico 2. The In1 GND plane and the In2 +5V and +3V3 islands run
-under the whole module, including its antenna, and F.Cu and B.Cu carry GND fill and some tracks
-there; this copper shortens the radio's range. That is acceptable even for a
-future wireless firmware, which would aim for short, Bluetooth-like range (a few metres), so no
-antenna keep-out is needed.
+## Network checks
+
+The network link ([Network (Wi-Fi)](CONNECTING.md#network-wi-fi)) was not tested on a board. Do
+these checks with J11 open (no laser output), at 150 MHz first.
+
+1. **Power-up time of the radio.** Send `WIFI SSID …`, `WIFI PASS …`, `WIFI ON` over USB. Measure
+   the time to the `OK WIFI=ON` reply. The firmware allows 8 s for it (the watchdog period for
+   this call). A `RESET=WATCHDOG` after `WIFI ON` means that the radio start hung.
+2. **Join.** `WIFI` shows `CONNECTED` and an address. Note the time from `WIFI ON`.
+3. **Stored set-up.** Power-cycle. The board joins the network again without a command, and
+   `WIFI_SAVED=1`. `WDT_RESETS` stays 0. Then send `WIFI OFF` and `WIFI ON` three times: each
+   `WIFI OFF` switches the radio chip off, and each `WIFI ON` must start it and join again.
+4. **Commands over the network.** Connect to port 4242. `ID?`, `STATUS`, a setting, `ARM` and
+   `DISARM` give the same replies as on USB. A second connection gets `ERR busy`. A connection
+   that opens and closes at once (`nc -z <address> 4242`, ten times) changes nothing:
+   `WDT_RESETS` stays 0 and the next connection works. Restart the server after a second
+   connection: connect a second host (it gets `ERR busy`), close both, then send `WIFI OFF` and
+   `WIFI ON` over USB within a minute. The board must join and take a connection again.
+5. **`DISARM` latency.** With a scope on J10 pin 1, send `DISARM` over the network and over USB
+   while the other link sends `STATUS` continuously. Measure the time from the command to the
+   end of the pulses on each link. Then, while ARMED, send `DISARM` and close the connection
+   without reading (the close then often resets it):
+   `python3 -c "import socket; s=socket.create_connection(('<address>',4242)); s.sendall(b'DISARM\n'); s.close()"`.
+   The board must disarm each time.
+6. **Pulse timing with network traffic.** Repeat the timing checks (pulse width, CH1-to-CH2 delay,
+   sync period) while a host sends `STATUS` continuously over the network. The values do not
+   change.
+7. **Lost network.** Switch the access point off while connected and ARMED (J11 open), with a host
+   that polls `STATUS` over the network (the GUI does). `WIFI` over USB shows `JOINING (link lost)`
+   and later `JOINING (network not found)`. Switch it on: the board joins again. During all of
+   this, USB commands answer, `DISARM` over USB acts without a delay that you can see, and `WDT_RESETS` stays 0. This is
+   the check for a reply that the host no longer acknowledges.
+8. **Lost host.** Disconnect the host computer from the network without closing the connection.
+   Note the time until `NET_CLIENT` goes to `NONE` (about 11 s for an idle connection).
+9. **Wrong passphrase, unknown network.** `WIFI` shows `JOINING` with the reason, and USB commands
+   answer. `WIFI=FAULT` here is a firmware error: the test command to the radio must get its
+   answer also from a radio that is not joined. After a `WIFI=FAULT`, from any cause, `WIFI ON`
+   must start the radio again. Watch `WIFI` for some hours of normal use at the place of use: a
+   `WIFI=FAULT` with a radio that is in order means that the test of the radio is too strict.
+10. **300 MHz.** Fit the clock jumper and power-cycle. The stored set-up joins the network.
+    `WIFI ON` with a new name gives `SAVED=0`. This combination is outside the RP2350
+    specification and may not work on every Pico.
+11. **Range.** Read `WIFI_RSSI_DBM` at the place of use. The In1 GND plane and the In2 +5V and
+    +3V3 islands run under the whole module, including its antenna, and F.Cu and B.Cu carry GND
+    fill and some tracks there; this copper shortens the radio's range. The board has no antenna
+    keep-out.
+12. **Interference.** Check the camera sync, trigger and pixel-reset lines and the laser outputs
+    with a scope while the radio transmits (a host that sends `STATUS` continuously).

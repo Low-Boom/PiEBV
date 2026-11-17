@@ -9,7 +9,9 @@ overview and the list of all pages are in the [README](../README.md).
 **Starting and stopping**
 
 - **`DISARM` always works, immediately.** The six letters D-I-S-A-R-M, in any case and anywhere in
-  what you type, disarm the outputs as soon as the last letter reaches the board. You don't need to
+  what you type, disarm the outputs as soon as the firmware reads the last letter. (A host that
+  does not read its replies, or the network link, can delay the reading: see the network bullet
+  below and [the command reference](COMMANDS.md#arm-and-disarm-in-detail).) You don't need to
   press Enter, as long as your terminal sends each key as you type it (all the terminals listed
   under [USB serial](CONNECTING.md#usb-serial) do). A monitor with a separate input box, such as the Arduino
   IDE's, sends nothing until you press Enter.
@@ -20,6 +22,13 @@ overview and the list of all pages are in the [README](../README.md).
 - **Losing the USB link does not disarm.** If the Pico's USB cable is pulled, the PC goes to sleep
   or a script is killed while ARMED, the board keeps running from J17 and the lasers keep pulsing,
   with no way to send `DISARM`. Stop them in hardware: take the J11 shunt off 1-2, or unplug J17.
+- **With Wi-Fi on, `ARM` can come from the network.** The network link has no password and no
+  encryption: every computer that can reach the board can arm it. Losing the network link does not
+  disarm. `DISARM` over USB stays available, but the network link can delay it: by design by about
+  0.6 s for a slow network host, and by 1 s to 2 s, at most twice, if the radio chip stops
+  answering (a wait above 3 s ends in a watchdog restart, which also disarms). The network link was not yet
+  tested on a board, and these times were not measured. See [Network (Wi-Fi)](CONNECTING.md#network-wi-fi). The link is off until it
+  is set up over USB.
 - **Before uploading new firmware, send `DISARM`.** The upload restarts the Pico, and a restart in
   the middle of a pulse can stretch that one pulse by an estimated 70–150 ns.
 - **Before using a debugger (SWD), send `DISARM` and remove the J11 shunt** (or unplug J17). A

@@ -1,6 +1,6 @@
 # PiEBV web GUI
 
-A small local web server that drives the PiEBV over USB serial. The browser page does everything
+A small local web server that drives the PiEBV over USB serial or over its network link. The browser page does everything
 the serial commands do, and draws the timing of one PIV pulse pair above the settings.
 
 - **Everything shown comes from the board.** The chart, the edge table and every "actual …" line
@@ -30,7 +30,7 @@ python tools/piebv_gui/piebv_gui.py --connect sim       # no hardware: the simul
 
 | Option | Meaning |
 |---|---|
-| `--connect TARGET` | Connect at start-up. `TARGET` is one of: a serial port; `auto` (the first USB device with the Pico's ID `2E8A`); `sim`; or a [pyserial URL](#wi-fi-later). Without it, pick the device on the page. |
+| `--connect TARGET` | Connect at start-up. `TARGET` is one of: a serial port; `auto` (the first USB device with the Pico's ID `2E8A`); `sim`; or a [pyserial URL](#network-wi-fi). Without it, pick the device on the page. |
 | `--http-port N` | Web server port (default 8765). |
 | `--host ADDR` | Interface to serve on. Default `127.0.0.1`: this computer only. See [Safety](#safety). |
 | `--no-browser` | Don't open a browser window. |
@@ -50,6 +50,7 @@ never uses 1200 baud, which would reboot the Pico into its bootloader.
 | Edge table | Every edge's realized time after CH1, in ns and in PIO cycles (6.667 ns at 150 MHz, 3.333 ns at 300 MHz with the clock jumper). |
 | Timing settings | `FREQ`, `WIDTH`, `DELAY` (Δt), `COMBINE`, and the camera marker's `MARKERWIDTH`, with one **Apply**. The 1 MHz camera sync clock is fixed by the firmware and is not an adjustable setting; `STATUS` reports its realized value. |
 | Pixel-reset gate | `PIXGATE`, `PIXLEAD`, `PIXLAG`. Hidden if the firmware predates the gate. |
+| Network (Wi-Fi) | The board's Wi-Fi link: its state, address, signal level, MAC address and connected host, and the set-up (network name, passphrase, **Join and store**, **Switch off**, **Erase set-up**). See [Network (Wi-Fi)](#network-wi-fi). Hidden if the firmware predates the link. |
 | Console | Full width at the bottom, and resizable by dragging its bottom edge. Shows every command and reply on the link. You can type any firmware command here, exactly as in a serial terminal. The camera sync clock is fixed at 1 MHz, not a command. The page's own once-a-second `STATUS` poll is kept out of the console. |
 
 **Entering values**
@@ -94,23 +95,53 @@ compiles the firmware's real `src/protocol.cpp` and `src/pulse_timing.h` for thi
 every reply, error message and realized value is the one the board would print. Build it once
 (see its README). The option appears in the device list only when the simulator binary exists.
 
-## Wi-Fi later
+## Network (Wi-Fi)
 
 The device layer accepts any [pyserial URL](https://pyserial.readthedocs.io/en/latest/url_handlers.html),
-so a network link needs no GUI change. When the firmware serves the same line protocol over TCP:
+and the firmware serves the same line protocol on TCP port 4242 when its Wi-Fi link is set up:
 
 ```
-python tools/piebv_gui/piebv_gui.py --connect socket://piebv.local:4242
+python tools/piebv_gui/piebv_gui.py --connect socket://192.168.1.37:4242
 ```
 
-or type the URL into *Other port or URL…* in the device list. This path is already tested: pyserial's
-`socket://` handler, talking to the simulator through a TCP bridge, works end to end.
+or type the URL into *Other port or URL…* in the device list. Use the address that `WIFI` shows
+(`WIFI_IP`), or `piebv.local` where mDNS works.
 
-The firmware side is still to be done; see "Wireless" in the top-level README. It needs:
-- the radio brought up;
-- a TCP server for the same commands;
-- authentication;
-- a decision on whether `ARM` may be sent wirelessly (`DISARM` must always stay reachable).
+**Set-up in the page.** Connect the page to the board's **USB serial port**, with the lasers
+DISARMED. In the *Network (Wi-Fi)* card:
+
+1. Type the network name and the passphrase. For a network without a passphrase, tick *Open
+   network*.
+2. Click **Join and store**. The page sends `WIFI SSID`, `WIFI PASS` and `WIFI ON`.
+3. Wait until *State* shows `CONNECTED`. *Address* then shows the URL to connect to.
+
+- For the network that the board has in use, an empty passphrase field keeps its passphrase
+  (the placeholder shows *unchanged*). The page then sends only `WIFI ON`. For any other name,
+  type the passphrase or tick *Open network*: a passphrase is never carried over to another
+  network. The same applies when the board holds a name or passphrase that was sent but not
+  joined (`WIFI_PENDING=1`, for example from the console).
+- The page checks the board's reply: the name and `PASS=SET` / `PASS=NONE` must be what you
+  asked for.
+- If the board refuses the join, the fields keep what you typed. Click **Join and store** again.
+- **Switch off** sends `WIFI OFF`. **Erase set-up** sends `WIFI CLEAR`.
+- The board's reply is shown under the buttons. `SAVED=0` means that the set-up is in use but not
+  stored (see [the limits](../../docs/CONNECTING.md#limits)).
+- The passphrase is shown as `********` in the console, also when you type `WIFI PASS …` there.
+  The page clears the field after a join and when the link closes. The board does not send it
+  back. The console takes printable ASCII characters only.
+- The buttons and the Enter key do nothing while ARMED, and while the page is connected over the
+  network (a `socket://` address): the board changes its Wi-Fi set-up only over USB and only
+  while DISARMED.
+- While the board starts its radio (some seconds), the page shows no new state. **DISARM** is
+  still written to the board at once.
+- The name and the passphrase can hold printable ASCII characters only in the page. They cannot
+  start or end with a space, and cannot contain the letters `disarm` in sequence.
+- The same set-up is possible with the `WIFI` commands in the console or a serial terminal: see
+  [Network (Wi-Fi)](../../docs/CONNECTING.md#network-wi-fi).
+- The board takes one network host at a time. Close other connections first.
+- The link has no password and no encryption, and a lost link does not disarm.
+- Tested: pyserial's `socket://` handler with the simulator through a TCP bridge. Not yet tested:
+  the link to a board.
 
 ## Files
 
@@ -132,3 +163,4 @@ JSON API (same origin, used by the page):
 | `POST /api/apply` `{"settings": {"FREQ": 15, "DELAY": 10000}}` | Set adjustable values; returns each reply |
 | `POST /api/arm`, `POST /api/disarm` | Arm / disarm |
 | `POST /api/command` `{"line": "HELP"}` | Any one command; returns every reply line |
+| `POST /api/wifi` `{"action": "on", "ssid": "Lab Network", "passphrase": "…"}` | Wi-Fi set-up. `action` is `on`, `off` or `clear`. For `on`, leave out `passphrase` to keep the board's one, or send `""` for an open network. Returns each reply. |

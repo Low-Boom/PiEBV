@@ -12,7 +12,7 @@ fixed in `platformio.ini`.
 | Command | Builds |
 |---|---|
 | `pio run` | `pico2w` (default): Raspberry Pi Pico 2 W |
-| `pio run -e pico2` | plain Raspberry Pi Pico 2 (same pins and socket) |
+| `pio run -e pico2` | plain Raspberry Pi Pico 2 (same pins and socket; no network link) |
 | `pio run -t upload` | builds and uploads to a connected board (send `DISARM` first) |
 
 Output files land in `.pio/build/<env>/`, including `firmware.uf2` for drag-and-drop loading. Load
@@ -42,6 +42,33 @@ python check_pixgate.py
 
 The expected output is listed in [its README](../tools/timing_check/README.md). These checks don't
 replace a scope check on the board.
+
+## Network check
+
+`tools/net_check/` runs the firmware's TCP link (`src/tcp_link.cpp`) and command protocol on a
+computer, against a model of lwIP. It checks what happens to commands and replies when a host
+closes or resets the connection, when a second host connects and when lwIP has no memory. Run it
+after changing `src/tcp_link.*` or `src/protocol.*`:
+
+```
+cd tools/net_check
+g++ -std=c++17 -O1 -g -Wall -Wextra -fsanitize=address,undefined -DPIEBV_NET_CHECK \
+    -I fake -I ../piebv_sim/fake -I ../../src -o net_check \
+    net_check.cpp ../../src/tcp_link.cpp ../../src/protocol.cpp
+./net_check
+```
+
+It prints `net_check: all checks passed`. A second check, `tools/net_check/lwip`, runs the same
+code against lwIP itself (the lwIP sources that PlatformIO installed for the firmware):
+
+```
+cd tools/net_check/lwip
+sh build.sh
+./lwip_check
+```
+
+Its last line is `lwip_check: all checks passed`. The two checks do not replace the
+[network checks](FIRST_BOARD_CHECKS.md#network-checks) on a board: see [their README](../tools/net_check/README.md).
 
 ## Signal simulation
 

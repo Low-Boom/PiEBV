@@ -1,7 +1,8 @@
 // PiEBV - PIV delay generator (Raspberry Pi Pico 2 / Pico 2 W, RP2350)
 // Built via the community arduino-pico core (see platformio.ini) since
 // PlatformIO's official "raspberrypi" platform/Mbed core has no RP2350
-// support; the wireless radio of a Pico 2 W is unused by this firmware.
+// support. On a Pico 2 W the radio can carry the command protocol over Wi-Fi
+// (net_link.h); it is off until it is set up with the WIFI command over USB.
 //
 // IDS EVS event-camera synchronizer, implemented with PIO state machines and the
 // RP2350 clock generator (no CPU busy-waits). Outputs (the GPIO map is in board.h):
@@ -38,8 +39,14 @@
 // Clock. clk_sys is 150 MHz (6.667 ns per PIO cycle), or 300 MHz (3.333 ns) when the
 // clock jumper is fitted at boot (clock_mode.h). All timing follows clock_get_hz().
 //
+// Host links. The command protocol runs on the USB serial port and, with Wi-Fi on,
+// on one TCP connection. Both links have the same commands, ARM included; only the
+// Wi-Fi set-up is limited to USB. loop() reads both in bounded turns, so that
+// neither link can keep a DISARM on the other one waiting.
+//
 // See src/pio_pulse.h for the PIO program design, src/pulse_timing.h for the
-// cycle math and timing checks, and src/protocol.h for the serial command set.
+// cycle math and timing checks, src/protocol.h for the command set, and
+// src/net_link.h for the network link.
 
 #include <Arduino.h>
 #include <cstdio>
@@ -53,6 +60,7 @@
 #include "hardware/structs/watchdog.h"
 #include "hardware/timer.h"
 #include "laser_gate.h"
+#include "net_link.h"
 #include "pio_pulse.h"
 #include "protocol.h"
 #include "pulse_timing.h"
@@ -93,6 +101,18 @@ constexpr const char *kBoardName = "unknown board";
 // leaves a wide margin above that and is well under the RP2350 maximum of 0xFFFFFF
 // us = 16.7 s. If it ever fires, the chip reboots DISARMED.
 constexpr uint32_t kWatchdogMs = 3000;
+// Watchdog period while the radio chip powers up (net::start(), net::set()): the one
+// long call in the firmware. Only used while DISARMED, when the laser pads are gated
+// LOW, so a longer period delays nothing but the restart after a hang.
+constexpr uint32_t kRadioStartWatchdogMs = 8000;
+// Characters taken from one host link before the other link gets its turn. The turn
+// also ends when it has lasted kLinkTurnUs. A command is slow only when its host is
+// slow to take the reply, and the replies of one command wait 250 ms at most
+// (protocol.h), so the other link's DISARM waits for one slow command of this link
+// in each pass of loop(), not for a whole burst of them, and only until this link's
+// reply budget is used up.
+constexpr int kLinkBurst = 128;
+constexpr uint64_t kLinkTurnUs = 5000;
 
 // SCRATCH4 as the SDK's watchdog_enable() left it (WATCHDOG_NON_REBOOT_MAGIC, private to
 // hardware_watchdog/watchdog.c; getResetReason() relies on it). Read back after
@@ -120,6 +140,16 @@ PulseChannel *const g_pixGateOnly[] = {&g_pixGate};
 PulseParams g_params;
 RealizedTiming g_rt;  // what is loaded in the state machines now
 Protocol g_protocol;
+
+// The USB serial port as a host link.
+class UsbSink final : public ReplySink {
+public:
+    bool connected() override { return (bool)Serial; }  // DTR: a host has the port open
+    int room() override { return Serial.availableForWrite(); }
+    size_t write(const uint8_t *buf, size_t n) override { return Serial.write(buf, n); }
+};
+UsbSink g_usbSink;
+ProtocolLink g_usbLink(g_usbSink, true);
 bool g_pioReady = false;
 bool g_configured = false;  // g_rt is loaded and running; false again after a failed load
 bool g_armed = false;  // always false after any reset
@@ -184,8 +214,9 @@ void feedWatchdog() {
 
 // Claims the pio0 state machines of the pulse group (kSmMask) before anything else
 // can. If any is already taken, nothing is claimed and ARM is refused. (On a Pico 2 W
-// the core's CYW43 init in initVariant() has already claimed a state machine, but the
-// SDK allocates from the highest PIO down, so it lands on pio2.)
+// the radio's driver claims a state machine too, when the radio chip first powers up.
+// That is after this call, and the SDK allocates from the highest PIO down, so it
+// lands on pio2.)
 bool claimPioStateMachines() {
     for (uint sm = 0; sm < NUM_PIO_STATE_MACHINES; ++sm) {
         if (((kSmMask >> sm) & 1u) && pio_sm_is_claimed(kPio, sm)) {
@@ -409,6 +440,52 @@ void printSystemStatus(Print &out) {
     out.println(g_reset.wdtCount);
     out.print(F("WDT_MS="));
     out.println(kWatchdogMs);
+    net::printStatus(out);
+}
+
+// Runs `call` with the longer watchdog period of the radio chip's power-up.
+template <class Call>
+auto withRadioStartWatchdog(Call call) {
+    rp2040.wdt_begin(kRadioStartWatchdogMs);
+    auto result = call();
+    rp2040.wdt_begin(kWatchdogMs);
+    g_wdtRunMagic = watchdog_hw->scratch[4];  // as watchdog_enable() left it (see g_wdtRunMagic)
+    return result;
+}
+
+// Protocol hooks: the Wi-Fi set-up.
+void wifiGet(WifiConfig *cfg) {
+    *cfg = net::config();
+}
+
+// The radio chip's power-up and the flash write (one sector erase) stop the command
+// loop, so both are refused while ARMED or while a laser start is pending: nothing may
+// delay a DISARM then.
+const char *wifiSet(const WifiConfig &cfg, const char **notSaved) {
+    if (g_armed || g_startPending) {
+        return "DISARM first: the radio start and the flash write stop the command loop for a moment";
+    }
+    return withRadioStartWatchdog([&] { return net::set(cfg, notSaved); });
+}
+
+// One turn of a host link: up to kLinkBurst characters. One driver call per character;
+// `read` returns -1 when nothing is left, also when the data went away after a check
+// (e.g. a USB bus reset), so -1 is never fed as a character. `pending` tells if more
+// input of the link has arrived.
+template <class Read, class Pending>
+void serviceLink(ProtocolLink &link, Read read, Pending pending) {
+    int c;
+    const uint64_t t0 = time_us_64();
+    for (int n = 0; n < kLinkBurst && (c = read()) >= 0; ++n) {
+        link.setInputPending(pending());  // input behind this character: see ReplyOut
+        g_protocol.feed(link, (char)c);
+        servicePendingStart();
+        gpio_put(kPinArmedLed, g_armed);
+        feedWatchdog();  // a long burst of input is still progress
+        if (time_us_64() - t0 >= kLinkTurnUs) {
+            break;
+        }
+    }
 }
 
 void printIdentity(Print &out) {
@@ -448,9 +525,11 @@ void setup() {
     // (The hooks are installed even if pio0 is unavailable, so commands still get
     // an answer -- applyPulseParams() then starts SYNC only, refuses every change, and
     // ARM is refused.)
+    net::begin();  // the stored Wi-Fi set-up (a flash read); the radio starts at the end of setup()
     const char *why = g_protocol.begin(
         &g_params, ProtocolHooks{applyPulseParams, setArmed, isArmed, startPendingUs, printSystemStatus,
-                                 printIdentity, clkHz});
+                                 printIdentity, clkHz, wifiGet, net::kAvailable ? wifiSet : nullptr,
+                                 net::printStatus});
     if (!g_pioReady) {
         why = "pio0 unavailable (state machine already claimed or instruction memory full)";
     } else if (!syncReady) {  // not reachable with the static_assert on kPinSync; reported, not ignored
@@ -483,20 +562,25 @@ void setup() {
         Serial.println(g_loadFailWhy);
     }
 
-    rp2040.wdt_begin(kWatchdogMs);  // last: every boot-time wait above is finished
-    g_wdtRunMagic = watchdog_hw->scratch[4];  // as watchdog_enable() left it (see g_wdtRunMagic)
+    // Last: every boot-time wait above is finished. The watchdog starts with the long
+    // period, joins the Wi-Fi network if the stored set-up asks for it (the lasers are
+    // DISARMED), and then runs at kWatchdogMs. After a watchdog reset the radio stays
+    // off until WIFI ON, so a radio fault cannot reset the board again and again.
+    withRadioStartWatchdog([] {
+        net::start(g_reset.reason != RP2040::WDT_RESET);
+        return 0;
+    });
 }
 
 void loop() {
     feedWatchdog();
     servicePendingStart();
     gpio_put(kPinArmedLed, g_armed);  // status only; every path that changes g_armed returns here
-    // One USB call per byte. read() returns -1 when nothing is left, also when the data
-    // went away after a check (e.g. a USB bus reset), so -1 is never fed as a character.
-    for (int c; (c = Serial.read()) >= 0;) {
-        g_protocol.feed((char)c);
-        servicePendingStart();
-        gpio_put(kPinArmedLed, g_armed);
-        feedWatchdog();  // a long burst of input is still progress
-    }
+    serviceLink(g_usbLink, [] { return Serial.read(); }, [] { return Serial.available() > 0; });
+    // A full watchdog period for the one call in here that can be long: the check of a
+    // radio chip that has stopped answering (net_link.h).
+    feedWatchdog();
+    net::service();
+    serviceLink(net::link(), [] { return net::read(); }, [] { return net::inputPending(); });
+    net::flush();
 }
