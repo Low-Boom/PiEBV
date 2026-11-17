@@ -87,7 +87,8 @@ ID?            ->  PiEBV delay generator (Pico 2 W), firmware 5dfedd5
 - **`DISARM`** is never refused. The outputs go low the moment the `M` arrives, the rest of that line
   is ignored, and a pending start is cancelled. It works even when the host is not reading replies,
   though a host that reads its replies slowly, or not at all, can delay it by up to about 0.3 s
-  (about 0.5 s if the hosts of both links, USB and network, are slow; a radio fault can add
+  (about 0.65 s if the hosts of both links, USB and network, are slow; these times are by
+  design and were not measured on a board; a radio fault can add
   more: see [the network limits](CONNECTING.md#limits)). The letters must be on
   one line: `DIS`, Enter, `ARM`, Enter is two commands and **arms** the board.
 - While DISARMED, **the sync clock and the marker keep running**, so the cameras stay synchronised.
@@ -101,7 +102,7 @@ own works on both links. All the others work **only on the USB port**.
 | Command | What it does |
 |---|---|
 | `WIFI` (or `WIFI?`) | Shows the Wi-Fi and network lines of [`STATUS`](#status) |
-| `WIFI SSID <name>` | Gives the network name (1 to 32 characters; spaces inside are allowed) for the next `WIFI ON`. It also discards a passphrase given before: send `WIFI PASS` after `WIFI SSID`. |
+| `WIFI SSID <name>` | Gives the network name (1 to 32 bytes: 32 ASCII characters, fewer with letters outside ASCII; spaces inside are allowed) for the next `WIFI ON`. It also discards a passphrase given before: send `WIFI PASS` after `WIFI SSID`. |
 | `WIFI PASS <passphrase>` | Gives the WPA2 passphrase (8 to 63 characters) for the next `WIFI ON`. `WIFI PASS` on its own selects an open network. The passphrase is never shown. |
 | `WIFI ON` | Joins the network now and at every power-up, and stores the set-up in flash |
 | `WIFI OFF` | Switches the radio off, now and at power-up. Keeps the name and the passphrase that are in use. |
@@ -117,7 +118,8 @@ WIFI ON      ->  OK WIFI=ON SSID=Lab Network PASS=SET SAVED=0 (not stored: flash
   `ERR WIFI ON refused: DISARM first: …`.
 - `OK WIFI=ON` means that the join started, not that it completed. Send `WIFI` to see the result.
 - The reply names the set-up that is now in use: the name, and `PASS=SET` or `PASS=NONE` (never
-  the passphrase). Read it: `PASS=NONE` means an open network.
+  the passphrase). Read it: `PASS=NONE` means an open network. The name is everything between
+  `SSID=` and the **last** ` PASS=` of the line (a name can itself hold such text).
 - `SAVED=0 (…)` means that the set-up is in use but not in flash, with the reason.
 - A name or passphrase given with `WIFI SSID` or `WIFI PASS` holds only until the next `WIFI ON`,
   `OFF` or `CLEAR`. `WIFI ON` uses it. `WIFI OFF` and `WIFI CLEAR` discard it, and so does each
@@ -133,7 +135,8 @@ WIFI ON      ->  OK WIFI=ON SSID=Lab Network PASS=SET SAVED=0 (not stored: flash
   longer than the other commands (up to some seconds; not yet measured).
 - `<name>` and `<passphrase>` are the rest of the line. They cannot start or end with a space,
   and cannot contain the letters `disarm` in sequence. A name must be UTF-8 text (plain ASCII is
-  that) without control characters (a tab included). A passphrase must be printable ASCII
+  that) without control characters (a tab included) and without the characters that change the
+  writing direction. A passphrase must be printable ASCII
   characters.
 - A host on the network link can read the set-up with `WIFI` or `STATUS`, but not the passphrase.
 

@@ -191,9 +191,11 @@ with a serial port. For a terminal, use `nc 192.168.1.37 4242`, or PuTTY with co
   - *A host that reads replies slowly, or not at all:* the replies of a link wait for its host
     only out of a time budget of 250 ms, which comes back slowly (one eighth of the time that
     passes). When it is used up, replies are dropped (`TX_DROPPED`) until the host has caught up.
-    Each link gives the other link its turn after one slow command. So a `DISARM` can wait about
+    Each link gives the other link its turn after one slow command, and the other link can be
+    slow again at its next turns until its own budget is used up. So a `DISARM` can wait about
     0.3 s for the replies on its own link, however many commands are queued before it, and about
-    250 ms for the other link.
+    0.35 s more if the host of the other link is slow also: about 0.65 s in all (calculated, and
+    0.64 s in a test on a computer).
   - *A radio chip that stops answering:* the firmware tests the radio with one command every 2 s
     while joined, before each new join, and at once after a send that took long. While a test
     runs, and after a failed test, it hands no frame to the radio's driver. The driver holds the
@@ -217,11 +219,11 @@ with a serial port. For a terminal, use `nc 192.168.1.37 4242`, or PuTTY with co
   until power-off. A set-up that was stored at 150 MHz is used at 300 MHz also.
 - A name or a passphrase cannot start or end with a space, and cannot contain the letters
   `disarm` in sequence (in any case): the board reads them as the `DISARM` command. A name must be
-  UTF-8 text (plain ASCII is that) without control characters; a name in another encoding, such as
+  UTF-8 text (plain ASCII is that) without control characters and writing-direction characters, at most 32 bytes long; a name in another encoding, such as
   Shift-JIS, is refused. A passphrase must be printable ASCII characters.
 - A host that connects while another host has the link gets `ERR busy`. This also applies to
   your own computer after its old connection was cut without a close: the link is free again
-  after about 11 s.
+  after about 11 s if the old connection was idle, and later if a reply was on its way.
 - A reply that the network host does not take in time is dropped (`TX_DROPPED`), as on USB.
 - After a watchdog restart the radio stays off (`WIFI=OFF (held off after a watchdog reset …)`)
   until `WIFI ON` or a power cycle.

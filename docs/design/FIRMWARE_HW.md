@@ -133,8 +133,10 @@ laser timing.
   passes; once it is used up, replies stop waiting until the host catches up. So a host that
   reads slowly, or not at all, delays a DISARM queued on its own link by at most about 0.3 s,
   however many commands are queued before it, and can't trip the watchdog.
-  With the network link in use, a DISARM on one link can also wait for one slow command of the
-  other link (about 250 ms): the main loop ends a link's turn after 5 ms. A radio chip that
+  With the network link in use, a DISARM on one link can also wait for the other link: the main
+  loop ends a link's turn after 5 ms, so the other link costs one slow command for each turn,
+  until its own budget is used up. Both hosts slow: about 0.65 s in all (500 ms of budget with a
+  quarter of the time coming back; 0.64 s in a test on a computer, not measured on a board). A radio chip that
   stops answering can hold the command loop for 1 s to 2 s, at most twice
   ([network limits](../CONNECTING.md#limits)).
   Replies that couldn't be sent are dropped a whole line at a time, and their bytes are counted in

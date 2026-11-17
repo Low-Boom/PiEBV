@@ -4,8 +4,9 @@
 # Run `pio run` once before, so that the package is there.
 #   sh build.sh [path to .../pico-sdk/lib/lwip/src]
 set -e
-cd "$(dirname "$0")"
 L="${1:-$HOME/.platformio/packages/framework-arduinopico/pico-sdk/lib/lwip/src}"
+case "$L" in /*) ;; *) L="$(pwd)/$L" ;; esac  # a relative path is from where the script was called
+cd "$(dirname "$0")"
 if [ ! -f "$L/core/tcp.c" ]; then
     echo "lwIP sources not found in $L (run 'pio run' first, or give the path)" >&2
     exit 1

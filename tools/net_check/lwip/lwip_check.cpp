@@ -38,6 +38,9 @@ uint64_t time_us_64() { return g_nowUs += 5; }
 extern "C" u32_t sys_now(void) { return (u32_t)(g_nowUs / 1000); }
 extern "C" unsigned int lwip_test_rand(void) { return (unsigned)rand(); }
 
+// The check does not free its host records: no leak report (build.sh uses the address sanitizer).
+extern "C" const char *__asan_default_options() { return "detect_leaks=0"; }
+
 int LWIPMutex::depth = 0;
 LWIPMutex::~LWIPMutex() { --depth; }
 
@@ -145,6 +148,15 @@ static size_t count(const std::string &s, const char *what) { size_t n = 0; for 
 
 int main(int argc, char **argv) {
     const std::string only = argc > 1 ? argv[1] : "";
+    static const char *const kCases[] = {"reset", "halfclose", "bind", "small", "help", "window", "rejectdata", "pool", "keepalive"};
+    bool known = only.empty();
+    for (const char *c : kCases) known = known || only == c;
+    if (!known) {
+        printf("unknown case '%s'; the cases are:", only.c_str());
+        for (const char *c : kCases) printf(" %s", c);
+        printf("\n");
+        return 2;
+    }
     ProtocolHooks hooks{};
     hooks.apply = [](const PulseParams &p, RealizedTiming *r) { return realizeTiming(p, 150000000, r); };
     hooks.setArmed = [](bool arm) -> const char * { g_armed = arm; return nullptr; };
@@ -269,6 +281,8 @@ int main(int argc, char **argv) {
     if (only == "window" || only.empty()) {
         g_case = "window";
         advance(3000); inject(*a, TCP_ACK); loopPass();
+        inject(*a, TCP_ACK | TCP_PSH, "ARM\n"); loopPass(); inject(*a, TCP_ACK); loopPass();
+        CHECK(g_armed);
         // Fill the whole announced window without the loop running.
         std::string line = "\n", chunk;  // empty lines: no replies, so only tcp_recved() can open the window
         while (chunk.size() + line.size() <= 1460) chunk += line;
@@ -286,6 +300,9 @@ int main(int argc, char **argv) {
         for (int i = 0; i < 400; ++i) { loopPass(); inject(*a, TCP_ACK); }
         NOTE("final window %u (the announced value can lag the real window by less than 4 segments)", a->peerWnd);
         CHECK(passes < 2000 && a->peerWnd >= TCP_WND - 4 * TCP_MSS);
+        CHECK(g_armed);  // the DISARM beyond the window was refused by lwIP, not stored
+        inject(*a, TCP_ACK | TCP_PSH, "DISARM\n"); loopPass(); inject(*a, TCP_ACK); loopPass();
+        CHECK(!g_armed);
     }
 
     if (only == "rejectdata" || only.empty()) {

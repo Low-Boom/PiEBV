@@ -67,8 +67,7 @@ sh build.sh          # or: sh build.sh <path to pico-sdk/lib/lwip/src>
 - `build.sh` compiles lwIP's core and TCP files from
   `~/.platformio/packages/framework-arduinopico/pico-sdk/lib/lwip/src` with `inc/lwipopts.h`. Keep
   that file in step with the core's `include/lwipopts.h` when the core is upgraded.
-- With the address sanitizer, run it as `ASAN_OPTIONS=detect_leaks=0 ./lwip_check`: the check
-  does not free its host records.
+- An unknown case name prints the list of cases and gives exit code 2.
 
 | Case (name) | What must be true |
 |---|---|
@@ -77,7 +76,7 @@ sh build.sh          # or: sh build.sh <path to pico-sdk/lib/lwip/src>
 | `bind` | After a second host and a stop, a new start works at once (lwIP keeps a closed connection on the port for 2 minutes, and the build has no address re-use) |
 | `small` | 30 one-line commands whose replies the host acknowledges late: no reply waits for memory, and none is lost |
 | `help` | The whole `HELP` reply arrives without a stall |
-| `window` | A full receive window is read, and the window opens again |
+| `window` | A full receive window is read, and the window opens again. Data beyond the window is not taken. |
 | `rejectdata` | A second host that sends data gets the busy line; silent second hosts are gone after their time limit |
 | `pool` | Second hosts that read the busy line and keep their sockets open do not use up lwIP's connection blocks |
 | `keepalive` | A silent host frees the link after 10 s to 13 s |

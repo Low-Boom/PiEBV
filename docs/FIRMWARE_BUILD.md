@@ -64,7 +64,7 @@ code against lwIP itself (the lwIP sources that PlatformIO installed for the fir
 ```
 cd tools/net_check/lwip
 sh build.sh
-ASAN_OPTIONS=detect_leaks=0 ./lwip_check
+./lwip_check
 ```
 
 Its last line is `lwip_check: all checks passed`. The two checks do not replace the
