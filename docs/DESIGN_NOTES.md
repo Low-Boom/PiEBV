@@ -10,6 +10,7 @@ operating rules are in the [hardware reference](../Hardware.md).
 | [design/POWER.md](design/POWER.md) | USB-C PD input, +5 V, +12 V supply and power-good gate, fan supply, +VCAM mux and data-sheet values, camera supply budget, +3.3 V, board output rating |
 | [design/SIGNALS.md](design/SIGNALS.md) | Camera signal chains, trigger source and CH1/CH2 skew, pixel reset, laser outputs, amplitude budget, output mode, External Sync Out timing, camera line series resistors, laser interlock, status LED circuits |
 | [design/FIRMWARE_HW.md](design/FIRMWARE_HW.md) | Firmware pin map, timing limit derivations, combined mode, pixel-reset gate, boot and arming, clock jumper (300 MHz overclock) |
+| [design/NETWORK.md](design/NETWORK.md) | Network link (Wi-Fi and TCP): decisions, structure, the rules for `DISARM` and the watchdog, radio fault handling, the two host links, verification and what is not verified |
 | [Rev 2 changes](#rev-2-changes) | The differences between Rev 1 and Rev 2 (below) |
 
 ---

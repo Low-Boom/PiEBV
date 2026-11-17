@@ -128,7 +128,8 @@ off until you set it up. Bluetooth is not used.
 
 **What the network must be:** an open network, or WPA2 with one passphrase for all users
 (WPA2-Personal). A network that asks each user for a name and a password (WPA2-Enterprise, e.g.
-eduroam) cannot be joined. The address comes from DHCP.
+eduroam) cannot be joined. The network must have a 2.4 GHz band: the Pico 2 W radio does not use
+5 GHz. The address comes from DHCP.
 
 ### Set-up
 

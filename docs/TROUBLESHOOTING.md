@@ -26,5 +26,19 @@ documentation. The overview and the list of all pages are in the [README](../REA
 | Cameras see no events around the laser pulses with `PIXGATE` on | PIXLEAD too short for the sensor to settle, or PIXLAG shorter than the sensor's event delay | Increase PIXLEAD and PIXLAG, or set `PIXGATE 0` to compare |
 | `RESET=WATCHDOG` in STATUS | The firmware hung and restarted itself, DISARMED | Note what you were doing and report it; arm again deliberately |
 | `TX_DROPPED` keeps rising | The host is not reading the replies | Read every reply line |
+| `ERR WIFI refused: …` | A Wi-Fi set-up command was sent over the network link | Send it over the Pico's USB port |
+| `ERR WIFI ON refused: DISARM first: …` | The board is ARMED, or a laser start is pending | Send `DISARM`, then the `WIFI` command |
+| `WIFI=JOINING (network not found)` | Wrong network name, the access point is off or out of range, or it is a 5 GHz-only network (the Pico 2 W radio uses 2.4 GHz) | Check the name (capitals matter) and the access point |
+| `WIFI=JOINING (the network refused the passphrase)` | Wrong passphrase, or a network that needs a user name (WPA2-Enterprise, not supported) | Send `WIFI SSID`, `WIFI PASS` and `WIFI ON` again |
+| `WIFI=DHCP` and it stays | The board joined, but the network gave no address | Check the network's DHCP server; give its administrator `WIFI_MAC` if the network accepts only known devices |
+| `WIFI=CONNECTED`, but the computer cannot connect | Wrong address or port, a firewall, or a network that isolates its clients | Use `WIFI_IP` and port 4242; connect from a computer on the same network |
+| `ERR busy: another host is connected` | Another connection has the link, or your own old connection was cut without a close | Close the other connection, or wait about 11 s |
+| `OK WIFI=ON … PASS=NONE …` for a network with a passphrase | `WIFI SSID` was sent after `WIFI PASS`, or without it: a new name discards the passphrase | Send `WIFI SSID`, then `WIFI PASS`, then `WIFI ON` |
+| `… SAVED=0 (not stored: flash is written only at the 150 MHz clock …)` | The clock jumper J20 is fitted | The set-up holds until power-off. To store it, remove the J20 shunt, power-cycle, and send it again. |
+| `WIFI=FAULT (…)` | The radio chip did not answer two tests in a row; the board switched it off | Send `WIFI ON` over USB. If it comes back often, note `WIFI_RSSI_DBM` and report it. |
+| `WIFI=OFF (held off after a watchdog reset …)` | The board restarted itself; the radio is not started again without a command | Check `RESET` and `WDT_RESETS`, then send `WIFI ON` or power-cycle |
+| `WIFI=OFF (the stored set-up cannot be read …)` | The stored record is damaged, or was written by firmware with other rules | Send the set-up again, or `WIFI CLEAR` |
+| `WIFI=UNAVAILABLE` | The `pico2` firmware image is loaded | Load the `pico2w` image on a Pico 2 W |
+| Replies over the network stop, `TX_DROPPED` rises | The host does not read or acknowledge the replies | Read every reply line; check the radio link (`WIFI_RSSI_DBM`) |
 | `pio run -t upload` can't find the Pico | The automatic restart into the bootloader failed | Unplug J17, then hold BOOTSEL while plugging in the Pico's USB, and upload again or copy the UF2 |
 | First build fails on Windows with git path errors | The PlatformIO folder is on a long path | Keep it at the default `%USERPROFILE%\.platformio` |

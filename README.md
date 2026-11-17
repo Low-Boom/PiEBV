@@ -1,10 +1,13 @@
 # PiEBV
 
-A USB-controlled pulse-timing box for particle image velocimetry (PIV), built around a Raspberry
-Pi Pico 2 W. It triggers two laser drivers and synchronizes up to six event cameras.
+A pulse-timing box for particle image velocimetry (PIV), built around a Raspberry Pi Pico 2 W. It
+triggers two laser drivers and synchronizes up to six event cameras. It is controlled over USB,
+and also over Wi-Fi after the network link is set up.
 
 > **Hardware status:** Firmware timing has not yet been verified on a physical board. Complete the
 > [first-board checks](docs/FIRST_BOARD_CHECKS.md#first-board-checks) before connecting a laser driver or camera.
+> The network (Wi-Fi) link has not run on a board either: do the
+> [network checks](docs/FIRST_BOARD_CHECKS.md#network-checks) before you rely on it.
 
 ## Quick start
 
@@ -48,7 +51,8 @@ The README gives the overview. The pages below give the detail.
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Symptoms, likely causes and fixes | Anyone with a problem |
 | [docs/FIRMWARE_BUILD.md](docs/FIRMWARE_BUILD.md) | Building from source, timing checks, signal simulation | Firmware developers |
 | [Hardware.md](Hardware.md) | Hardware reference: pins, power, signal chains, connectors | Hardware developers |
-| [docs/DESIGN_NOTES.md](docs/DESIGN_NOTES.md) | Design notes: index of the design pages in `docs/design/` (layout, power, signals, firmware), Rev 2 changes | Hardware developers |
+| [docs/DESIGN_NOTES.md](docs/DESIGN_NOTES.md) | Design notes: index of the design pages in `docs/design/` (layout, power, signals, firmware, network link), Rev 2 changes | Hardware and firmware developers |
+| [docs/design/NETWORK.md](docs/design/NETWORK.md) | Design of the network link: decisions, rules for `DISARM`, radio fault handling, verification | Firmware developers |
 | [docs/FIRST_BOARD_CHECKS.md](docs/FIRST_BOARD_CHECKS.md) | The full first-board checks, with exact test points | Anyone who tests a newly assembled board |
 | [docs/MANUFACTURING.md](docs/MANUFACTURING.md) | Fabrication and assembly notes | Anyone who orders or assembles a board |
 | [docs/EVK4_HARNESS.md](docs/EVK4_HARNESS.md) | The EVK4 camera harness | Users of Prophesee EVK4 cameras |
@@ -215,7 +219,30 @@ on J23 runs when the charger gives 15 V. On a 5 V-only charger it normally does 
 4. Do not use 1200 baud. 115200 is usual.
 5. Type `STATUS` and press Enter.
 
-Other terminals, the web GUI, Python scripting and the network (Wi-Fi) link are in [docs/CONNECTING.md](docs/CONNECTING.md).
+Other terminals, the web GUI and Python scripting are in [docs/CONNECTING.md](docs/CONNECTING.md).
+
+### Network (Wi-Fi)
+
+A Pico 2 W can also take the commands over Wi-Fi, on TCP port 4242 of an existing network (open,
+or WPA2 with a shared passphrase). Set it up one time over USB, with the lasers DISARMED:
+
+```
+WIFI SSID Lab Network
+WIFI PASS correct horse
+WIFI ON                      ->  OK WIFI=ON SSID=Lab Network PASS=SET SAVED=1
+WIFI                         ->  WIFI=CONNECTED … WIFI_IP=192.168.1.37 …
+```
+
+Then connect to the address that `WIFI` shows, for example
+`python tools/piebv_gui/piebv_gui.py --connect socket://192.168.1.37:4242`. The web GUI has a card
+for the same set-up.
+
+- The network link has **no password and no encryption**: each computer that can reach the board
+  can send `ARM`. Use it only on a network that you control.
+- A lost network link does not disarm.
+- The link has not been tested on a board.
+
+The details and the limits are in [docs/CONNECTING.md](docs/CONNECTING.md#network-wi-fi).
 
 ## Most-used commands
 
@@ -229,6 +256,7 @@ Other terminals, the web GUI, Python scripting and the network (Wi-Fi) link are 
 | `ARM?` | – | – | Report the arm state: `ARMED=0` or `ARMED=1` |
 | `STATUS` | – | – | All settings, the arm state and system information |
 | `ID?` | – | – | Board and firmware version (the git commit it was built from) |
+| `WIFI …` | – | off | The Wi-Fi state and set-up ([details](docs/COMMANDS.md#wi-fi-wifi)) |
 | `HELP` | – | – | Command summary |
 
 A name on its own asks for a value (`DELAY`). A name followed by a number sets it (`DELAY 5000`).
@@ -247,7 +275,7 @@ does not work, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 | `tools/piebv_gui/` | Web GUI: settings, timing chart and console in the browser |
 | `tools/piebv_sim/` | Simulator: the firmware's command code built for a computer, for trying the GUI and scripts without a board |
 | `tools/timing_check/` | Timing checks run on a computer |
-| `tools/net_check/` | Check of the network link's connection handling, run on a computer against a model of lwIP |
+| `tools/net_check/` | Checks of the network link's connection handling, run on a computer: against a model of lwIP, and against lwIP's own sources |
 | `tools/signal_sim/` | Transmission-line simulation of the timing nets (KiCad's ngspice) |
 | `PiEBV_Pico.kicad_pro` / `.kicad_sch` / `.kicad_pcb` | **Current hardware:** KiCad project of the 4-layer board |
 | `Hardware.md` | [Full hardware reference](Hardware.md) |
