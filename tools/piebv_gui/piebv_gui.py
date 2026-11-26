@@ -9,6 +9,7 @@
 The server owns the serial port; any number of browser tabs share it. It binds to
 127.0.0.1 only unless --host says otherwise: whoever can reach the page can ARM the
 lasers. Serial needs pyserial (python -m pip install pyserial); the simulator does not.
+The page and the console speak the firmware's SCPI protocol (src/protocol.h).
 Closing the page or stopping the server does NOT disarm -- only DISARM does.
 """
 import argparse
@@ -192,16 +193,18 @@ class Handler(BaseHTTPRequestHandler):
                 if not isinstance(action, str) or not all(v is None or isinstance(v, str) for v in (ssid, passphrase)):
                     return self._json({"error": "action, ssid and passphrase must be text"}, 400)
                 try:
-                    ok, replies = dev.wifi_setup(action, ssid, passphrase)
+                    ok, replies, warning = dev.wifi_setup(action, ssid, passphrase)
                 except ValueError as exc:
                     return self._json({"error": str(exc)}, 400)
-                return self._json({"ok": ok, "replies": replies, "state": snapshot()})
+                return self._json({"ok": ok, "warning": warning, "replies": replies, "state": snapshot()})
             if url.path == "/api/command":
                 line = body.get("line")
                 line = line.strip() if isinstance(line, str) else ""
                 # The error text does not repeat the line: it can hold a passphrase.
-                if not line or len(line) > 120 or any(piebv_device._is_control(c) for c in line):
-                    return self._json({"error": "one command line without control characters, up to 120 characters"}, 400)
+                if (not line or len(line.encode("utf-8")) > piebv_device.LINE_MAX
+                        or any(piebv_device._is_control(c) for c in line)):
+                    return self._json({"error": "one program message without control characters, up to %d bytes"
+                                       % piebv_device.LINE_MAX}, 400)
                 return self._json({"lines": dev.raw(line), "state": snapshot()})
         except piebv_device.LinkError as exc:
             return self._json({"error": str(exc), "state": snapshot()}, 409)

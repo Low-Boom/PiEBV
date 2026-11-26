@@ -1,23 +1,24 @@
 "use strict";
 // PiEBV web GUI. Talks to piebv_gui.py (same origin) over a small JSON API; every value
-// shown comes from the board's own STATUS reply (realized cycles), never from local math
-// on the requested values.
+// shown comes from the board's own replies to its SCPI queries (realized values, whole PIO
+// cycles), never from local math on the requested values.
 
 const $ = (id) => document.getElementById(id);
 const SVGNS = "http://www.w3.org/2000/svg";
 
 // ---------------------------------------------------------------- field metadata
+// The keys are the GUI server's setting names; scpi is the board's command header.
 const META = {
-  FREQ: { group: "timing", label: "Pair rate", kind: "hz", help: "pulse pairs per second" },
-  WIDTH: { group: "timing", label: "Pulse width", kind: "ns", help: "both laser pulses" },
-  DELAY: { group: "timing", label: "Δt (CH2 delay)", kind: "ns", help: "CH2 rise after CH1 rise" },
-  COMBINE: { group: "timing", label: "Outputs", kind: "select",
+  FREQ: { group: "timing", label: "Pair rate", kind: "hz", scpi: ":FREQ", help: "pulse pairs per second" },
+  WIDTH: { group: "timing", label: "Pulse width", kind: "ns", scpi: ":PULS:WIDT", help: "both laser pulses" },
+  DELAY: { group: "timing", label: "Δt (CH2 delay)", kind: "ns", scpi: ":PULS:DOUB:DEL", help: "CH2 rise after CH1 rise" },
+  COMBINE: { group: "timing", label: "Outputs", kind: "select", scpi: ":OUTP:COMB",
     options: [[0, "Split"], [1, "Combined"]] },  // the realized line spells out the routing
-  MARKERWIDTH: { group: "timing", label: "Marker width", kind: "ns", help: "camera trigger marker" },
-  PIXGATE: { group: "pix", label: "Gate", kind: "select",
+  MARKERWIDTH: { group: "timing", label: "Marker width", kind: "ns", scpi: ":MARK:WIDT", help: "camera trigger marker" },
+  PIXGATE: { group: "pix", label: "Gate", kind: "select", scpi: ":PIX:GATE",
     options: [[0, "Off"], [1, "While ARMED"], [2, "Always"]] },
-  PIXLEAD: { group: "pix", label: "Release before CH1", kind: "ns" },
-  PIXLAG: { group: "pix", label: "Reset after last pulse", kind: "ns" },
+  PIXLEAD: { group: "pix", label: "Release before CH1", kind: "ns", scpi: ":PIX:LEAD" },
+  PIXLAG: { group: "pix", label: "Reset after last pulse", kind: "ns", scpi: ":PIX:LAG" },
 };
 const GROUP_BOX = { timing: "timingFields", pix: "pixFields", other: "otherFields" };
 let snap = null;        // last /api/state reply
@@ -53,6 +54,28 @@ function fmtTime(sec, digits = 3) {
   return (sec * scale).toFixed(digits).replace(/\.?0+$/, "") + " " + unit;
 }
 function fmtNsExact(cycles, clk) { return (cycles * 1e9 / clk).toFixed(3) + " ns"; }
+// An entry of the board's error queue, <code>,"<text>" (text: "<message>;<detail>"), as
+// one sentence. Any other text comes back unchanged.
+function fmtErr(raw) {
+  const m = /^([-+]?\d+),"(.*)"$/.exec(String(raw || ""));
+  if (!m) return String(raw || "");
+  const text = m[2].replace(/""/g, '"'), i = text.indexOf(";");
+  return (i < 0 ? text : text.slice(0, i) + ": " + text.slice(i + 1)) + " (error " + m[1] + ")";
+}
+
+// The same rule as mask_secret() in piebv_device.py: from the first token that starts
+// with PASS (the passphrase header, any case and form) to the end of the line.
+function maskSecret(line) {
+  const m = /(^|[:;\s*])(pass(?:word)?)/i.exec(line);
+  return m ? line.slice(0, m.index + m[1].length) + m[2] + " ********" : line;
+}
+
+// *IDN? -> "PiEBV <model> · serial <serial> · firmware <firmware>".
+function fmtIdentity(idn) {
+  const p = String(idn || "").split(",");
+  return p.length >= 4 ? p[0] + " " + p[1] + " · serial " + p[2] + " · firmware " + p.slice(3).join(",") : String(idn || "");
+}
+
 function fmtHz(hz) {
   if (hz >= 1e6) return (hz / 1e6).toFixed(6).replace(/\.?0+$/, "") + " MHz";
   if (hz >= 1e3) return (hz / 1e3).toFixed(6).replace(/\.?0+$/, "") + " kHz";
@@ -107,8 +130,8 @@ async function toggleConnect() {
       if (target === "__custom") target = $("customTarget").value.trim();
       if (!target) throw new Error("choose a port");
       snap = await api("/api/connect", { target });
-      logSeq = 0;
-      $("console").replaceChildren();
+      // After any log fetch still on its way (it holds the old link's sequence numbers).
+      logFetch = logFetch.then(() => { logSeq = 0; $("console").replaceChildren(); });
       dirty = {};
       wifiSsidDirty = false;
       $("wifiPass").value = "";
@@ -202,7 +225,7 @@ function fieldRow(name) {
   label.textContent = meta.label;
   const code = document.createElement("span");
   code.className = "code";
-  code.textContent = name;
+  code.textContent = meta.scpi || name;
   label.appendChild(code);
   const wrap = document.createElement("div");
   wrap.className = "input";
@@ -251,16 +274,13 @@ function fieldRow(name) {
 function realizedText(name, f, clk) {
   if (f.mode) return f.mode;
   if (f.unit === "ns" && f.cycles !== undefined) {
-    return "actual " + f.actual.toFixed(3) + " ns · " + f.cycles.toLocaleString("en-US") + " cycles" +
+    return "realized " + f.actual.toFixed(3) + " ns · " + f.cycles.toLocaleString("en-US") + " cycles" +
       (f.actual >= 1000 ? " (" + fmtTime(f.actual * 1e-9) + ")" : "");
   }
   if (f.unit === "Hz" && f.cycles !== undefined) {
-    return "actual " + f.actual.toFixed(3) + " Hz · period " + fmtTime(f.cycles / clk, 6);
+    return "realized " + f.actual.toFixed(3) + " Hz · period " + fmtTime(f.cycles / clk, 6);
   }
-  if (f.unit === "Hz" && f.divider !== undefined) {
-    return "actual " + fmtHz(f.actual) + " · divider " + f.divider.toFixed(3) + (f.jitter ? " (1-cycle jitter)" : "");
-  }
-  return f.detail || "";
+  return f.text || "";
 }
 
 async function applyNames(names) {
@@ -287,7 +307,7 @@ async function applyNames(names) {
         row.classList.remove("dirty");
         row.querySelector(".error").textContent = "";
       } else {
-        row.querySelector(".error").textContent = res.reply;
+        row.querySelector(".error").textContent = fmtErr(res.reply);
       }
     }
     if (r.state) snap = r.state;
@@ -354,9 +374,8 @@ async function wifiAction(action) {
   try {
     const r = await api("/api/wifi", body);
     const last = (r.replies || []).slice(-1)[0] || r.error || "";
-    // SAVED=0 is a success with a warning: in use, but lost at power-off. The reply
-    // ends in " SAVED=0 (why)"; the network name is earlier in the line.
-    wifiMessage(last, !r.ok || / SAVED=0 \([^()]*\)$/.test(last));
+    // warning: a success that is in use but not stored (error 101), lost at power-off.
+    wifiMessage(last, !r.ok || !!r.warning);
     // After an action that the board accepted, the passphrase does not stay in the
     // page ("Switch off" keeps a typed name). A refused join keeps the fields as typed
     // for the next try: every join sends them again.
@@ -372,9 +391,9 @@ async function wifiAction(action) {
 
 function renderWifi(sys, connected) {
   const card = $("wifiCard");
-  const state = sys && sys.WIFI;
-  // No WIFI line in STATUS: firmware without the network link. A single missed poll
-  // (status absent while still connected) leaves the card as it is.
+  const state = sys && sys.WIFI_STATE;
+  // No Wi-Fi state: not connected. A single missed poll (status absent while still
+  // connected) leaves the card as it is.
   if (!state && connected && snap && !snap.status) return;
   card.hidden = !state;
   if (!state) {
@@ -387,9 +406,9 @@ function renderWifi(sys, connected) {
   const none = (v) => !v || v === "NONE";
   const ip = sys.WIFI_IP, port = sys.NET_PORT || "4242";
   $("wifiPort").textContent = port;
-  const available = !state.startsWith("UNAVAILABLE");
+  const available = state !== "UNAVAILABLE";  // a firmware image without a radio
   $("wifiForm").hidden = !available;
-  const rows = [["State", state]];
+  const rows = [["State", sys.WIFI]];
   if (available) {
     rows.push(
       ["Network", sys.WIFI_SSID ? sys.WIFI_SSID + (sys.WIFI_PASS === "SET" ? " (passphrase set)" : " (no passphrase)") : "not set"],
@@ -398,7 +417,7 @@ function renderWifi(sys, connected) {
       ["Radio address (MAC)", sys.WIFI_MAC || "?"],
       ["Network host", none(sys.NET_CLIENT) ? "none" : sys.NET_CLIENT],
       ["At power-up", sys.WIFI_AT_POWER_UP === "1" ? "joins the network" : "radio off"],
-      // WIFI_SAVED=1: the set-up in use is the one the board loads at power-up.
+      // WIFI_SAVED=1 (:SYST:COMM:WLAN:SAV? 1): the set-up in use is the one the board loads at power-up.
       ["Stored in the board", sys.WIFI_SAVED !== "1" ? "no: at the next power-up the board uses the set-up in its flash, not this one"
         : sys.WIFI_SSID ? "yes" : "nothing is set up"],
     );
@@ -430,7 +449,7 @@ function render() {
   $("connectBtn").textContent = connected ? "Disconnect" : "Connect";
   $("target").disabled = connected;
   $("customTarget").disabled = connected;
-  $("ident").textContent = connected ? (snap.identity || snap.target) : (snap && snap.error ? snap.error : "Not connected");
+  $("ident").textContent = connected ? (fmtIdentity(snap.identity) || snap.target) : (snap && snap.error ? snap.error : "Not connected");
   $("ident").title = $("ident").textContent;
   // No ARM while a Wi-Fi action runs: it would wait behind it for seconds.
   for (const b of document.querySelectorAll("#armBtn, .apply, #cmdSend")) b.disabled = !connected || (b.id === "armBtn" && wifiBusy);
@@ -475,6 +494,7 @@ function render() {
     ["Firmware", sys.ARMED ? "ARMED" : "DISARMED"],
     ["Start hold-off", pending > 0 ? fmtTime(pending * 1e-6, 0) : "none"],
     ["Hardware", sys.HW || "?"],
+    ["Camera sync", sys.SYNC_HZ ? fmtHz(parseFloat(sys.SYNC_HZ)) : "?"],
   ]);
   renderSysline(sys, clk);
   renderCharts(st, clk);
@@ -523,7 +543,9 @@ function appendLog(entries) {
   const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 30;
   for (const e of entries) {
     const div = document.createElement("div");
-    div.className = e.dir === ">" ? "in" : e.text.startsWith("ERR") ? "err" : "out";
+    // An entry of the error queue (<code>,"<text>", code not 0) or an echo error line.
+    const isErr = /^(ERR |[-+]?[1-9]\d*,")/.test(e.text);
+    div.className = e.dir === ">" ? "in" : isErr ? "err" : "out";
     div.textContent = (e.dir === ">" ? "> " : "  ") + e.text;
     box.appendChild(div);
   }
@@ -543,8 +565,7 @@ async function sendCommand() {
   } catch (e) {  // refused by the GUI server, or the server is unreachable
     // The line never reached the server's console log: show it here, without a
     // passphrase (the server masks its own log entries the same way).
-    const shown = /^\s*WIFI\??\s+PASS/i.test(line) ? "WIFI PASS ********" : line;
-    appendLog([{ dir: ">", text: shown }, { dir: "<", text: "ERR " + (e.message || e) }]);
+    appendLog([{ dir: ">", text: maskSecret(line) }, { dir: "<", text: "ERR " + maskSecret(String(e.message || e)) }]);
   }
   render();
   await fetchLog();
@@ -590,7 +611,7 @@ function buildRows(m, k0, k1) {
       name: "Pixel reset", sub: "TDRSTN · low = reset", color: 4, washLow: on,
       highs: on ? free : [[-1e9, 1e9]],
       inactive: on && m.gate === 1 && !m.armed,
-      note: !on ? "Pixel-reset gate off: TDRSTN stays high (no reset)." : m.gate === 1 && !m.armed ? "The pixel-reset gate (PIXGATE 1) runs only while ARMED (drawn faint)." : "",
+      note: !on ? "Pixel-reset gate off: TDRSTN stays high (no reset)." : m.gate === 1 && !m.armed ? "The pixel-reset gate (:PIX:GATE ARM) runs only while ARMED (drawn faint)." : "",
       state: ["reset", "free"],
     });
   }
@@ -769,12 +790,12 @@ function renderCharts(st, clk) {
     annotate: (svg, X, rows) => {
       const Wpx = svg.viewBox.baseVal.width;
       const r1 = rows[0], r2 = rows[1];
-      dimension(svg, X(0), X(W), r1.y[0] - 8, "WIDTH " + fmtTime(W, 3), Wpx);
+      dimension(svg, X(0), X(W), r1.y[0] - 8, "width " + fmtTime(W, 3), Wpx);
       dimension(svg, X(0), X(D), r2.y[0] - 8, "Δt " + fmtTime(D, 3), Wpx);
       const px = rows.find((r) => r.name === "Pixel reset");
       if (px && gateOn) {
-        if (X(-L) > X(t0)) dimension(svg, X(-L), X(0), px.y[0] - 8, "PIXLEAD " + fmtTime(L, 3), Wpx);
-        if (X(lastFall + G) < X(t1)) dimension(svg, X(lastFall), X(lastFall + G), px.y[0] - 8, "PIXLAG " + fmtTime(G, 3), Wpx);
+        if (X(-L) > X(t0)) dimension(svg, X(-L), X(0), px.y[0] - 8, "lead " + fmtTime(L, 3), Wpx);
+        if (X(lastFall + G) < X(t1)) dimension(svg, X(lastFall), X(lastFall + G), px.y[0] - 8, "lag " + fmtTime(G, 3), Wpx);
       }
     },
   });
@@ -798,7 +819,7 @@ function renderCharts(st, clk) {
   const notes = [];
   for (const r of pairRows) if (r.note && !notes.includes(r.note)) notes.push(r.note);
   if (w1 || w2) notes.push("Pulses narrower than 2 px are drawn 2 px wide.");
-  if (m.combine) notes.push("COMBINE 1: both lasers carry CH1's and CH2's pulse.");
+  if (m.combine) notes.push(":OUTP:COMB 1: both lasers carry CH1's and CH2's pulse.");
   $("chartNote").textContent = notes.join(" ");
   renderEdges(m);
 }

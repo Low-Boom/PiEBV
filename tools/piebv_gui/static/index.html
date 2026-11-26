@@ -34,7 +34,7 @@
         <button id="disarmBtn2" class="disarm">DISARM</button>
       </div>
       <dl class="kv inline" id="armInfo"></dl>
-      <p class="hint">The firmware cannot see the J11 interlock or the 12 V power gate: ARMED=1 alone does not mean the outputs are live. Esc disarms from anywhere on this page. Closing the page does not disarm.</p>
+      <p class="hint">The firmware cannot see the J11 interlock or the 12 V power gate: ARMED (:OUTP? 1) alone does not mean the outputs are live. Esc disarms from anywhere on this page. Closing the page does not disarm.</p>
     </section>
 
     <section class="card" id="timingCard">
@@ -82,11 +82,11 @@
         <dl class="kv" id="wifiInfo"></dl>
         <div id="wifiForm">
           <div class="field wide">
-            <label for="wifiSsid">Network name<span class="code">SSID</span></label>
+            <label for="wifiSsid">Network name<span class="code">WLAN:SSID</span></label>
             <div class="input"><input id="wifiSsid" type="text" maxlength="32" autocomplete="off" spellcheck="false"></div>
           </div>
           <div class="field wide">
-            <label for="wifiPass">Passphrase<span class="code">PASS</span></label>
+            <label for="wifiPass">Passphrase<span class="code">WLAN:PASS</span></label>
             <div class="input"><input id="wifiPass" type="password" maxlength="63" autocomplete="new-password"></div>
             <div class="realized"><label class="check"><input id="wifiOpen" type="checkbox"> Open network (no passphrase)</label></div>
           </div>
@@ -102,10 +102,10 @@
     </div>
 
     <section class="card keep" id="consoleCard">
-      <div class="card-head"><h2>Console</h2><span class="sub">Every command and reply on the link</span></div>
+      <div class="card-head"><h2>Console</h2><span class="sub">Every command and reply on the link, and the errors the board reports</span></div>
       <div class="console" id="console" aria-live="polite"></div>
       <div class="console-row">
-        <input id="cmdInput" type="text" placeholder="Command, e.g. HELP or DELAY 12000" aria-label="Command">
+        <input id="cmdInput" type="text" placeholder="SCPI command, e.g. *IDN? or :PULS:DOUB:DEL 12US" aria-label="Command">
         <button id="cmdSend">Send</button>
       </div>
     </section>
