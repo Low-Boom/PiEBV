@@ -8,23 +8,24 @@ Ordered by what would bite hardest.
 
 1. **Bench-verify the laser outputs before connecting a laser driver.** With J17 on a 15 V PD
    charger, check +12V at C17 (11.54–12.05 V, typically 11.8 V) and that `LASER_PWR_OK` (U13 pins
-   1/8) is high (~12 V). Fit J11 on 1-2 and J18/J19 on 1-2 (50 Ω mode), send `ARM`, then scope J7
+   1/8) is high (~12 V). Fit J11 on 1-2 and J18/J19 on 1-2 (50 Ω mode), send `:OUTP ON`, then scope J7
    and J8 through a **50 Ω-terminated** input:
    - amplitude 0 V to 4.53–5.14 V (typically ~4.79 V); the budget rests on datasheet corners for
      U17's reference and U13's output resistance, so a measurement closes it;
-   - CH2 rising exactly DELAY after CH1 (e.g. `DELAY 10000` → 10.000 µs, `DELAY 13` → 13.3 ns),
-     and MARKER rising with every CH1 pulse for minutes at `FREQ 3000`;
+   - CH2 rising exactly DELAY after CH1 (e.g. `:PULS:DOUB:DEL 10 US` → 10.000 µs,
+     `:PULS:DOUB:DEL 13 NS` → 13.3 ns), and MARKER rising with every CH1 pulse for minutes at
+     `:FREQ 3000`;
    - MARKER rising with every CH1 pulse at a FREQ whose period is not a whole number of cycles,
-     e.g. `FREQ 7000`;
-   - the first pulse after `ARM` full width, and no two CH1 pulses closer than 1/FREQ while a host
-     loops `ARM`/`DISARM` as fast as it can;
+     e.g. `:FREQ 7000`;
+   - the first pulse after `:OUTP ON` full width, and no two CH1 pulses closer than 1/FREQ while a
+     host loops `:OUTP ON` / `DISARM` as fast as it can;
    - J7/J8 at 0 V after `DISARM`; after a reset (a power cycle of both J17 and the Pico USB, since
      neither the board nor the Pico 2 W has a reset button, and a watchdog timeout forced over SWD
      as described under [Boot and arming](design/FIRMWARE_HW.md#boot-and-arming)); and, while ARMED with pulses running,
      with J17 unplugged and while it is plugged back in;
    - Hi-Z mode: J18/J19 on 2-3 and the scope at 1 MΩ, 0 V to 4.55–5.08 V, with at most ~5 %
      overshoot (≤ ~5.3 V) at the far end of a 2 m cable (the source is ~49 Ω);
-   - the shortest pulse: `WIDTH 20` reaches full height at J7/J8 (U13's minimum input pulse is
+   - the shortest pulse: `:PULS:WIDT 20 NS` reaches full height at J7/J8 (U13's minimum input pulse is
      15 ns maximum for the current die, 25 ns for the older one; see [Amplitude budget](design/SIGNALS.md#amplitude-budget));
 2. **Check the charger's PD behaviour.** The CH224A datasheet does not say what it does when the
    charger lacks the requested 15 V. The board is safe either way (U18 keeps the lasers disabled
@@ -57,7 +58,7 @@ Ordered by what would bite hardest.
    offset again after a change of J22. With J21 on 2-3 and the
    scope at 1 MΩ: 4.55–5.08 V, peak at most ~5.3 V at the end of a 2 m cable. With the Pico's USB
    alone (J17 unplugged), J12 must stay at 0 V. With
-   `PIXGATE 0`, TDRSTN at every camera port must stay high (no other source of pixel reset).
+   `:PIX:GATE OFF`, TDRSTN at every camera port must stay high (no other source of pixel reset).
 5. **Before the first USB-C PD power-up, check the fine-pitch parts for solder bridges.** J17's pads are
    as little as 0.27 mm apart, U20's leads have 0.5 mm pitch (SOT-583) and U16's and U17's leads 0.65 mm pitch, on lead-free HASL. Look at U20 for bridges between adjacent pins (check 7 measures its function). With no power applied, check
    that VBUS_PD is not shorted to GND, CC1 or CC2 (at J17 and U14 pins), and that +5V_PD and +5V are
@@ -69,8 +70,8 @@ Ordered by what would bite hardest.
    holds the outputs off). Also confirm that J17's four shell legs are
    soldered (they are through-hole with no paste).
 
-6. **Clock jumper J20:** with no shunt, `STATUS` must show `CLK=150000000` and `CLKMODE=STANDARD`;
-   with a shunt, after a power-cycle, `CLK=300000000` and `CLKMODE=OVERCLOCK (jumper fitted)`.
+6. **Clock jumper J20:** with no shunt, `:DIAG:CLOC?;CLOC:MODE?` must give
+   `150000000;"STANDARD"`; with a shunt, after a power-cycle, `300000000;"OVERCLOCK (jumper fitted)"`.
    Measure about 1 kΩ (R29) from J20.1 to Pico pin 14 (GP10) and continuity from J20.2 to GND,
    with no short between J20.1 and J20.2 when the shunt is off. Only if you use 300 MHz: do the soak
    test under
@@ -89,10 +90,10 @@ Ordered by what would bite hardest.
    go to 3.3 V.
 8. **Status LEDs (Rev 2).** With J17 on a 15 V charger, D2 (`12V OK`) must light when `LASER_PWR_OK`
    goes high, and stay dark on a 5 V-only supply. D3 (`ARMED`) must light only with all three of:
-   `ARM` sent, J11 on 1-2, D2 lit. Check each one alone: `DISARM`, J11 on 2-3, J17 unplugged must
-   each turn D3 off. With the outputs into 50 Ω: D4 and D5 must flash once for each pulse pair at
-   `FREQ 1` and be on continuously at `FREQ 1000`, and be dark when DISARMED; D6 must follow the
-   marker. Send `WIDTH 20` and check that D4 and D5 still light. The levels at J7 and J8 (check 1)
+   `:OUTP ON` sent, J11 on 1-2, D2 lit. Check each one alone: `DISARM`, J11 on 2-3, J17 unplugged
+   must each turn D3 off. With the outputs into 50 Ω: D4 and D5 must flash once for each pulse
+   pair at `:FREQ 1` and be on continuously at `:FREQ 1000`, and be dark when DISARMED; D6 must
+   follow the marker. Send `:PULS:WIDT 20 NS` and check that D4 and D5 still light. The levels at J7 and J8 (check 1)
    must be inside 4.53–5.14 V with the sense dividers fitted.
 9. **EVK4 harness (Rev 2), if you use EVK4 cameras.** Do the continuity table and the powered
    check of [docs/EVK4_HARNESS.md](EVK4_HARNESS.md) before you connect a camera. With the
@@ -114,46 +115,54 @@ Ordered by what would bite hardest.
 The network link ([Network (Wi-Fi)](CONNECTING.md#network-wi-fi)) was not tested on a board. Do
 these checks with J11 open (no laser output), at 150 MHz first.
 
-1. **Power-up time of the radio.** Send `WIFI SSID …`, `WIFI PASS …`, `WIFI ON` over USB. Measure
-   the time to the `OK WIFI=ON` reply. The firmware allows 8 s for it (the watchdog period for
-   this call). A `RESET=WATCHDOG` after `WIFI ON` means that the radio start hung.
-2. **Join.** `WIFI` shows `CONNECTED` and an address. Note the time from `WIFI ON`.
+1. **Power-up time of the radio.** Send `:SYST:ECHO ON`, then `:SYST:COMM:WLAN:SSID "…"`,
+   `:SYST:COMM:WLAN:PASS "…"` and `:SYST:COMM:WLAN ON` over USB. Measure the time to the
+   `OK :SYST:COMM:WLAN 1 …` reply. The firmware allows 8 s for it (the watchdog period for this
+   call). `:DIAG:RES:CAUS?` giving `WATCHDOG` after `WLAN ON` means that the radio start hung.
+2. **Join.** `:SYST:COMM:WLAN:LINK?;IPAD?` gives `CONNECTED` and an address. Note the time from
+   `WLAN ON`.
 3. **Stored set-up.** Power-cycle. The board joins the network again without a command, and
-   `WIFI_SAVED=1`. `WDT_RESETS` stays 0. Then send `WIFI OFF` and `WIFI ON` three times: each
-   `WIFI OFF` switches the radio chip off, and each `WIFI ON` must start it and join again.
-4. **Commands over the network.** Connect to port 4242. `ID?`, `STATUS`, a setting, `ARM` and
-   `DISARM` give the same replies as on USB. A second connection gets `ERR busy`. A connection
-   that opens and closes at once (`nc -z <address> 4242`, ten times) changes nothing:
-   `WDT_RESETS` stays 0 and the next connection works. Restart the server after a second
-   connection: connect a second host (it gets `ERR busy`), close both, then send `WIFI OFF` and
-   `WIFI ON` over USB within a minute. The board must join and take a connection again.
+   `:SYST:COMM:WLAN:SAV?` gives `1`. `:DIAG:WATC:RES?` stays 0. Then send `:SYST:COMM:WLAN OFF`
+   and `:SYST:COMM:WLAN ON` three times: each `WLAN OFF` switches the radio chip off, and each
+   `WLAN ON` must start it and join again.
+4. **Commands over the network.** Connect to port 4242. `*IDN?`, the queries, a setting,
+   `:OUTP ON` and `DISARM` give the same results as on USB. A second connection gets `ERR busy`.
+   A connection that opens and closes at once (`nc -z <address> 4242`, ten times) changes
+   nothing: `:DIAG:WATC:RES?` stays 0 and the next connection works. Restart the server after a
+   second connection: connect a second host (it gets `ERR busy`), close both, then send
+   `:SYST:COMM:WLAN OFF` and `:SYST:COMM:WLAN ON` over USB within a minute. The board must join
+   and take a connection again.
 5. **`DISARM` latency.** With a scope on J10 pin 1, send `DISARM` over the network and over USB
-   while the other link sends `STATUS` continuously. Measure the time from the command to the
+   while the other link sends queries continuously (for example
+   `:FREQ?;:PULS:WIDT?;DOUB:DEL?;:OUTP?;:DIAG:HARD?`). Measure the time from the command to the
    end of the pulses on each link. Then, while ARMED, send `DISARM` and close the connection
    without reading (the close then often resets it):
    `python3 -c "import socket; s=socket.create_connection(('<address>',4242)); s.sendall(b'DISARM\n'); s.close()"`.
    The board must disarm each time.
 6. **Pulse timing with network traffic.** Repeat the timing checks (pulse width, CH1-to-CH2 delay,
-   sync period) while a host sends `STATUS` continuously over the network. The values do not
+   sync period) while a host sends queries continuously over the network. The values do not
    change.
 7. **Lost network.** Switch the access point off while connected and ARMED (J11 open), with a host
-   that polls `STATUS` over the network (the GUI does). `WIFI` over USB shows `JOINING (link lost)`
-   and later `JOINING (network not found)`. Switch it on: the board joins again. During all of
-   this, USB commands answer, `DISARM` over USB acts without a delay that you can see, and `WDT_RESETS` stays 0. This is
-   the check for a reply that the host no longer acknowledges.
+   that polls queries over the network (the GUI does). `:SYST:COMM:WLAN:LINK?` over USB gives
+   `JOINING,"link lost"` and later `JOINING,"network not found"`. Switch it on: the board joins
+   again. During all of this, USB commands answer, `DISARM` over USB acts without a delay that
+   you can see, and `:DIAG:WATC:RES?` stays 0. This is the check for a reply that the host no
+   longer acknowledges.
 8. **Lost host.** Disconnect the host computer from the network without closing the connection.
-   Note the time until `NET_CLIENT` goes to `NONE` (about 11 s for an idle connection).
-9. **Wrong passphrase, unknown network.** `WIFI` shows `JOINING` with the reason, and USB commands
-   answer. `WIFI=FAULT` here is a firmware error: the test command to the radio must get its
-   answer also from a radio that is not joined. After a `WIFI=FAULT`, from any cause, `WIFI ON`
-   must start the radio again. Watch `WIFI` for some hours of normal use at the place of use: a
-   `WIFI=FAULT` with a radio that is in order means that the test of the radio is too strict.
+   Note the time until `:SYST:COMM:WLAN:CLI?` gives `""` (about 11 s for an idle connection).
+9. **Wrong passphrase, unknown network.** `:SYST:COMM:WLAN:LINK?` gives `JOINING` with the reason,
+   and USB commands answer. `FAULT` here is a firmware error: the test command to the radio must
+   get its answer also from a radio that is not joined. After a `FAULT`, from any cause,
+   `:SYST:COMM:WLAN ON` must start the radio again. Read `:SYST:COMM:WLAN:LINK?` for some hours of
+   normal use at the place of use: a `FAULT` with a radio that is in order means that the test of
+   the radio is too strict.
 10. **300 MHz.** Fit the clock jumper and power-cycle. The stored set-up joins the network.
-    `WIFI ON` with a new name gives `SAVED=0`. This combination is outside the RP2350
-    specification and may not work on every Pico.
-11. **Range.** Read `WIFI_RSSI_DBM` at the place of use. The In1 GND plane and the In2 +5V and
+    `WLAN ON` with a new name gives error 101 (`Set-up not stored`), and `:SYST:COMM:WLAN:SAV?`
+    gives `0`. This combination is outside the RP2350 specification and may not work on every
+    Pico.
+11. **Range.** Read `:SYST:COMM:WLAN:RSSI?` at the place of use. The In1 GND plane and the In2 +5V and
     +3V3 islands run under the whole module, including its antenna, and F.Cu and B.Cu carry GND
     fill and some tracks there; this copper shortens the radio's range. The board has no antenna
     keep-out.
 12. **Interference.** Check the camera sync, trigger and pixel-reset lines and the laser outputs
-    with a scope while the radio transmits (a host that sends `STATUS` continuously).
+    with a scope while the radio transmits (a host that sends queries continuously).

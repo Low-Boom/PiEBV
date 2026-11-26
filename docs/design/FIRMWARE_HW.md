@@ -39,7 +39,9 @@ every command, using the **realized** values (after rounding to whole PIO cycles
 3.333 ns with the [clock jumper](#clock-jumper-j20-300-mhz-overclock)). It sets
 **no laser-driver ratings**: pulse width, duty and spacing depend on the attached driver (the
 PicoLas LDP-V datasheets were used only for the electrical interface), so set values within your
-driver's ratings. The checks only keep the waveform correct:
+driver's ratings. FREQ, WIDTH, DELAY, MARKERWIDTH, PIXLEAD and PIXLAG are the short names of the
+settings, as in the error texts; the commands are in the
+[command reference](../COMMANDS.md#timing). The checks only keep the waveform correct:
 
 - **Pulse pairs stay separate:** `DELAY ≤ 1/FREQ − 2 × WIDTH`, so CH2 ends at least one WIDTH
   before the next pair's CH1 starts. That also limits WIDTH to half the period.
@@ -52,7 +54,7 @@ driver's ratings. The checks only keep the waveform correct:
   program also needs MARKERWIDTH ≤ 1/FREQ − 5 cycles, which is the tighter limit only for periods
   under 10 cycles.
 
-## Combined mode (`COMBINE 1`)
+## Combined mode (`:OUTPut:COMBine ON`)
 
 Both pulses of every pair go to **both** laser outputs, for one light source making both PIV pulses
 or two sources fired together with the same double pulse. The CH1 and CH2 state machines then each
@@ -63,21 +65,21 @@ per period, so check its ratings; the firmware imposes none.
 
 The one extra rule is that the pulses stay separate on the shared pins: `DELAY ≥ WIDTH + 1 PIO
 cycle` (6.667 ns). At `DELAY = WIDTH`, CH2 rises on the cycle CH1 falls, the higher-numbered state
-machine wins the latch, and the two pulses merge into one of 2 × WIDTH. COMBINE can only be changed
-while DISARMED.
+machine wins the latch, and the two pulses merge into one of 2 × WIDTH. `:OUTP:COMB` can only be
+changed while DISARMED.
 
 **Don't use a BNC tee instead.** Joining J7 and J8, or splitting one output to two drivers, gives
 3–3.4 V pulses in 50 Ω mode, or 6.9 V where the pulses overlap (see [Laser outputs](SIGNALS.md#laser-outputs)).
 
-## Pixel-reset gate (`PIXGATE`)
+## Pixel-reset gate (`:PIX:GATE`)
 
 pio0 SM3 runs the same pulse program on GP16, with the pin's output inverted in the GPIO block
 (`GPIO_OVERRIDE_INVERT`), so the program's pulse becomes the pixel reset. It pulls TDRSTN low
 `PIXLAG` after the last laser pulse ends (CH1 rise + DELAY + WIDTH + PIXLAG) and releases it
 `PIXLEAD` before the next CH1 rise, cycle-exact and locked to CH1 (checked in
-`tools/timing_check/check_pixgate.py`). `PIXGATE 1` runs it only while the laser pins carry pulses,
-`PIXGATE 2` always. This gate is the only source of the camera pixel reset: the board has no
-pixel-reset input, so with `PIXGATE 0` the pixels are never held in reset.
+`tools/timing_check/check_pixgate.py`). `:PIX:GATE ARMed` runs it only while the laser pins carry
+pulses, `:PIX:GATE ALWays` always. This gate is the only source of the camera pixel reset: the board
+has no pixel-reset input, so with `:PIX:GATE OFF` the pixels are never held in reset.
 
 A stopped gate leaves its output latch LOW, which (inverted) leaves the pin HIGH, so DISARM, a
 restart hold-off and a reset all leave the pixels free. Rules: PIXLEAD ≥ 5 cycles, and
@@ -87,9 +89,10 @@ laser timing.
 
 ## Timing: what you set is what you get
 
-- **Every reply shows the realized value,** e.g. `DELAY 1003` → `OK DELAY=1003 (actual
-  1000.000 ns, 150 cyc)`, and `STATUS` lists them all. The user never has to correct a setting for
-  rounding or for fixed instruction overheads.
+- **Every query returns the realized value,** e.g. `:PULS:DOUB:DEL 1003 NS`, then
+  `:PULS:DOUB:DEL?` → `1.000000000E-06` (150 cycles); with the echo on, the setting itself replies
+  `OK :PULS:DOUB:DEL 1.000000000E-06 (1000.000 ns, 150 cyc)`. The user never has to correct a
+  setting for rounding or for fixed instruction overheads.
 - **CH2 rises exactly DELAY after CH1,** to the nearest 6.667 ns cycle. This is exact in a
   cycle-accurate model of the PIO; see `tools/timing_check/`.
 - **MARKER fires with every pulse pair** and is locked to CH1: it runs the same program at exactly
@@ -106,25 +109,28 @@ laser timing.
 - **The firmware starts DISARMED.** An early start-up hook (`src/laser_gate.cpp`, `.preinit_array`
   priority 00110) drives GP12/GP13 LOW right after the chip's peripheral reset, before clock setup,
   USB, the Pico 2 W's radio-chip initialisation and `setup()`. They stay LOW until the host sends
-  `ARM` (over USB, or over the network link if it is set up). SYNC and MARKER start as soon as `setup()` applies the defaults, and keep running
+  `:OUTP ON` (over USB, or over the network link if it is set up). SYNC and MARKER start as soon as `setup()` applies the defaults, and keep running
   while DISARMED. A second hook (`src/clock_mode.cpp`, priority 00700, after the clock setup) reads
   the [clock jumper](#clock-jumper-j20-300-mhz-overclock); the laser pins are already LOW then.
-- **`ARM`** (exactly that word, no argument) restarts CH1, CH2 and MARKER together, so the first
-  laser pulse is full width and in step. It replies at once; the pulses begin after a **restart
+- **`:OUTP ON`** (arming) restarts CH1, CH2 and MARKER together, so the first
+  laser pulse is full width and in step. The command ends at once; the pulses begin after a **restart
   hold-off** of one pulse period (the longer of the old and new periods, ≤ 1 s), counted from when
   the laser pins last carried pulses. Changing pulse settings while armed goes through the same
   restart. The hold-off keeps the laser pulse spacing ≥ the set period under any sequence of
-  commands, so a host looping ARM/DISARM can't fire faster than FREQ. MARKER pauses during it.
+  commands, so a host looping `:OUTP ON` / `DISARM` can't fire faster than FREQ. MARKER pauses
+  during it. `:OUTP:PEND?` gives the time left.
 - **`DISARM` can never be refused and acts at once.** The six characters `DISARM` (any case)
   anywhere in the input disarm immediately (mid-line, inside an over-long line, after backspace
-  edits) and cancel a pending start. Lines may end with CR, LF or CRLF, so PuTTY, Tera Term, screen
-  and minicom all work.
+  edits) and cancel a pending start; nothing else on that line runs. This is not SCPI: it is a
+  safety extension. `:OUTP OFF`, `:ABORt` and `*RST` also disarm, as ordinary commands. Lines may
+  end with CR, LF or CRLF, so PuTTY, Tera Term, screen and minicom all work.
 - **J7/J8 pulse only when all three are true:** firmware ARMED, J11 on 1-2 (hardware interlock), and
   `LASER_PWR_OK` (12 V rail in its window).
 - **Watchdog.** A 3 s hardware watchdog, fed only from the main loop, restarts the chip if the
-  firmware hangs. It comes back DISARMED, and `STATUS` shows `RESET=WATCHDOG` and a `WDT_RESETS`
-  count. The period is 8 s in place of 3 s while the radio chip of a Pico 2 W starts (at power-up
-  if Wi-Fi is set up, and during `WIFI ON`, `OFF` and `CLEAR`, which stop the command loop for that
+  firmware hangs. It comes back DISARMED, `:DIAG:RES:CAUS?` gives `WATCHDOG`, and
+  `:DIAG:WATC:RES?` gives the count. The period is 8 s in place of 3 s while the radio chip of a
+  Pico 2 W starts (at power-up if Wi-Fi is set up, and during `:SYST:COMM:WLAN ON`, `OFF` and
+  `:SYST:COMM:WLAN:CLE`, which stop the command loop for that
   call); the lasers are DISARMED then. No other command is designed to hold the firmware; to test the watchdog, write `0x80000000` (TRIGGER) to
   `WATCHDOG_CTRL` (`0x400d8000`) over SWD with the core running (a halted core pauses the
   watchdog).
@@ -142,10 +148,15 @@ laser timing.
   with long command queues: 0.54 s and 1.24 s. Not measured on a board.) A radio chip that
   stops answering can hold the command loop for 1 s to 2 s, at most twice
   ([network limits](../CONNECTING.md#limits)).
-  Replies that couldn't be sent are dropped a whole line at a time, and their bytes are counted in
-  `STATUS` as `TX_DROPPED`.
-- **Host scripts** must send `ARM` after every reset, and should check `RESET=` in `STATUS` first
-  (require an operator action after `RESET=WATCHDOG`). Parse `STATUS` by key, not by line count.
+  Replies that couldn't be sent are dropped a whole line at a time, and their bytes are counted
+  (`:DIAG:TXDR?`, for each link).
+- **No greeting.** The firmware sends nothing that was not asked for. A problem of the pulse
+  hardware at start goes into the error queue of the USB link as error -240
+  (`:SYST:ERR?`; `:DIAG:HARD?` gives the same reason), and `*ESR?` gives the power-on bit (128).
+  After a reset, `setup()` waits up to 1.5 s for the USB host.
+- **Host scripts** must send `:OUTP ON` after every reset, and should send `:DIAG:RES:CAUS?` first
+  (require an operator action after `WATCHDOG`). A setting gives no reply: read the error queue
+  (`:SYST:ERR?`) after the settings.
 - **Losing the USB link does not disarm.** The firmware doesn't watch the USB connection, and J17
   alone keeps the board powered, so a pulled cable, a sleeping PC or a killed host script leaves an
   ARMED board pulsing with no serial path for `DISARM`. The hardware stops are J11 (off 1-2) or
@@ -204,17 +215,18 @@ right of it (silkscreen `CLOCK JUMPER`, `OPEN = 150 MHz`, `FIT = 300 MHz (OVERCL
 
   USB, the timer and the watchdog run from their own clocks and do not change.
 - **Everything timed follows the clock.** All settings realize in 3.333 ns steps, the SYNC divider is
-  exactly 300 (SYNC stays an exact 1 MHz), and every reply shows the realized values. `STATUS` shows
-  `CLK=300000000`, `CLKMODE=OVERCLOCK (jumper fitted)` and `VREG_MV=1300`, and the start-up line
-  says `clock 300 MHz overclock`. `tools/timing_check` runs every clock-dependent check at 300 MHz too.
+  exactly 300 (SYNC stays an exact 1 MHz), and every query returns the realized values.
+  `:DIAG:CLOC?` gives `300000000`, `:DIAG:CLOC:MODE?` gives `"OVERCLOCK (jumper fitted)"` and
+  `:DIAG:VREG?` gives `1.300000000E+00`. `tools/timing_check` runs every clock-dependent check at
+  300 MHz too.
 - **No overclock after a watchdog restart.** If the watchdog has fired since the last power-up or
-  RUN reset (`WDT_RESETS` > 0), the hook keeps 150 MHz with the shunt fitted, and `STATUS` shows
-  `CLKMODE=STANDARD (jumper fitted, overclock off: watchdog reset since power-up; power-cycle to
-  retry)`. An unstable chip therefore can't crash in a loop at 300 MHz. To try 300 MHz again,
+  RUN reset (`:DIAG:WATC:RES?` > 0), the hook keeps 150 MHz with the shunt fitted, and
+  `:DIAG:CLOC:MODE?` gives `"STANDARD (jumper fitted, overclock off: watchdog reset since power-up;
+  power-cycle to retry)"`. An unstable chip therefore can't crash in a loop at 300 MHz. To try 300 MHz again,
   power-cycle both J17 and the Pico's USB.
 - **Back to 1.10 V at 150 MHz.** The voltage regulator keeps its setting through a watchdog or soft
   reset, so on every start that stays at 150 MHz the hook sets the default 1.10 V again
-  (`VREG_MV=1100`).
+  (`:DIAG:VREG?` gives `1.100000000E+00`).
 - **300 MHz is outside the RP2350's specification.** Each chip is different, and the higher voltage
   makes the chip hotter. Once running, the watchdog catches a hang (the chip restarts DISARMED, then
   at 150 MHz). It starts only at the end of `setup()`, about 1.5 s after a reset: a chip that hangs
@@ -224,14 +236,14 @@ right of it (silkscreen `CLOCK JUMPER`, `OPEN = 150 MHz`, `FIT = 300 MHz (OVERCL
 
 **Before you rely on 300 MHz with a given Pico** (again for every replacement Pico):
 
-1. Fit the heat sink on the RP2350. Fit the shunt, power-cycle, and check `CLK=300000000` and
-   `CLKMODE=OVERCLOCK …` in `STATUS`.
+1. Fit the heat sink on the RP2350. Fit the shunt, power-cycle, and check that
+   `:DIAG:CLOC?;CLOC:MODE?` gives `300000000;"OVERCLOCK (jumper fitted)"`.
 2. With J11 open (lasers off) and the outputs into 50 Ω scope inputs, repeat the timing points of
-   [first-board check 1](../FIRST_BOARD_CHECKS.md#first-board-checks) at the finer step, e.g. `DELAY 13` → 13.333 ns and
-   `WIDTH 10` → 10.000 ns.
-3. Soak test: run at the highest `FREQ` and the shortest settings you will use, in the enclosure, at
+   [first-board check 1](../FIRST_BOARD_CHECKS.md#first-board-checks) at the finer step, e.g.
+   `:PULS:DOUB:DEL 13 NS` → 13.333 ns and `:PULS:WIDT 10 NS` → 10.000 ns.
+3. Soak test: run at the highest frequency and the shortest settings you will use, in the enclosure, at
    the highest room temperature you expect, for several hours (overnight is better). Use the scope's
-   pulse-width trigger to catch any pulse of the wrong width. Then `STATUS` must show
-   `WDT_RESETS=0` and `HW=OK`.
+   pulse-width trigger to catch any pulse of the wrong width. Then `:DIAG:WATC:RES?` must give `0`
+   and `:DIAG:HARD?` must give `"OK"`.
 4. Optional: to make less heat, lower the voltage (`kOverclockVreg` in `src/clock_mode.cpp`) to the
-   lowest value that still passes step 3 with margin. `VREG_MV` in `STATUS` shows the setting.
+   lowest value that still passes step 3 with margin. `:DIAG:VREG?` gives the setting.
