@@ -435,6 +435,7 @@ void systemInfo(SystemInfo *s) {
     s->chipReset = g_reset.chipReset;
     s->wdtResets = g_reset.wdtCount;
     s->wdtMs = kWatchdogMs;
+    s->uptimeUs = time_us_64();
 }
 
 // Runs `call` with the longer watchdog period of the radio chip's power-up.

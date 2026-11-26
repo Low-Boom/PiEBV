@@ -149,6 +149,10 @@ check("SYSTem:VERSion?", run("SYST:VERS?"), ["1999.0"])
 check("diagnostics", run(":DIAG:HARD?;CLOC?;CLOC:MODE?;:DIAG:VREG?;RES:CAUS?;:DIAG:WATC:PER?;RES?;:DIAG:TXDR?"),
       ['"OK";150000000;"STANDARD";1.100000000E+00;POWER_ON;3.000000000E+00;0;0'])
 
+check("uptime", run(":DIAG:UPT?"), [re.compile(NR3)])
+up = run(":DIAG:UPT?", "*OPC?", ":DIAG:UPT?")
+check("uptime rises", float(up[2]) >= float(up[0]), True)
+
 # --- help: a definite-length block whose length is exact
 help_raw = subprocess.run([SIM], input=b"SYST:HELP:HEAD?\n", capture_output=True, timeout=20).stdout
 m = re.match(rb"#(\d)", help_raw)

@@ -565,6 +565,7 @@ const ScpiCmd kCommands[] = {
     {":DIAGnostic:WATChdog:RESets", &Protocol::cmdDiag, kQ, 6},
     {":DIAGnostic:WATChdog:PERiod", &Protocol::cmdDiag, kQ, 7},
     {":DIAGnostic:TXDRopped", &Protocol::cmdDiag, kQ, 8},
+    {":DIAGnostic:UPTime", &Protocol::cmdDiag, kQ, 9},
 };
 
 struct Tok {
@@ -1044,6 +1045,7 @@ void Protocol::cmdDiag(ScpiCtx &c) {
         case 6: g_out->print(s.wdtResets); break;
         case 7: printSci(*g_out, s.wdtMs, 1000); break;
         case 8: g_out->print(c.link->dropped()); break;
+        case 9: printSci(*g_out, s.uptimeUs / 1000, 1000); break;  // seconds, to the millisecond
     }
 }
 

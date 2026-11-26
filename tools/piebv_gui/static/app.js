@@ -515,6 +515,11 @@ function renderSysline(sys, clk) {
       " (" + (1e9 / clk).toFixed(3) + " ns steps)", false],
   );
   if (overclockOff) items.push([overclockOff[1], true]);
+  // A restart that the GUI saw (piebv_device: the board's uptime went back).
+  if (sys.RESTART_AT) {
+    const at = new Date(sys.RESTART_AT * 1000).toLocaleTimeString();
+    items.push(["board restarted (seen at " + at + ", reset cause " + (sys.RESTART_CAUSE || "?") + ")", true]);
+  }
   items.push(["last reset " + (sys.RESET || "?"), sys.RESET === "WATCHDOG"]);
   if (wdtResets > 0) items.push([wdtResets + " watchdog reset" + (wdtResets > 1 ? "s" : "") + " since power-on", true]);
   items.push(["watchdog " + (parseInt(sys.WDT_MS || "0", 10) / 1000) + " s", false]);
@@ -545,8 +550,8 @@ function appendLog(entries) {
     const div = document.createElement("div");
     // An entry of the error queue (<code>,"<text>", code not 0) or an echo error line.
     const isErr = /^(ERR |[-+]?[1-9]\d*,")/.test(e.text);
-    div.className = e.dir === ">" ? "in" : isErr ? "err" : "out";
-    div.textContent = (e.dir === ">" ? "> " : "  ") + e.text;
+    div.className = e.dir === ">" ? "in" : e.dir === "!" || isErr ? "err" : "out";
+    div.textContent = (e.dir === ">" ? "> " : e.dir === "!" ? "! " : "  ") + e.text;
     box.appendChild(div);
   }
   while (box.children.length > 1500) box.removeChild(box.firstChild);

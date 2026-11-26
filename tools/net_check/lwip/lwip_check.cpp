@@ -276,7 +276,7 @@ int main(int argc, char **argv) {
         for (int i = 0; i < 10; ++i) { inject(*a, TCP_ACK); loopPass(); }
         NOTE("help reply bytes received: %zu, stalled=%d", a->got.size() - before, (int)tcplink::link().stalled());
         CHECK(!tcplink::link().stalled());
-        CHECK(a->got.find(":DIAGnostic:TXDRopped/qonly/\r\n\r\n", before) != std::string::npos);
+        CHECK(a->got.find(":DIAGnostic:UPTime/qonly/\r\n\r\n", before) != std::string::npos);
     }
 
     if (only == "window" || only.empty()) {

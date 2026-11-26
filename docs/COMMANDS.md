@@ -185,6 +185,7 @@ All are queries only.
 | `:DIAGnostic:RESet:RAW?` | The raw restart registers, as two decimal numbers: the watchdog reason register and the chip reset register (for bug reports) |
 | `:DIAGnostic:WATChdog:RESets?` | Watchdog restarts since power-on |
 | `:DIAGnostic:WATChdog:PERiod?` | The watchdog period in seconds (`3.000000000E+00`). If the firmware stops, the board restarts DISARMED after this time. While the radio chip starts (at power-up with Wi-Fi set up, and during `:SYST:COMM:WLAN ON`, `OFF` and `CLEar`) the period is 8 s; the query does not show that. |
+| `:DIAGnostic:UPTime?` | Time since the board last started, in seconds (resolution 1 ms). A host can compare two reads: a value smaller than the earlier value plus the time between the reads shows a restart in between. The PiEBV GUI does this. |
 | `:DIAGnostic:TXDRopped?` | Bytes of replies that were discarded because the host of this link did not read them. Each link has its own count. The count of the network link starts at 0 for each new host. |
 
 ### Network link (Wi-Fi)
@@ -716,5 +717,6 @@ and errors go into the [error queue](#errors). The old start-up greeting is gone
 | `NET_CLIENT` | `:SYST:COMM:WLAN:CLI?` | `""` for no host |
 | `WIFI_PENDING` | `:SYST:COMM:WLAN:PEND?` | |
 | `TX_DROPPED` | `:DIAG:TXDR?` | |
+| (none) | `:DIAG:UPT?` | New: time since the board started, in seconds |
 
 One line can read many values: `:FREQ?;:PULS:WIDT?;DOUB:DEL?;:OUTP?;:DIAG:HARD?`.

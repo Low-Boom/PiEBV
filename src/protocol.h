@@ -179,6 +179,7 @@ struct SystemInfo {
     const char *resetCause;    // POWER_ON, WATCHDOG, ...
     uint32_t wdReason, chipReset;  // raw reset registers
     uint32_t wdtResets, wdtMs;
+    uint64_t uptimeUs;  // since the chip started (DIAGnostic:UPTime?; a host compares it to see a restart)
 };
 
 struct Identity {

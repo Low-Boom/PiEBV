@@ -299,6 +299,29 @@ _COMBINE_TEXT = ["CH1 on LASER 1, CH2 on LASER 2", "CH1 + CH2 on LASER 1 and LAS
 _GATE_TEXT = ["off: no pixel reset", "pixels reset between pulse pairs while armed",
               "pixels reset between pulse pairs, also while disarmed"]
 
+# ---------------------------------------------------------------- restart detection
+# A board restart is seen in its uptime (:DIAG:UPT?, which a query does not change,
+# unlike *ESR?): the uptime is less than it was, plus the time that passed since then.
+# The last uptime of each board is kept here, for the life of the GUI server, so that a
+# restart is also seen across a reconnect (a restart closes the USB port and the
+# network connection). A board is known by its *IDN? reply.
+_RESTART_SLACK_S = 2.0  # host and board clocks, and the time a status read takes
+_last_uptime = {}       # *IDN? -> (uptime in s, time.monotonic() of the read)
+_last_uptime_lock = threading.Lock()
+
+
+def note_uptime(board, uptime):
+    """Records the board's uptime. True if the board restarted since the last record."""
+    now = time.monotonic()
+    with _last_uptime_lock:
+        last = _last_uptime.get(board)
+        _last_uptime[board] = (uptime, now)
+    if last is None:
+        return False
+    expected = last[0] + (now - last[1])
+    return uptime + _RESTART_SLACK_S < expected
+
+
 # The status read-out: program messages and the names of their responses. Absolute
 # headers, except below WLAN (a relative header after :SYST:COMM:WLAN? resolves below
 # WLAN). Each response line stays far below 256 bytes: the two long texts (hardware
@@ -307,8 +330,8 @@ _STATUS_MESSAGES = [
     (":FREQ?;:PULS:PER?;:PULS:WIDT?;:PULS:DOUB:DEL?;:MARK:WIDT?;:OUTP:COMB?;:PIX:GATE?;:PIX:LEAD?;:PIX:LAG?",
      ["FREQ", "PERIOD", "WIDTH", "DELAY", "MARKERWIDTH", "COMBINE", "PIXGATE", "PIXLEAD", "PIXLAG"]),
     (":PIX:WIND?;:SOUR:SYNC:FREQ?;:OUTP?;:OUTP:PEND?", ["PIXWIN", "SYNC", "ARMED", "PENDING"]),
-    (":DIAG:CLOC?;:DIAG:VREG?;:DIAG:RES:CAUS?;:DIAG:WATC:RES?;:DIAG:WATC:PER?;:DIAG:TXDR?",
-     ["CLK", "VREG", "RESET", "WDT_RESETS", "WDT_PER", "TX_DROPPED"]),
+    (":DIAG:CLOC?;:DIAG:VREG?;:DIAG:RES:CAUS?;:DIAG:WATC:RES?;:DIAG:WATC:PER?;:DIAG:TXDR?;:DIAG:UPT?",
+     ["CLK", "VREG", "RESET", "WDT_RESETS", "WDT_PER", "TX_DROPPED", "UPTIME"]),
     (":DIAG:HARD?", ["HW"]),
     (":DIAG:CLOC:MODE?", ["CLKMODE"]),
     (":SYST:COMM:WLAN?;SSID?;SEC?;PEND?;SAV?;MAC?;IPAD?;RSSI?;PORT?;CLI?",
@@ -360,6 +383,7 @@ def build_status(r):
         "WDT_RESETS": r["WDT_RESETS"],
         "WDT_MS": str(round(float(r["WDT_PER"]) * 1000)),
         "TX_DROPPED": r["TX_DROPPED"],
+        "UPTIME_S": r["UPTIME"],
         "SYNC_HZ": r["SYNC"],
         "WIFI": state + (" (%s)" % note if note else ""),
         "WIFI_STATE": state,
@@ -401,6 +425,7 @@ class PiEBV:
         self._log_seq = 0
         self._log_lock = threading.Lock()
         self.identity = None
+        self.restart = None  # the last restart seen on this link: {"at": epoch s, "cause": ...}
         try:
             time.sleep(0.15)
             self._stale(0.2)  # replies a previous host left unread
@@ -543,9 +568,18 @@ class PiEBV:
                     raise LinkError("unexpected reply to %r" % message)
                 r.update(zip(names, values))
         try:
-            return build_status(r)
+            st = build_status(r)
+            uptime = float(r["UPTIME"])
         except (ValueError, KeyError, IndexError) as exc:
             raise LinkError("unexpected status reply: %s" % exc)
+        if note_uptime(self.identity, uptime):
+            self.restart = {"at": time.time(), "cause": r["RESET"]}
+            self._record("!", "The board restarted (reset cause: %s). It is DISARMED, with the default "
+                              "settings unless they were sent again." % r["RESET"])
+        if self.restart:
+            st["system"]["RESTART_AT"] = self.restart["at"]
+            st["system"]["RESTART_CAUSE"] = self.restart["cause"]
+        return st
 
     def set(self, name, value):
         """One setting of the page. Returns (ok, reply): reply is the board's error-queue

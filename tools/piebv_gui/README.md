@@ -45,7 +45,7 @@ never uses 1200 baud, which would reboot the Pico into its bootloader.
 
 | Part | What it does |
 |---|---|
-| Header | Device list, with PiEBV boards marked; **↻** rescans. **Connect**/**Disconnect**. The board's identity (from `*IDN?`) and, under it, a system line: clock, why it last restarted, crash restarts (watchdog), the watchdog timeout and reply bytes dropped (from the `:DIAG:` queries). A crash restart or dropped replies is flagged ⚠. Then the theme button, the **ARMED** indicator and **DISARM**. |
+| Header | Device list, with PiEBV boards marked; **↻** rescans. **Connect**/**Disconnect**. The board's identity (from `*IDN?`) and, under it, a system line: clock, why it last restarted, crash restarts (watchdog), the watchdog timeout and reply bytes dropped (from the `:DIAG:` queries). A crash restart or dropped replies is flagged ⚠. A board restart that the GUI sees is flagged too: see [Board restarts](#board-restarts). Then the theme button, the **ARMED** indicator and **DISARM**. |
 | Arming | A short strip above the charts: **ARM** and **DISARM**, with the firmware's arming state (`:OUTP?`), the start hold-off (`:OUTP:PEND?`), the hardware status (`:DIAG:HARD?`) and the camera sync clock (`:SOUR:SYNC:FREQ?`). |
 | Timing chart | One pulse pair, with Laser 1, Laser 2, marker and pixel reset on a common time axis. (The sync clock runs continuously, so it is not drawn.) Time 0 is the CH1 rising edge. **Pulses** zooms to the two laser pulses. **Pulses + reset window** also shows the window of `:PIX:LEAD` and `:PIX:LAG`. Hover for the level of every signal at that instant. |
 | Sequence chart | Three consecutive pairs, with the marker and the pixel-reset gate between pairs. |
@@ -54,6 +54,27 @@ never uses 1200 baud, which would reboot the Pico into its bootloader.
 | Pixel-reset gate | Gate (`:PIX:GATE OFF`, `ARM` or `ALW`), release before CH1 (`:PIX:LEAD`), reset after the last pulse (`:PIX:LAG`), and the reset window that the board calculates (`:PIX:WIND?`). |
 | Network (Wi-Fi) | The board's Wi-Fi link: its state, address, signal level, MAC address and connected host, and the set-up (network name, passphrase, **Join and store**, **Switch off**, **Erase set-up**). See [Network (Wi-Fi)](#network-wi-fi). For a firmware image without a radio (Pico 2), the card shows the state `UNAVAILABLE` only. |
 | Console | Full width at the bottom, and resizable by dragging its bottom edge. Shows every command and reply on the link, and the entries of the board's error queue. You can type any SCPI command here: see [Console](#console). The page's own once-a-second status poll is kept out of the console. |
+
+### Board restarts
+
+A board that restarts (power loss, watchdog, reset button, firmware upload) is DISARMED and
+has the default settings again. The GUI finds such a restart, also when the link was lost
+and connected again:
+
+- With each status poll, the GUI reads `:DIAG:UPT?`, the time since the board started.
+- It compares the value with the last value from the same board (the same `*IDN?` reply) plus
+  the time between the two reads. A value more than 2 s too small is a restart.
+- The GUI then writes a line that starts with `!` in the console, and the system line shows
+  **⚠ board restarted (seen at <time>, reset cause <cause>)** until the GUI disconnects from
+  that board.
+
+Limits:
+- The GUI keeps the last values in memory only. After a restart of the GUI itself, it cannot
+  see a board restart that occurred before.
+- A firmware upload with a different version changes the `*IDN?` reply, so the GUI sees a
+  different board, and does not report the restart.
+- Because of the 2 s slack, a second restart is not seen if it occurs less than 2 s after
+  the board started.
 
 **Entering values**
 - Type into a field and press **Enter** (that field only) or **Apply** (the whole card).

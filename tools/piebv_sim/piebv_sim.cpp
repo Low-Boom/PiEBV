@@ -178,6 +178,7 @@ void systemInfo(SystemInfo *s) {
     s->chipReset = 0;
     s->wdtResets = 0;
     s->wdtMs = kWatchdogMs;
+    s->uptimeUs = time_us_64();
 }
 
 void wifiGet(WifiConfig *cfg) { *cfg = g_wifi; }
