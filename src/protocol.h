@@ -13,7 +13,7 @@
 // characters. Backspace (0x08) and DEL (0x7F) erase the previous character, so raw
 // terminals work. Message units are separated by ';', with the SCPI rules for the
 // current path. Headers have a long and a short form, in any case. Times are in
-// seconds and frequencies in hertz; suffixes (NS, US, MS, S, HZ, KHZ, MHZ) are
+// seconds and frequencies in hertz; suffixes (PS, NS, US, MS, S, HZ, KHZ, MHZ or MAHZ, GHZ) are
 // accepted. A query returns the REALIZED value (whole PIO cycles), in NR3 form.
 // Responses to the queries of one message are joined by ';' and end in "\r\n".
 //
@@ -128,7 +128,9 @@ constexpr size_t kErrorTextMax = 256;  // with the NUL (SCPI allows 255 characte
 class ProtocolLink {
 public:
     // usb: this is the Pico's USB port. Only that link may change the Wi-Fi set-up.
-    ProtocolLink(ReplySink &sink, bool usb) : out_(sink), usb_(usb) {}
+    // The power-on bit of *ESR? is set on the USB link only: the first network host
+    // after power-up is not the one that saw the power come on.
+    ProtocolLink(ReplySink &sink, bool usb) : out_(sink), usb_(usb), esr_(usb ? 0x80 : 0) {}
     // A new host on this link (a new TCP client): forgets a partial line.
     void reset();
     // The host of this link is not reading replies (ReplyOut::stalled()).
@@ -163,7 +165,7 @@ private:
     // --- SCPI state of the link (a new host on the link starts with it cleared)
     Error errors_[kErrorQueueLen];
     size_t errHead_ = 0, errCount_ = 0;
-    uint8_t esr_ = 0x80, ese_ = 0, sre_ = 0;  // IEEE 488.2 standard event status (power-on bit set), its enable, service request enable
+    uint8_t esr_, ese_ = 0, sre_ = 0;  // IEEE 488.2 standard event status, its enable, service request enable
     bool echo_ = false;                    // SYSTem:ECHO
 };
 

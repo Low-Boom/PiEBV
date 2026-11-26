@@ -1,5 +1,5 @@
 # PlatformIO post script (platformio.ini: extra_scripts = post:...): passes the git
-# version of the source tree to the firmware as PIDG_FIRMWARE_VERSION, which ID? reports.
+# version of the source tree to the firmware as PIDG_FIRMWARE_VERSION, which *IDN? reports.
 #
 # The version is `git describe --always --dirty`: the commit (or tag) the image was
 # built from, with "-dirty" if tracked files had uncommitted changes. Unlike a build

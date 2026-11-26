@@ -133,7 +133,7 @@ const char *applyPulseParams(const PulseParams &p, RealizedTiming *realized) {
     RealizedTiming rt;
     if (const char *why = realizeTiming(p, clkHz(), &rt)) return why;
     if (g_armed && g_configured && rt.combine != g_rt.combine) {
-        return "DISARM first: COMBINE changes what both laser outputs carry";
+        return "DISARM first: OUTPut:COMBine changes what both laser outputs carry";
     }
     if (!g_pioReady) return "pio0 unavailable";
     if (!g_configured || pulseLoadDiffers(g_rt, rt)) restartPulses(rt, g_armed);
@@ -143,7 +143,7 @@ const char *applyPulseParams(const PulseParams &p, RealizedTiming *realized) {
     return nullptr;
 }
 
-// net::printStatus(), with a radio that joins at once.
+// net::netInfo(), with a radio that joins at once.
 // net::netInfo(), with a radio that joins at once.
 void netInfo(NetInfo *n) {
     n->state = g_wifi.enabled ? "CONNECTED" : "OFF";

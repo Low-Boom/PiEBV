@@ -19,7 +19,7 @@ namespace {
 // (as the core builds it) gives every TCP segment a buffer of full segment size from
 // a heap of 16 kB that it shares with DHCP, ARP and mDNS, so the whole send buffer of
 // 8 segments would take most of that heap. 3 segments' worth holds the longest reply
-// (SYSTem:HELP:HEADers?, about 2 kB); it can lie in 4 segments, about 6 kB of the heap.
+// (SYSTem:HELP:HEADers?, about 1.4 kB); it can lie in 4 segments, about 6 kB of the heap.
 constexpr int kMaxQueued = 3 * TCP_MSS;
 static_assert(kMaxQueued <= TCP_SND_BUF, "cannot queue more than the send buffer");
 // Free queue space that counts as "the host reads again" after a reply was dropped:

@@ -293,8 +293,8 @@ in a terminal:
 - Queries reply as without the echo.
 - The echo switch is for each link. It is off at start, and off for each new host of the network
   link. `*RST` does not change it.
-- With the echo on, each error also goes into the error queue. Send `*CLS` from time to time: when
-  the queue is full, the `ERR` line shows -350 in place of the error.
+- With the echo on, each error also goes into the error queue. The `ERR` line always shows the
+  error itself. Send `*CLS` from time to time, or the queue fills up with -350.
 
 ```
 :SYST:ECHO ON              ->  OK :SYST:ECHO 1
@@ -590,8 +590,9 @@ FOO
 
 - The text is the SCPI error text, then `;` and the detail. A double quote in the detail becomes
   a single quote.
-- The queue holds 8 entries. When it is full, the newest entry becomes `-350,"Queue overflow"`,
-  and later errors are lost until you read the queue or send `*CLS`.
+- The queue holds 8 entries. When it is full, the newest entry becomes `-350,"Queue overflow"`
+  (and `*ESR?` bit 3, DDE, is set), and later errors are lost until you read the queue or send
+  `*CLS`.
 - An error in the structure of a command ends the rest of the line: errors -102, -103 and -113,
   error -151 for a missing closing quote, and error -108 for more than four values. The commands
   before it ran.

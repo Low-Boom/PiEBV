@@ -164,7 +164,22 @@ struct ScpiCtx {
 
 // Access to a link's SCPI state (error queue, status registers, echo).
 struct ScpiAccess {
-    static void push(ProtocolLink &l, int code, const char *detail, size_t detailLen) {
+    // "<standard text>;<detail>" into out (kErrorTextMax bytes).
+    static void compose(int code, const char *detail, size_t detailLen, char *out) {
+        size_t n = 0;
+        for (const char *t = errorText(code); *t && n + 1 < kErrorTextMax; ++t) {
+            out[n++] = *t;
+        }
+        if (detail && detailLen && n + 2 < kErrorTextMax) {
+            out[n++] = ';';
+            for (size_t i = 0; i < detailLen && detail[i] && n + 1 < kErrorTextMax; ++i) {
+                // A double quote would end the response string: use a single one.
+                out[n++] = detail[i] == '"' ? '\'' : detail[i];
+            }
+        }
+        out[n] = '\0';
+    }
+    static void push(ProtocolLink &l, int code, const char *text) {
         l.esr_ |= esrBitFor(code);
         ProtocolLink::Error *e;
         if (l.errCount_ < kErrorQueueLen) {
@@ -173,21 +188,11 @@ struct ScpiAccess {
         } else {  // full: the newest entry becomes "Queue overflow" (SCPI)
             e = &l.errors_[(l.errHead_ + kErrorQueueLen - 1) % kErrorQueueLen];
             code = -350;
-            detail = nullptr;
+            text = errorText(-350);
+            l.esr_ |= esrBitFor(-350);
         }
         e->code = (int16_t)code;
-        size_t n = 0;
-        for (const char *t = errorText(code); *t && n + 1 < sizeof(e->text); ++t) {
-            e->text[n++] = *t;
-        }
-        if (detail && detailLen && n + 2 < sizeof(e->text)) {
-            e->text[n++] = ';';
-            for (size_t i = 0; i < detailLen && detail[i] && n + 1 < sizeof(e->text); ++i) {
-                // A double quote would end the response string: use a single one.
-                e->text[n++] = detail[i] == '"' ? '\'' : detail[i];
-            }
-        }
-        e->text[n] = '\0';
+        snprintf(e->text, sizeof(e->text), "%s", text);
     }
     static bool pop(ProtocolLink &l, int *code, const char **text) {
         if (l.errCount_ == 0) {
@@ -199,9 +204,6 @@ struct ScpiAccess {
         l.errHead_ = (l.errHead_ + 1) % kErrorQueueLen;
         --l.errCount_;
         return true;
-    }
-    static const ProtocolLink::Error &newest(ProtocolLink &l) {
-        return l.errors_[(l.errHead_ + l.errCount_ + kErrorQueueLen - 1) % kErrorQueueLen];
     }
     static size_t count(ProtocolLink &l) { return l.errCount_; }
     static void clear(ProtocolLink &l) {
@@ -229,14 +231,15 @@ void endResponseLine(ScpiCtx *c) {
 void error(ScpiCtx &c, int code, const char *detail = nullptr, size_t detailLen = SIZE_MAX) {
     c.failed = true;
     ProtocolLink &l = *c.link;
-    ScpiAccess::push(l, code, detail, detail ? detailLen : 0);
-    if (ScpiAccess::echo(l)) {
+    char text[kErrorTextMax];
+    ScpiAccess::compose(code, detail, detail ? detailLen : 0, text);
+    ScpiAccess::push(l, code, text);
+    if (ScpiAccess::echo(l)) {  // the error itself, also when the queue is full
         endResponseLine(&c);
-        const ProtocolLink::Error &e = ScpiAccess::newest(l);
         g_out->print(F("ERR "));
-        g_out->print(e.code);
+        g_out->print(code);
         g_out->print(',');
-        printQuoted(*g_out, e.text);
+        printQuoted(*g_out, text);
         g_out->println();
     }
 }
@@ -350,7 +353,7 @@ bool parseNumber(ScpiCtx &c, const ScpiParam &p, Unit unit, double *value) {
                     return false;
                 }
             }
-            error(c, -131, unit == Unit::Second ? "use S, MS, US, NS or PS" : "use HZ, KHZ or MHZ");
+            error(c, -131, unit == Unit::Second ? "use S, MS, US, NS or PS" : "use HZ, KHZ, MHZ or GHZ");
             return false;
         }
     }
@@ -1171,11 +1174,6 @@ void Protocol::wifiChange(ScpiCtx &c, int action) {
         return;
     }
     wifi_ = cfg;
-    if (notSaved) {
-        if (strncmp(notSaved, "not stored: ", 12) == 0) notSaved += 12;
-        error(c, 101, notSaved);
-        c.failed = false;  // a warning: the change is in use
-    }
     if (beginEcho(c)) {
         if (action == 2) {
             g_out->print(F(":SYST:COMM:WLAN:CLE"));
@@ -1186,6 +1184,11 @@ void Protocol::wifiChange(ScpiCtx &c, int action) {
             g_out->print(notSaved ? F(", not stored)") : F(", stored)"));
         }
         g_out->println();
+    }
+    if (notSaved) {  // a warning: the change is in use
+        if (strncmp(notSaved, "not stored: ", 12) == 0) notSaved += 12;
+        error(c, 101, notSaved);
+        c.failed = false;
     }
 }
 
@@ -1199,8 +1202,10 @@ void Protocol::reportError(ProtocolLink &link, int code, const char *detail) {
     g_out = prev;
 }
 
-// One program message: message units separated by ';'. A command error (-1xx) ends
-// the message; an execution error (-2xx) ends only its unit.
+// One program message: message units separated by ';'. An error that the parser
+// finds in the message itself (-102, -103, -108, -113, -151 for a missing closing
+// quote) ends the rest of the message. An error in a command's values or in its
+// execution ends only that unit.
 void Protocol::dispatch(ProtocolLink &link, char *line) {
     g_out->startCommand();
     bool respStarted = false;

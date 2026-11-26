@@ -2,13 +2,13 @@
 // Built via the community arduino-pico core (see platformio.ini) since
 // PlatformIO's official "raspberrypi" platform/Mbed core has no RP2350
 // support. On a Pico 2 W the radio can carry the command protocol over Wi-Fi
-// (net_link.h); it is off until it is set up with the WIFI command over USB.
+// (net_link.h); it is off until it is set up with the SYSTem:COMMunicate:WLAN commands over USB.
 //
 // IDS EVS event-camera synchronizer, implemented with PIO state machines and the
 // RP2350 clock generator (no CPU busy-waits). Outputs (the GPIO map is in board.h):
 //   - CH1 / CH2 (GP13 / GP12): the two laser trigger pulses. Shared width; CH2's
 //     rising edge follows CH1's by exactly DELAY (to the nearest PIO cycle).
-//     COMBINE 1 puts BOTH pulses on BOTH outputs (two light sources fired in sync
+//     OUTPut:COMBine ON puts BOTH pulses on BOTH outputs (two light sources fired in sync
 //     with the same double pulse): the CH1 and CH2 state machines then each drive
 //     GP12 and GP13 together (pio_pulse.cpp, dual-pin program).
 //   - MARKER (GP11): a pulse of MARKERWIDTH with every pulse pair, rising with
@@ -80,7 +80,7 @@ constexpr uint32_t kSmMask = (1u << kSmCh1) | (1u << kSmCh2) | (1u << kSmMarker)
 // SYNC needs a pin with a clk_gpout function (sync_clock.h); catch a wrong board.h at build time.
 static_assert(GPIO_TO_GPOUT_CLOCK_HANDLE(kPinSync, CLK_COUNT) != CLK_COUNT, "kPinSync has no clk_gpout function");
 
-// Firmware version for ID?: `git describe --always --dirty` of the source tree, passed in
+// Firmware version for *IDN?: `git describe --always --dirty` of the source tree, passed in
 // by tools/firmware_version.py (platformio.ini extra_scripts). It replaces the build
 // date and time, so two builds of the same commit are the same image.
 #ifndef PIDG_FIRMWARE_VERSION
@@ -133,7 +133,7 @@ PulseChannel g_marker;
 PulseChannel g_pixGate;  // pixel-reset gate: output INVERTED, latch high = pixels in reset
 SyncClock g_sync;  // clk_gpout, not PIO
 // Started and stopped together. The first three always run; the gate (last) runs only
-// while PIXGATE asks for it (pulseGroupCount()).
+// while PIXel:GATE asks for it (pulseGroupCount()).
 PulseChannel *const g_group[] = {&g_ch1, &g_ch2, &g_marker, &g_pixGate};
 constexpr size_t kGroupAll = std::size(g_group);
 PulseChannel *const g_pixGateOnly[] = {&g_pixGate};
@@ -238,8 +238,8 @@ void initPixGatePin() {
     pio_sm_set_consecutive_pindirs(kPio, kSmPixGate, kPinPixGate, 1, true);
 }
 
-// How many of g_group run for a pulse train: the gate joins under PIXGATE 2 always,
-// and under PIXGATE 1 only while the laser pads carry pulses.
+// How many of g_group run for a pulse train: the gate joins under PIXel:GATE ALWays always,
+// and under PIXel:GATE ARMed only while the laser pads carry pulses.
 size_t pulseGroupCount(const RealizedTiming &rt, bool lasersLive) {
     return (rt.pixGate == 2 || (rt.pixGate == 1 && lasersLive)) ? kGroupAll : kGroupAll - 1;
 }
@@ -262,7 +262,7 @@ void closeLaserGate() {
 //     latches LOW (stopPulseChannelsLow).
 //  3. Load the new cycle counts. If any load fails, stop here and start nothing.
 //  4. Lasers not live: enable the group now, on the same clock cycle (MARKER runs,
-//     CH1/CH2 run behind the closed gate, the gate SM only under PIXGATE 2).
+//     CH1/CH2 run behind the closed gate, the gate SM only under PIXel:GATE ALWays).
 //     Lasers live: leave everything stopped and schedule the start for the end of
 //     the restart hold-off. servicePendingStart(), called from loop(), then opens
 //     the gate (latch LOW -> no edge) and enables the group together, so the first
@@ -353,7 +353,7 @@ const char *setArmed(bool arm) {
             g_startPending = false;
             startPulseChannelsInSync(g_group, pulseGroupCount(g_rt, false));
         } else if (g_armed && g_rt.pixGate == 1) {
-            // PIXGATE 1 gates only while ARMED: stop the gate, which leaves its latch
+            // PIXel:GATE ARMed gates only while ARMED: stop the gate, which leaves its latch
             // LOW, i.e. the pixels free. A reset in progress ends at the halt (at most a
             // few cycles later, the time to its forced SET PINS 0).
             stopPulseChannelsLow(g_pixGateOnly, 1);

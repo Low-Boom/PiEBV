@@ -177,7 +177,8 @@ The GUI server (`tools/piebv_gui`) owns the link to the board, over USB or over 
 | `tools/net_check/lwip` `lwip_check` | The same code linked with lwIP's own sources and the firmware's lwIP options: reset after `DISARM`, half-close, server restart, heap use, receive window, second hosts, keep-alive |
 | [`tools/piebv_sim`](../../tools/piebv_sim/README.md) | The Wi-Fi commands and all replies, with a radio that joins at once; `scpi_check.py` checks the SCPI replies, the Wi-Fi set-up included |
 | USB replies against `main` | 1500 random inputs gave the same replies as before the network link (a check of the earlier text commands, before the change to SCPI) |
-| GUI against the simulator | The set-up paths, passphrase masking, arming behind a delayed join followed by `DISARM`, malformed requests, the page in a browser (done with the earlier text commands) |
+| GUI against the simulator | The set-up paths, passphrase masking, arming behind a delayed join followed by `DISARM`, malformed requests, the page in a browser. Done with the earlier text commands, and again after the change to SCPI. |
+| SCPI parser on a computer | 400 random inputs with the address and undefined-behaviour sanitizers: no failure, and `DISARM` acted in every case. 802 realized values in NR3 form agree with an exact calculation. |
 
 The link went through four rounds of independent adversarial review, each followed by
 corrections. Rounds 1 to 3 found high-severity defects in the firmware; round 4 found none. In
