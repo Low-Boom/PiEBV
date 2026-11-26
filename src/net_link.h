@@ -21,7 +21,7 @@
 //     after a frame send that took long. No frame is handed to the driver during a
 //     test, nor after a failed one, so a failed test holds the loop for the time-outs
 //     of that one command (1 to 2 s). The second failed test in a row powers the chip
-//     off (WIFI=FAULT, until WIFI ON). loop() feeds the watchdog right before each
+//     off (WLAN:LINK? FAULT, until WLAN ON). loop() feeds the watchdog right before each
 //     test; a wait above the watchdog period restarts the board (DISARMED, radio held
 //     off). A chip that fails between a passed test and the end of the join request
 //     that follows it (more than ten commands) also ends in the watchdog restart.
@@ -57,7 +57,7 @@ constexpr bool kAvailable = false;
 void begin();
 
 // Joins the network if the stored set-up asks for it. `allowed` false (after a watchdog
-// reset) holds the radio off until WIFI ON, so a radio fault cannot reset the board
+// reset) holds the radio off until WLAN ON, so a radio fault cannot reset the board
 // again and again. Can take as long as the radio chip's power-up.
 void start(bool allowed);
 
@@ -87,7 +87,7 @@ void flush();
 // The TCP host's protocol link (line buffer and reply path).
 ProtocolLink &link();
 
-// The Wi-Fi and network STATUS lines, one "KEY=value" each.
-void printStatus(Print &out);
+// The network link's state, for the SYSTem:COMMunicate:WLAN queries.
+void netInfo(NetInfo *n);
 
 }  // namespace net

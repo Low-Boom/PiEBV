@@ -295,6 +295,13 @@ int main() {
         return nullptr;
     };
     hooks.isArmed = [] { return g_armed; };
+    static int wifiSets = 0;
+    hooks.wifiGet = [](WifiConfig *cfg) { *cfg = WifiConfig{}; };
+    hooks.wifiSet = [](const WifiConfig &, const char **notSaved) -> const char * {
+        ++wifiSets;
+        *notSaved = nullptr;
+        return nullptr;
+    };
     CHECK(g_protocol.begin(&g_params, hooks) == nullptr);
     CHECK(tcplink::start(4242));
     CHECK(g_listener != nullptr);
@@ -303,12 +310,12 @@ int main() {
     tcp_pcb *a = hostConnects();
     CHECK(linkHasHost());
     CHECK((a->so_options & SOF_KEEPALIVE) && a->keep_idle == 5000 && a->keep_intvl == 2000 && a->keep_cnt == 3);
-    hostSends(a, "ARM\n");
+    hostSends(a, "OUTP ON;OUTP?\n");
     loopPass();
     CHECK(g_armed);
-    CHECK(a->out == "OK ARMED=1\r\n" && a->sentBytes == a->out.size());
+    CHECK(a->out == "1\r\n" && a->sentBytes == a->out.size());
     loopPass();
-    CHECK(a->recved == 4);  // the window is open again for what was read
+    CHECK(a->recved == 14);  // the window is open again for what was read
     hostAcks(a);
 
     g_case = "DISARM, then a reset, before the loop reads";
@@ -320,6 +327,19 @@ int main() {
     CHECK(!g_armed);      // the input that arrived was run
     loopPass();
     CHECK(!linkHasHost());
+
+    g_case = "the Wi-Fi set-up is refused from the network link";
+    {
+        tcp_pcb *w = hostConnects();
+        hostSends(w, ":SYST:COMM:WLAN:SSID \"x\";:SYST:COMM:WLAN ON\nSYST:ERR?\n:SYST:COMM:WLAN:PEND?\n");
+        loopPass();
+        CHECK(w->out == "-203,\"Command protected;the Wi-Fi set-up changes only from the Pico USB port\"\r\n0\r\n");
+        CHECK(wifiSets == 0);
+        hostCloses(w);
+        loopPass();
+        loopPass();
+        CHECK(!linkHasHost());
+    }
 
     g_case = "a host that connects and closes at once";
     tcp_pcb *b = hostConnects();
@@ -333,42 +353,42 @@ int main() {
 
     g_case = "half-close: the reply goes out, then an orderly close";
     tcp_pcb *d = hostConnects();
-    hostSends(d, "ARM?\n");
+    hostSends(d, "OUTP?\n");
     hostCloses(d);
     loopPass();
-    CHECK(d->out == "ARMED=0\r\n" && !d->gone);
+    CHECK(d->out == "0\r\n" && !d->gone);
     loopPass();
-    CHECK(d->closed && !d->aborted && d->recved == 5 && d->sentBytes == d->out.size());
+    CHECK(d->closed && !d->aborted && d->recved == 6 && d->sentBytes == d->out.size());
     CHECK(!linkHasHost());
 
     g_case = "a partial line does not reach the next host";
     tcp_pcb *e = hostConnects();
-    hostSends(e, "AR");
+    hostSends(e, "OUTP O");
     loopPass();
     hostResets(e);
     loopPass();
     loopPass();
     tcp_pcb *f = hostConnects();
     CHECK(linkHasHost());
-    hostSends(f, "M\n");
+    hostSends(f, "N\nSYST:ERR?\n");  // "N" alone, not "OUTP ON"
     loopPass();
     CHECK(!g_armed);
-    CHECK(f->out.rfind("ERR M unknown command", 0) == 0);
+    CHECK(f->out == "-113,\"Undefined header;N\"\r\n");
 
     g_case = "a second host";
     err_t r = ERR_OK;
     tcp_pcb *g = hostConnects(&r);
     CHECK(r == ERR_OK && g->out == kBusy && !g->gone);
-    hostSends(g, "ARM\n");  // taken and discarded
+    hostSends(g, "OUTP ON\n");  // taken and discarded
     loopPass();
-    CHECK(!g_armed && g->recved == 4 && g_pbufsLive == 0);
+    CHECK(!g_armed && g->recved == 8 && g_pbufsLive == 0);
     hostAcks(g);            // the host has the line: our FIN goes out, we still listen
     CHECK(g->txClosed && !g->gone);
     hostCloses(g);          // the host closes: now the connection is given up
     CHECK(g->closed && !g->aborted);
-    hostSends(f, "ARM?\n"); // the first host is not disturbed
+    hostSends(f, "OUTP?\n"); // the first host is not disturbed
     loopPass();
-    CHECK(f->out.find("ARMED=0\r\n") != std::string::npos);
+    CHECK(f->out.size() >= 3 && f->out.compare(f->out.size() - 3, 3, "0\r\n") == 0);
 
     g_case = "more second hosts than the limit";
     tcp_pcb *h1 = hostConnects(), *h2 = hostConnects();
@@ -396,18 +416,18 @@ int main() {
     hostAcks(f);
     g_writeFails = true;
     uint64_t t0 = g_nowUs;
-    hostSends(f, "HELP\n");
+    hostSends(f, ":SYST:HELP:HEAD?\n");
     loopPass();
     uint64_t dt = g_nowUs - t0;
     CHECK(dt >= 250000 && dt < 300000);  // the reply budget, once
     CHECK(tcplink::link().stalled());
     t0 = g_nowUs;
-    hostSends(f, "STATUS\nHELP\n");
+    hostSends(f, "*IDN?\n:SYST:HELP:HEAD?\n");
     for (int i = 0; i < 20; ++i) {
         loopPass();
     }
     CHECK(g_nowUs - t0 < 20000);         // no second wait
-    hostSends(f, "ARM\n");               // commands still run
+    hostSends(f, "OUTP ON\n");           // commands still run
     loopPass();
     loopPass();
     CHECK(g_armed);
@@ -415,13 +435,13 @@ int main() {
     hostAcks(f);
     fake_advance_us(2500000);            // the memory hold time
     const size_t before = f->out.size();
-    hostSends(f, "DISARM\n");
+    hostSends(f, "DISARM\nOUTP?\n");
     loopPass();
     CHECK(!g_armed && f->out.size() > before && !tcplink::link().stalled());
 
     g_case = "more input than the buffer, in pieces";
     {
-        std::string line = "ARM?\n", all;
+        std::string line = "OUTP?\n", all;
         size_t replies = 0;
         loopPass();  // the window is open for everything read so far
         hostAcks(f);
@@ -447,18 +467,18 @@ int main() {
             hostAcks(f);
         }
         const std::string got = f->out.substr(start);
-        for (size_t pos = 0; (pos = got.find("ARMED=0\r\n", pos)) != std::string::npos; pos += 9) {
+        for (size_t pos = 0; (pos = got.find("0\r\n", pos)) != std::string::npos; pos += 3) {
             ++replies;
         }
         CHECK(all.size() > 3 * TCP_WND);
         CHECK(replies == all.size() / line.size());  // every command was read, in order, once
-        CHECK(got.size() == replies * 9);
+        CHECK(got.size() == replies * 3);
         CHECK(f->recved - recvedStart == all.size());
         CHECK(g_pbufsLive == 0);
     }
 
     g_case = "radio fault: input that has arrived still runs";
-    hostSends(f, "ARM\n");
+    hostSends(f, "OUTP ON\n");
     loopPass();
     CHECK(g_armed);
     hostSends(f, "DISARM\n");
@@ -476,7 +496,7 @@ int main() {
     CHECK(linkHasHost());
 
     g_case = "stop with a host connected, then start again";
-    hostSends(f, "ARM");
+    hostSends(f, "OUTP ON");
     tcplink::stop(false);
     CHECK(f->aborted && !linkHasHost());
     hostConnects(&stopped);
@@ -485,9 +505,9 @@ int main() {
     CHECK(!g_armed);
     CHECK(tcplink::start(4242));
     tcp_pcb *k = hostConnects();
-    hostSends(k, "\nARM?\n");  // nothing of "ARM" is left
+    hostSends(k, "\nOUTP?\n");  // nothing of "OUTP ON" is left
     loopPass();
-    CHECK(k->out == "ARMED=0\r\n");
+    CHECK(k->out == "0\r\n" && !g_armed);
     tcplink::stop(false);
     tcplink::stop(true);  // twice is harmless
 

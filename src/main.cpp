@@ -33,8 +33,8 @@
 // this.
 //
 // Watchdog. A hardware watchdog (kWatchdogMs) resets the chip if loop() stops
-// running. The chip then comes back up DISARMED, and STATUS reports
-// RESET=WATCHDOG.
+// running. The chip then comes back up DISARMED, and DIAGnostic:RESet:CAUSe? reports
+// WATCHDOG.
 //
 // Clock. clk_sys is 150 MHz (6.667 ns per PIO cycle), or 300 MHz (3.333 ns) when the
 // clock jumper is fitted at boot (clock_mode.h). All timing follows clock_get_hz().
@@ -59,6 +59,7 @@
 #include "hardware/structs/powman.h"
 #include "hardware/structs/watchdog.h"
 #include "hardware/timer.h"
+#include "pico/unique_id.h"
 #include "laser_gate.h"
 #include "net_link.h"
 #include "pio_pulse.h"
@@ -313,8 +314,8 @@ const char *restartPulses(const RealizedTiming &rt, bool lasersLive) {
 }
 
 // A load failed (restartPulses()): nothing runs and the laser pads stay gated LOW.
-// Disarms, and refuses ARM until a later setting loads cleanly; STATUS shows the
-// reason as HW=ERR. Returns `why`.
+// Disarms, and refuses OUTPut ON until a later setting loads cleanly;
+// DIAGnostic:HARDware? shows the reason. Returns `why`.
 const char *pulseLoadFailed(const char *why) {
     g_armed = false;
     g_configured = false;
@@ -393,7 +394,7 @@ const char *applyPulseParams(const PulseParams &p, RealizedTiming *realized) {
         return why;
     }
     if (g_armed && g_configured && rt.combine != g_rt.combine) {
-        return "DISARM first: COMBINE changes what both laser outputs carry";
+        return "DISARM first: OUTPut:COMBine changes what both laser outputs carry";
     }
     g_sync.start(rt.syncDiv);  // does nothing while SYNC already runs at this divider
     if (!g_pioReady) {
@@ -411,36 +412,29 @@ const char *applyPulseParams(const PulseParams &p, RealizedTiming *realized) {
     return nullptr;
 }
 
-void printSystemStatus(Print &out) {
-    out.print(F("HW="));
+// Protocol hook: the read-outs of the DIAGnostic queries.
+void systemInfo(SystemInfo *s) {
     if (g_hwWhy[0]) {
-        out.print(F("ERR "));
-        out.println(g_hwWhy);
+        snprintf(s->hw, sizeof(s->hw), "%s", g_hwWhy);
     } else if (g_loadFailWhy) {
-        out.print(F("ERR outputs stopped: "));
-        out.println(g_loadFailWhy);
+        snprintf(s->hw, sizeof(s->hw), "outputs stopped: %s", g_loadFailWhy);
     } else {
-        out.println(F("OK"));
+        s->hw[0] = '\0';
     }
-    out.print(F("START_PENDING_US="));
-    out.println(startPendingUs());
-    out.print(F("CLK="));
-    out.println(clkHz());
-    out.print(F("CLKMODE="));
-    printClockMode(out, clockModeInfo());
-    out.print(F("VREG_MV="));
-    out.println(clockModeInfo().vregMv);
-    out.print(F("RESET="));
-    out.println(resetReasonName(g_reset.reason));
-    out.print(F("RESET_RAW=WD:0x"));
-    out.print(g_reset.wdReason, HEX);
-    out.print(F(" CHIP:0x"));
-    out.println(g_reset.chipReset, HEX);
-    out.print(F("WDT_RESETS="));
-    out.println(g_reset.wdtCount);
-    out.print(F("WDT_MS="));
-    out.println(kWatchdogMs);
-    net::printStatus(out);
+    s->startPendingUs = startPendingUs();
+    s->clkHz = clkHz();
+    BufPrint mode(s->clkMode, sizeof(s->clkMode));
+    printClockMode(mode, clockModeInfo());
+    // printClockMode() ends with a line end: not part of the value.
+    for (size_t n = strlen(s->clkMode); n && (s->clkMode[n - 1] == '\n' || s->clkMode[n - 1] == '\r'); --n) {
+        s->clkMode[n - 1] = '\0';
+    }
+    s->vregMv = clockModeInfo().vregMv;
+    s->resetCause = resetReasonName(g_reset.reason);
+    s->wdReason = g_reset.wdReason;
+    s->chipReset = g_reset.chipReset;
+    s->wdtResets = g_reset.wdtCount;
+    s->wdtMs = kWatchdogMs;
 }
 
 // Runs `call` with the longer watchdog period of the radio chip's power-up.
@@ -488,10 +482,15 @@ void serviceLink(ProtocolLink &link, Read read, Pending pending) {
     }
 }
 
-void printIdentity(Print &out) {
-    out.print(F("PiEBV delay generator ("));
-    out.print(kBoardName);
-    out.println(F("), firmware " PIDG_FIRMWARE_VERSION));
+// Protocol hook: the fields of *IDN?.
+void identity(Identity *id) {
+    static char serial[2 * PICO_UNIQUE_BOARD_ID_SIZE_BYTES + 1] = "";
+    if (!serial[0]) {
+        pico_get_unique_board_id_string(serial, sizeof(serial));
+    }
+    id->model = kBoardName;
+    id->serial = serial;
+    id->firmware = PIDG_FIRMWARE_VERSION;
 }
 
 }  // namespace
@@ -527,9 +526,8 @@ void setup() {
     // ARM is refused.)
     net::begin();  // the stored Wi-Fi set-up (a flash read); the radio starts at the end of setup()
     const char *why = g_protocol.begin(
-        &g_params, ProtocolHooks{applyPulseParams, setArmed, isArmed, startPendingUs, printSystemStatus,
-                                 printIdentity, clkHz, wifiGet, net::kAvailable ? wifiSet : nullptr,
-                                 net::printStatus});
+        &g_params, ProtocolHooks{applyPulseParams, setArmed, isArmed, startPendingUs, systemInfo, identity, wifiGet,
+                                 net::kAvailable ? wifiSet : nullptr, net::netInfo});
     if (!g_pioReady) {
         why = "pio0 unavailable (state machine already claimed or instruction memory full)";
     } else if (!syncReady) {  // not reachable with the static_assert on kPinSync; reported, not ignored
@@ -549,23 +547,19 @@ void setup() {
         // give the USB CDC connection a moment, but don't hang forever
     }
 
-    // One line: hosts recognize a reboot by its start (tools/piebv_gui/piebv_device.py).
-    Serial.print(F("PiEBV delay generator ready, lasers DISARMED (reset: "));
-    Serial.print(resetReasonName(g_reset.reason));
-    Serial.print(clockModeBannerNote(clockModeInfo()));
-    Serial.println(F("). Type HELP for commands."));
+    // No greeting: an SCPI instrument sends nothing that was not asked for. A boot-time
+    // problem goes to the USB link's error queue (SYSTem:ERRor?), and *ESR? shows the
+    // power-on bit.
     if (g_hwWhy[0]) {
-        Serial.print(F("ERR "));
-        Serial.println(g_hwWhy);
+        g_protocol.reportError(g_usbLink, -240, g_hwWhy);
     } else if (g_loadFailWhy) {
-        Serial.print(F("ERR outputs stopped: "));
-        Serial.println(g_loadFailWhy);
+        g_protocol.reportError(g_usbLink, -240, g_loadFailWhy);
     }
 
     // Last: every boot-time wait above is finished. The watchdog starts with the long
     // period, joins the Wi-Fi network if the stored set-up asks for it (the lasers are
     // DISARMED), and then runs at kWatchdogMs. After a watchdog reset the radio stays
-    // off until WIFI ON, so a radio fault cannot reset the board again and again.
+    // off until WLAN ON, so a radio fault cannot reset the board again and again.
     withRadioStartWatchdog([] {
         net::start(g_reset.reason != RP2040::WDT_RESET);
         return 0;

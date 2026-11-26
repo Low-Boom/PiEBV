@@ -172,15 +172,15 @@ int main(int argc, char **argv) {
     g_case = "basic";
     Host *a = connect();
     CHECK(linkHasHost());
-    inject(*a, TCP_ACK | TCP_PSH, "ARM?\n");
+    inject(*a, TCP_ACK | TCP_PSH, "OUTP?\n");
     loopPass();
-    CHECK(a->got == "ARMED=0\r\n");
+    CHECK(a->got == "0\r\n");
     inject(*a, TCP_ACK);
     loopPass();
 
     if (only == "reset" || only.empty()) {
         g_case = "DISARM, then a reset, before the loop reads";
-        inject(*a, TCP_ACK | TCP_PSH, "ARM\n");
+        inject(*a, TCP_ACK | TCP_PSH, "OUTP ON\n");
         loopPass();
         CHECK(g_armed);
         inject(*a, TCP_ACK | TCP_PSH, "DISARM\n");
@@ -205,9 +205,9 @@ int main(int argc, char **argv) {
     if (only == "halfclose" || only.empty()) {
         g_case = "half-close with data+FIN in one segment";
         const size_t before = a->got.size();
-        inject(*a, TCP_ACK | TCP_PSH | TCP_FIN, "ARM?\n");
+        inject(*a, TCP_ACK | TCP_PSH | TCP_FIN, "OUTP?\n");
         loopPass(); loopPass(); loopPass();
-        CHECK(a->got.size() == before + 9);
+        CHECK(a->got.size() == before + 3);
         CHECK(a->gotFin && !a->gotRst);
         inject(*a, TCP_ACK);
         CHECK(!linkHasHost());
@@ -246,43 +246,43 @@ int main(int argc, char **argv) {
         const size_t before = a->got.size();
         int sent = 0;
         for (int i = 0; i < 30; ++i) {
-            inject(*a, TCP_ACK | TCP_PSH, "ARM?\n"); ++sent;
+            inject(*a, TCP_ACK | TCP_PSH, "OUTP?\n"); ++sent;
             loopPass();
             g_nowUs += 1000;  // 1 ms between commands
             if (tcplink::link().stalled()) { NOTE("link stalled after command %d (t=+%d ms)", sent, i + 1); break; }
         }
-        NOTE("commands %d, replies received %zu", sent, count(a->got.substr(before), "ARMED=0"));
+        NOTE("commands %d, replies received %zu", sent, count(a->got.substr(before), "0\r\n"));
         a->freezeAck = false;
         inject(*a, TCP_ACK);  // now everything is acknowledged
         const uint64_t t0 = g_nowUs;
-        size_t got0 = count(a->got, "ARMED=0");
+        size_t got0 = count(a->got, "0\r\n");
         int tries = 0;
         for (; tries < 60; ++tries) {
             advance(100);
-            inject(*a, TCP_ACK | TCP_PSH, "ARM?\n"); loopPass(); inject(*a, TCP_ACK);
-            if (count(a->got, "ARMED=0") > got0) break;
+            inject(*a, TCP_ACK | TCP_PSH, "OUTP?\n"); loopPass(); inject(*a, TCP_ACK);
+            if (count(a->got, "0\r\n") > got0) break;
         }
         NOTE("first reply again %llu ms after the host acknowledged everything", (unsigned long long)((g_nowUs - t0) / 1000));
         CHECK(sent == 30);                        // no reply waited for memory
-        CHECK(count(a->got.substr(before), "ARMED=0") >= 30);  // and none was dropped
+        CHECK(count(a->got.substr(before), "0\r\n") >= 30);  // and none was dropped
     }
 
     if (only == "help" || only.empty()) {
-        g_case = "HELP";
+        g_case = "SYSTem:HELP:HEADers?";
         advance(3000); inject(*a, TCP_ACK); loopPass();
         const size_t before = a->got.size();
-        inject(*a, TCP_ACK | TCP_PSH, "HELP\n");
+        inject(*a, TCP_ACK | TCP_PSH, ":SYST:HELP:HEAD?\n");
         loopPass();
         for (int i = 0; i < 10; ++i) { inject(*a, TCP_ACK); loopPass(); }
-        NOTE("HELP reply bytes received: %zu, stalled=%d", a->got.size() - before, (int)tcplink::link().stalled());
+        NOTE("help reply bytes received: %zu, stalled=%d", a->got.size() - before, (int)tcplink::link().stalled());
         CHECK(!tcplink::link().stalled());
-        CHECK(a->got.find("the set period. The reply comes at once; the pulses follow the hold-off.\r\n", before) != std::string::npos);
+        CHECK(a->got.find(":DIAGnostic:TXDRopped/qonly/\r\n\r\n", before) != std::string::npos);
     }
 
     if (only == "window" || only.empty()) {
         g_case = "window";
         advance(3000); inject(*a, TCP_ACK); loopPass();
-        inject(*a, TCP_ACK | TCP_PSH, "ARM\n"); loopPass(); inject(*a, TCP_ACK); loopPass();
+        inject(*a, TCP_ACK | TCP_PSH, "OUTP ON\n"); loopPass(); inject(*a, TCP_ACK); loopPass();
         CHECK(g_armed);
         // Fill the whole announced window without the loop running.
         std::string line = "\n", chunk;  // empty lines: no replies, so only tcp_recved() can open the window
@@ -310,9 +310,9 @@ int main(int argc, char **argv) {
         g_case = "second host sends data with its handshake ACK and with the ACK of the busy line";
         Host *b = newHost();
         inject(*b, TCP_SYN);
-        inject(*b, TCP_ACK | TCP_PSH, "ARM\n");
+        inject(*b, TCP_ACK | TCP_PSH, "OUTP ON\n");
         CHECK(b->got == "ERR busy: another host is connected\r\n");
-        inject(*b, TCP_ACK | TCP_PSH, "ARM\n");
+        inject(*b, TCP_ACK | TCP_PSH, "OUTP ON\n");
         loopPass();
         NOTE("fin=%d rst=%d armed=%d", (int)b->gotFin, (int)b->gotRst, (int)g_armed);
         CHECK(!g_armed);

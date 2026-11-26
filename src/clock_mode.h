@@ -50,13 +50,3 @@ void printClockMode(Out &out, const ClockModeInfo &m) {
         out.println("STANDARD");
     }
 }
-
-// For the boot banner, inside its "(reset: ...)" part: "", ", clock 300 MHz overclock",
-// or ", overclock jumper fitted but off (see STATUS)".
-inline const char *clockModeBannerNote(const ClockModeInfo &m) {
-    static_assert(kOverclockHz == 300000000, "update the clock text below");
-    if (m.overclocked) {
-        return ", clock 300 MHz overclock";
-    }
-    return m.jumperFitted ? ", overclock jumper fitted but off (see STATUS)" : "";
-}
