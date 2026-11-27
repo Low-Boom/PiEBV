@@ -1,27 +1,31 @@
 #pragma once
-// Line-based ASCII serial protocol for the PiEBV delay generator.
+// SCPI command protocol of the PiEBV delay generator (IEEE 488.2 syntax, SCPI-style
+// command tree). The command list is in docs/COMMANDS.md and in the reply to
+// SYSTem:HELP:HEADers?; the parser and the tree are in protocol.cpp.
 //
 // The same protocol runs on every host link: the Pico's USB serial port and, on a
 // Pico 2 W with Wi-Fi switched on, one TCP connection (net_link.h). Each link is a
-// ProtocolLink with its own line buffer and its own reply path; the settings and the arm
-// state are shared. A reply goes only to the link that sent the command.
+// ProtocolLink with its own line buffer, reply path, error queue, status registers and
+// echo switch; the settings and the arm state are shared. A reply goes only to the
+// link that sent the command.
 //
-// One command per line, terminated by '\n', '\r' or "\r\n". Backspace (0x08)
-// and DEL (0x7F) erase the previous character, so raw terminals work. A bare
-// command name queries the current value; a command followed by one value sets
-// it. ARM, ARM?, STATUS, ID?/ID and HELP take no argument. WIFI has sub-commands (the
-// Wi-Fi set-up; it changes settings only from the USB link). See HELP output in
-// protocol.cpp for the full command list. Every reply line ends in "\r\n".
+// Program messages end with '\n', '\r' or "\r\n", up to kProtocolLineMax - 1
+// characters. Backspace (0x08) and DEL (0x7F) erase the previous character, so raw
+// terminals work. Message units are separated by ';', with the SCPI rules for the
+// current path. Headers have a long and a short form, in any case. Times are in
+// seconds and frequencies in hertz; suffixes (PS, NS, US, MS, S, HZ, KHZ, MHZ or MAHZ, GHZ) are
+// accepted. A query returns the REALIZED value (whole PIO cycles), in NR3 form.
+// Responses to the queries of one message are joined by ';' and end in "\r\n".
 //
-// Time/frequency values are what the user asked for; every reply also shows
-// the REALIZED value the PIO actually produces, e.g. at 150 MHz
-//   DELAY 1003  ->  OK DELAY=1003 (actual 1000.000 ns, 150 cyc)
-// so nobody has to correct for the 6.667 ns quantization by hand.
+// A setting gives no reply, and an error goes to the link's error queue
+// (SYSTem:ERRor?), as SCPI requires. SYSTem:ECHO ON (not SCPI, per link, off at start)
+// makes each setting reply "OK <header> <realized value>" and each error reply
+// "ERR <code>,\"<text>\"", for use in a terminal.
 //
-// Laser arming. The outputs boot DISARMED. ARM (exactly that, no argument)
-// enables them. DISARM can never be refused: the six characters D-I-S-A-R-M
-// (any case) anywhere in the input disarm at once, without waiting for the end
-// of the line and whatever surrounds them; the rest of that line is discarded.
+// Laser arming. The outputs boot DISARMED. OUTPut ON enables them. Not SCPI, for
+// safety: the six characters D-I-S-A-R-M (any case) anywhere in the input disarm at
+// once, without waiting for the end of the line and whatever surrounds them; the rest
+// of that line is discarded. OUTPut OFF and ABORt disarm too.
 //
 // Replies are written a whole line at a time, and wait for a host that is slow to take
 // them only out of a time budget of the link: kReplyBudgetUs (250 ms), which comes back
@@ -41,7 +45,7 @@
 // command for each turn until its own budget is used up; with both hosts slow that
 // is about as much again (1.2 s). From tests on a computer with long command queues;
 // not measured on a board. Lines that could not be sent are dropped whole and their
-// bytes counted (STATUS TX_DROPPED, counted per link and per network host).
+// bytes counted (DIAGnostic:TXDRopped?, counted per link and per network host).
 
 #include <Arduino.h>
 #include <cstddef>
@@ -114,23 +118,38 @@ private:
 };
 
 // Line buffer size: a line holds up to kProtocolLineMax - 1 characters (+ NUL).
-constexpr size_t kProtocolLineMax = 96;
+constexpr size_t kProtocolLineMax = 256;
+// Error queue entries per link (SCPI: at least 2); the last one is replaced by -350
+// "Queue overflow" when the queue is full.
+constexpr size_t kErrorQueueLen = 8;
+constexpr size_t kErrorTextMax = 256;  // with the NUL (SCPI allows 255 characters)
 
 // One host link: its input line and its reply path.
 class ProtocolLink {
 public:
     // usb: this is the Pico's USB port. Only that link may change the Wi-Fi set-up.
-    ProtocolLink(ReplySink &sink, bool usb) : out_(sink), usb_(usb) {}
+    // The power-on bit of *ESR? is set on the USB link only: the first network host
+    // after power-up is not the one that saw the power come on.
+    ProtocolLink(ReplySink &sink, bool usb) : out_(sink), usb_(usb), esr_(usb ? 0x80 : 0) {}
     // A new host on this link (a new TCP client): forgets a partial line.
     void reset();
     // The host of this link is not reading replies (ReplyOut::stalled()).
     bool stalled() const { return out_.stalled(); }
+    // Dropped reply bytes (DIAGnostic:TXDRopped?).
+    uint32_t dropped() const { return out_.dropped(); }
     // Call before feed(): true if more input of this link has already arrived behind
     // the character that is fed (ReplyOut::setInputPending()).
     void setInputPending(bool pending) { out_.setInputPending(pending); }
 
+    // One entry of the error queue (SYSTem:ERRor?).
+    struct Error {
+        int16_t code;
+        char text[kErrorTextMax];
+    };
+
 private:
     friend class Protocol;
+    friend struct ScpiAccess;  // protocol.cpp: error queue and status registers
     ReplyOut out_;
     bool usb_;
     char buf_[kProtocolLineMax];
@@ -143,6 +162,45 @@ private:
     char recent_[kProtocolLineMax] = {};
     size_t recentEnd_ = 0;  // ring index of the next character
     size_t recentLen_ = 0;  // characters held, <= kProtocolLineMax
+    // --- SCPI state of the link (a new host on the link starts with it cleared)
+    Error errors_[kErrorQueueLen];
+    size_t errHead_ = 0, errCount_ = 0;
+    uint8_t esr_, ese_ = 0, sre_ = 0;  // IEEE 488.2 standard event status, its enable, service request enable
+    bool echo_ = false;                    // SYSTem:ECHO
+};
+
+// Read-outs for the SYSTem and DIAGnostic queries.
+struct SystemInfo {
+    char hw[112];              // "" = in order, else why the pulse outputs do not run
+    uint32_t startPendingUs;   // until a pending laser start (restart hold-off), 0 = none
+    uint32_t clkHz;
+    char clkMode[96];          // STANDARD | OVERCLOCK (jumper fitted) | STANDARD (jumper fitted, overclock off: ...)
+    uint32_t vregMv;
+    const char *resetCause;    // POWER_ON, WATCHDOG, ...
+    uint32_t wdReason, chipReset;  // raw reset registers
+    uint32_t wdtResets, wdtMs;
+    uint64_t uptimeUs;  // since the chip started (DIAGnostic:UPTime?; a host compares it to see a restart)
+};
+
+struct Identity {
+    const char *model;     // e.g. "Pico 2 W"
+    const char *serial;    // unique board ID, or "0"
+    const char *firmware;  // git describe of the build
+};
+
+// The network link's state (SYSTem:COMMunicate:WLAN queries).
+struct NetInfo {
+    const char *state = "UNAVAILABLE";  // OFF, JOINING, DHCP, CONNECTED, FAULT, UNAVAILABLE
+    const char *note = "";              // why the link is not up, or ""
+    char ssid[kWifiSsidMax + 1] = "";
+    bool passSet = false, atPowerUp = false, saved = true;
+    bool macKnown = false;
+    uint8_t mac[6] = {};
+    char ip[16] = "";        // "" = no address
+    bool rssiKnown = false;
+    int32_t rssi = 0;
+    uint16_t port = 0;
+    char client[16] = "";    // address of the TCP host, or ""
 };
 
 struct ProtocolHooks {
@@ -150,31 +208,28 @@ struct ProtocolHooks {
     // success and fills *realized; otherwise returns a short reason, and the
     // previous configuration must be left running untouched. (Sole exception: the
     // hardware fails to load counts that passed every check; then the outputs stop,
-    // the lasers are disarmed, and STATUS reports it as HW=ERR.)
+    // the lasers are disarmed, and DIAGnostic:HARDware? reports it.)
     const char *(*apply)(const PulseParams &params, RealizedTiming *realized);
-    // ARM (true) or DISARM (false). Returns nullptr on success, or a reason.
-    // DISARM must always succeed.
+    // Arm (true) or disarm (false). Returns nullptr on success, or a reason.
+    // Disarming must always succeed.
     const char *(*setArmed)(bool arm);
     bool (*isArmed)();
     // Microseconds until a pending laser (re)start fires (restart hold-off), or 0.
     uint32_t (*startPendingUs)();
-    // Prints the extra STATUS lines (hardware state, reset cause, watchdog), one
-    // "KEY=value" each.
-    void (*printSystemStatus)(Print &out);
-    // One-line firmware identity for ID?.
-    void (*printIdentity)(Print &out);
-    // The PIO clock in Hz (clk_sys), for HELP's cycle length.
-    uint32_t (*clkHz)();
-    // --- Wi-Fi set-up (WIFI command). wifiSet == nullptr: no radio in this build. ---
+    void (*systemInfo)(SystemInfo *out);
+    void (*identity)(Identity *out);
+    // --- Wi-Fi set-up. wifiSet == nullptr: no radio in this build. ---
     // The configuration in use.
     void (*wifiGet)(WifiConfig *cfg);
     // Makes cfg the configuration in use (radio on, off, or a new join) and stores it
     // in flash. Returns nullptr, or why it was refused (then the configuration is as
     // before). On success *notSaved is nullptr, or why cfg holds for this power cycle only.
     const char *(*wifiSet)(const WifiConfig &cfg, const char **notSaved);
-    // Prints the Wi-Fi and network STATUS lines, one "KEY=value" each.
-    void (*printNetStatus)(Print &out);
+    void (*netInfo)(NetInfo *out);
 };
+
+
+struct ScpiCtx;  // one message unit being executed (protocol.cpp)
 
 class Protocol {
 public:
@@ -183,20 +238,74 @@ public:
     const char *begin(PulseParams *params, const ProtocolHooks &hooks);
 
     // Feed the characters of one link one at a time (e.g. from Serial.read()); a
-    // command is dispatched as soon as a complete line has been accumulated.
+    // program message is run as soon as a complete line has been accumulated.
     void feed(ProtocolLink &link, char c);
+
+    // Queues an error on a link (for example a boot-time hardware problem on the USB
+    // link). `code` is an SCPI error number.
+    void reportError(ProtocolLink &link, int code, const char *detail);
+
+    // The handlers of the command table in protocol.cpp.
+    void cmdField(ScpiCtx &c);
+    void cmdPeriod(ScpiCtx &c);
+    void cmdDouble(ScpiCtx &c);
+    void cmdSync(ScpiCtx &c);
+    void cmdOutput(ScpiCtx &c);
+    void cmdAbort(ScpiCtx &c);
+    void cmdPending(ScpiCtx &c);
+    void cmdPixWindow(ScpiCtx &c);
+    void cmdIdn(ScpiCtx &c);
+    void cmdRst(ScpiCtx &c);
+    void cmdCls(ScpiCtx &c);
+    void cmdEse(ScpiCtx &c);
+    void cmdEsr(ScpiCtx &c);
+    void cmdSre(ScpiCtx &c);
+    void cmdStb(ScpiCtx &c);
+    void cmdOpc(ScpiCtx &c);
+    void cmdWai(ScpiCtx &c);
+    void cmdTst(ScpiCtx &c);
+    void cmdSysErr(ScpiCtx &c);
+    void cmdSysErrCount(ScpiCtx &c);
+    void cmdSysVersion(ScpiCtx &c);
+    void cmdSysEcho(ScpiCtx &c);
+    void cmdSysHelp(ScpiCtx &c);
+    void cmdWlan(ScpiCtx &c);
+    void cmdDiag(ScpiCtx &c);
 
 private:
     void dispatch(ProtocolLink &link, char *line);
     void disarmNow(ProtocolLink &link);
-    void wifiCommand(ProtocolLink &link, char *args);
-    void printWifiPending();
+    void wifiChange(ScpiCtx &c, int action);
 
     PulseParams *params_ = nullptr;
     ProtocolHooks hooks_{};
     RealizedTiming realized_{};
-    // WIFI SSID / WIFI PASS collect here until the next WIFI ON, OFF or CLEAR. Each of
-    // those three ends with wifi_ equal to the configuration in use, accepted or
-    // refused, so nothing typed earlier can take effect later by surprise.
+    // WLAN:SSID / WLAN:PASSword collect here until the next WLAN:STATe ON or OFF or
+    // WLAN:CLEar. Each of those ends with wifi_ equal to the configuration in use,
+    // accepted or refused, so nothing typed earlier can take effect later by surprise.
     WifiConfig wifi_{};
+};
+
+// An Arduino Print into a fixed buffer, always NUL-terminated (for SystemInfo texts).
+class BufPrint : public Print {
+public:
+    BufPrint(char *buf, size_t len) : buf_(buf), len_(len) {
+        if (len_) {
+            buf_[0] = '\0';
+        }
+    }
+    size_t write(uint8_t c) override {
+        if (n_ + 1 >= len_) {
+            return 0;
+        }
+        buf_[n_++] = (char)c;
+        buf_[n_] = '\0';
+        return 1;
+    }
+    using Print::write;
+
+private:
+    char *buf_;
+    size_t len_;
+    size_t n_ = 0;
 };

@@ -78,7 +78,7 @@ The layer functions and the island layout are in [docs/design/LAYOUT.md](docs/de
                                             └─► +12V_FAN (cooling fan header J23), from its own regulator (U24)
 
  PC ──USB──► Pico 2 W ──┬─ CH1, CH2 ──► interlock ──► 12 V driver ──► output resistors ──► J7, J8
-                        │             (ARM, J11)      (U13, on only    and mode jumpers      Laser 1, 2
+                        │             (arm, J11)      (U13, on only    and mode jumpers      Laser 1, 2
                         │                              if 12 V is OK)  (R6/R7, J18/J19)
                         ├─ marker ────► J10 selector ─┬─► +VCAM buffers ──► camera trigger (J1–J6)
                         │                             └─► 12 V driver (U19) ──► R30, J21 ──► J12
@@ -88,8 +88,8 @@ The layer functions and the island layout are in [docs/design/LAYOUT.md](docs/de
 ```
 
 - **The Pico makes all the timing.** Its PIO blocks (small timing engines beside the processor) make the two laser pulses, the camera marker and the pixel-reset gate. The 1 MHz sync clock comes from the clock generator. All use one 150 MHz clock (300 MHz with a shunt on the [clock jumper](#clock-jumper-j20-300-mhz-overclock) J20).
-- **The laser path** has three gates in series: the firmware's ARM state, the hardware interlock (J11) and a 12 V power-good check (U18) that switches the driver chip on. The driver chip (U13) swings its output to 12 V. Resistors after it bring that down to about 5 V at the laser driver's input. Jumpers J18/J19 match each output to a 50 Ω or a high-impedance load: the wrong setting gives the wrong voltage.
-- **The camera path** converts every signal to the camera I/O level `+VCAM`. Each camera cable has its own driver gate and a 47 Ω series resistor (R52–R69). `+VCAM` is 1.8 V (IDS cameras) with J22 open and 3.3 V (Prophesee EVK4) with J22 fitted. The pixel reset comes only from the Pico (`PIXGATE`). The EVK4 has no pixel-reset input.
+- **The laser path** has three gates in series: the firmware's arm state, the hardware interlock (J11) and a 12 V power-good check (U18) that switches the driver chip on. The driver chip (U13) swings its output to 12 V. Resistors after it bring that down to about 5 V at the laser driver's input. Jumpers J18/J19 match each output to a 50 Ω or a high-impedance load: the wrong setting gives the wrong voltage.
+- **The camera path** converts every signal to the camera I/O level `+VCAM`. Each camera cable has its own driver gate and a 47 Ω series resistor (R52–R69). `+VCAM` is 1.8 V (IDS cameras) with J22 open and 3.3 V (Prophesee EVK4) with J22 fitted. The pixel reset comes only from the Pico (`:PIX:GATE`). The EVK4 has no pixel-reset input.
 - **Status LEDs** show 12 V good (D2), ARMED (D3), a pulse at each output (D4–D6) and a 3.3 V camera level (D1).
 - **External Sync Out (J12)** copies the camera trigger to a BNC through a third channel built like the laser outputs (U19, R30, J21), with the same 50 Ω / Hi-Z choice and the same ~5 V level.
 - **Power** comes from a USB-C charger on J17. The board asks the charger for 15 V. The Pico's own USB can run everything except the laser outputs. A separate regulator (U24) supplies a 12 V cooling fan on J23 from the 15 V input.
@@ -192,7 +192,7 @@ All eight module grounds are connected. Every other socket pad is unconnected an
 
 ### Timing limits
 
-The firmware (`realizeTiming()` in `src/pulse_timing.h`) checks all settings on every command. It uses the **realized** values (after rounding to whole PIO cycles: 6.667 ns, or 3.333 ns with the [clock jumper](#clock-jumper-j20-300-mhz-overclock)). Every reply shows the realized value. The firmware sets **no laser-driver ratings**: pulse width, duty and spacing depend on the attached driver, so set values within your driver's ratings.
+The firmware (`realizeTiming()` in `src/pulse_timing.h`) checks all settings on every command. It uses the **realized** values (after rounding to whole PIO cycles: 6.667 ns, or 3.333 ns with the [clock jumper](#clock-jumper-j20-300-mhz-overclock)). Every query returns the realized value. FREQ, WIDTH, DELAY, MARKERWIDTH, PIXLEAD and PIXLAG are the short names of the settings, as in the error texts; the commands are in the [command reference](docs/COMMANDS.md#timing). The firmware sets **no laser-driver ratings**: pulse width, duty and spacing depend on the attached driver, so set values within your driver's ratings.
 
 | Rule | Limit | Reason |
 |---|---|---|
@@ -200,20 +200,20 @@ The firmware (`realizeTiming()` in `src/pulse_timing.h`) checks all settings on 
 | Shortest pulse | WIDTH and MARKERWIDTH ≥ 3 cycles (20.000 ns; 10.000 ns at 300 MHz) | 16 ns or less (at 150 MHz) is **rejected**, not rounded up. |
 | PIO program | `DELAY ≤ 1/FREQ − WIDTH − 5 cycles`; MARKERWIDTH ≤ 1/FREQ − 5 cycles | Matters only at 3–4-cycle widths, and for periods under 10 cycles. |
 | Marker duty | **at most 50 %:** `2 × MARKERWIDTH ≤ 1/FREQ` | The one limit set for the hardware: it keeps R30's average power inside its rating with J12 shorted. |
-| Combined mode (`COMBINE 1`) | `DELAY ≥ WIDTH + 1 PIO cycle` (6.667 ns) | At `DELAY = WIDTH` the two pulses merge into one of 2 × WIDTH. COMBINE can only be changed while DISARMED. |
-| Pixel-reset gate (`PIXGATE`) | PIXLEAD ≥ 5 cycles; PIXLEAD + DELAY + WIDTH + PIXLAG ≤ 1/FREQ − 3 cycles | PIO program. The first pair after a start has no reset before it. |
+| Combined mode (`:OUTP:COMB ON`) | `DELAY ≥ WIDTH + 1 PIO cycle` (6.667 ns) | At `DELAY = WIDTH` the two pulses merge into one of 2 × WIDTH. `:OUTP:COMB` can only be changed while DISARMED. |
+| Pixel-reset gate (`:PIX:GATE`) | PIXLEAD ≥ 5 cycles; PIXLEAD + DELAY + WIDTH + PIXLAG ≤ 1/FREQ − 3 cycles | PIO program. The first pair after a start has no reset before it. |
 | Pulse through U13 / U19 | Use WIDTH ≥ 20 ns (≥ 30 ns for an older die) at the outputs; the same for MARKERWIDTH at J12 | The driver needs an input pulse of 15 ns maximum (current die) or 25 ns (older die). The die on the reel is not known. At 300 MHz a 10 ns WIDTH can be lost or shortened. |
 | Camera trigger from CH1 (J10 on 1-2) | `WIDTH` ≥ 500 ns | Prophesee specifies a 500 ns minimum trigger pulse. |
 
-- **`COMBINE 1`** sends both pulses of every pair to **both** laser outputs. Each driver then sees two pulses per period, so check its ratings; the firmware imposes none.
+- **`:OUTP:COMB ON`** sends both pulses of every pair to **both** laser outputs. Each driver then sees two pulses per period, so check its ratings; the firmware imposes none.
 - **Don't use a BNC tee instead.** Joining J7 and J8, or splitting one output to two drivers, gives 3–3.4 V pulses in 50 Ω mode, or 6.9 V where the pulses overlap (above the LDP-V's 5.2 V damage limit).
-- **`PIXGATE`** is the only source of the camera pixel reset. With `PIXGATE 0` the pixels are never held in reset. `PIXGATE 1` runs the gate only while the laser pins carry pulses, `PIXGATE 2` always. DISARM, a restart hold-off and a reset all leave the pixels free.
+- **`:PIX:GATE`** is the only source of the camera pixel reset. With `:PIX:GATE OFF` the pixels are never held in reset. `:PIX:GATE ARMed` runs the gate only while the laser pins carry pulses, `:PIX:GATE ALWays` always. DISARM, a restart hold-off and a reset all leave the pixels free.
 - **SYNC** is fixed at 1 MHz and does not depend on the pulse settings.
-- Derivations: [Timing limits](docs/design/FIRMWARE_HW.md#timing-limits), [Combined mode](docs/design/FIRMWARE_HW.md#combined-mode-combine-1), [Pixel-reset gate](docs/design/FIRMWARE_HW.md#pixel-reset-gate-pixgate).
+- Derivations: [Timing limits](docs/design/FIRMWARE_HW.md#timing-limits), [Combined mode](docs/design/FIRMWARE_HW.md#combined-mode-outputcombine-on), [Pixel-reset gate](docs/design/FIRMWARE_HW.md#pixel-reset-gate-pixgate).
 
 ### Board output rating
 
-**No firmware setting can overload the laser outputs.** R6/R7, R30 and R25–R28, R31, R32 are **2 W 2512** resistors, and U17 is a 500 mA regulator with a 400 mA current limit (360 mA minimum). The laser outputs carry any duty the firmware accepts (up to 50 % per output, 67 % with `COMBINE 1`):
+**No firmware setting can overload the laser outputs.** R6/R7, R30 and R25–R28, R31, R32 are **2 W 2512** resistors, and U17 is a 500 mA regulator with a 400 mA current limit (360 mA minimum). The laser outputs carry any duty the firmware accepts (up to 50 % per output, 67 % with `:OUTP:COMB ON`):
 
 | Situation (50 Ω mode, unless the row says Hi-Z) | Current | Dissipation |
 |---|---|---|
@@ -222,7 +222,7 @@ The firmware (`realizeTiming()` in `src/pulse_timing.h`) checks all settings on 
 | Output **stuck** high into a short (a fault; the firmware never holds an output high) | | 1.5–2.16 W in R6/R7: at the 2 W rating, and up to 8 % over it only if ROH is near 0 Ω (D-package ROH has no specified minimum) |
 | Hi-Z mode, while high | ~60 mA per output into an open circuit, ~100 mA into a short | R27/R28 (R32) at most 0.31 W; R25/R26 (R31) at most 0.18 W open, 0.32 W into 50 Ω, 0.52 W stuck high into a short |
 
-- **Don't short J12.** J12 follows the camera trigger: its duty is the marker's (at most 50 %), or with J10 on 1-2 the CH1 duty (50 %, 67 % with `COMBINE 1`). The stuck-high case (1.5–2.16 W in R30) needs a firmware or GP11 fault as well as a short.
+- **Don't short J12.** J12 follows the camera trigger: its duty is the marker's (at most 50 %), or with J10 on 1-2 the CH1 duty (50 %, 67 % with `:OUTP:COMB ON`). The stuck-high case (1.5–2.16 W in R30) needs a firmware or GP11 fault as well as a short.
 - Shorts on several outputs at once can exceed U17's limit. U17 then limits, +12V sags below U18's undervoltage threshold and `LASER_PWR_OK` turns all three drivers off. This can repeat while the short lasts.
 - Derivation: [Board output rating](docs/design/POWER.md#board-output-rating).
 
@@ -347,7 +347,7 @@ J10's silkscreen reads **`CH1 / TRG / MKR`** (pins 1/2/3).
 | J10 shunt | Camera trigger and J12 | Notes |
 |---|---|---|
 | **2-3** (TRG to MKR, normal) | the marker: it rises with CH1 and has its own `MARKERWIDTH` | Runs also while DISARMED. |
-| **1-2** (TRG to CH1) | every laser CH1 pulse | Only dependable with `WIDTH` ≥ 500 ns. CH1 pulses exist only while ARMED: with the lasers disarmed the cameras get no trigger (use 2-3, or ARM with J11 on 2-3, for camera-only work). |
+| **1-2** (TRG to CH1) | every laser CH1 pulse | Only dependable with `WIDTH` ≥ 500 ns. CH1 pulses exist only while ARMED: with the lasers disarmed the cameras get no trigger (use 2-3, or arm with J11 on 2-3, for camera-only work). |
 | none | idle low (R9, 10 k, pulls `PWM_TRIG_TAP` low) | |
 
 - **Never fit a shunt across all three pins:** that ties GP13 (through R19) to GP11.
@@ -399,13 +399,13 @@ J12 gives other equipment a copy of the camera trigger: the marker with J10 on 2
 
 - **Levels:** the same circuit as a laser output (U19 channel A, R30 68 Ω, R31 47 Ω, R32 82 Ω, J21). J21 on 1-2 gives 4.53–5.14 V into 50 Ω. J21 on 2-3 gives 4.55–5.08 V open circuit from a 47–50 Ω source. Ship with J21 on 1-2.
 - **Power:** J12 is live only with a 15 V PD charger on J17. On the Pico's USB alone it stays at 0 V.
-- **Not gated by the laser interlock.** ARM and J11 act only on the laser pulses (U7/U8). With J10 on 2-3, J12 keeps pulsing while the lasers are disarmed, as the camera triggers do.
+- **Not gated by the laser interlock.** Arming and J11 act only on the laser pulses (U7/U8). With J10 on 2-3, J12 keeps pulsing while the lasers are disarmed, as the camera triggers do.
 - **Timing: measure the offset to the cameras on each board.**
   - J12 minus camera trigger, simulated (min / typ / max): **−8.5 / +10.5 / +26.3 ns** rising, **−9.4 / +9.5 / +24.1 ns** falling. Conditions: 4 mA default drive, J10 on 2-3, J21 on 1-2, J12 into 50 Ω.
   - On one board the offset is fixed: measured once, it holds to about 0.5 ns, plus 1–2 ns over temperature (estimates).
   - The offset depends on J10 and J21, so measure each setting you use ([first-board check 4](docs/FIRST_BOARD_CHECKS.md#first-board-checks)).
   - Write the result in the `J12-TRIG OFFSET (MEASURED)` field on the silkscreen, in the left area of the board, below TP3.
-- **Duty and loads.** J12 is high at most 50 % of the time (67 % with J10 on 1-2 and `COMBINE 1`). Don't short it. One load per output, no BNC tee, as for the laser outputs.
+- **Duty and loads.** J12 is high at most 50 % of the time (67 % with J10 on 1-2 and `:OUTP:COMB ON`). Don't short it. One load per output, no BNC tee, as for the laser outputs.
 - Timing table and layout: [External Sync Out](docs/design/SIGNALS.md#external-sync-out-j12).
 
 ## Laser interlock
@@ -431,7 +431,7 @@ J8 output = AND( LASER_EN , CH2 pulse )    -- U8
 | no shunt | disabled: R8 holds U10 pin 1 low (**fails safe**; without R8 the interlock would be enabled with the header empty) |
 
 - **E-stop switch: wire it across J11 1-2.** Replace the shunt with a *normally-closed* switch between J11.1 and J11.2. Closed, it acts like the shunt. Pressing it or breaking its cable opens the circuit and R8 pulls U10.1 low, so the stop fails safe. The silkscreen beside J11 reads `LASER INTERLOCK: ON = 1-2` and `E-STOP: NC SWITCH ACROSS 1-2`.
-- **Three gates in series.** The firmware's ARM state (DISARMED holds the pulse inputs of U7/U8 LOW), the J11/U10 interlock at U7/U8, and the power-good gate `LASER_PWR_OK` on the ENA/ENB pins of U13 (and of U19, for J12). Any one of them alone forces both BNC centre pins to 0 V, and none can enable a laser that another has disabled.
+- **Three gates in series.** The firmware's arm state (DISARMED holds the pulse inputs of U7/U8 LOW), the J11/U10 interlock at U7/U8, and the power-good gate `LASER_PWR_OK` on the ENA/ENB pins of U13 (and of U19, for J12). Any one of them alone forces both BNC centre pins to 0 V, and none can enable a laser that another has disabled.
 - **Pico removed, J17 powered:** R17/R18 (10 kΩ) hold `_PULSE_OUT_CH1`/`_PULSE_OUT_CH2` low at the socket (J14.17/.16), so the laser outputs stay at 0 V.
 - **J11 does not stop J12 or the camera signals.**
 - Margins and rationale: [Laser interlock](docs/design/SIGNALS.md#laser-interlock).
@@ -538,8 +538,8 @@ M3, unplated, mechanical only, each with a 3 mm-radius copper keep-out. All four
 | Shunt fitted | 300 MHz, twice the rated speed | 3.333 ns | 10.000 ns |
 
 - **Read once at boot.** Moving the shunt has no effect until the next reset. A lost shunt gives the rated clock.
-- **`STATUS` at 300 MHz** shows `CLK=300000000`, `CLKMODE=OVERCLOCK (jumper fitted)` and `VREG_MV=1300` (core voltage 1.30 V instead of 1.10 V). SYNC stays an exact 1 MHz.
-- **No overclock after a watchdog restart.** If the watchdog has fired since the last power-up or RUN reset (`WDT_RESETS` > 0), the firmware keeps 150 MHz with the shunt fitted. To try 300 MHz again, power-cycle both J17 and the Pico's USB.
+- **At 300 MHz** `:DIAG:CLOC?` gives `300000000`, `:DIAG:CLOC:MODE?` gives `"OVERCLOCK (jumper fitted)"` and `:DIAG:VREG?` gives `1.300000000E+00` (core voltage 1.30 V instead of 1.10 V). SYNC stays an exact 1 MHz.
+- **No overclock after a watchdog restart.** If the watchdog has fired since the last power-up or RUN reset (`:DIAG:WATC:RES?` > 0), the firmware keeps 150 MHz with the shunt fitted. To try 300 MHz again, power-cycle both J17 and the Pico's USB.
 - **300 MHz is outside the RP2350's specification.** Each chip is different, and the higher voltage makes the chip hotter. The watchdog starts only at the end of `setup()`, about 1.5 s after a reset. A chip that hangs before then shows no serial port and stays hung: remove the shunt and power-cycle. The laser pins stay LOW.
 - **Nothing detects a chip that keeps running and makes wrong timing.** J11 and the 12 V power-good gate stay the hardware stops.
 - **At 300 MHz use WIDTH ≥ 20 ns (≥ 30 ns for an older die) at the outputs** (see [Timing limits](#timing-limits)).
@@ -548,10 +548,10 @@ M3, unplated, mechanical only, each with a 3 mm-radius copper keep-out. All four
 
 **Before you rely on 300 MHz with a given Pico** (again for every replacement Pico):
 
-1. Fit the heat sink on the RP2350. Fit the shunt, power-cycle, and check `CLK=300000000` and `CLKMODE=OVERCLOCK …` in `STATUS`.
-2. With J11 open (lasers off) and the outputs into 50 Ω scope inputs, repeat the timing points of [first-board check 1](docs/FIRST_BOARD_CHECKS.md#first-board-checks) at the finer step, e.g. `DELAY 13` → 13.333 ns and `WIDTH 10` → 10.000 ns.
-3. Soak test: run at the highest `FREQ` and the shortest settings you will use, in the enclosure, at the highest room temperature you expect, for several hours (overnight is better). Use the scope's pulse-width trigger to catch any pulse of the wrong width. Then `STATUS` must show `WDT_RESETS=0` and `HW=OK`.
-4. Optional: to make less heat, lower the voltage (`kOverclockVreg` in `src/clock_mode.cpp`) to the lowest value that still passes step 3 with margin. `VREG_MV` in `STATUS` shows the setting.
+1. Fit the heat sink on the RP2350. Fit the shunt, power-cycle, and check that `:DIAG:CLOC?;CLOC:MODE?` gives `300000000;"OVERCLOCK (jumper fitted)"`.
+2. With J11 open (lasers off) and the outputs into 50 Ω scope inputs, repeat the timing points of [first-board check 1](docs/FIRST_BOARD_CHECKS.md#first-board-checks) at the finer step, e.g. `:PULS:DOUB:DEL 13 NS` → 13.333 ns and `:PULS:WIDT 10 NS` → 10.000 ns.
+3. Soak test: run at the highest frequency and the shortest settings you will use, in the enclosure, at the highest room temperature you expect, for several hours (overnight is better). Use the scope's pulse-width trigger to catch any pulse of the wrong width. Then `:DIAG:WATC:RES?` must give `0` and `:DIAG:HARD?` must give `"OK"`.
+4. Optional: to make less heat, lower the voltage (`kOverclockVreg` in `src/clock_mode.cpp`) to the lowest value that still passes step 3 with margin. `:DIAG:VREG?` gives the setting.
 
 What the firmware changes at 300 MHz, and why: [Clock jumper](docs/design/FIRMWARE_HW.md#clock-jumper-j20-300-mhz-overclock).
 
@@ -563,13 +563,13 @@ What the firmware changes at 300 MHz, and why: [Clock jumper](docs/design/FIRMWA
 | DISARMED (after every start) | LOW | run |
 | ARMED | pulses, after a restart hold-off of one pulse period (≤ 1 s) | run; MARKER pauses during the hold-off |
 
-- **The firmware starts DISARMED.** GP12/GP13 stay LOW until the host sends `ARM` (over USB, or over the network link if it is set up). SYNC and MARKER keep running while DISARMED.
+- **The firmware starts DISARMED.** GP12/GP13 stay LOW until the host sends `:OUTP ON` (over USB, or over the network link if it is set up). SYNC and MARKER keep running while DISARMED.
 - **J7/J8 pulse only when all three are true:** firmware ARMED, J11 on 1-2 (hardware interlock), and `LASER_PWR_OK` (12 V rail in its window).
-- **`ARM`** (exactly that word, no argument) restarts CH1, CH2 and MARKER together. It replies at once. Changing pulse settings while armed goes through the same restart and hold-off. A host that loops ARM/DISARM can't fire faster than FREQ.
-- **`DISARM` can never be refused and acts at once.** The six characters `DISARM` (any case) anywhere in the input disarm as soon as the firmware reads them, and cancel a pending start. Lines may end with CR, LF or CRLF.
-- **Watchdog.** A 3 s hardware watchdog restarts the chip if the firmware hangs. The period is 8 s in place of 3 s while the radio chip of a Pico 2 W starts (at power-up if Wi-Fi is set up, and during `WIFI ON`, `OFF` and `CLEAR`); the lasers are DISARMED in that time. It comes back DISARMED, and `STATUS` shows `RESET=WATCHDOG` and a `WDT_RESETS` count.
-- **A host that reads replies slowly, or not at all,** delays a DISARM queued on its own link by at most about 0.55 s, however many commands are queued before it, and by about 1.2 s in all if the host of the other link (USB or network) is slow also. These times are from tests on a computer; they were not measured on a board. A radio fault can add more ([network limits](docs/CONNECTING.md#limits)). Dropped reply bytes are counted in `STATUS` as `TX_DROPPED`.
-- **Host scripts** must send `ARM` after every reset, and should check `RESET=` in `STATUS` first (require an operator action after `RESET=WATCHDOG`). Parse `STATUS` by key, not by line count.
+- **`:OUTP ON`** (arming) restarts CH1, CH2 and MARKER together. The command ends at once; the pulses start after the restart hold-off. Changing pulse settings while armed goes through the same restart and hold-off. A host that loops `:OUTP ON` / `DISARM` can't fire faster than FREQ.
+- **`DISARM` can never be refused and acts at once.** The six characters `DISARM` (any case) anywhere in the input disarm as soon as the firmware reads them, and cancel a pending start. This is a safety extension, not SCPI. `:OUTP OFF`, `:ABORt` and `*RST` also disarm. Lines may end with CR, LF or CRLF.
+- **Watchdog.** A 3 s hardware watchdog restarts the chip if the firmware hangs. The period is 8 s in place of 3 s while the radio chip of a Pico 2 W starts (at power-up if Wi-Fi is set up, and during `:SYST:COMM:WLAN ON`, `OFF` and `:SYST:COMM:WLAN:CLE`); the lasers are DISARMED in that time. It comes back DISARMED, `:DIAG:RES:CAUS?` gives `WATCHDOG`, and `:DIAG:WATC:RES?` gives the count.
+- **A host that reads replies slowly, or not at all,** delays a DISARM queued on its own link by at most about 0.55 s, however many commands are queued before it, and by about 1.2 s in all if the host of the other link (USB or network) is slow also. These times are from tests on a computer; they were not measured on a board. A radio fault can add more ([network limits](docs/CONNECTING.md#limits)). Dropped reply bytes are counted for each link (`:DIAG:TXDR?`).
+- **Host scripts** must send `:OUTP ON` after every reset, and should send `:DIAG:RES:CAUS?` first (require an operator action after `WATCHDOG`). A setting gives no reply: read the error queue (`:SYST:ERR?`) after the settings. The firmware sends no greeting; a problem of the pulse hardware at start goes into the error queue of the USB link (error -240).
 - **Losing the USB link does not disarm.** A pulled cable, a sleeping PC or a killed host script leaves an ARMED board pulsing with no serial path for `DISARM`. The hardware stops are J11 (off 1-2) or unplugging J17.
 
 **Remaining hazards the firmware can't remove.** Both need a reset to land during a laser pulse, so the chance per reset is at most the duty.

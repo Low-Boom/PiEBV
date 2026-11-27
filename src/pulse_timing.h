@@ -7,7 +7,7 @@
 // Every user-facing time/frequency is converted ONCE to whole PIO clock cycles
 // here, all checks (including the laser safety limits) run on those REALIZED
 // cycle counts, and the hardware is loaded from exactly the same numbers. So
-// what STATUS reports is what the pins do, and the user never has to correct a
+// what the queries report is what the pins do, and the user never has to correct a
 // setting for quantization or for fixed instruction overheads.
 //
 // Cycle model of the pulse program (checked cycle-exact against a model of the
@@ -33,13 +33,13 @@
 // driver, and the unit is used with more than one. The firmware enforces what the
 // PIO programs physically need: widths of >= kPulseMinWidthCycles (20 ns at 150 MHz),
 // DELAY + WIDTH and MARKERWIDTH fitting in the period, the SYNC clock-divider range,
-// and with COMBINE 1 (both pulses on both outputs, sharing the pins) DELAY >= WIDTH +
+// and with OUTPut:COMBine ON (both pulses on both outputs, sharing the pins) DELAY >= WIDTH +
 // 1 cycle so the two pulses never touch. It adds TWO rules that the PIO does not need:
 // pulse pairs stay apart, DELAY <= 1/FREQ - 2 x WIDTH, so CH2 ends at least one WIDTH
 // before the next CH1 rises; and the marker is at most 50 % duty, 2 x MARKERWIDTH <=
 // 1/FREQ, to protect R30 of the J12 output (External Sync Out) against a shorted BNC.
 //
-// Pixel-reset gate (PIXGATE 1/2): a fourth state machine runs the same pulse
+// Pixel-reset gate (PIXel:GATE ARMed / ALWays): a fourth state machine runs the same pulse
 // program on GP16, whose output is INVERTED in the GPIO block, so its "pulse" is the
 // camera pixel reset (TDRSTN low). Every period it asserts reset PIXLAG after the
 // last laser pulse falls (CH1 rise + DELAY + WIDTH + PIXLAG) and releases it PIXLEAD

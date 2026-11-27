@@ -3,7 +3,7 @@
 This page gives the design of the Wi-Fi and TCP link of the firmware: the structure, the rules
 that keep `DISARM` and the watchdog safe, the reasons for each choice, and what was verified.
 To *use* the link, see [Network (Wi-Fi)](../CONNECTING.md#network-wi-fi) and the
-[`WIFI` commands](../COMMANDS.md#wi-fi-wifi).
+[Wi-Fi commands](../COMMANDS.md#wi-fi-set-up).
 Back to: [hardware reference](../../Hardware.md) · [design notes index](../DESIGN_NOTES.md)
 
 > **Status:** the link was not tested on a board. The code compiles, and its command handling
@@ -20,10 +20,10 @@ These were set by the owner of the project:
 | Decision | Result in the firmware |
 |---|---|
 | The board joins an existing laboratory network | Station mode only. No access point, no set-up web page. |
-| `ARM` is permitted over the network | The TCP link has all commands of the USB link, except the Wi-Fi set-up |
+| Arming is permitted over the network | The TCP link has all commands of the USB link (`:OUTP ON` included), except the Wi-Fi settings |
 | A lost link does not disarm | As on USB: a closed or lost connection changes no output |
 | No password on the network link | No login and no encryption. The link is for a controlled laboratory network. |
-| The set-up is done over USB | `WIFI SSID`, `PASS`, `ON`, `OFF` and `CLEAR` are refused from the network link |
+| The set-up is done over USB | The Wi-Fi settings (`:SYST:COMM:WLAN:SSID`, `WLAN:PASS`, `:SYST:COMM:WLAN ON`, `OFF` and `WLAN:CLEar`) are refused from the network link with error -203 |
 
 ## Structure
 
@@ -38,14 +38,14 @@ These were set by the owner of the project:
 
 | File | Contents |
 |---|---|
-| `src/protocol.*` | The command protocol. One `ProtocolLink` for each host link: its own line buffer, `DISARM` match and reply path. The settings and the arm state are shared. A reply goes only to the link that sent the command. |
+| `src/protocol.*` | The SCPI command protocol. One `ProtocolLink` for each host link: its own line buffer, `DISARM` match, reply path, error queue, status registers and echo switch. The settings and the arm state are shared. A reply goes only to the link that sent the command. |
 | `src/tcp_link.*` | The TCP server, on lwIP's callback interface, for one host at a time |
-| `src/net_link.*` | The radio: power, join, fault handling, the stored set-up, the `STATUS` lines |
+| `src/net_link.*` | The radio: power, join, fault handling, the stored set-up, the values for the `:SYST:COMM:WLAN` queries |
 | `src/wifi_config.h` | Set-up values, their limits and the flash record. No hardware calls, so the simulator uses the same code. |
 | `src/main.cpp` | Reads both links in turns; owns the watchdog and the arm state |
 
 The image for a plain Pico 2 (`pico2`) has no radio: `net_link` is then a set of empty functions,
-and `STATUS` shows `WIFI=UNAVAILABLE`.
+`:SYST:COMM:WLAN:LINK?` gives `UNAVAILABLE`, and the Wi-Fi settings give error -241.
 
 ## Rules that the link must keep
 
@@ -66,12 +66,13 @@ the join through the same CYW43 driver and then polls every 200 ms. The interfac
 "link down" until the driver reports the join as complete; lwIP starts DHCP at that moment. A join
 that fails or gives no result is requested again after 5 s to 20 s.
 
-**The chip is off whenever the link is off.** `WIFI OFF`, `WIFI CLEAR`, a fault and a failed start
+**The chip is off whenever the link is off.** `:SYST:COMM:WLAN OFF`, `:SYST:COMM:WLAN:CLE`, a fault and a failed start
 all power the radio chip off (`WL_REG_ON` low) and release the driver's bus. Each start is then the
 same power-up, and none needs an answer from an old chip state. The power-up loads the chip's
 firmware and is the one long call: it runs only while DISARMED, with the watchdog period set to
-8 s for that call. After a watchdog reset the radio is not started at power-up (`WIFI=OFF (held
-off …)`), so a radio fault cannot restart the board again and again.
+8 s for that call. After a watchdog reset the radio is not started at power-up
+(`:SYST:COMM:WLAN:LINK?` gives `OFF,"held off …"`), so a radio fault cannot restart the board again
+and again.
 
 **A chip that stops answering.** The radio's driver is a compiled library. With a chip that does
 not answer, it waits for its own time-outs (about 1 s each) in every command and every frame, also
@@ -82,7 +83,8 @@ in lwIP's background work. The firmware cannot shorten these waits. It limits ho
 - No frame is handed to the driver during a test, nor after a failed one. lwIP sends a dropped
   TCP segment again.
 - One failed test can come from a chip that is alive on a bad link, so the second failed test in a
-  row is the fault: the chip is powered off and `STATUS` shows `WIFI=FAULT` until `WIFI ON`.
+  row is the fault: the chip is powered off and `:SYST:COMM:WLAN:LINK?` gives `FAULT` until
+  `:SYST:COMM:WLAN ON`.
 - `loop()` feeds the watchdog right before each test. A wait above the 3 s watchdog period restarts
   the board, DISARMED.
 
@@ -90,7 +92,7 @@ in lwIP's background work. The firmware cannot shorten these waits. It limits ho
 EEPROM sector. It is written only at the 150 MHz clock: after a flash write the SDK restores the
 flash interface timing of its start-up, which does not agree with the timing that
 `clock_mode.cpp` sets at 300 MHz. With the clock jumper fitted, a new set-up holds until power-off
-(`SAVED=0`). The record is written unless the flash holds the same bytes, or is erased and the
+(error 101, `Set-up not stored`; `:SYST:COMM:WLAN:SAV?` gives `0`). The record is written unless the flash holds the same bytes, or is erased and the
 set-up is empty; a record that cannot be read is always written over, because it can hold a
 passphrase.
 
@@ -108,7 +110,7 @@ work. The link is a server on lwIP's callback interface (`tcp_link.cpp`):
 | Replies | Queued with `tcp_write()`, sent once in each loop pass. A reply that lwIP cannot take is dropped and counted. | Nothing waits for the host |
 | Reply queue | At most 3 segments' worth (4380 bytes). Nagle's rule stays on. | lwIP gives each segment a full-size buffer from a 16 kB heap that DHCP, ARP and mDNS share. Cost: a reply longer than one packet can arrive 40 ms to 200 ms late. |
 | Listening socket | Made once and kept, also while the link is stopped | This lwIP build has no address re-use: a second bind to the port fails for up to 2 minutes after a closed connection |
-| Second host | Gets `ERR busy: another host is connected` and our FIN. At most two at a time, each for at most 2 s. | lwIP has 5 connection blocks in all |
+| Second host | Gets `ERR busy: another host is connected` (not an SCPI reply) and our FIN. At most two at a time, each for at most 2 s. | lwIP has 5 connection blocks in all |
 | Closed connection | Reset after 2 s if its host does not finish the close | It would hold its reply buffers for 2 minutes |
 | Silent host | TCP keep-alive: 5 s idle, then 3 probes 2 s apart | The link is free again after about 11 s |
 
@@ -136,28 +138,32 @@ These times were not measured on a board. The waits of the radio's driver (above
 ## Wi-Fi set-up commands
 
 - **USB only, DISARMED only.** A network host must not be able to move the board to another
-  network or lock the USB user out. `WIFI ON`, `OFF` and `CLEAR` stop the command loop for the
-  radio start and the flash write, so they are refused while ARMED or while a laser start is
-  pending.
-- **A name and passphrase are collected, then used.** `WIFI SSID` and `WIFI PASS` hold their
-  values in RAM until the next `WIFI ON`, `OFF` or `CLEAR`, accepted or refused. `STATUS` shows
-  `WIFI_PENDING=1` while something is collected.
-- **A new name never gets another network's passphrase.** `WIFI SSID` discards a passphrase given
+  network or lock the USB user out: the Wi-Fi settings from the network link give error -203.
+  `:SYST:COMM:WLAN ON`, `OFF` and `WLAN:CLEar` stop the command loop for the radio start and the
+  flash write, so they are refused (error -200) while ARMED or while a laser start is pending.
+- **A name and passphrase are collected, then used.** `:SYST:COMM:WLAN:SSID` and `WLAN:PASS` hold
+  their values in RAM until the next `WLAN ON`, `OFF` or `CLEar`, accepted or refused.
+  `:SYST:COMM:WLAN:PEND?` gives `1` while something is collected.
+- **A new name never gets another network's passphrase.** `WLAN:SSID` discards a passphrase given
   before it.
-- **The passphrase is never printed.** Replies show `PASS=SET` or `PASS=NONE`.
-- **Text rules.** The letters `disarm` in a name or passphrase would act as the command. A name
-  must be UTF-8 text without control and writing-direction characters, because it is printed in
-  replies. A passphrase must be printable ASCII (IEEE 802.11).
+- **The passphrase is never printed.** `WLAN:PASS` has no query form. `:SYST:COMM:WLAN:SEC?` gives
+  `WPA2` or `NONE`, and the echo line gives `(set; …)` or `(none: open network; …)`.
+- **Text rules.** The name and the passphrase are SCPI strings in quotes. The letters `disarm` in a
+  name or passphrase would act as the command. A name must be UTF-8 text without control and
+  writing-direction characters, because it is printed in replies. A passphrase must be printable
+  ASCII (IEEE 802.11).
 
 ## Web GUI
 
 The GUI server (`tools/piebv_gui`) owns the link to the board, over USB or over the network.
 
-- The set-up sequence (`WIFI SSID`, `WIFI PASS`, `WIFI ON`) holds the command lock from its first
-  command to its last, and the server checks that the board joined what was asked for.
+- The set-up sequence (`:SYST:COMM:WLAN:SSID`, `WLAN:PASS`, `:SYST:COMM:WLAN ON`) holds the command
+  lock from its first command to its last, and the server checks that the board joined what was
+  asked for.
 - `DISARM` is written to the board at once, without the command lock, and its request is handled
   before the request body is read.
-- An `ARM` request that waited for the lock is not sent if a `DISARM` was sent in the meantime.
+- An arming request (`:OUTP ON`) that waited for the lock is not sent if a `DISARM` was sent in
+  the meantime.
 - All POST routes other than `DISARM` need a JSON object body and refuse a request that carries
   the Origin of another site.
 - The passphrase is masked in the console log, in error messages and in the page.
@@ -169,9 +175,10 @@ The GUI server (`tools/piebv_gui`) owns the link to the board, over USB or over 
 | `pio run`, `pio run -e pico2` | Both images compile without warnings |
 | [`tools/net_check`](../../tools/net_check/README.md) `net_check` | `tcp_link.cpp` and `protocol.cpp` against a model of lwIP that fails on a call without the lwIP lock and on use of a connection that is gone |
 | `tools/net_check/lwip` `lwip_check` | The same code linked with lwIP's own sources and the firmware's lwIP options: reset after `DISARM`, half-close, server restart, heap use, receive window, second hosts, keep-alive |
-| [`tools/piebv_sim`](../../tools/piebv_sim/README.md) | The `WIFI` commands and all replies, with a radio that joins at once |
-| USB replies against `main` | 1500 random inputs give the same replies as before the network link |
-| GUI against the simulator | The set-up paths, passphrase masking, `ARM` behind a delayed join followed by `DISARM`, malformed requests, the page in a browser |
+| [`tools/piebv_sim`](../../tools/piebv_sim/README.md) | The Wi-Fi commands and all replies, with a radio that joins at once; `scpi_check.py` checks the SCPI replies, the Wi-Fi set-up included |
+| USB replies against `main` | 1500 random inputs gave the same replies as before the network link (a check of the earlier text commands, before the change to SCPI) |
+| GUI against the simulator | The set-up paths, passphrase masking, arming behind a delayed join followed by `DISARM`, malformed requests, the page in a browser. Done with the earlier text commands, and again after the change to SCPI. |
+| SCPI parser on a computer | 400 random inputs with the address and undefined-behaviour sanitizers: no failure, and `DISARM` acted in every case. 802 realized values in NR3 form agree with an exact calculation. |
 
 The link went through four rounds of independent adversarial review, each followed by
 corrections. Rounds 1 to 3 found high-severity defects in the firmware; round 4 found none. In

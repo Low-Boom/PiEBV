@@ -75,7 +75,7 @@ sh build.sh          # or: sh build.sh <path to pico-sdk/lib/lwip/src>
 | `halfclose` | Data and FIN in one segment: the reply arrives, then FIN, and no reset |
 | `bind` | After a second host and a stop, a new start works at once (lwIP keeps a closed connection on the port for 2 minutes, and the build has no address re-use) |
 | `small` | 30 one-line commands whose replies the host acknowledges late: no reply waits for memory, and none is lost |
-| `help` | The whole `HELP` reply arrives without a stall |
+| `help` | The whole `:SYST:HELP:HEAD?` reply (about 1.4 kB) arrives without a stall |
 | `window` | A full receive window is read, and the window opens again. Data beyond the window is not taken. |
 | `rejectdata` | A second host that sends data gets the busy line; silent second hosts are gone after their time limit |
 | `pool` | Second hosts that read the busy line and keep their sockets open do not use up lwIP's connection blocks |

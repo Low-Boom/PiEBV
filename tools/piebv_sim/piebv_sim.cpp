@@ -7,13 +7,13 @@
 // stdout, so every reply, error message and realized value is exactly what the board
 // prints. The PiEBV web GUI (tools/piebv_gui) starts it when you choose "Simulator".
 //
-// It is a protocol simulator only: nothing is timed, and the reset registers in
-// STATUS are placeholders. Keep the hook emulation in step with src/main.cpp.
+// It is a protocol simulator only: nothing is timed, and the reset registers in the
+// DIAGnostic queries are placeholders. Keep the hook emulation in step with src/main.cpp.
 //
-// Wi-Fi: the WIFI command runs as on the board's USB port, but there is no radio. The
-// set-up lives in memory (nothing is stored between runs), and WIFI ON shows a joined
-// network with a made-up address at once. Keep the STATUS keys in step with
-// net::printStatus() in src/net_link.cpp.
+// Wi-Fi: the SYSTem:COMMunicate:WLAN commands run as on the board's USB port, but there
+// is no radio. The set-up lives in memory (nothing is stored between runs), and WLAN ON
+// shows a joined network with a made-up address at once. Keep netInfo() in step with
+// net::netInfo() in src/net_link.cpp.
 //
 // Option: --overclock simulates the clock jumper fitted (clk_sys 300 MHz, clock_mode.h).
 //
@@ -133,7 +133,7 @@ const char *applyPulseParams(const PulseParams &p, RealizedTiming *realized) {
     RealizedTiming rt;
     if (const char *why = realizeTiming(p, clkHz(), &rt)) return why;
     if (g_armed && g_configured && rt.combine != g_rt.combine) {
-        return "DISARM first: COMBINE changes what both laser outputs carry";
+        return "DISARM first: OUTPut:COMBine changes what both laser outputs carry";
     }
     if (!g_pioReady) return "pio0 unavailable";
     if (!g_configured || pulseLoadDiffers(g_rt, rt)) restartPulses(rt, g_armed);
@@ -143,47 +143,42 @@ const char *applyPulseParams(const PulseParams &p, RealizedTiming *realized) {
     return nullptr;
 }
 
-// net::printStatus(), with a radio that joins at once.
-void printNetStatus(Print &out) {
-    out.println(g_wifi.enabled ? F("WIFI=CONNECTED") : F("WIFI=OFF"));
-    out.print(F("WIFI_SSID="));
-    out.println(g_wifi.ssid);
-    out.print(F("WIFI_PASS="));
-    out.println(g_wifi.pass[0] ? F("SET") : F("NONE"));
-    out.print(F("WIFI_AT_POWER_UP="));
-    out.println(g_wifi.enabled ? 1 : 0);
-    out.print(F("WIFI_SAVED="));
-    out.println(g_wifiSaved ? 1 : 0);
-    out.println(F("WIFI_MAC=02:00:00:00:00:01"));
-    out.println(g_wifi.enabled ? F("WIFI_IP=192.0.2.10") : F("WIFI_IP=NONE"));
-    out.println(g_wifi.enabled ? F("WIFI_RSSI_DBM=-50") : F("WIFI_RSSI_DBM=NONE"));
-    out.print(F("NET_PORT="));
-    out.println(kNetPort);
-    out.println(F("NET_CLIENT=NONE"));
+// net::netInfo(), with a radio that joins at once.
+// net::netInfo(), with a radio that joins at once.
+void netInfo(NetInfo *n) {
+    n->state = g_wifi.enabled ? "CONNECTED" : "OFF";
+    n->note = "";
+    snprintf(n->ssid, sizeof(n->ssid), "%s", g_wifi.ssid);
+    n->passSet = g_wifi.pass[0] != '\0';
+    n->atPowerUp = g_wifi.enabled;
+    n->saved = g_wifiSaved;
+    n->macKnown = true;
+    const uint8_t mac[6] = {0x02, 0, 0, 0, 0, 0x01};
+    memcpy(n->mac, mac, sizeof(mac));
+    snprintf(n->ip, sizeof(n->ip), "%s", g_wifi.enabled ? "192.0.2.10" : "");
+    n->rssiKnown = g_wifi.enabled;
+    n->rssi = -50;
+    n->port = kNetPort;
+    n->client[0] = '\0';
 }
 
-void printSystemStatus(Print &out) {
-    out.print(F("HW="));
-    if (g_hwWhy[0]) {
-        out.print(F("ERR "));
-        out.println(g_hwWhy);
-    } else {
-        out.println(F("OK"));
+// main.cpp systemInfo(); the reset registers are placeholders.
+void systemInfo(SystemInfo *s) {
+    snprintf(s->hw, sizeof(s->hw), "%s", g_hwWhy);
+    s->startPendingUs = startPendingUs();
+    s->clkHz = clkHz();
+    BufPrint mode(s->clkMode, sizeof(s->clkMode));
+    printClockMode(mode, g_clockMode);
+    for (size_t n = strlen(s->clkMode); n && (s->clkMode[n - 1] == '\n' || s->clkMode[n - 1] == '\r'); --n) {
+        s->clkMode[n - 1] = '\0';
     }
-    out.print(F("START_PENDING_US="));
-    out.println(startPendingUs());
-    out.print(F("CLK="));
-    out.println(clkHz());
-    out.print(F("CLKMODE="));
-    printClockMode(out, g_clockMode);
-    out.print(F("VREG_MV="));
-    out.println(g_clockMode.vregMv);
-    out.println(F("RESET=POWER_ON"));
-    out.println(F("RESET_RAW=WD:0x0 CHIP:0x0"));
-    out.println(F("WDT_RESETS=0"));
-    out.print(F("WDT_MS="));
-    out.println(kWatchdogMs);
-    printNetStatus(out);
+    s->vregMv = g_clockMode.vregMv;
+    s->resetCause = "POWER_ON";
+    s->wdReason = 0;
+    s->chipReset = 0;
+    s->wdtResets = 0;
+    s->wdtMs = kWatchdogMs;
+    s->uptimeUs = time_us_64();
 }
 
 void wifiGet(WifiConfig *cfg) { *cfg = g_wifi; }
@@ -199,23 +194,20 @@ const char *wifiSet(const WifiConfig &cfg, const char **notSaved) {
     return nullptr;
 }
 
-void printIdentity(Print &out) {
-    out.println(F("PiEBV delay generator (simulator), protocol and timing code from ../../src"));
+void identity(Identity *id) {
+    id->model = "simulator";
+    id->serial = "0";
+    id->firmware = "protocol and timing code from ../../src";
 }
 
 void setup() {
     g_lastLaserPeriodCycles = clkHz();  // worst case (1 s), as on the board
     const char *why = g_protocol.begin(
-        &g_params, ProtocolHooks{applyPulseParams, setArmed, isArmed, startPendingUs, printSystemStatus,
-                                 printIdentity, clkHz, wifiGet, wifiSet, printNetStatus});
+        &g_params, ProtocolHooks{applyPulseParams, setArmed, isArmed, startPendingUs, systemInfo, identity, wifiGet,
+                                 wifiSet, netInfo});
     if (why) snprintf(g_hwWhy, sizeof(g_hwWhy), "outputs not started: %s", why);
-    Serial.print(F("PiEBV delay generator ready, lasers DISARMED (reset: POWER_ON"));
-    Serial.print(clockModeBannerNote(g_clockMode));
-    Serial.println(F("). Type HELP for commands."));
-    if (g_hwWhy[0]) {
-        Serial.print(F("ERR "));
-        Serial.println(g_hwWhy);
-    }
+    // No greeting, as on the board: a boot-time problem goes to the error queue.
+    if (g_hwWhy[0]) g_protocol.reportError(g_link, -240, g_hwWhy);
 }
 }  // namespace
 

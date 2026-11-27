@@ -25,36 +25,39 @@ with 50 Ω inputs (or 50 Ω feed-through terminators).
 4. **Power up:** the charger into J17, and the Pico's micro-USB into your computer.
 5. **Open a serial terminal** on the Pico's port ([how](CONNECTING.md#usb-serial)) and turn on local echo,
    because the firmware does not echo what you type. (Or use the [web GUI](CONNECTING.md#web-gui): its console
-   takes the same commands.) Type `STATUS` and press Enter. You should see:
+   takes the same commands.) Type `*IDN?` and press Enter. The reply starts with `PiEBV,`. Then
+   read the settings, the arm state and the hardware state on one line:
    ```
-   FREQ=1000 (actual 1000.000 Hz, period 150000 cyc)
-   WIDTH=100 (actual 100.000 ns, 15 cyc)
-   DELAY=10000 (actual 10000.000 ns, 1500 cyc)
-   MARKERWIDTH=2000 (actual 2000.000 ns, 300 cyc)
-   COMBINE=0 (CH1 on LASER 1, CH2 on LASER 2)
-   ARMED=0
-   HW=OK
-   ...
+   :FREQ?;:PULS:WIDT?;DOUB:DEL?;:MARK:WIDT?;:OUTP:COMB?;:OUTP?;:DIAG:HARD?
    ```
-6. **Set your timing,** for example 15 pulse pairs per second, 100 ns wide, 10 µs apart:
+   You should see (frequency in Hz, times in s, `0` = disarmed):
    ```
-   FREQ 15        ->  OK FREQ=15 (actual 15.000 Hz, period 10000000 cyc)
-   WIDTH 100      ->  OK WIDTH=100 (actual 100.000 ns, 15 cyc)
-   DELAY 10000    ->  OK DELAY=10000 (actual 10000.000 ns, 1500 cyc)
+   1.000000000E+03;1.000000000E-07;1.000000000E-05;2.000000000E-06;0;0;"OK"
    ```
+6. **Set your timing,** for example 15 pulse pairs per second, 100 ns wide, 10 µs apart. Then
+   read the error queue and the realized values:
+   ```
+   :FREQ 15;:PULS:WIDT 100 NS;DOUB:DEL 10 US
+   :SYST:ERR?                    ->  0,"No error"
+   :FREQ?;:PULS:WIDT?;DOUB:DEL?  ->  1.500000000E+01;1.000000000E-07;1.000000000E-05
+   ```
+   A setting gives no reply. Put the suffix (`NS`, `US`) after each time: a number without a
+   suffix is in seconds. Send `:SYST:ECHO ON` first if you want a reply to each setting
+   ([echo](COMMANDS.md#echo-for-terminals)).
 7. **Check the laser outputs with no laser connected.** With J18 and J19 on 1-2, connect J7 and J8
-   to the scope with **50 Ω termination**. Fit J11 on **1-2**, then type `ARM`. Within one pulse
-   period you should see:
+   to the scope with **50 Ω termination**. Fit J11 on **1-2**, then type `:OUTP ON`. Within one
+   pulse period (at most 1 s) you should see:
    - pulses from 0 V to about 4.8 V;
-   - the J8 pulse starting exactly `DELAY` after the J7 pulse.
+   - the J8 pulse starting exactly the delay (`:PULS:DOUB:DEL`) after the J7 pulse.
 
    Type `DISARM`: both outputs must drop to 0 V.
 8. **Connect the equipment.** Plug in the laser drivers (J7, J8) and the cameras (J1–J6; one camera
-   first, see the [first-board checks](#first-board-checks)). Then `ARM` to run, and `DISARM` when
-   you're done.
+   first, see the [first-board checks](#first-board-checks)). Then send `:OUTP ON` to run, and
+   `DISARM` when you're done.
 
-Settings are **not saved**. Every restart brings back the defaults (FREQ 1000, WIDTH 100,
-DELAY 10000 and MARKERWIDTH 2000); the 1 MHz sync clock is fixed. The lasers start DISARMED.
+Settings are **not saved**. Every restart brings back the defaults (frequency 1000 Hz, pulse width
+100 ns, delay 10 µs and marker width 2 µs); `*RST` does the same without a restart. The 1 MHz sync
+clock is fixed. The lasers start DISARMED.
 
 ## First-board checks
 
@@ -74,14 +77,15 @@ list, with exact test points, is under
      fan with a lower rated current.
 3. **Laser outputs,** J18/J19 on 1-2, into a 50 Ω-terminated scope with no driver connected:
    - pulses from 0 V to 4.53–5.14 V;
-   - CH2 exactly `DELAY` after CH1 (`DELAY 13` should give 13.3 ns);
-   - the first pulse after `ARM` is full width;
+   - CH2 exactly the delay after CH1 (`:PULS:DOUB:DEL 13 NS` should give 13.3 ns);
+   - the first pulse after `:OUTP ON` is full width;
    - 0 V after `DISARM` and after a full restart; and, while ARMED and pulsing, 0 V once J17 is
      unplugged, with no stray pulse while it is plugged back in;
    - then J18/J19 on 2-3 with the scope at 1 MΩ: 0 V to 4.55–5.08 V, with at most ~5 % overshoot at
      the end of the longest cable you will use. Put the shunts back on the mode you need afterwards.
    - **External Sync Out (J12),** J21 on 1-2, same 50 Ω scope: a 0 V to 4.53–5.14 V pulse of
-     `MARKERWIDTH` with every period, also while DISARMED (J10 on 2-3); J21 on 2-3 at 1 MΩ:
+     the marker width (`:MARK:WIDT`) with every period, also while DISARMED (J10 on 2-3); J21 on
+     2-3 at 1 MΩ:
      4.55–5.08 V.
 4. **Camera signal level, before any camera is connected:** with J22 open, measure the test pad
    `VCAM` (TP8) with a meter. It must be 1.76–1.84 V and the blue `3V3` LED dark. With a shunt on
@@ -123,16 +127,17 @@ camera:** fit the shunt only when no IDS camera is connected, and do not use IDS
 together. The blue LED marked `3V3` next to J22 is lit when the level is 3.3 V: look at it before
 you connect a camera. Before you connect an IDS camera, also measure the test pad `VCAM` (TP8)
 with a meter: it must be 1.8 V with J22 open. Change J22 with the power off. An EVK4 camera needs the
-[EVK4 harness](EVK4_HARNESS.md); it has no pixel-reset input, so `PIXGATE` has no effect on it.
+[EVK4 harness](EVK4_HARNESS.md); it has no pixel-reset input, so `:PIX:GATE` has no effect on it.
 The harness has no resistors: the series resistors are on the board.
 
 **J10 — camera trigger source.** Labelled `CH1 TRG MKR` under the pins and
 `CAMERA TRIGGER: TRG-MKR = MARKER / TRG-CH1 = LASER 1` beside them. The middle pin (`TRG`) feeds the
 trigger input of all six cameras and External Sync Out (J12).
 - `TRG` to `MKR` (2-3, normal): the marker. It rises with every Laser 1 pulse, has its own width
-  (`MARKERWIDTH`, 2 µs by default) and keeps running while DISARMED.
+  (`:MARK:WIDT`, 2 µs by default) and keeps running while DISARMED.
 - `TRG` to `CH1` (1-2): the Laser 1 pulse itself, so only while ARMED. The cameras need a trigger
-  pulse of at least 500 ns, so this is only dependable with `WIDTH` ≥ 500 ns.
+  pulse of at least 500 ns, so this is only dependable with a pulse width (`:PULS:WIDT`) of
+  500 ns or more.
 - Never join all three pins.
 
 **J18 / J19 — laser output mode.** Labelled `LASER 1 OUT` / `LASER 2 OUT`, with `50Ω` and `HiZ`
@@ -156,7 +161,7 @@ runs the Pico at 300 MHz instead of 150 MHz, so every time setting has 3.333 ns 
 6.667 ns. That is twice the chip's rated speed: soak-test each Pico first, as described in
 [Hardware.md](../Hardware.md#clock-jumper-j20-300-mhz-overclock). No shunt (the default) is the
 rated 150 MHz. After any watchdog restart the Pico stays at 150 MHz until it is power-cycled.
-`STATUS` shows the clock in `CLK` and `CLKMODE`.
+`:DIAG:CLOC?` gives the clock, and `:DIAG:CLOC:MODE?` gives the clock mode.
 
 ## J12 — External Sync Out
 
@@ -175,7 +180,7 @@ lines do: with every marker (J10 on 2-3, also while DISARMED), or with every Las
 - One device per output, no BNC tee, and don't short it (see [Safety](SAFETY.md#safety)).
 
 The board has no pixel-reset input any more: PiEBV alone controls the camera pixel reset
-([`PIXGATE`](COMMANDS.md#pixel-reset-gate-pixgate)).
+([`:PIX:GATE`](COMMANDS.md#pixel-reset-gate)).
 
 ## Seating the Pico
 

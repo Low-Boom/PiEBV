@@ -1,7 +1,7 @@
 # Building from source
 
-This page tells you how to build the firmware and how to run the timing checks and the signal
-simulation. This page is part of the PiEBV documentation. The overview and the list of all pages are
+This page tells you how to build the firmware and how to run the timing checks, the protocol
+check, the network check and the signal simulation. This page is part of the PiEBV documentation. The overview and the list of all pages are
 in the [README](../README.md).
 
 The firmware is Arduino C++ on the [arduino-pico](https://github.com/earlephilhower/arduino-pico)
@@ -42,6 +42,23 @@ python check_pixgate.py
 
 The expected output is listed in [its README](../tools/timing_check/README.md). These checks don't
 replace a scope check on the board.
+
+## Protocol check (simulator)
+
+`tools/piebv_sim/` builds the firmware's command protocol (`src/protocol.cpp`) for a computer.
+`tools/piebv_sim/scpi_check.py` sends SCPI commands to it and compares each reply with the
+expected text: the common commands, the settings and the realized values, the header rules, the
+error queue, the echo switch and the Wi-Fi set-up. Run it after changing `src/protocol.*`,
+`src/pulse_timing.h` or `src/wifi_config.h`:
+
+```
+cd tools/piebv_sim
+g++ -std=c++17 -O2 -I fake -I ../../src -o piebv_sim piebv_sim.cpp ../../src/protocol.cpp
+python scpi_check.py
+```
+
+It prints `scpi_check: all checks passed`. A failed check prints its name, the reply and the
+expected reply, and the exit code is 1. See [its README](../tools/piebv_sim/README.md).
 
 ## Network check
 

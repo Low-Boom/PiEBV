@@ -11,18 +11,20 @@ overview and the list of all pages are in the [README](../README.md).
 - **`DISARM` always works, immediately.** The six letters D-I-S-A-R-M, in any case and anywhere in
   what you type, disarm the outputs as soon as the firmware reads the last letter. (A host that
   does not read its replies, or the network link, can delay the reading: see the network bullet
-  below and [the command reference](COMMANDS.md#arm-and-disarm-in-detail).) You don't need to
+  below and [the command reference](COMMANDS.md#arming-and-disarm).) You don't need to
   press Enter, as long as your terminal sends each key as you type it (all the terminals listed
   under [USB serial](CONNECTING.md#usb-serial) do). A monitor with a separate input box, such as the Arduino
-  IDE's, sends nothing until you press Enter.
+  IDE's, sends nothing until you press Enter. `DISARM` is not an SCPI command: it is a safety
+  extension, and it acts also inside another command or a quoted text. `:OUTP OFF`, `:ABOR` and
+  `*RST` disarm too, when the firmware has read the end of their line.
 - **The three gates are independent.** Each one on its own holds both outputs at 0 V. The firmware
-  can only see the first one, so `ARMED=1` does not by itself mean the outputs are live. The third
+  can only see the first one, so `:OUTP?` giving `1` does not by itself mean the outputs are live. The third
   gate (U18) checks that the board's 12 V laser-driver supply is between 10.6 and 13.3 V, which needs
   the 15 V charger.
 - **Losing the USB link does not disarm.** If the Pico's USB cable is pulled, the PC goes to sleep
   or a script is killed while ARMED, the board keeps running from J17 and the lasers keep pulsing,
   with no way to send `DISARM`. Stop them in hardware: take the J11 shunt off 1-2, or unplug J17.
-- **With Wi-Fi on, `ARM` can come from the network.** The network link has no password and no
+- **With Wi-Fi on, arming (`:OUTP ON`) can come from the network.** The network link has no password and no
   encryption: every computer that can reach the board can arm it. Losing the network link does not
   disarm. `DISARM` over USB stays available, but the network link can delay it: by design by about
   0.6 s for a slow network host, and by 1 s to 2 s, at most twice, if the radio chip stops
@@ -46,7 +48,7 @@ overview and the list of all pages are in the [README](../README.md).
   | none | — | nothing: always fit a shunt | about 3.5 V | about 12 V |
 
   To fire **one light source with both pulses**, or **two light sources together with the same
-  double pulse**, use `COMBINE 1` instead ([Combined mode](COMMANDS.md#combined-mode-combine)): each output
+  double pulse**, use `:OUTP:COMB ON` instead ([Combined mode](COMMANDS.md#combined-mode)): each output
   then carries both pulses, still one driver per output.
 
 **Cameras and jumpers**
@@ -58,9 +60,9 @@ overview and the list of all pages are in the [README](../README.md).
 - **Set every camera to sync slave.** PiEBV drives the sync pin, so a camera set as sync master would
   fight it.
 - **Never fit a shunt across all three pins of J10.**
-- **Don't short J12.** External Sync Out can be high for up to half the period (`MARKERWIDTH` is
-  limited to 50 % for this reason); into a short its 2 W, 68 Ω resistor then takes up to 1.1 W on
-  average (1.45 W with J10 on 1-2 and `COMBINE 1`).
+- **Don't short J12.** External Sync Out can be high for up to half the period (the marker width,
+  `:MARK:WIDT`, is limited to 50 % for this reason); into a short its 2 W, 68 Ω resistor then takes
+  up to 1.1 W on average (1.45 W with J10 on 1-2 and `:OUTP:COMB ON`).
 
 More detail: [Hardware.md](../Hardware.md), sections Boot and arming, Laser
 interlock and Connectors.

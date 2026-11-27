@@ -27,7 +27,7 @@ pio run
 3. Seat the Pico components-up, USB toward the board's left edge. Set J10 to **2-3** and J18, J19
    and J21 to **1-2** for the 50 Ω scope checks; leave J11 empty until instructed to check the outputs.
 4. Connect the 15 V charger to J17 and the Pico's micro-USB to the computer. Open the Pico's serial
-   port, enable local echo, and send `STATUS`.
+   port, enable local echo, and send `*IDN?`. The reply starts with `PiEBV,`.
 5. Follow [Hardware setup](docs/SETUP.md#hardware-setup) to check the laser outputs with a scope before
    connecting laser drivers or cameras.
 
@@ -44,12 +44,12 @@ The README gives the overview. The pages below give the detail.
 
 | Page | What it holds | Who needs it |
 |---|---|---|
-| [docs/SAFETY.md](docs/SAFETY.md) | The safety rules in detail: starting and stopping, laser outputs, cameras and jumpers | Everyone, before the first `ARM` |
+| [docs/SAFETY.md](docs/SAFETY.md) | The safety rules in detail: starting and stopping, laser outputs, cameras and jumpers | Everyone, before the lasers are armed for the first time |
 | [docs/SETUP.md](docs/SETUP.md) | Hardware setup step by step, first-board checks, jumpers, J12, seating the Pico, power | Anyone who sets up a board |
 | [docs/CONNECTING.md](docs/CONNECTING.md) | USB serial, web GUI, Python scripting, network (Wi-Fi) | Operators and script writers |
-| [docs/COMMANDS.md](docs/COMMANDS.md) | Command reference: rules, commands, timing, errors, `STATUS` | Operators and script writers |
+| [docs/COMMANDS.md](docs/COMMANDS.md) | Command reference (SCPI): rules, commands, timing, status registers, errors, Wi-Fi set-up | Operators and script writers |
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Symptoms, likely causes and fixes | Anyone with a problem |
-| [docs/FIRMWARE_BUILD.md](docs/FIRMWARE_BUILD.md) | Building from source, timing checks, signal simulation | Firmware developers |
+| [docs/FIRMWARE_BUILD.md](docs/FIRMWARE_BUILD.md) | Building from source, timing checks, protocol check, network check, signal simulation | Firmware developers |
 | [Hardware.md](Hardware.md) | Hardware reference: pins, power, signal chains, connectors | Hardware developers |
 | [docs/DESIGN_NOTES.md](docs/DESIGN_NOTES.md) | Design notes: index of the design pages in `docs/design/` (layout, power, signals, firmware, network link), Rev 2 changes | Hardware and firmware developers |
 | [docs/design/NETWORK.md](docs/design/NETWORK.md) | Design of the network link: decisions, rules for `DISARM`, radio fault handling, verification | Firmware developers |
@@ -66,11 +66,11 @@ The README gives the overview. The pages below give the detail.
 
 | Output | Connector | What it is for |
 |---|---|---|
-| **Laser 1** (CH1) | BNC J7 | Trigger for the first laser driver: a 5 V pulse (with J18 set to match the input), `WIDTH` long, `FREQ` times per second |
-| **Laser 2** (CH2) | BNC J8 | Trigger for the second laser driver: the same pulse, starting exactly `DELAY` after Laser 1 |
+| **Laser 1** (CH1) | BNC J7 | Trigger for the first laser driver: a 5 V pulse (with J18 set to match the input), of the set pulse width (`:PULS:WIDT`), at the set frequency (`:FREQ`) |
+| **Laser 2** (CH2) | BNC J8 | Trigger for the second laser driver: the same pulse, starting exactly the set delay (`:PULS:DOUB:DEL`) after Laser 1 |
 | **Sync** | Camera ports J1–J6 | A steady 1 MHz clock that all six cameras keep time by |
 | **Trigger** (the marker) | Camera ports J1–J6 | A pulse at the same instant as every Laser 1 pulse. Each camera records it as a timestamp in its data. (Jumper J10 can switch the cameras to the Laser 1 pulse itself instead.) |
-| **Pixel reset** | Camera ports J1–J6 | Holds the camera sensors blank between flash pairs. Controlled only by PiEBV (`PIXGATE`) |
+| **Pixel reset** | Camera ports J1–J6 | Holds the camera sensors blank between flash pairs. Controlled only by PiEBV (`:PIX:GATE`) |
 | **External Sync Out** | BNC J12 | A copy of the camera trigger (the marker, or Laser 1 with J10 on 1-2) for other equipment: a 5 V pulse, with J21 set to match the input |
 
 - Every signal to the cameras is **1.8 V** (IDS cameras, J22 open) or **3.3 V** (Prophesee EVK4
@@ -86,9 +86,9 @@ The README gives the overview. The pages below give the detail.
   each group, KiCad's length reading).
 - Times are set in steps of **6.667 ns** (one tick of the Pico's 150 MHz clock), or **3.333 ns**
   with a shunt on the clock jumper J20 (a 300 MHz overclock; see [Jumpers](#jumpers)).
-  Every reply shows the exact value the hardware will produce, so you never have to correct for the
-  step size.
-- Both laser pulses share one `WIDTH` and one `FREQ`.
+  Every query returns the exact value the hardware will produce, so you never have to correct for
+  the step size.
+- Both laser pulses share one pulse width and one frequency.
 - The firmware sets **no laser-driver limits** (pulse width, duty, spacing). Set what your driver is
   rated for. It only stops the pulses from running into each other.
 
@@ -104,14 +104,14 @@ the output mode (J18/J19) set to match their input.
 ### The short version
 
 1. **The lasers start off.** At every power-up and every reset the laser outputs are DISARMED. They
-   pulse only after you send `ARM`.
-2. **Typing `DISARM` stops them at once.**
+   pulse only after you send `:OUTP ON`.
+2. **Typing `DISARM` stops them at once.** `:OUTP OFF` also stops them.
 3. **Three things must all be true** for the lasers to pulse. Remove any one and they stop:
    - the firmware is ARMED;
    - a shunt is on **J11 pins 1-2** (or a closed E-stop switch is wired there);
    - a 15 V USB-C charger is plugged into **J17**.
 4. **Unplugging the computer does not stop the lasers.** Use J11 or J17 for that. A lost network
-   link does not stop them either. With Wi-Fi set up, `ARM` can also come from the network.
+   link does not stop them either. With Wi-Fi set up, `:OUTP ON` can also come from the network.
 5. **Set each output's mode (J18, J19, J21) before you connect anything to it.**
 6. **One laser driver per output.** Never split an output with a BNC tee, and never join J7 and J8.
 7. **Cameras:** build the harness with wires 2, 3, 4, 5 and 7 only, and set every camera to sync
@@ -215,9 +215,11 @@ on J23 runs when the charger gives 15 V. On a 5 V-only charger it normally does 
    ```
    pio device monitor --echo                 # PlatformIO; add -p COM7 if needed
    ```
-3. Turn on local echo. The firmware does not echo.
+3. Turn on local echo. The firmware does not echo what you type.
 4. Do not use 1200 baud. 115200 is usual.
-5. Type `STATUS` and press Enter.
+5. Type `*IDN?` and press Enter. The reply starts with `PiEBV,`.
+6. Type `:SYST:ECHO ON` to get a reply to each setting and each error in the terminal. Without
+   it, a setting gives no reply.
 
 Other terminals, the web GUI and Python scripting are in [docs/CONNECTING.md](docs/CONNECTING.md).
 
@@ -227,18 +229,19 @@ A Pico 2 W can also take the commands over Wi-Fi, on TCP port 4242 of an existin
 or WPA2 with a shared passphrase). Set it up one time over USB, with the lasers DISARMED:
 
 ```
-WIFI SSID Lab Network
-WIFI PASS correct horse
-WIFI ON                      ->  OK WIFI=ON SSID=Lab Network PASS=SET SAVED=1
-WIFI                         ->  WIFI=CONNECTED … WIFI_IP=192.168.1.37 …
+:SYST:COMM:WLAN:SSID "Lab Network"
+:SYST:COMM:WLAN:PASS "correct horse"
+:SYST:COMM:WLAN ON
+:SYST:ERR?                       ->  0,"No error"
+:SYST:COMM:WLAN:LINK?;IPAD?      ->  CONNECTED,"";"192.168.1.37"
 ```
 
-Then connect to the address that `WIFI` shows, for example
+Then connect to the address that `:SYST:COMM:WLAN:IPAD?` gives, for example
 `python tools/piebv_gui/piebv_gui.py --connect socket://192.168.1.37:4242`. The web GUI has a card
 for the same set-up.
 
 - The network link has **no password and no encryption**: each computer that can reach the board
-  can send `ARM`. Use it only on a network that you control.
+  can arm the lasers. Use it only on a network that you control.
 - A lost network link does not disarm.
 - The link has not been tested on a board.
 
@@ -246,21 +249,29 @@ The details and the limits are in [docs/CONNECTING.md](docs/CONNECTING.md#networ
 
 ## Most-used commands
 
-| Command | Unit | Default | What it sets |
+| Command | Unit | Default | What it sets or returns |
 |---|---|---|---|
-| `FREQ [n]` | Hz | 1000 | How many pulse pairs per second |
-| `WIDTH [n]` | ns | 100 | Length of both laser pulses |
-| `DELAY [n]` | ns | 10000 | Time from the start of the Laser 1 pulse to the start of the Laser 2 pulse. `0` makes them start together. |
-| `ARM` | – | disarmed | Allow the laser pulses |
-| `DISARM` | – | – | Stop the laser pulses at once; recognised anywhere in what you type |
-| `ARM?` | – | – | Report the arm state: `ARMED=0` or `ARMED=1` |
-| `STATUS` | – | – | All settings, the arm state and system information |
-| `ID?` | – | – | Board and firmware version (the git commit it was built from) |
-| `WIFI …` | – | off | The Wi-Fi state and set-up ([details](docs/COMMANDS.md#wi-fi-wifi)) |
-| `HELP` | – | – | Command summary |
+| `:FREQ <f>`, `:FREQ?` | Hz | 1000 | How many pulse pairs per second |
+| `:PULS:WIDT <t>`, `:PULS:WIDT?` | s | 100 ns | Length of both laser pulses |
+| `:PULS:DOUB:DEL <t>`, `:PULS:DOUB:DEL?` | s | 10 µs | Time from the start of the Laser 1 pulse to the start of the Laser 2 pulse. `0` makes them start together. |
+| `:OUTP ON` | – | disarmed | Allow the laser pulses (arm) |
+| `DISARM` | – | – | Stop the laser pulses at once; recognised anywhere in what you type. `:OUTP OFF` also disarms. |
+| `:OUTP?` | – | – | The arm state: `0` or `1` |
+| `:SYST:ERR?` | – | – | The next entry of the error queue, or `0,"No error"` |
+| `:SYST:ECHO ON` | – | off | A reply to each setting and error, for a terminal |
+| `*IDN?` | – | – | Board and firmware version (the git commit it was built from) |
+| `*RST` | – | – | Disarm and set the default settings |
+| `:SYST:COMM:WLAN …` | – | off | The Wi-Fi state and set-up ([details](docs/COMMANDS.md#wi-fi-set-up)) |
+| `:SYST:HELP:HEAD?` | – | – | The list of all commands |
 
-A name on its own asks for a value (`DELAY`). A name followed by a number sets it (`DELAY 5000`).
-All commands, limits and error replies are in [docs/COMMANDS.md](docs/COMMANDS.md). If something
+- Times are in seconds and frequencies in hertz. Add a suffix: `:PULS:WIDT 100 NS`,
+  `:PULS:DOUB:DEL 10 US`, `:FREQ 2 KHZ`. A number without a suffix is in seconds or hertz.
+- A query ends in `?` and returns the realized value, for example `1.000000000E-07` for 100 ns.
+- A setting gives no reply. An error goes into the error queue: read it with `:SYST:ERR?`.
+- One line can hold more than one command, separated by `;`:
+  `:FREQ 15;:PULS:WIDT 100 NS;DOUB:DEL 10 US`.
+
+All commands, limits and errors are in [docs/COMMANDS.md](docs/COMMANDS.md). If something
 does not work, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
 ---
@@ -269,11 +280,11 @@ does not work, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
 | Path | Contents |
 |---|---|
-| `src/` | Firmware: `main.cpp` (start-up, arming, crash watchdog), `protocol.*` (commands, on USB and on the network link), `net_link.*` (Wi-Fi link of a Pico 2 W), `tcp_link.*` (its TCP server), `wifi_config.h` (Wi-Fi set-up values and flash record), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `sync_clock.*` (1 MHz SYNC clock), `clock_mode.*` (clock jumper: 150 or 300 MHz at boot), `laser_gate.*` (laser output gate), `board.h` (pin map) |
+| `src/` | Firmware: `main.cpp` (start-up, arming, crash watchdog), `protocol.*` (SCPI commands, on USB and on the network link), `net_link.*` (Wi-Fi link of a Pico 2 W), `tcp_link.*` (its TCP server), `wifi_config.h` (Wi-Fi set-up values and flash record), `pulse_timing.h` (timing maths and checks), `pio_pulse.*` (PIO programs), `sync_clock.*` (1 MHz SYNC clock), `clock_mode.*` (clock jumper: 150 or 300 MHz at boot), `laser_gate.*` (laser output gate), `board.h` (pin map) |
 | `platformio.ini` | Build configuration (`pico2w` and `pico2` builds) |
 | `tools/piebv_example.py` | Python example script |
 | `tools/piebv_gui/` | Web GUI: settings, timing chart and console in the browser |
-| `tools/piebv_sim/` | Simulator: the firmware's command code built for a computer, for trying the GUI and scripts without a board |
+| `tools/piebv_sim/` | Simulator: the firmware's command code built for a computer, for trying the GUI and scripts without a board, and `scpi_check.py`, which checks the SCPI replies |
 | `tools/timing_check/` | Timing checks run on a computer |
 | `tools/net_check/` | Checks of the network link's connection handling, run on a computer: against a model of lwIP, and against lwIP's own sources |
 | `tools/signal_sim/` | Transmission-line simulation of the timing nets (KiCad's ngspice) |

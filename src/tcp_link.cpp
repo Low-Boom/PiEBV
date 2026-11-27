@@ -19,7 +19,7 @@ namespace {
 // (as the core builds it) gives every TCP segment a buffer of full segment size from
 // a heap of 16 kB that it shares with DHCP, ARP and mDNS, so the whole send buffer of
 // 8 segments would take most of that heap. 3 segments' worth holds the longest reply
-// (HELP, about 2.9 kB); it can lie in 4 segments, about 6 kB of the heap.
+// (SYSTem:HELP:HEADers?, about 1.4 kB); it can lie in 4 segments, about 6 kB of the heap.
 constexpr int kMaxQueued = 3 * TCP_MSS;
 static_assert(kMaxQueued <= TCP_SND_BUF, "cannot queue more than the send buffer");
 // Free queue space that counts as "the host reads again" after a reply was dropped:
@@ -203,7 +203,7 @@ err_t onAccept(void *, tcp_pcb *pcb, err_t err) {
 }
 
 // Replies can go out while the connection is open in our direction: established, or
-// the host has closed its sending side only (CLOSE_WAIT), e.g. `echo STATUS | nc -N`.
+// the host has closed its sending side only (CLOSE_WAIT), e.g. `echo '*IDN?' | nc -N`.
 bool canSend(const tcp_pcb *pcb) {
     return pcb && (pcb->state == ESTABLISHED || pcb->state == CLOSE_WAIT);
 }

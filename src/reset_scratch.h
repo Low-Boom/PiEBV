@@ -4,7 +4,7 @@
 //
 // SCRATCH0 counts watchdog timeouts since the last POR/BOR/RUN; it is valid only while
 // SCRATCH1 holds kWdtCountMagic. main.cpp (captureResetInfo()) keeps the count and shows
-// it as WDT_RESETS; clock_mode.cpp reads it to keep the clock at 150 MHz after a timeout.
+// it as DIAGnostic:WATChdog:RESets?; clock_mode.cpp reads it to keep the clock at 150 MHz after a timeout.
 
 #include <cstdint>
 

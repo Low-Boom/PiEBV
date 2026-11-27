@@ -2,13 +2,13 @@
 // Built via the community arduino-pico core (see platformio.ini) since
 // PlatformIO's official "raspberrypi" platform/Mbed core has no RP2350
 // support. On a Pico 2 W the radio can carry the command protocol over Wi-Fi
-// (net_link.h); it is off until it is set up with the WIFI command over USB.
+// (net_link.h); it is off until it is set up with the SYSTem:COMMunicate:WLAN commands over USB.
 //
 // IDS EVS event-camera synchronizer, implemented with PIO state machines and the
 // RP2350 clock generator (no CPU busy-waits). Outputs (the GPIO map is in board.h):
 //   - CH1 / CH2 (GP13 / GP12): the two laser trigger pulses. Shared width; CH2's
 //     rising edge follows CH1's by exactly DELAY (to the nearest PIO cycle).
-//     COMBINE 1 puts BOTH pulses on BOTH outputs (two light sources fired in sync
+//     OUTPut:COMBine ON puts BOTH pulses on BOTH outputs (two light sources fired in sync
 //     with the same double pulse): the CH1 and CH2 state machines then each drive
 //     GP12 and GP13 together (pio_pulse.cpp, dual-pin program).
 //   - MARKER (GP11): a pulse of MARKERWIDTH with every pulse pair, rising with
@@ -33,8 +33,8 @@
 // this.
 //
 // Watchdog. A hardware watchdog (kWatchdogMs) resets the chip if loop() stops
-// running. The chip then comes back up DISARMED, and STATUS reports
-// RESET=WATCHDOG.
+// running. The chip then comes back up DISARMED, and DIAGnostic:RESet:CAUSe? reports
+// WATCHDOG.
 //
 // Clock. clk_sys is 150 MHz (6.667 ns per PIO cycle), or 300 MHz (3.333 ns) when the
 // clock jumper is fitted at boot (clock_mode.h). All timing follows clock_get_hz().
@@ -59,6 +59,7 @@
 #include "hardware/structs/powman.h"
 #include "hardware/structs/watchdog.h"
 #include "hardware/timer.h"
+#include "pico/unique_id.h"
 #include "laser_gate.h"
 #include "net_link.h"
 #include "pio_pulse.h"
@@ -79,7 +80,7 @@ constexpr uint32_t kSmMask = (1u << kSmCh1) | (1u << kSmCh2) | (1u << kSmMarker)
 // SYNC needs a pin with a clk_gpout function (sync_clock.h); catch a wrong board.h at build time.
 static_assert(GPIO_TO_GPOUT_CLOCK_HANDLE(kPinSync, CLK_COUNT) != CLK_COUNT, "kPinSync has no clk_gpout function");
 
-// Firmware version for ID?: `git describe --always --dirty` of the source tree, passed in
+// Firmware version for *IDN?: `git describe --always --dirty` of the source tree, passed in
 // by tools/firmware_version.py (platformio.ini extra_scripts). It replaces the build
 // date and time, so two builds of the same commit are the same image.
 #ifndef PIDG_FIRMWARE_VERSION
@@ -132,7 +133,7 @@ PulseChannel g_marker;
 PulseChannel g_pixGate;  // pixel-reset gate: output INVERTED, latch high = pixels in reset
 SyncClock g_sync;  // clk_gpout, not PIO
 // Started and stopped together. The first three always run; the gate (last) runs only
-// while PIXGATE asks for it (pulseGroupCount()).
+// while PIXel:GATE asks for it (pulseGroupCount()).
 PulseChannel *const g_group[] = {&g_ch1, &g_ch2, &g_marker, &g_pixGate};
 constexpr size_t kGroupAll = std::size(g_group);
 PulseChannel *const g_pixGateOnly[] = {&g_pixGate};
@@ -237,8 +238,8 @@ void initPixGatePin() {
     pio_sm_set_consecutive_pindirs(kPio, kSmPixGate, kPinPixGate, 1, true);
 }
 
-// How many of g_group run for a pulse train: the gate joins under PIXGATE 2 always,
-// and under PIXGATE 1 only while the laser pads carry pulses.
+// How many of g_group run for a pulse train: the gate joins under PIXel:GATE ALWays always,
+// and under PIXel:GATE ARMed only while the laser pads carry pulses.
 size_t pulseGroupCount(const RealizedTiming &rt, bool lasersLive) {
     return (rt.pixGate == 2 || (rt.pixGate == 1 && lasersLive)) ? kGroupAll : kGroupAll - 1;
 }
@@ -261,7 +262,7 @@ void closeLaserGate() {
 //     latches LOW (stopPulseChannelsLow).
 //  3. Load the new cycle counts. If any load fails, stop here and start nothing.
 //  4. Lasers not live: enable the group now, on the same clock cycle (MARKER runs,
-//     CH1/CH2 run behind the closed gate, the gate SM only under PIXGATE 2).
+//     CH1/CH2 run behind the closed gate, the gate SM only under PIXel:GATE ALWays).
 //     Lasers live: leave everything stopped and schedule the start for the end of
 //     the restart hold-off. servicePendingStart(), called from loop(), then opens
 //     the gate (latch LOW -> no edge) and enables the group together, so the first
@@ -313,8 +314,8 @@ const char *restartPulses(const RealizedTiming &rt, bool lasersLive) {
 }
 
 // A load failed (restartPulses()): nothing runs and the laser pads stay gated LOW.
-// Disarms, and refuses ARM until a later setting loads cleanly; STATUS shows the
-// reason as HW=ERR. Returns `why`.
+// Disarms, and refuses OUTPut ON until a later setting loads cleanly;
+// DIAGnostic:HARDware? shows the reason. Returns `why`.
 const char *pulseLoadFailed(const char *why) {
     g_armed = false;
     g_configured = false;
@@ -352,7 +353,7 @@ const char *setArmed(bool arm) {
             g_startPending = false;
             startPulseChannelsInSync(g_group, pulseGroupCount(g_rt, false));
         } else if (g_armed && g_rt.pixGate == 1) {
-            // PIXGATE 1 gates only while ARMED: stop the gate, which leaves its latch
+            // PIXel:GATE ARMed gates only while ARMED: stop the gate, which leaves its latch
             // LOW, i.e. the pixels free. A reset in progress ends at the halt (at most a
             // few cycles later, the time to its forced SET PINS 0).
             stopPulseChannelsLow(g_pixGateOnly, 1);
@@ -393,7 +394,7 @@ const char *applyPulseParams(const PulseParams &p, RealizedTiming *realized) {
         return why;
     }
     if (g_armed && g_configured && rt.combine != g_rt.combine) {
-        return "DISARM first: COMBINE changes what both laser outputs carry";
+        return "DISARM first: OUTPut:COMBine changes what both laser outputs carry";
     }
     g_sync.start(rt.syncDiv);  // does nothing while SYNC already runs at this divider
     if (!g_pioReady) {
@@ -411,36 +412,30 @@ const char *applyPulseParams(const PulseParams &p, RealizedTiming *realized) {
     return nullptr;
 }
 
-void printSystemStatus(Print &out) {
-    out.print(F("HW="));
+// Protocol hook: the read-outs of the DIAGnostic queries.
+void systemInfo(SystemInfo *s) {
     if (g_hwWhy[0]) {
-        out.print(F("ERR "));
-        out.println(g_hwWhy);
+        snprintf(s->hw, sizeof(s->hw), "%s", g_hwWhy);
     } else if (g_loadFailWhy) {
-        out.print(F("ERR outputs stopped: "));
-        out.println(g_loadFailWhy);
+        snprintf(s->hw, sizeof(s->hw), "outputs stopped: %s", g_loadFailWhy);
     } else {
-        out.println(F("OK"));
+        s->hw[0] = '\0';
     }
-    out.print(F("START_PENDING_US="));
-    out.println(startPendingUs());
-    out.print(F("CLK="));
-    out.println(clkHz());
-    out.print(F("CLKMODE="));
-    printClockMode(out, clockModeInfo());
-    out.print(F("VREG_MV="));
-    out.println(clockModeInfo().vregMv);
-    out.print(F("RESET="));
-    out.println(resetReasonName(g_reset.reason));
-    out.print(F("RESET_RAW=WD:0x"));
-    out.print(g_reset.wdReason, HEX);
-    out.print(F(" CHIP:0x"));
-    out.println(g_reset.chipReset, HEX);
-    out.print(F("WDT_RESETS="));
-    out.println(g_reset.wdtCount);
-    out.print(F("WDT_MS="));
-    out.println(kWatchdogMs);
-    net::printStatus(out);
+    s->startPendingUs = startPendingUs();
+    s->clkHz = clkHz();
+    BufPrint mode(s->clkMode, sizeof(s->clkMode));
+    printClockMode(mode, clockModeInfo());
+    // printClockMode() ends with a line end: not part of the value.
+    for (size_t n = strlen(s->clkMode); n && (s->clkMode[n - 1] == '\n' || s->clkMode[n - 1] == '\r'); --n) {
+        s->clkMode[n - 1] = '\0';
+    }
+    s->vregMv = clockModeInfo().vregMv;
+    s->resetCause = resetReasonName(g_reset.reason);
+    s->wdReason = g_reset.wdReason;
+    s->chipReset = g_reset.chipReset;
+    s->wdtResets = g_reset.wdtCount;
+    s->wdtMs = kWatchdogMs;
+    s->uptimeUs = time_us_64();
 }
 
 // Runs `call` with the longer watchdog period of the radio chip's power-up.
@@ -488,10 +483,15 @@ void serviceLink(ProtocolLink &link, Read read, Pending pending) {
     }
 }
 
-void printIdentity(Print &out) {
-    out.print(F("PiEBV delay generator ("));
-    out.print(kBoardName);
-    out.println(F("), firmware " PIDG_FIRMWARE_VERSION));
+// Protocol hook: the fields of *IDN?.
+void identity(Identity *id) {
+    static char serial[2 * PICO_UNIQUE_BOARD_ID_SIZE_BYTES + 1] = "";
+    if (!serial[0]) {
+        pico_get_unique_board_id_string(serial, sizeof(serial));
+    }
+    id->model = kBoardName;
+    id->serial = serial;
+    id->firmware = PIDG_FIRMWARE_VERSION;
 }
 
 }  // namespace
@@ -527,9 +527,8 @@ void setup() {
     // ARM is refused.)
     net::begin();  // the stored Wi-Fi set-up (a flash read); the radio starts at the end of setup()
     const char *why = g_protocol.begin(
-        &g_params, ProtocolHooks{applyPulseParams, setArmed, isArmed, startPendingUs, printSystemStatus,
-                                 printIdentity, clkHz, wifiGet, net::kAvailable ? wifiSet : nullptr,
-                                 net::printStatus});
+        &g_params, ProtocolHooks{applyPulseParams, setArmed, isArmed, startPendingUs, systemInfo, identity, wifiGet,
+                                 net::kAvailable ? wifiSet : nullptr, net::netInfo});
     if (!g_pioReady) {
         why = "pio0 unavailable (state machine already claimed or instruction memory full)";
     } else if (!syncReady) {  // not reachable with the static_assert on kPinSync; reported, not ignored
@@ -549,23 +548,19 @@ void setup() {
         // give the USB CDC connection a moment, but don't hang forever
     }
 
-    // One line: hosts recognize a reboot by its start (tools/piebv_gui/piebv_device.py).
-    Serial.print(F("PiEBV delay generator ready, lasers DISARMED (reset: "));
-    Serial.print(resetReasonName(g_reset.reason));
-    Serial.print(clockModeBannerNote(clockModeInfo()));
-    Serial.println(F("). Type HELP for commands."));
+    // No greeting: an SCPI instrument sends nothing that was not asked for. A boot-time
+    // problem goes to the USB link's error queue (SYSTem:ERRor?), and *ESR? shows the
+    // power-on bit.
     if (g_hwWhy[0]) {
-        Serial.print(F("ERR "));
-        Serial.println(g_hwWhy);
+        g_protocol.reportError(g_usbLink, -240, g_hwWhy);
     } else if (g_loadFailWhy) {
-        Serial.print(F("ERR outputs stopped: "));
-        Serial.println(g_loadFailWhy);
+        g_protocol.reportError(g_usbLink, -240, g_loadFailWhy);
     }
 
     // Last: every boot-time wait above is finished. The watchdog starts with the long
     // period, joins the Wi-Fi network if the stored set-up asks for it (the lasers are
     // DISARMED), and then runs at kWatchdogMs. After a watchdog reset the radio stays
-    // off until WIFI ON, so a radio fault cannot reset the board again and again.
+    // off until WLAN ON, so a radio fault cannot reset the board again and again.
     withRadioStartWatchdog([] {
         net::start(g_reset.reason != RP2040::WDT_RESET);
         return 0;

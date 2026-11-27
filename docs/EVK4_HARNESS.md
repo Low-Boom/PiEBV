@@ -15,7 +15,7 @@ This document specifies the wire harness that connects one camera port of the Pi
 | J22 (camera I/O level) | **Shunt fitted** | The camera buffers U1–U6 then run from 3.3 V. With J22 open they run from 1.8 V, which is too low for the EVK4 inputs. |
 | D1 (blue, `3V3`) | Lit | It shows that the camera lines are at 3.3 V. |
 | Camera types | EVK4 only on all six ports | J22 sets the level of all six ports. Do not connect an IDS camera while J22 is fitted: its 1.8 V pins would get 3.3 V. |
-| `PIXGATE` | Not used | The EVK4 has no pixel-reset input. The `TDRSTN` line (pin 3) stays open in the harness. |
+| Pixel-reset gate (`:PIX:GATE`) | Not used | The EVK4 has no pixel-reset input. The `TDRSTN` line (pin 3) stays open in the harness. |
 
 ## Signals
 
@@ -123,7 +123,7 @@ pulse. Connect the camera after that.
 - The Metavision documentation says that the Trigger In circuit of the EVK4 inverts the signal: a
   falling edge at the input gives an event of polarity 1 and a rising edge gives an event of
   polarity 0. The leading (rising) edge of the board's marker pulse is thus the polarity 0 event.
-- Prophesee specifies a minimum trigger pulse of 500 ns. Set `MARKERWIDTH` to 500 ns or more.
+- Prophesee specifies a minimum trigger pulse of 500 ns. Set the marker width to 500 ns or more (`:MARK:WIDT 500 NS`).
 
 ## Open items
 

@@ -38,7 +38,7 @@ J10's silkscreen reads **`CH1 / TRG / MKR`** (pins 1/2/3).
   has its own `MARKERWIDTH`.
 - **1-2 (TRG to CH1):** the cameras are triggered by every laser CH1 pulse. Prophesee specifies a
   500 ns minimum trigger pulse, so this is only dependable with `WIDTH` ≥ 500 ns. CH1 pulses exist
-  only while ARMED, so with the lasers disarmed 1-2 gives the cameras no trigger (use 2-3, or ARM
+  only while ARMED, so with the lasers disarmed 1-2 gives the cameras no trigger (use 2-3, or arm
   with J11 on 2-3, for camera-only work).
 - **Never fit a shunt across all three pins:** that ties GP13 (through R19) to GP11.
 
@@ -77,7 +77,7 @@ selected GPIO by only 330 µA.
 
 **The Pico is the only source.** With both inputs on `PIXRST_GATE`, U3 is an inverter, so after U4
 the cameras get TDRSTN = `PIXRST_GATE` (active low at the camera: `0 = pixels in reset`). The gate
-idles high (R24 before the firmware runs, then the firmware drives it high while `PIXGATE` is 0), so
+idles high (R24 before the firmware runs, then the firmware drives it high while `:PIX:GATE` is `OFF`), so
 the cameras run unless the firmware asserts the reset. GP16 drives U3 directly at 3.3 V; U3's inputs
 are 5.5 V-tolerant at any supply (VIH 1.17 V at 1.8 V, 2.0 V at 3.3 V). The firmware side is under
 [Pixel-reset gate](FIRMWARE_HW.md#pixel-reset-gate-pixgate).
@@ -223,7 +223,7 @@ trigger lines are high, and low while `PWM_TRIG_TAP` is low, including with no s
 - **Power.** U19's ENA/ENB are on `LASER_PWR_OK` and its VDD on +12V, so J12 is live only with a
   15 V PD charger on J17; on the Pico's USB alone it stays at 0 V. C21 (0.1 µF) sits beside U19 pin 6
   with its own GND via, and C22 (10 µF) is its reservoir, as C9/C10 are for U13.
-- **Not gated by the laser interlock.** ARM and J11 act only on the laser pulses (U7/U8). With
+- **Not gated by the laser interlock.** Arming and J11 act only on the laser pulses (U7/U8). With
   J10 on 2-3, J12 keeps pulsing while the lasers are disarmed, as the camera triggers do.
 - **Timing: measure the offset to the cameras on each board.** J12 follows GP11 through U19, and
   the camera trigger lines through U5 and U6, so the two are offset by a fixed delay that the
@@ -255,7 +255,7 @@ trigger lines are high, and low while `PWM_TRIG_TAP` is low, including with no s
   0.04–0.06 ns of each other in the simulation (up to 0.3 ns on the 126 mm layout).
 
 - **Duty and loads.** J12 is high at most 50 % of the time, the firmware's MARKERWIDTH limit (67 %
-  with J10 on 1-2 and `COMBINE 1`; see [Board output rating](POWER.md#board-output-rating)); don't short it. One load per output, no BNC tee,
+  with J10 on 1-2 and `:OUTP:COMB ON`; see [Board output rating](POWER.md#board-output-rating)); don't short it. One load per output, no BNC tee,
   as for the laser outputs.
 - **Layout.** J21, R31 and R32 copy the Laser 1 block 40 mm lower, on J12's centre-pin row, and
   U19, C21, C22 and R30 copy U13's layout. These parts are in the rigid output block (see the
@@ -346,7 +346,7 @@ and R8 pulls U10.1 low, so the stop fails safe. The silkscreen beside J11 reads 
 
 Without R8 the interlock would be *enabled* with the header empty; R8 makes an empty J11 fail safe.
 
-**Three gates in series.** The firmware's ARM state acts before U7/U8 (DISARMED holds their pulse
+**Three gates in series.** The firmware's arm state acts before U7/U8 (DISARMED holds their pulse
 inputs LOW), the J11/U10 interlock acts at U7/U8, and the power-good gate (`LASER_PWR_OK`, see
 [Power-good gate](POWER.md#power-good-gate-u18)) acts on U13's ENA/ENB (and on U19's, for J12). Any one of them alone forces both
 BNC centre pins to 0 V, and none can enable a laser that another has disabled. U10 alone carries the

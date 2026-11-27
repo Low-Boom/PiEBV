@@ -426,7 +426,7 @@
  "firmware_duty": {
   "marker": 0.5,
   "combine": 0.6667,
-  "src": "src/pulse_timing.h: 2 x MARKERWIDTH <= 1/FREQ (marker, J10 on 2-3); with COMBINE 1 and J10 on 1-2, DELAY >= WIDTH + 1 cycle and DELAY <= 1/FREQ - 2 x WIDTH give 2 x WIDTH < 2/3 x 1/FREQ (Hardware.md 'Board output rating')"
+  "src": "src/pulse_timing.h: 2 x MARKERWIDTH <= 1/FREQ (marker, J10 on 2-3); with :OUTP:COMB ON and J10 on 1-2, DELAY >= WIDTH + 1 cycle and DELAY <= 1/FREQ - 2 x WIDTH give 2 x WIDTH < 2/3 x 1/FREQ (Hardware.md 'Board output rating')"
  },
  "option_d": {
   "est": true,

@@ -961,7 +961,7 @@ def main():
       "'short' = 1 mohm at the cable end. Power = steady state while high (last 50 ns). Hand = the "
       "series circuit VDD / (ROH + R30 [+ R31 + R32 || load]). Average = power while high x the "
       f"firmware's duty limit: {duty_m:.0%} (2 x MARKERWIDTH <= 1/FREQ) or {duty_c:.0%} (J10 on 1-2 "
-      "with COMBINE 1). Corner: high = 12.05 V, ROH 0.01 ohm, 1 % resistors low; low = 11.54 V, "
+      "with :OUTP:COMB ON). Corner: high = 12.05 V, ROH 0.01 ohm, 1 % resistors low; low = 11.54 V, "
       "ROH 8.5 ohm, resistors high. Compare Hardware.md 'Board output rating' and 'Output mode': "
       "0.71 W into 50 ohm, 1.5-2.16 W stuck high into a short, 1.08 W / 1.45 W average, R31 0.52 W "
       "and R32 0.31 W in Hi-Z mode. R30 is a 2 W 2512.", "",

@@ -88,7 +88,7 @@ and has two GND vias to the planes.
 while high into an open circuit, ~100 mA into a short. U17 drops 15 − 11.8 = 3.2 V, so it
 dissipates ~0.3 W at the firmware's highest sustained duty into 50 Ω (50 % per laser output), ~0.45 W
 with J12 also at its 50 % limit into 50 Ω, and ~0.7 W with both laser outputs shorted at 67 %
-duty (`COMBINE 1`). Thermal shutdown is the last resort. C10
+duty (`:OUTP:COMB ON`). Thermal shutdown is the last resort. C10
 (10 µF X7R 1206) is also U13's pulse reservoir: a 1 µs, ~200 mA pulse pair droops it by ~20 mV
 (0.2 %) before U17's regulation catches up.
 
@@ -318,7 +318,7 @@ and 5 of J1–J6 are 3.3 V signals.
 
 **No firmware setting can overload the laser outputs.** R6/R7, R30 and R25–R28, R31, R32 are
 **2 W 2512** resistors, and U17 is a 500 mA regulator with a 400 mA current limit. The laser outputs
-carry any duty the firmware accepts (up to 50 % per output, 67 % with `COMBINE 1`):
+carry any duty the firmware accepts (up to 50 % per output, 67 % with `:OUTP:COMB ON`):
 
 | Situation (50 Ω mode) | Current | Dissipation |
 |---|---|---|
@@ -329,10 +329,10 @@ carry any duty the firmware accepts (up to 50 % per output, 67 % with `COMBINE 1
 Hi-Z mode loads everything less (see [Output mode](SIGNALS.md#output-mode)).
 
 **External Sync Out (J12) follows the camera trigger,** so its duty is the marker's, at most 50 %
-(`2 × MARKERWIDTH ≤ 1/FREQ`), or with J10 on 1-2 the CH1 duty (50 %, 67 % with `COMBINE 1`, as
+(`2 × MARKERWIDTH ≤ 1/FREQ`), or with J10 on 1-2 the CH1 duty (50 %, 67 % with `:OUTP:COMB ON`, as
 for the laser outputs). Into 50 Ω that is the same ~96 mA (at most 103 mA) and at most 0.71 W in R30
 while high. Into a shorted BNC at those duties R30 averages at most 1.08 W (marker) or 1.45 W
-(`COMBINE 1`, J10 on 1-2), the same as the laser outputs. The firmware never holds the marker high,
+(`:OUTP:COMB ON`, J10 on 1-2), the same as the laser outputs. The firmware never holds the marker high,
 so 1.5–2.16 W (the stuck-high fault case of R6/R7) needs a firmware or GP11 fault as well as a
 short. Still, don't short J12. All three outputs high into 50 Ω draw
 at most ~310 mA, under U17's 360 mA minimum limit. Shorts on several outputs at once can exceed it:

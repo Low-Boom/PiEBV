@@ -40,10 +40,10 @@ enum class Phase : uint8_t {
     Off,      // radio chip off, no network interface
     Joining,  // join requested, or waiting to request it again
     Linked,   // joined; CONNECTED once DHCP gave an address
-    Fault,    // as Off, after the radio chip stopped answering; until WIFI ON or a power cycle
+    Fault,    // as Off, after the radio chip stopped answering; until WLAN ON or a power cycle
 };
 Phase g_phase = Phase::Off;
-const char *g_note = nullptr;  // why the link is not up (STATUS), or nullptr
+const char *g_note = nullptr;  // why the link is not up (WLAN:LINK?), or nullptr
 uint32_t g_lastPollMs = 0;
 uint32_t g_lastJoinMs = 0;
 uint32_t g_lastProbeMs = 0;
@@ -183,7 +183,7 @@ void radioStop(bool polite) {
 void radioFault() {
     radioStop(false);
     g_phase = Phase::Fault;
-    g_note = "the radio chip stopped answering: send WIFI ON to start it again";
+    g_note = "the radio chip stopped answering: send :SYST:COMM:WLAN ON to start it again";
 }
 
 // Powers the radio up, brings the interface up and requests the join. nullptr, or why
@@ -256,7 +256,7 @@ void pollJoin(uint32_t nowMs) {
             g_note = "link lost";
             g_rssiKnown = false;
         } else if (g_radioSuspect || nowMs - g_lastProbeMs >= kProbeMs) {
-            // The signal level for STATUS, read here so that STATUS makes no radio
+            // The signal level for WLAN:RSSI?, read here so that a query makes no radio
             // call; a chip that has stopped answering is found here too.
             g_lastProbeMs = nowMs;
             int32_t rssi = 0;
@@ -322,17 +322,6 @@ const char *store(const WifiConfig &cfg) {
     return memcmp(EEPROM.getConstDataPtr(), rec, sizeof(rec)) == 0 ? nullptr : "not stored: the flash write failed";
 }
 
-void printMac(Print &out) {
-    for (size_t i = 0; i < sizeof(g_mac); ++i) {
-        if (i) {
-            out.print(':');
-        }
-        if (g_mac[i] < 0x10) {
-            out.print('0');
-        }
-        out.print(g_mac[i], HEX);
-    }
-}
 
 }  // namespace
 
@@ -343,7 +332,7 @@ void begin() {
     if (!wifiRecordDecode(EEPROM.getConstDataPtr(), &g_cfg)) {
         g_cfg = WifiConfig{};  // no record: the set-up of every power-up until one is stored
         if (!flashErased()) {  // damaged, or written by firmware with other rules
-            g_note = "the stored set-up cannot be read: send it again, or WIFI CLEAR";
+            g_note = "the stored set-up cannot be read: send it again, or :SYST:COMM:WLAN:CLE";
         }
     }
     g_saved = true;
@@ -354,10 +343,10 @@ void start(bool allowed) {
         return;
     }
     if (!allowed) {
-        g_note = "held off after a watchdog reset: send WIFI ON, or power-cycle";
+        g_note = "held off after a watchdog reset: send :SYST:COMM:WLAN ON, or power-cycle";
         return;
     }
-    radioStart();  // a failure shows in STATUS
+    radioStart();  // a failure shows in WLAN:LINK?
 }
 
 const WifiConfig &config() {
@@ -407,56 +396,32 @@ ProtocolLink &link() {
     return tcplink::link();
 }
 
-void printStatus(Print &out) {
+void netInfo(NetInfo *n) {
     const bool linked = g_phase == Phase::Linked;
     const bool hasIp = linked && g_radio.connected();  // connected() = has an IPv4 address
-    out.print(F("WIFI="));
-    out.print(g_phase == Phase::Off       ? F("OFF")
-              : g_phase == Phase::Fault   ? F("FAULT")
-              : g_phase == Phase::Joining ? F("JOINING")
-              : hasIp                     ? F("CONNECTED")
-                                          : F("DHCP"));
-    if (g_note) {
-        out.print(F(" ("));
-        out.print(g_note);
-        out.print(')');
-    }
-    out.println();
-    out.print(F("WIFI_SSID="));
-    out.println(g_cfg.ssid);
-    out.print(F("WIFI_PASS="));
-    out.println(g_cfg.pass[0] ? F("SET") : F("NONE"));
-    out.print(F("WIFI_AT_POWER_UP="));
-    out.println(g_cfg.enabled ? 1 : 0);
-    out.print(F("WIFI_SAVED="));
-    out.println(g_saved ? 1 : 0);
-    out.print(F("WIFI_MAC="));
-    if (g_macKnown) {
-        printMac(out);
-        out.println();
-    } else {
-        out.println(F("UNKNOWN (read when the radio starts)"));
-    }
-    out.print(F("WIFI_IP="));
+    n->state = g_phase == Phase::Off       ? "OFF"
+               : g_phase == Phase::Fault   ? "FAULT"
+               : g_phase == Phase::Joining ? "JOINING"
+               : hasIp                     ? "CONNECTED"
+                                           : "DHCP";
+    n->note = g_note ? g_note : "";
+    snprintf(n->ssid, sizeof(n->ssid), "%s", g_cfg.ssid);
+    n->passSet = g_cfg.pass[0] != '\0';
+    n->atPowerUp = g_cfg.enabled;
+    n->saved = g_saved;
+    n->macKnown = g_macKnown;
+    memcpy(n->mac, g_mac, sizeof(n->mac));
+    n->ip[0] = '\0';
     if (hasIp) {
-        out.println(g_radio.localIP());
-    } else {
-        out.println(F("NONE"));
+        snprintf(n->ip, sizeof(n->ip), "%s", g_radio.localIP().toString().c_str());
     }
-    out.print(F("WIFI_RSSI_DBM="));  // read every kProbeMs in pollJoin(): no radio call here
-    if (linked && g_rssiKnown) {
-        out.println(g_rssi);
-    } else {
-        out.println(F("NONE"));
-    }
-    out.print(F("NET_PORT="));
-    out.println(kNetPort);
-    out.print(F("NET_CLIENT="));
+    n->rssiKnown = linked && g_rssiKnown;  // read every kProbeMs in pollJoin(): no radio call here
+    n->rssi = g_rssi;
+    n->port = kNetPort;
+    n->client[0] = '\0';
     ip_addr_t host;
     if (tcplink::hostAddress(&host)) {
-        out.println(IPAddress(host));
-    } else {
-        out.println(F("NONE"));
+        snprintf(n->client, sizeof(n->client), "%s", IPAddress(host).toString().c_str());
     }
 }
 
@@ -497,8 +462,9 @@ void flush() {}
 ProtocolLink &link() {
     return g_link;
 }
-void printStatus(Print &out) {
-    out.println(F("WIFI=UNAVAILABLE (firmware image for a Pico 2, which has no radio)"));
+void netInfo(NetInfo *n) {
+    n->state = "UNAVAILABLE";
+    n->note = "firmware image for a Pico 2, which has no radio";
 }
 
 }  // namespace net
